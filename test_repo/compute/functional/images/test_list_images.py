@@ -119,7 +119,7 @@ class ImageListTest(ComputeFixture):
         """The detailed list of servers should be filtered by image type"""
         type = self.image_2.metadata.image_type
         images = self.images_client.list_images_with_detail(image_type=type)
-        image_3 = self.images_client.get_image(self.image_ref)
+        image_3 = self.images_client.get_image(self.image_ref).entity
         filtered_images = [image.id for image in images.entity]
 
         self.assertTrue(self.image_1.id in filtered_images,

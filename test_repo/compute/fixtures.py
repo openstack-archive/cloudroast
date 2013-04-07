@@ -14,14 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-'''
-@summary: Base Classes for Compute Test Suites (Collections of Test Cases)
-@note: Correspondes DIRECTLY TO A unittest.TestCase
-@see: http://docs.python.org/library/unittest.html#unittest.TestCase
-@copyright: Copyright (c) 2012 Rackspace US, Inc.
-'''
-import os
-
 from cafe.drivers.unittest.fixtures import BaseTestFixture
 from cloudcafe.common.resources import ResourcePool
 from cloudcafe.compute.common.exceptions import TimeoutException, \
@@ -44,9 +36,9 @@ from cloudcafe.identity.v2_0.tokens_api.config import TokenAPI_Config
 
 
 class ComputeFixture(BaseTestFixture):
-    '''
-    @summary: Fixture for an Compute test.
-    '''
+    """
+    @summary: Base fixture for compute tests
+    """
 
     @classmethod
     def setUpClass(cls):
@@ -97,59 +89,23 @@ class ComputeFixture(BaseTestFixture):
         cls.resources.release()
 
     @classmethod
-    def parse_image_id(self, image_response):
+    def parse_image_id(cls, image_response):
         """
         @summary: Extract Image Id from Image response
         @param image_response: Image response
-        @type image_ref: string
+        @type image_response: string
         @return: Image id
         @rtype: string
         """
         image_ref = image_response.headers['location']
         return image_ref.rsplit('/')[-1]
 
-    def verify_server_event_details(self, server, image, flavor, event):
-        '''
-        @summary: Verifies the common attributes for all compute events
-        @param event: Contains event details (actual data) to be verified.
-        @type event: Dictionary
-        '''
-        failure = 'Expected {0} field in event to be {1}, was {2}'
-        image_id = event.payload.image_ref_url.rsplit('/')[-1]
-
-        self.assertEqual(server.tenant_id, event.payload.tenant_id,
-                         msg=failure.format('tenant id', server.tenant_id,
-                                            event.payload.tenant_id))
-        self.assertEqual(event.payload.user_id, server.user_id,
-                         msg=failure.format('user id', server.user_id,
-                                            event.payload.user_id))
-        self.assertEqual(event.payload.instance_type_id, int(server.flavor.id),
-                         msg=failure.format('flavor id', server.flavor.id,
-                                            event.payload.instance_type_id))
-        self.assertEqual(event.payload.instance_type, flavor.name,
-                         msg=failure.format('flavor name', flavor.name,
-                                            event.payload.instance_type))
-        self.assertEqual(event.payload.memory_mb, flavor.ram,
-                         msg=failure.format('RAM size', flavor.ram,
-                                            event.payload.memory_mb))
-        self.assertEqual(event.payload.disk_gb, flavor.disk,
-                         msg=failure.format('disk size', flavor.disk,
-                                            event.payload.disk_gb))
-        self.assertEqual(event.payload.instance_id, server.id,
-                         msg=failure.format('server id', server.id,
-                                            event.payload.instance_id))
-        self.assertEqual(event.payload.display_name, server.name,
-                         msg=failure.format('server name', server.name,
-                                            event.payload.display_name))
-        self.assertEqual(image_id, server.image.id,
-                         msg=failure.format('image id', server.image.id,
-                                            image_id))
 
 class CreateServerFixture(ComputeFixture):
-    '''
+    """
     @summary: Creates a server using defaults from the test data,
-                         waits for active state.
-    '''
+              waits for active state.
+    """
 
     @classmethod
     def setUpClass(cls, name=None,
@@ -157,7 +113,7 @@ class CreateServerFixture(ComputeFixture):
                    personality=None, metadata=None,
                    diskConfig=None, networks=None):
 
-        '''
+        """
         @summary:Creates a server and waits for server to reach active status
         @param name: The name of the server.
         @type name: String
@@ -174,7 +130,7 @@ class CreateServerFixture(ComputeFixture):
         @type disk_config: String
         @param networks:The networks to which you want to attach the server
         @type networks: String
-        '''
+        """
 
         super(CreateServerFixture, cls).setUpClass()
         if name is None:

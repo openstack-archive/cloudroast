@@ -25,19 +25,19 @@ class ResizeServerUpConfirmTests(ComputeFixture):
     @classmethod
     def setUpClass(cls):
         super(ResizeServerUpConfirmTests, cls).setUpClass()
-        server_response = cls.compute_provider.create_active_server()
+        server_response = cls.server_behaviors.create_active_server()
         server_to_resize = server_response.entity
         cls.resources.add(server_to_resize.id, cls.servers_client.delete_server)
 
         # resize server and confirm
         cls.servers_client.resize(server_to_resize.id, cls.flavor_ref_alt)
-        cls.compute_provider.wait_for_server_status(server_to_resize.id,
+        cls.server_behaviors.wait_for_server_status(server_to_resize.id,
                                                     NovaServerStatusTypes.VERIFY_RESIZE)
 
         cls.servers_client.confirm_resize(server_to_resize.id)
-        cls.compute_provider.wait_for_server_status(server_to_resize.id,
+        cls.server_behaviors.wait_for_server_status(server_to_resize.id,
                                                     NovaServerStatusTypes.ACTIVE)
-        resized_server_response = cls.servers_client.get_server(server_to_resize.id)
+        resized_server_response = cls.server_behaviors.get_server(server_to_resize.id)
         cls.resized_server = resized_server_response.entity
         cls.resized_server.adminPass = server_to_resize.adminPass
 
@@ -61,9 +61,9 @@ class ResizeServerUpConfirmTests(ComputeFixture):
         """
 
         new_flavor = self.flavors_client.get_flavor_details(self.flavor_ref_alt).entity
-        public_address = self.compute_provider.get_public_ip_address(self.resized_server)
+        public_address = self.server_behaviors.get_public_ip_address(self.resized_server)
 
-        remote_instance = self.compute_provider.get_remote_instance_client(self.resized_server, public_address)
+        remote_instance = self.server_behaviors.get_remote_instance_client(self.resized_server, public_address)
 
         lower_limit = int(new_flavor.ram) - (int(new_flavor.ram) * .1)
         server_ram_size = int(remote_instance.get_ram_size_in_mb())
@@ -81,17 +81,17 @@ class ResizeServerDownConfirmTests(ComputeFixture):
     @classmethod
     def setUpClass(cls):
         super(ResizeServerDownConfirmTests, cls).setUpClass()
-        server_response = cls.compute_provider.create_active_server(flavor_ref=cls.flavor_ref_alt)
+        server_response = cls.server_behaviors.create_active_server(flavor_ref=cls.flavor_ref_alt)
         server_to_resize = server_response.entity
         cls.resources.add(server_to_resize.id, cls.servers_client.delete_server)
 
         # resize server and confirm
         cls.servers_client.resize(server_to_resize.id, cls.flavor_ref)
-        cls.compute_provider.wait_for_server_status(server_to_resize.id,
+        cls.server_behaviors.wait_for_server_status(server_to_resize.id,
                                                     NovaServerStatusTypes.VERIFY_RESIZE)
 
         cls.servers_client.confirm_resize(server_to_resize.id)
-        cls.compute_provider.wait_for_server_status(server_to_resize.id,
+        cls.server_behaviors.wait_for_server_status(server_to_resize.id,
                                                     NovaServerStatusTypes.ACTIVE)
         resized_server_response = cls.servers_client.get_server(server_to_resize.id)
         cls.resized_server = resized_server_response.entity
@@ -117,8 +117,8 @@ class ResizeServerDownConfirmTests(ComputeFixture):
         """
 
         new_flavor = self.flavors_client.get_flavor_details(self.flavor_ref).entity
-        public_address = self.compute_provider.get_public_ip_address(self.resized_server)
-        remote_instance = self.compute_provider.get_remote_instance_client(self.resized_server, public_address)
+        public_address = self.server_behaviors.get_public_ip_address(self.resized_server)
+        remote_instance = self.server_behaviors.get_remote_instance_client(self.resized_server, public_address)
 
         lower_limit = int(new_flavor.ram) - (int(new_flavor.ram) * .1)
         server_ram_size = int(remote_instance.get_ram_size_in_mb())

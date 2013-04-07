@@ -26,9 +26,9 @@ class ResizeServerUpRevertTests(ComputeFixture):
     @classmethod
     def setUpClass(cls):
         super(ResizeServerUpRevertTests, cls).setUpClass()
-        response = cls.compute_provider.create_active_server()
+        response = cls.server_behaviors.create_active_server()
         cls.server = response.entity
-        cls.remote_instance = cls.compute_provider.get_remote_instance_client(cls.server)
+        cls.remote_instance = cls.server_behaviors.get_remote_instance_client(cls.server)
         file_name = rand_name('file') + '.txt'
         file_content = 'This is a test file'
         cls.file_details = cls. remote_instance.create_file(file_name, file_content)
@@ -46,31 +46,31 @@ class ResizeServerUpRevertTests(ComputeFixture):
         The server's RAM and disk space should return to its original
         values after a resize is reverted
         """
-        server_response = self.compute_provider.create_active_server()
+        server_response = self.server_behaviors.create_active_server()
         server_to_resize = server_response.entity
         self.resources.add(server_to_resize.id, self.servers_client.delete_server)
-        remote_instance = self.compute_provider.get_remote_instance_client(server_to_resize)
+        remote_instance = self.server_behaviors.get_remote_instance_client(server_to_resize)
         file_name = rand_name('file') + '.txt'
         file_content = 'This is a test file'
         file_details = remote_instance.create_file(file_name, file_content)
 
         #resize server and revert
         self.servers_client.resize(server_to_resize.id, self.flavor_ref_alt)
-        self.compute_provider.wait_for_server_status(server_to_resize.id, NovaServerStatusTypes.VERIFY_RESIZE)
+        self.server_behaviors.wait_for_server_status(server_to_resize.id, NovaServerStatusTypes.VERIFY_RESIZE)
 
         self.servers_client.revert_resize(server_to_resize.id)
-        reverted_server_response = self.compute_provider.wait_for_server_status(server_to_resize.id, NovaServerStatusTypes.ACTIVE)
+        reverted_server_response = self.server_behaviors.wait_for_server_status(server_to_resize.id, NovaServerStatusTypes.ACTIVE)
         reverted_server = reverted_server_response.entity
         flavor_response = self.flavors_client.get_flavor_details(self.flavor_ref)
         flavor = flavor_response.entity
 
-        '''Verify that the server resize was reverted '''
-        public_address = self.compute_provider.get_public_ip_address(reverted_server)
+        # Verify that the server resize was reverted
+        public_address = self.server_behaviors.get_public_ip_address(reverted_server)
         reverted_server.adminPass = server_to_resize.adminPass
-        remote_instance = self.compute_provider.get_remote_instance_client(reverted_server, public_address)
+        remote_instance = self.server_behaviors.get_remote_instance_client(reverted_server, public_address)
         actual_file_content = remote_instance.get_file_details(file_details.name)
 
-        '''Verify that the file content does not change after resize revert'''
+        # Verify that the file content does not change after resize revert
         self.assertEqual(actual_file_content, file_details, msg="file changed after resize revert")
 
         self.assertEqual(self.flavor_ref, reverted_server.flavor.id,
@@ -88,12 +88,8 @@ class ResizeServerUpRevertTests(ComputeFixture):
                          msg="AccessIPv4 did not match")
         self.assertEqual(expected_accessIPv6, server.accessIPv6,
                          msg="AccessIPv6 did not match")
-        self.assertEquals(self.config.nova.tenant_id, server.tenant_id,
-                          msg="Tenant id did not match")
         self.assertEqual(expected_name, server.name,
                          msg="Server name did not match")
-        self.assertTrue(server.host_id is not None,
-                        msg="Host id was not set")
         self.assertEqual(expected_image_ref, server.image.id,
                          msg="Image id did not match")
         self.assertEqual(self.flavor_ref, server.flavor.id,

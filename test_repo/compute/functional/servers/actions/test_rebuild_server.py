@@ -29,7 +29,7 @@ class RebuildServerTests(ComputeFixture):
     @classmethod
     def setUpClass(cls):
         super(RebuildServerTests, cls).setUpClass()
-        response = cls.compute_provider.create_active_server()
+        response = cls.server_behaviors.create_active_server()
         cls.server = response.entity
         response = cls.flavors_client.get_flavor_details(cls.flavor_ref)
         cls.flavor = response.entity
@@ -47,7 +47,7 @@ class RebuildServerTests(ComputeFixture):
                                                              metadata=cls.metadata,
                                                              personality=personality,
                                                              admin_pass=cls.password)
-        cls.rebuilt_server_response = cls.compute_provider.wait_for_server_status(cls.server.id,
+        cls.rebuilt_server_response = cls.server_behaviors.wait_for_server_status(cls.server.id,
                                                                                   NovaServerStatusTypes.ACTIVE)
 
     @classmethod
@@ -67,8 +67,6 @@ class RebuildServerTests(ComputeFixture):
             self.assertEqual(v6_address, self.server.accessIPv6,
                              msg="AccessIPv6 did not match")
 
-        self.assertEquals(rebuilt_server.tenant_id, self.config.compute_api.tenant_id,
-                          msg="Tenant id did not match")
         self.assertEqual(rebuilt_server.name, self.name,
                          msg="Server name did not match")
         self.assertTrue(rebuilt_server.hostId is not None,
@@ -90,26 +88,12 @@ class RebuildServerTests(ComputeFixture):
         self.assertEquals(rebuilt_server.addresses, self.server.addresses,
                           msg="Server IP addresses changed after rebuild")
 
-    @tags(type='positive', net='yes')
-    @unittest.skip('V1 Bug:I-04125')
-    def test_server_hostname_after_rebuild(self):
-        server = self.rebuilt_server_response.entity
-        rebuilt_server = self.rebuilt_server_response.entity
-        public_address = self.compute_provider.get_public_ip_address(rebuilt_server)
-        server.adminPass = self.password
-        remote_instance = self.compute_provider.get_remote_instance_client(server, public_address)
-
-        # Verify that the server hostname is set to the new server name
-        hostname = remote_instance.get_hostname()
-        self.assertEqual(hostname, server.name,
-                         msg="The hostname was not same as the server name after rebuild")
-
     @tags(type='smoke', net='yes')
     def test_can_log_into_server_after_rebuild(self):
         server = self.rebuilt_server_response.entity
         rebuilt_server = self.rebuilt_server_response.entity
-        public_address = self.compute_provider.get_public_ip_address(rebuilt_server)
+        public_address = self.server_behaviors.get_public_ip_address(rebuilt_server)
         server.adminPass = self.password
-        remote_instance = self.compute_provider.get_remote_instance_client(server, public_address)
+        remote_instance = self.server_behaviors.get_remote_instance_client(server, public_address)
         self.assertTrue(remote_instance.can_connect_to_public_ip(),
                         msg="Could not connect to server (%s) using new admin password %s" % (public_address, server.adminPass))
