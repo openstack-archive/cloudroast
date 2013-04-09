@@ -63,7 +63,9 @@ class ResizeServerUpConfirmTests(ComputeFixture):
         new_flavor = self.flavors_client.get_flavor_details(self.flavor_ref_alt).entity
         public_address = self.server_behaviors.get_public_ip_address(self.resized_server)
 
-        remote_instance = self.server_behaviors.get_remote_instance_client(self.resized_server, public_address)
+        remote_instance = self.server_behaviors.get_remote_instance_client(self.resized_server,
+                                                                           self.servers_config,
+                                                                           public_address)
 
         lower_limit = int(new_flavor.ram) - (int(new_flavor.ram) * .1)
         server_ram_size = int(remote_instance.get_ram_size_in_mb())
@@ -118,7 +120,9 @@ class ResizeServerDownConfirmTests(ComputeFixture):
 
         new_flavor = self.flavors_client.get_flavor_details(self.flavor_ref).entity
         public_address = self.server_behaviors.get_public_ip_address(self.resized_server)
-        remote_instance = self.server_behaviors.get_remote_instance_client(self.resized_server, public_address)
+        remote_instance = self.server_behaviors.get_remote_instance_client(self.resized_server,
+                                                                           self.servers_config,
+                                                                           public_address)
 
         lower_limit = int(new_flavor.ram) - (int(new_flavor.ram) * .1)
         server_ram_size = int(remote_instance.get_ram_size_in_mb())

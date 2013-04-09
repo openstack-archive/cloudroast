@@ -20,7 +20,6 @@ from cafe.drivers.unittest.decorators import tags
 from cloudcafe.compute.common.types import NovaServerStatusTypes
 from cloudcafe.compute.common.datagen import rand_name
 from test_repo.compute.fixtures import ComputeFixture
-from cafe.engine.clients.remote_instance.instance_client import InstanceClientFactory
 
 
 class CreateServerTest(ComputeFixture):

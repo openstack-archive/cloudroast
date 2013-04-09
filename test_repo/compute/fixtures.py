@@ -30,9 +30,9 @@ from cloudcafe.compute.config import ComputeConfig
 from cloudcafe.compute.flavors_api.config import FlavorsConfig
 from cloudcafe.compute.images_api.config import ImagesConfig
 from cloudcafe.compute.servers_api.config import ServersConfig
-from cloudcafe.identity.v2_0.tokens_api.client import TokenAPI_Client
-from cloudcafe.identity.v2_0.tokens_api.behaviors import TokenAPI_Behaviors
-from cloudcafe.identity.v2_0.tokens_api.config import TokenAPI_Config
+from cloudcafe.extensions.rax_auth.v2_0.tokens_api.client import TokenAPI_Client
+from cloudcafe.extensions.rax_auth.v2_0.tokens_api.behaviors import TokenAPI_Behaviors
+from cloudcafe.extensions.rax_auth.v2_0.tokens_api.config import TokenAPI_Config
 
 
 class ComputeFixture(BaseTestFixture):
@@ -59,8 +59,8 @@ class ComputeFixture(BaseTestFixture):
                                        'json', 'json')
         token_behaviors = TokenAPI_Behaviors(token_client)
         access_data = token_behaviors.get_access_data(identity_config.username,
-                                                      identity_config.password,
-                                                      identity_config.tenant_name)
+                                                      identity_config.api_key,
+                                                      identity_config.tenant_id)
 
         compute_service = access_data.get_service(
             cls.compute_config.compute_endpoint_name)

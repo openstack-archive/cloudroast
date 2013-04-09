@@ -56,7 +56,7 @@ class RebuildServerTests(ComputeFixture):
 
     @tags(type='smoke', net='no')
     def test_verify_rebuild_server_response(self):
-        #Verify the properties in the initial response are correct
+        # Verify the properties in the initial response are correct
         rebuilt_server = self.rebuilt_server_response.entity
 
         if rebuilt_server.addresses.public is not None:
@@ -69,17 +69,12 @@ class RebuildServerTests(ComputeFixture):
 
         self.assertEqual(rebuilt_server.name, self.name,
                          msg="Server name did not match")
-        self.assertTrue(rebuilt_server.hostId is not None,
-                        msg="Host id was not set")
         self.assertEqual(rebuilt_server.image.id, self.image_ref_alt,
                          msg="Image id did not match")
         self.assertEqual(rebuilt_server.flavor.id, self.flavor_ref,
                          msg="Flavor id did not match")
         self.assertEqual(rebuilt_server.id, self.server.id, msg="Server id did not match")
-
         self.assertEqual(rebuilt_server.links.bookmark, self.server.links.bookmark, msg="Bookmark links do not match")
-        self.assertEqual(self.server.links.self, self.rebuilt_server_response['location'],
-                         msg="Location url did not match a valid link for the server")
         self.assertEqual(rebuilt_server.metadata.key, 'value')
         self.assertEqual(rebuilt_server.created, self.server.created,
                          msg="Server Created date changed after rebuild")
@@ -93,7 +88,9 @@ class RebuildServerTests(ComputeFixture):
         server = self.rebuilt_server_response.entity
         rebuilt_server = self.rebuilt_server_response.entity
         public_address = self.server_behaviors.get_public_ip_address(rebuilt_server)
-        server.adminPass = self.password
-        remote_instance = self.server_behaviors.get_remote_instance_client(server, public_address)
+        remote_instance = self.server_behaviors.get_remote_instance_client(server,
+                                                                           config=self.servers_config,
+                                                                           password=self.password)
         self.assertTrue(remote_instance.can_connect_to_public_ip(),
-                        msg="Could not connect to server (%s) using new admin password %s" % (public_address, server.adminPass))
+                        msg="Could not connect to server (%s) using new admin password %s" % (public_address,
+                                                                                              server.admin_pass))

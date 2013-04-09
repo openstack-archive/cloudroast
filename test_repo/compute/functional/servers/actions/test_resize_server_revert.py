@@ -49,10 +49,6 @@ class ResizeServerUpRevertTests(ComputeFixture):
         server_response = self.server_behaviors.create_active_server()
         server_to_resize = server_response.entity
         self.resources.add(server_to_resize.id, self.servers_client.delete_server)
-        remote_instance = self.server_behaviors.get_remote_instance_client(server_to_resize)
-        file_name = rand_name('file') + '.txt'
-        file_content = 'This is a test file'
-        file_details = remote_instance.create_file(file_name, file_content)
 
         #resize server and revert
         self.servers_client.resize(server_to_resize.id, self.flavor_ref_alt)
@@ -66,12 +62,10 @@ class ResizeServerUpRevertTests(ComputeFixture):
 
         # Verify that the server resize was reverted
         public_address = self.server_behaviors.get_public_ip_address(reverted_server)
-        reverted_server.adminPass = server_to_resize.adminPass
-        remote_instance = self.server_behaviors.get_remote_instance_client(reverted_server, public_address)
-        actual_file_content = remote_instance.get_file_details(file_details.name)
-
-        # Verify that the file content does not change after resize revert
-        self.assertEqual(actual_file_content, file_details, msg="file changed after resize revert")
+        reverted_server.admin_pass = server_to_resize.admin_pass
+        remote_instance = self.server_behaviors.get_remote_instance_client(reverted_server,
+                                                                           self.servers_config,
+                                                                           public_address)
 
         self.assertEqual(self.flavor_ref, reverted_server.flavor.id,
                          msg="Flavor id not reverted")

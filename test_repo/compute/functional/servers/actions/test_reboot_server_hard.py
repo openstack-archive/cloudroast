@@ -37,13 +37,14 @@ class RebootServerHardTests(ComputeFixture):
     @tags(type='smoke', net='yes')
     def test_reboot_server_hard(self):
         """ The server should be power cycled """
-        public_address = self.server_behaviors.get_public_ip_address(self.server)
-        remote_instance = self.server_behaviors.get_remote_instance_client(self.server, public_address)
+        remote_instance = self.server_behaviors.get_remote_instance_client(self.server,
+                                                                           config=self.servers_config)
         uptime_start = remote_instance.get_uptime()
         start = time.time()
 
         self.server_behaviors.reboot_and_await(self.server.id, NovaServerRebootTypes.HARD)
-        remote_client = self.server_behaviors.get_remote_instance_client(self.server, public_address)
+        remote_client = self.server_behaviors.get_remote_instance_client(self.server,
+                                                                         config=self.servers_config)
         finish = time.time()
         uptime_post_reboot = remote_client.get_uptime()
         self.assertLess(uptime_post_reboot, (uptime_start + (finish - start)))
