@@ -16,8 +16,6 @@ limitations under the License.
 
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.compute.common.types import NovaServerStatusTypes
-from cloudcafe.compute.common.datagen import rand_name
-from cloudcafe.compute.common.equality_tools import EqualityTools
 from test_repo.compute.fixtures import ComputeFixture
 
 
@@ -26,62 +24,68 @@ class ResizeServerUpRevertTests(ComputeFixture):
     @classmethod
     def setUpClass(cls):
         super(ResizeServerUpRevertTests, cls).setUpClass()
-        response = cls.server_behaviors.create_active_server()
-        cls.server = response.entity
-        response = cls.flavors_client.get_flavor_details(cls.flavor_ref)
-        cls.flavor = response.entity
-        cls.resources.add(cls.server.id, cls.servers_client.delete_server)
+        server_response = cls.server_behaviors.create_active_server()
+        server_to_resize = server_response.entity
+        cls.resources.add(server_to_resize.id, cls.servers_client.delete_server)
+
+        # resize server and confirm
+        cls.servers_client.resize(server_to_resize.id, cls.flavor_ref_alt)
+        cls.server_behaviors.wait_for_server_status(server_to_resize.id,
+                                                    NovaServerStatusTypes.VERIFY_RESIZE)
+
+        cls.servers_client.revert_resize(server_to_resize.id)
+        cls.server_behaviors.wait_for_server_status(server_to_resize.id,
+                                                    NovaServerStatusTypes.ACTIVE)
+        resized_server_response = cls.servers_client.get_server(server_to_resize.id)
+        cls.server = resized_server_response.entity
+        cls.server.admin_pass = server_to_resize.admin_pass
+        cls.flavor = cls.flavors_client.get_flavor_details(cls.flavor_ref).entity
 
     @classmethod
     def tearDownClass(cls):
         super(ResizeServerUpRevertTests, cls).tearDownClass()
 
+    @tags(type='smoke', net='no')
+    def test_server_properties_after_resize(self):
+        self.assertEqual(self.flavor_ref, self.server.flavor.id)
+
     @tags(type='smoke', net='yes')
-    def test_ram_and_disk_size_on_resize_up_server_revert(self):
-        """
-        The server's RAM and disk space should return to its original
-        values after a resize is reverted
-        """
-        server_response = self.server_behaviors.create_active_server()
-        server_to_resize = server_response.entity
-        self.resources.add(server_to_resize.id, self.servers_client.delete_server)
+    def test_resize_reverted_server_vcpus(self):
+        """Verify the number of vCPUs reported matches the amount set by the original flavor"""
 
-        #resize server and revert
-        self.servers_client.resize(server_to_resize.id, self.flavor_ref_alt)
-        self.server_behaviors.wait_for_server_status(server_to_resize.id, NovaServerStatusTypes.VERIFY_RESIZE)
+        remote_client = self.server_behaviors.get_remote_instance_client(self.server,
+                                                                         config=self.servers_config)
+        server_actual_vcpus = remote_client.get_number_of_vcpus()
+        self.assertEqual(server_actual_vcpus, self.flavor.vcpus,
+                         msg="Expected number of vcpus to be {0}, was {1}.".format(
+                             self.flavor.vcpus, server_actual_vcpus))
 
-        self.servers_client.revert_resize(server_to_resize.id)
-        reverted_server_response = self.server_behaviors.wait_for_server_status(server_to_resize.id, NovaServerStatusTypes.ACTIVE)
-        reverted_server = reverted_server_response.entity
-        flavor_response = self.flavors_client.get_flavor_details(self.flavor_ref)
-        flavor = flavor_response.entity
+    @tags(type='smoke', net='yes')
+    def test_resize_reverted_server_disk_size(self):
+        """Verify the size of the virtual disk matches the size set by the original flavor"""
+        remote_client = self.server_behaviors.get_remote_instance_client(self.server,
+                                                                         config=self.servers_config)
+        disk_size = remote_client.get_disk_size_in_gb(self.servers_config.instance_disk_path)
+        self.assertEqual(disk_size, self.flavor.disk,
+                         msg="Expected disk to be {0} GB, was {1} GB".format(
+                             self.flavor.disk, disk_size))
 
-        # Verify that the server resize was reverted
-        public_address = self.server_behaviors.get_public_ip_address(reverted_server)
-        reverted_server.admin_pass = server_to_resize.admin_pass
-        remote_instance = self.server_behaviors.get_remote_instance_client(reverted_server,
-                                                                           self.servers_config,
-                                                                           public_address)
+    @tags(type='smoke', net='yes')
+    def test_can_log_into_resize_reverted_server(self):
+        """Tests that we can log into the created server after reverting the resize"""
+        remote_client = self.server_behaviors.get_remote_instance_client(self.server,
+                                                                         config=self.servers_config)
+        self.assertTrue(remote_client.can_connect_to_public_ip(),
+                        msg="Cannot connect to server using public ip")
 
-        self.assertEqual(self.flavor_ref, reverted_server.flavor.id,
-                         msg="Flavor id not reverted")
-        lower_limit = int(flavor.ram) - (int(flavor.ram) * .1)
+    @tags(type='smoke', net='yes')
+    def test_ram_after_resize_revert(self):
+        """The server's RAM should still be set to the amount from the original flavor"""
+
+        remote_instance = self.server_behaviors.get_remote_instance_client(self.server,
+                                                                           self.servers_config)
+        lower_limit = int(self.flavor.ram) - (int(self.flavor.ram) * .1)
         server_ram_size = int(remote_instance.get_ram_size_in_mb())
-        self.assertTrue(int(flavor.ram) == server_ram_size or lower_limit <= server_ram_size,
-                        msg="Ram size after revert did not match.Expected ram size : %s, Actual ram size : %s" % (flavor.ram, server_ram_size))
-
-        self.assertTrue(EqualityTools.are_sizes_equal(flavor.disk, remote_instance.get_disk_size_in_gb(), 0.5),
-                        msg="Disk size %s after revert did not match %s" % (remote_instance.get_disk_size_in_gb(), flavor.disk))
-
-    def _assert_server_details(self, server, expected_name, expected_accessIPv4, expected_accessIPv6, expected_id, expected_image_ref):
-        self.assertEqual(expected_accessIPv4, server.accessIPv4,
-                         msg="AccessIPv4 did not match")
-        self.assertEqual(expected_accessIPv6, server.accessIPv6,
-                         msg="AccessIPv6 did not match")
-        self.assertEqual(expected_name, server.name,
-                         msg="Server name did not match")
-        self.assertEqual(expected_image_ref, server.image.id,
-                         msg="Image id did not match")
-        self.assertEqual(self.flavor_ref, server.flavor.id,
-                         msg="Flavor id did not match")
-        self.assertEqual(expected_id, server.id, msg="Server id did not match")
+        self.assertTrue(int(self.flavor.ram) == server_ram_size or lower_limit <= server_ram_size,
+                        msg="Ram size after confirm-resize did not match. Expected ram size : %s, Actual ram size : %s" %
+                            (self.flavor.ram, server_ram_size))

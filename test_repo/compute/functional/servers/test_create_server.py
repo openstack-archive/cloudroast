@@ -93,3 +93,54 @@ class CreateServerTest(ComputeFixture):
             self.assertEqual(addresses.public.ipv6, self.server.accessIPv6,
                              msg="Expected access IPv6 address to be {0}, was {1}.".format(
                                  addresses.public.ipv6, self.server.accessIPv6))
+
+    @tags(type='smoke', net='yes')
+    def test_created_server_vcpus(self):
+        """Verify the number of vCPUs reported matches the amount set by the flavor"""
+
+        remote_client = self.server_behaviors.get_remote_instance_client(self.server,
+                                                                         self.servers_config)
+        server_actual_vcpus = remote_client.get_number_of_vcpus()
+        self.assertEqual(server_actual_vcpus, self.flavor.vcpus,
+                         msg="Expected number of vcpus to be {0}, was {1}.".format(
+                             self.flavor.vcpus, server_actual_vcpus))
+
+    @tags(type='smoke', net='yes')
+    def test_created_server_disk_size(self):
+        """Verify the size of the virtual disk matches the size set by the flavor"""
+        remote_client = self.server_behaviors.get_remote_instance_client(self.server,
+                                                                         self.servers_config)
+        disk_size = remote_client.get_disk_size_in_gb(self.servers_config.instance_disk_path)
+        self.assertEqual(disk_size, self.flavor.disk,
+                         msg="Expected disk to be {0} GB, was {1} GB".format(
+                             self.flavor.disk, disk_size))
+
+    @tags(type='smoke', net='yes')
+    def test_created_server_ram(self):
+        """The server's RAM and should be set to the amount specified in the flavor"""
+
+        remote_instance = self.server_behaviors.get_remote_instance_client(self.server,
+                                                                           self.servers_config)
+        lower_limit = int(self.flavor.ram) - (int(self.flavor.ram) * .1)
+        server_ram_size = int(remote_instance.get_ram_size_in_mb())
+        self.assertTrue(int(self.flavor.ram) == server_ram_size or lower_limit <= server_ram_size,
+                        msg="Ram size after confirm-resize did not match. Expected ram size : %s, Actual ram size : %s" %
+                            (self.flavor.ram, server_ram_size))
+
+    @tags(type='smoke', net='yes')
+    def test_created_server_hostname(self):
+        """Verify that the hostname of the server is the same as the server name"""
+        remote_client = self.server_behaviors.get_remote_instance_client(self.server,
+                                                                         self.servers_config)
+        hostname = remote_client.get_hostname()
+        self.assertEqual(hostname, self.name,
+                         msg="Expected hostname to be {0}, was {1}".format(
+                             self.name, hostname))
+
+    @tags(type='smoke', net='yes')
+    def test_can_log_into_created_server(self):
+        """Tests that we can log into the created server"""
+        remote_client = self.server_behaviors.get_remote_instance_client(self.server,
+                                                                         self.servers_config)
+        self.assertTrue(remote_client.can_connect_to_public_ip(),
+                        msg="Cannot connect to server using public ip")

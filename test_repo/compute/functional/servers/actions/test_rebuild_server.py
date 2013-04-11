@@ -94,3 +94,36 @@ class RebuildServerTests(ComputeFixture):
         self.assertTrue(remote_instance.can_connect_to_public_ip(),
                         msg="Could not connect to server (%s) using new admin password %s" % (public_address,
                                                                                               server.admin_pass))
+    @tags(type='smoke', net='yes')
+    def test_rebuilt_server_vcpus(self):
+        """Verify the number of vCPUs reported is the correct after the rebuild"""
+
+        remote_client = self.server_behaviors.get_remote_instance_client(self.server,
+                                                                         config=self.servers_config,
+                                                                         password=self.password)
+        server_actual_vcpus = remote_client.get_number_of_vcpus()
+        self.assertEqual(server_actual_vcpus, self.flavor.vcpus,
+                         msg="Expected number of vcpus to be {0}, was {1}.".format(
+                             self.flavor.vcpus, server_actual_vcpus))
+
+    @tags(type='smoke', net='yes')
+    def test_rebuilt_server_disk_size(self):
+        """Verify the size of the virtual disk after the server rebuild"""
+        remote_client = self.server_behaviors.get_remote_instance_client(self.server,
+                                                                         self.servers_config,
+                                                                         password=self.password)
+        disk_size = remote_client.get_disk_size_in_gb(self.servers_config.instance_disk_path)
+        self.assertEqual(disk_size, self.flavor.disk,
+                         msg="Expected disk to be {0} GB, was {1} GB".format(
+                             self.flavor.disk, disk_size))
+
+    @tags(type='smoke', net='yes')
+    def test_server_ram_after_rebuild(self):
+        remote_instance = self.server_behaviors.get_remote_instance_client(self.server,
+                                                                           self.servers_config)
+        lower_limit = int(self.flavor.ram) - (int(self.flavor.ram) * .1)
+        server_ram_size = int(remote_instance.get_ram_size_in_mb())
+        self.assertTrue(int(self.flavor.ram) == server_ram_size or lower_limit <= server_ram_size,
+                        msg="Ram size after confirm-resize did not match. Expected ram size : %s, Actual ram size : %s" %
+                            (self.flavor.ram, server_ram_size))
+
