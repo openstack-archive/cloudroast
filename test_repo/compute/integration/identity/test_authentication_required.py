@@ -21,11 +21,11 @@ from cloudcafe.compute.common.exceptions import Unauthorized
 from test_repo.compute.fixtures import ComputeFixture
 
 
-class AuthRequiredTests(ComputeFixture):
+class TokenRequiredTests(ComputeFixture):
 
     @classmethod
     def setUpClass(cls):
-        super(AuthRequiredTests, cls).setUpClass()
+        super(TokenRequiredTests, cls).setUpClass()
         cls.metadata = {'meta_key_1': 'meta_value_1',
                         'meta_key_2': 'meta_value_2'}
         cls.server = cls.server_behaviors.create_active_server(
@@ -45,179 +45,188 @@ class AuthRequiredTests(ComputeFixture):
 
     @classmethod
     def tearDownClass(cls):
-        super(AuthRequiredTests, cls).tearDownClass()
+        super(TokenRequiredTests, cls).tearDownClass()
 
-    def test_list_flavors_without_token(self):
+    def test_list_flavors_with_invalid_token(self):
         with self.assertRaises(Unauthorized):
             self.flavors_client.list_flavors(
                 requestslib_kwargs=self.auth_token)
 
-    def test_list_flavors_detailed_without_token(self):
+    def test_list_flavors_detailed_with_invalid_token(self):
         with self.assertRaises(Unauthorized):
             self.flavors_client.list_flavors_with_detail(
                 requestslib_kwargs=self.auth_token)
 
-    def test_get_flavor_without_token(self):
+    def test_get_flavor_with_invalid_token(self):
         with self.assertRaises(Unauthorized):
             self.flavors_client.get_flavor_details(
                 self.flavor_ref,
                 requestslib_kwargs=self.auth_token)
 
-    def test_list_images_without_token(self):
+    def test_list_images_with_invalid_token(self):
         with self.assertRaises(Unauthorized):
             self.images_client.list_images(
                 requestslib_kwargs=self.auth_token)
 
-    def test_list_images_detailed_without_token(self):
+    def test_list_images_detailed_with_invalid_token(self):
         with self.assertRaises(Unauthorized):
             self.images_client.list_images_with_detail(
                 requestslib_kwargs=self.auth_token)
 
-    def test_get_image_without_token(self):
+    def test_get_image_with_invalid_token(self):
         with self.assertRaises(Unauthorized):
             self.images_client.get_image(
                 self.image_ref,
                 requestslib_kwargs=self.auth_token)
 
-    def test_delete_image_without_token(self):
+    def test_delete_image_with_invalid_token(self):
         with self.assertRaises(Unauthorized):
             self.images_client.delete_image(
                 self.image_id,
                 requestslib_kwargs=self.auth_token)
 
-    def test_list_servers_without_token(self):
+    def test_list_servers_with_invalid_token(self):
         with self.assertRaises(Unauthorized):
             self.servers_client.list_servers(
                 requestslib_kwargs=self.auth_token)
 
-    def test_list_servers_detailed_without_token(self):
+    def test_list_servers_detailed_with_invalid_token(self):
         with self.assertRaises(Unauthorized):
             self.servers_client.list_servers_with_detail(
                 requestslib_kwargs=self.auth_token)
 
-    def test_create_server_without_token(self):
+    def test_create_server_with_invalid_token(self):
         with self.assertRaises(Unauthorized):
             self.servers_client.create_server(
                 'test', self.image_ref, self.flavor_ref,
                 requestslib_kwargs=self.auth_token)
 
-    def test_delete_server_without_token(self):
+    def test_delete_server_with_invalid_token(self):
         with self.assertRaises(Unauthorized):
             self.servers_client.delete_server(
                 self.server.id,
                 requestslib_kwargs=self.auth_token)
 
-    def test_change_server_password_without_token(self):
+    def test_change_server_password_with_invalid_token(self):
         with self.assertRaises(Unauthorized):
             self.servers_client.change_password(
                 self.server.id, 'newP@ssw0rd',
                 requestslib_kwargs=self.auth_token)
 
-    def test_reboot_server_without_token(self):
+    def test_reboot_server_with_invalid_token(self):
         with self.assertRaises(Unauthorized):
             self.servers_client.reboot(
                 self.server.id, NovaServerRebootTypes.SOFT,
                 requestslib_kwargs=self.auth_token)
 
-    def test_rebuild_server_without_token(self):
+    def test_rebuild_server_with_invalid_token(self):
         with self.assertRaises(Unauthorized):
             self.servers_client.rebuild(
                 self.server.id, self.image_ref_alt,
                 requestslib_kwargs=self.auth_token)
 
-    def test_resize_server_without_token(self):
+    def test_resize_server_with_invalid_token(self):
         with self.assertRaises(Unauthorized):
             self.servers_client.resize(
                 self.server.id, self.flavor_ref_alt,
                 requestslib_kwargs=self.auth_token)
 
-    def test_create_image_without_token(self):
+    def test_create_image_with_invalid_token(self):
         with self.assertRaises(Unauthorized):
             self.servers_client.create_image(
                 self.server.id, 'testimage',
                 requestslib_kwargs=self.auth_token)
 
-    def test_list_server_metadata_without_token(self):
+    def test_list_server_metadata_with_invalid_token(self):
         with self.assertRaises(Unauthorized):
             self.servers_client.list_server_metadata(
                 self.server.id,
                 requestslib_kwargs=self.auth_token)
 
-    def test_list_server_metadata_without_token(self):
+    def test_list_server_metadata_with_invalid_token(self):
         with self.assertRaises(Unauthorized):
             self.servers_client.list_server_metadata(
                 self.server.id,
                 requestslib_kwargs=self.auth_token)
 
-    def test_set_server_metadata_without_token(self):
+    def test_set_server_metadata_with_invalid_token(self):
         with self.assertRaises(Unauthorized):
             new_meta = {'meta2': 'data2', 'meta3': 'data3'}
             self.servers_client.set_server_metadata(
                 self.server.id, new_meta,
                 requestslib_kwargs=self.auth_token)
 
-    def test_update_server_metadata_without_token(self):
+    def test_update_server_metadata_with_invalid_token(self):
         with self.assertRaises(Unauthorized):
             new_meta = {'meta2': 'data2', 'meta3': 'data3'}
             self.servers_client.update_server_metadata(
                 self.server.id, new_meta,
                 requestslib_kwargs=self.auth_token)
 
-    def test_get_server_metadata_item_without_token(self):
+    def test_get_server_metadata_item_with_invalid_token(self):
         with self.assertRaises(Unauthorized):
             self.servers_client.get_server_metadata_item(
                 self.server.id, 'meta_key_1',
                 requestslib_kwargs=self.auth_token)
 
-    def test_delete_server_metadata_item_without_token(self):
+    def test_delete_server_metadata_item_with_invalid_token(self):
         with self.assertRaises(Unauthorized):
             self.servers_client.delete_server_metadata_item(
                 self.server.id, 'meta_key_1',
                 requestslib_kwargs=self.auth_token)
 
-    def test_set_server_metadata_item_without_token(self):
+    def test_set_server_metadata_item_with_invalid_token(self):
         with self.assertRaises(Unauthorized):
             self.servers_client.set_server_metadata_item(
                 self.server.id, 'meta_key_1', 'newvalue',
                 requestslib_kwargs=self.auth_token)
 
-
-
-    def test_list_image_metadata_without_token(self):
+    def test_list_image_metadata_with_invalid_token(self):
         with self.assertRaises(Unauthorized):
             self.images_client.list_image_metadata(
                 self.image_id,
                 requestslib_kwargs=self.auth_token)
 
-    def test_set_image_metadata_without_token(self):
+    def test_set_image_metadata_with_invalid_token(self):
         with self.assertRaises(Unauthorized):
             new_meta = {'meta2': 'data2', 'meta3': 'data3'}
             self.images_client.set_image_metadata(
                 self.image_id, new_meta,
                 requestslib_kwargs=self.auth_token)
 
-    def test_update_image_metadata_without_token(self):
+    def test_update_image_metadata_with_invalid_token(self):
         with self.assertRaises(Unauthorized):
             new_meta = {'meta2': 'data2', 'meta3': 'data3'}
             self.images_client.update_image_metadata(
                 self.image_id, new_meta,
                 requestslib_kwargs=self.auth_token)
 
-    def test_get_image_metadata_item_without_token(self):
+    def test_get_image_metadata_item_with_invalid_token(self):
         with self.assertRaises(Unauthorized):
             self.images_client.get_image_metadata_item(
                 self.image_id, 'key1',
                 requestslib_kwargs=self.auth_token)
 
-    def test_delete_image_metadata_item_without_token(self):
+    def test_delete_image_metadata_item_with_invalid_token(self):
         with self.assertRaises(Unauthorized):
             self.images_client.delete_image_metadata_item(
                 self.image_id, 'key1',
                 requestslib_kwargs=self.auth_token)
 
-    def test_set_image_metadata_item_without_token(self):
+    def test_set_image_metadata_item_with_invalid_token(self):
         with self.assertRaises(Unauthorized):
             self.images_client.set_image_metadata_item(
                 self.image_id, 'key1', 'newvalue',
                 requestslib_kwargs=self.auth_token)
 
+
+class InvalidTokenTests(TokenRequiredTests):
+
+    @classmethod
+    def setUpClass(cls):
+        super(InvalidTokenTests, cls).setUpClass()
+        cls.auth_token = {'headers':{'X-Auth-Token': 'abc'}}
+
+    @classmethod
+    def tearDownClass(cls):
+        super(InvalidTokenTests, cls).tearDownClass()
