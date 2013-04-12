@@ -34,6 +34,12 @@ from cloudcafe.extensions.rax_auth.v2_0.tokens_api.client import TokenAPI_Client
 from cloudcafe.extensions.rax_auth.v2_0.tokens_api.behaviors import TokenAPI_Behaviors
 from cloudcafe.extensions.rax_auth.v2_0.tokens_api.config import TokenAPI_Config
 
+from cloudcafe.identity.v2_0.tokens_api.client import TokenAPI_Client as OSTokenAPI_Client
+from cloudcafe.identity.v2_0.tokens_api.behaviors import TokenAPI_Behaviors as OSTokenAPI_Behaviors
+from cloudcafe.identity.v2_0.tokens_api.config import TokenAPI_Config as OSTokenAPI_Config
+
+from cloudcafe.compute.config import ComputeAdminConfig
+
 
 class ComputeFixture(BaseTestFixture):
     """
@@ -168,3 +174,58 @@ class CreateServerFixture(ComputeFixture):
     @classmethod
     def tearDownClass(cls):
         super(CreateServerFixture, cls).tearDownClass()
+
+class ComputeAdminFixture(BaseTestFixture):
+    """
+    @summary: Base fixture for compute tests
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        super(ComputeAdminFixture, cls).setUpClass()
+        cls.flavors_config = FlavorsConfig()
+        cls.images_config = ImagesConfig()
+        cls.servers_config = ServersConfig()
+        cls.compute_config = ComputeConfig()
+
+        cls.flavor_ref = cls.flavors_config.primary_flavor
+        cls.flavor_ref_alt = cls.flavors_config.secondary_flavor
+        cls.image_ref = cls.images_config.primary_image
+        cls.image_ref_alt = cls.images_config.secondary_image
+        cls.disk_path = cls.servers_config.instance_disk_path
+
+        identity_config = OSTokenAPI_Config()
+        compute_admin_config = ComputeAdminConfig()
+        print identity_config.authentication_endpoint
+        token_client = OSTokenAPI_Client(identity_config.authentication_endpoint,
+                                       'json', 'json')
+        token_behaviors = OSTokenAPI_Behaviors(token_client)
+        access_data = token_behaviors.get_access_data(compute_admin_config.username,
+                                                      compute_admin_config.password,
+                                                      compute_admin_config.tenant_name)
+
+        compute_service = access_data.get_service(
+            cls.compute_config.compute_endpoint_name)
+        url = compute_service.get_endpoint(
+            cls.compute_config.region).public_url
+        cls.flavors_client = FlavorsClient(url, access_data.token.id_,
+                                           'json', 'json')
+        cls.servers_client = ServersClient(url, access_data.token.id_,
+                                           'json', 'json')
+        cls.images_client = ImagesClient(url, access_data.token.id_,
+                                         'json', 'json')
+        cls.server_behaviors = ServerBehaviors(cls.servers_client,
+                                               cls.servers_config,
+                                               cls.images_config,
+                                               cls.flavors_config)
+        cls.image_behaviors = ImageBehaviors(cls.images_client,
+                                             cls.images_config)
+        cls.flavors_client.add_exception_handler(ExceptionHandler())
+        cls.resources = ResourcePool()
+
+
+    @classmethod
+    def tearDownClass(cls):
+        super(ComputeAdminFixture, cls).tearDownClass()
+        cls.flavors_client.delete_exception_handler(ExceptionHandler())
+        #cls.resources.release()

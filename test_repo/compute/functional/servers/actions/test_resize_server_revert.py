@@ -28,10 +28,6 @@ class ResizeServerUpRevertTests(ComputeFixture):
         super(ResizeServerUpRevertTests, cls).setUpClass()
         response = cls.server_behaviors.create_active_server()
         cls.server = response.entity
-        cls.remote_instance = cls.server_behaviors.get_remote_instance_client(cls.server)
-        file_name = rand_name('file') + '.txt'
-        file_content = 'This is a test file'
-        cls.file_details = cls. remote_instance.create_file(file_name, file_content)
         response = cls.flavors_client.get_flavor_details(cls.flavor_ref)
         cls.flavor = response.entity
         cls.resources.add(cls.server.id, cls.servers_client.delete_server)
