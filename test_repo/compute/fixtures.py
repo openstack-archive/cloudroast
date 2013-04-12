@@ -228,4 +228,4 @@ class ComputeAdminFixture(BaseTestFixture):
     def tearDownClass(cls):
         super(ComputeAdminFixture, cls).tearDownClass()
         cls.flavors_client.delete_exception_handler(ExceptionHandler())
-        #cls.resources.release()
+        cls.resources.release()
