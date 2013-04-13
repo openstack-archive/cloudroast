@@ -60,13 +60,13 @@ class ComputeFixture(BaseTestFixture):
         cls.image_ref_alt = cls.images_config.secondary_image
         cls.disk_path = cls.servers_config.instance_disk_path
 
-        cls.identity_config = OSTokenAPI_Config()
-        token_client = OSTokenAPI_Client(
+        cls.identity_config = TokenAPI_Config()
+        token_client = TokenAPI_Client(
             cls.identity_config.authentication_endpoint, 'json', 'json')
-        token_behaviors = OSTokenAPI_Behaviors(token_client)
+        token_behaviors = TokenAPI_Behaviors(token_client)
         access_data = token_behaviors.get_access_data(cls.identity_config.username,
-                                                      cls.identity_config.password,
-                                                      cls.identity_config.tenant_name)
+                                                      cls.identity_config.api_key,
+                                                      cls.identity_config.tenant_id)
 
         compute_service = access_data.get_service(
             cls.compute_config.compute_endpoint_name)
@@ -175,7 +175,7 @@ class CreateServerFixture(ComputeFixture):
     def tearDownClass(cls):
         super(CreateServerFixture, cls).tearDownClass()
 
-class ComputeAdminFixture(BaseTestFixture):
+class ComputeAdminFixture(ComputeFixture):
     """
     @summary: Base fixture for compute tests
     """
@@ -183,49 +183,30 @@ class ComputeAdminFixture(BaseTestFixture):
     @classmethod
     def setUpClass(cls):
         super(ComputeAdminFixture, cls).setUpClass()
-        cls.flavors_config = FlavorsConfig()
-        cls.images_config = ImagesConfig()
-        cls.servers_config = ServersConfig()
-        cls.compute_config = ComputeConfig()
 
-        cls.flavor_ref = cls.flavors_config.primary_flavor
-        cls.flavor_ref_alt = cls.flavors_config.secondary_flavor
-        cls.image_ref = cls.images_config.primary_image
-        cls.image_ref_alt = cls.images_config.secondary_image
-        cls.disk_path = cls.servers_config.instance_disk_path
-
-        identity_config = OSTokenAPI_Config()
+        # Setup admin client
         compute_admin_config = ComputeAdminConfig()
-        print identity_config.authentication_endpoint
-        token_client = OSTokenAPI_Client(identity_config.authentication_endpoint,
-                                       'json', 'json')
+        token_client = OSTokenAPI_Client(compute_admin_config.authentication_endpoint,
+                                         'json', 'json')
         token_behaviors = OSTokenAPI_Behaviors(token_client)
         access_data = token_behaviors.get_access_data(compute_admin_config.username,
                                                       compute_admin_config.password,
                                                       compute_admin_config.tenant_name)
-
         compute_service = access_data.get_service(
-            cls.compute_config.compute_endpoint_name)
+            compute_admin_config.compute_endpoint_name)
         url = compute_service.get_endpoint(
-            cls.compute_config.region).public_url
-        cls.flavors_client = FlavorsClient(url, access_data.token.id_,
-                                           'json', 'json')
-        cls.servers_client = ServersClient(url, access_data.token.id_,
-                                           'json', 'json')
-        cls.images_client = ImagesClient(url, access_data.token.id_,
-                                         'json', 'json')
-        cls.server_behaviors = ServerBehaviors(cls.servers_client,
-                                               cls.servers_config,
-                                               cls.images_config,
-                                               cls.flavors_config)
-        cls.image_behaviors = ImageBehaviors(cls.images_client,
-                                             cls.images_config)
-        cls.flavors_client.add_exception_handler(ExceptionHandler())
-        cls.resources = ResourcePool()
+            compute_admin_config.region).public_url
+        cls.admin_servers_client = ServersClient(url, access_data.token.id_,
+                                                 'json', 'json')
+        cls.admin_server_behaviors = ServerBehaviors(cls.admin_servers_client,
+                                                     cls.servers_config,
+                                                     cls.images_config,
+                                                     cls.flavors_config)
+        cls.admin_servers_client.add_exception_handler(ExceptionHandler())
 
 
     @classmethod
     def tearDownClass(cls):
         super(ComputeAdminFixture, cls).tearDownClass()
         cls.flavors_client.delete_exception_handler(ExceptionHandler())
-        #cls.resources.release()
+        cls.resources.release()

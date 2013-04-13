@@ -14,7 +14,9 @@ class StopServerTests(ComputeAdminFixture):
         super(StopServerTests, cls).tearDownClass()
 
     def test_stop_start_server(self):
-        self.servers_client.stop_server(self.server.id)
-        self.server_behaviors.wait_for_server_status(self.server.id, 'SHUTOFF')
-        self.servers_client.start_server(self.server.id)
-        self.server_behaviors.wait_for_server_status(self.server.id, 'ACTIVE')
+        self.admin_servers_client.stop_server(self.server.id)
+        self.admin_server_behaviors.wait_for_server_status(
+            self.server.id, 'SHUTOFF')
+        self.admin_servers_client.start_server(self.server.id)
+        self.admin_server_behaviors.wait_for_server_status(
+            self.server.id, 'ACTIVE')
