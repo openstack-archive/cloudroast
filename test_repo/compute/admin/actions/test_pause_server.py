@@ -1,6 +1,7 @@
 from cafe.drivers.unittest.decorators import tags
 from test_repo.compute.fixtures import ComputeAdminFixture
 
+
 class PauseServerTests(ComputeAdminFixture):
 
     @classmethod
@@ -14,7 +15,7 @@ class PauseServerTests(ComputeAdminFixture):
         super(PauseServerTests, cls).tearDownClass()
 
     def test_pause_unpause_server(self):
-        self.servers_client.pause_server(self.server.id)
-        self.server_behaviors.wait_for_server_status(self.server.id, 'PAUSED')
-        self.servers_client.unpause_server(self.server.id)
-        self.server_behaviors.wait_for_server_status(self.server.id, 'ACTIVE')
+        self.admin_servers_client.pause_server(self.server.id)
+        self.admin_server_behaviors.wait_for_server_status(self.server.id, 'PAUSED')
+        self.admin_servers_client.unpause_server(self.server.id)
+        self.admin_server_behaviors.wait_for_server_status(self.server.id, 'ACTIVE')

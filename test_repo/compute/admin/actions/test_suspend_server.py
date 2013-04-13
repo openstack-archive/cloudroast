@@ -14,7 +14,9 @@ class SuspendServerTests(ComputeAdminFixture):
         super(SuspendServerTests, cls).tearDownClass()
 
     def test_suspend_resume_server(self):
-        self.servers_client.suspend_server(self.server.id)
-        self.server_behaviors.wait_for_server_status(self.server.id, 'SUSPENDED')
-        self.servers_client.resume_server(self.server.id)
-        self.server_behaviors.wait_for_server_status(self.server.id, 'ACTIVE')
+        self.admin_servers_client.suspend_server(self.server.id)
+        self.admin_server_behaviors.wait_for_server_status(
+            self.server.id, 'SUSPENDED')
+        self.admin_servers_client.resume_server(self.server.id)
+        self.admin_server_behaviors.wait_for_server_status(
+            self.server.id, 'ACTIVE')

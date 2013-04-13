@@ -16,11 +16,11 @@ class ResetServerStateTests(ComputeAdminFixture):
     def test_set_server_state(self):
 
         # Set the active server into error status
-        self.servers_client.reset_state(self.server.id, 'error')
-        current_server = self.servers_client.get_server(self.server.id).entity
+        self.admin_servers_client.reset_state(self.server.id, 'error')
+        current_server = self.admin_servers_client.get_server(self.server.id).entity
         self.assertEqual(current_server.status.lower(), 'error')
 
         # Reset the server's error status back to active
-        self.servers_client.reset_state(self.server.id, 'active')
-        current_server = self.servers_client.get_server(self.server.id).entity
+        self.admin_servers_client.reset_state(self.server.id, 'active')
+        current_server = self.admin_servers_client.get_server(self.server.id).entity
         self.assertEqual(current_server.status.lower(), 'active')
