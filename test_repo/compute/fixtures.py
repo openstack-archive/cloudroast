@@ -24,6 +24,7 @@ from cloudcafe.compute.common.exception_handler import ExceptionHandler
 from cloudcafe.compute.flavors_api.client import FlavorsClient
 from cloudcafe.compute.servers_api.client import ServersClient
 from cloudcafe.compute.images_api.client import ImagesClient
+from cloudcafe.compute.extensions.keypairs_api.client import KeypairsClient
 from cloudcafe.compute.servers_api.behaviors import ServerBehaviors
 from cloudcafe.compute.images_api.behaviors import ImageBehaviors
 from cloudcafe.compute.config import ComputeConfig
@@ -33,11 +34,9 @@ from cloudcafe.compute.servers_api.config import ServersConfig
 from cloudcafe.extensions.rax_auth.v2_0.tokens_api.client import TokenAPI_Client
 from cloudcafe.extensions.rax_auth.v2_0.tokens_api.behaviors import TokenAPI_Behaviors
 from cloudcafe.extensions.rax_auth.v2_0.tokens_api.config import TokenAPI_Config
-
 from cloudcafe.identity.v2_0.tokens_api.client import TokenAPI_Client as OSTokenAPI_Client
 from cloudcafe.identity.v2_0.tokens_api.behaviors import TokenAPI_Behaviors as OSTokenAPI_Behaviors
 from cloudcafe.identity.v2_0.tokens_api.config import TokenAPI_Config as OSTokenAPI_Config
-
 from cloudcafe.compute.config import ComputeAdminConfig
 
 
@@ -78,6 +77,8 @@ class ComputeFixture(BaseTestFixture):
                                            'json', 'json')
         cls.images_client = ImagesClient(url, access_data.token.id_,
                                          'json', 'json')
+        #cls.keypairs_client = KeypairsClient(url, access_data.token.id_,
+        #                                     'json', 'json')
         cls.server_behaviors = ServerBehaviors(cls.servers_client,
                                                cls.servers_config,
                                                cls.images_config,
@@ -207,25 +208,19 @@ class ComputeAdminFixture(BaseTestFixture):
         compute_service = access_data.get_service(
             cls.compute_config.compute_endpoint_name)
         url = compute_service.get_endpoint(
-            cls.compute_config.region).public_url
-        cls.flavors_client = FlavorsClient(url, access_data.token.id_,
-                                           'json', 'json')
-        cls.servers_client = ServersClient(url, access_data.token.id_,
-                                           'json', 'json')
-        cls.images_client = ImagesClient(url, access_data.token.id_,
-                                         'json', 'json')
-        cls.server_behaviors = ServerBehaviors(cls.servers_client,
-                                               cls.servers_config,
-                                               cls.images_config,
-                                               cls.flavors_config)
-        cls.image_behaviors = ImageBehaviors(cls.images_client,
-                                             cls.images_config)
-        cls.flavors_client.add_exception_handler(ExceptionHandler())
-        cls.resources = ResourcePool()
-
+            compute_admin_config.region).public_url
+        cls.admin_flavors_client = FlavorsClient(url, access_data.token.id_,
+                                                 'json', 'json')
+        cls.admin_servers_client = ServersClient(url, access_data.token.id_,
+                                                 'json', 'json')
+        cls.admin_server_behaviors = ServerBehaviors(cls.admin_servers_client,
+                                                     cls.servers_config,
+                                                     cls.images_config,
+                                                     cls.flavors_config)
+        cls.admin_servers_client.add_exception_handler(ExceptionHandler())
 
     @classmethod
     def tearDownClass(cls):
         super(ComputeAdminFixture, cls).tearDownClass()
         cls.flavors_client.delete_exception_handler(ExceptionHandler())
-        #cls.resources.release()
+        cls.resources.release()
