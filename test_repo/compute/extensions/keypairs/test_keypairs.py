@@ -16,7 +16,8 @@ limitations under the License.
 
 from test_repo.compute.fixtures import ComputeFixture
 
-class FlavorsTest(ComputeFixture):
+
+class KeypairsTest(ComputeFixture):
 
     def test_create_delete_keypair(self):
         resp = self.keypairs_client.create_keypair('test3')
