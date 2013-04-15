@@ -25,6 +25,8 @@ from cloudcafe.compute.flavors_api.client import FlavorsClient
 from cloudcafe.compute.servers_api.client import ServersClient
 from cloudcafe.compute.images_api.client import ImagesClient
 from cloudcafe.compute.extensions.keypairs_api.client import KeypairsClient
+from cloudcafe.compute.extensions.security_groups_api.client import \
+    SecurityGroupsClient
 from cloudcafe.compute.servers_api.behaviors import ServerBehaviors
 from cloudcafe.compute.images_api.behaviors import ImageBehaviors
 from cloudcafe.compute.config import ComputeConfig
@@ -79,6 +81,8 @@ class ComputeFixture(BaseTestFixture):
                                          'json', 'json')
         cls.keypairs_client = KeypairsClient(url, access_data.token.id_,
                                              'json', 'json')
+        cls.sec_groups_client = SecurityGroupsClient(
+            url, access_data.token.id_, 'json', 'json')
         cls.server_behaviors = ServerBehaviors(cls.servers_client,
                                                cls.servers_config,
                                                cls.images_config,
@@ -175,6 +179,7 @@ class CreateServerFixture(ComputeFixture):
     @classmethod
     def tearDownClass(cls):
         super(CreateServerFixture, cls).tearDownClass()
+
 
 class ComputeAdminFixture(ComputeFixture):
     """
