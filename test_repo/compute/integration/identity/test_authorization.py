@@ -87,6 +87,20 @@ class AuthorizationTests(ComputeFixture):
         with self.assertRaises(ItemNotFound):
             self.images_client.delete_image(self.image_id)
 
+    def test_get_server_unauthorized(self):
+        with self.assertRaises(ItemNotFound):
+            self.servers_client.get_server(self.server.id)
+
+    def test_list_server_addresses_with_invalid_token(self):
+        with self.assertRaises(ItemNotFound):
+            self.servers_client.list_addresses(
+                self.server.id)
+
+    def test_list_server_addresses_by_network_with_invalid_token(self):
+        with self.assertRaises(ItemNotFound):
+            self.servers_client.list_addresses_by_network(
+                self.server.id, 'prviate')
+
     def test_delete_server_unauthorized(self):
         with self.assertRaises(ItemNotFound):
             self.servers_client.delete_server(self.server.id)
