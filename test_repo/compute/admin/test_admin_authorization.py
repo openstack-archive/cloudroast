@@ -1,5 +1,5 @@
 from cafe.drivers.unittest.decorators import tags
-from cloudcafe.compute.common.exceptions import BadRequest
+from cloudcafe.compute.common.exceptions import BadRequest, ItemNotFound
 from test_repo.compute.fixtures import ComputeFixture
 
 
@@ -69,3 +69,13 @@ class AdminAuthorizationTest(ComputeFixture):
         """A reset state request should fail when not made by an admin"""
         with self.assertRaises(BadRequest):
             self.servers_client.reset_state(self.server.id)
+
+    def test_create_flavor_fails_as_user(self):
+        with self.assertRaises(ItemNotFound):
+            self.flavors_client.create_flavor(
+                name='test555', ram='128', vcpus='1', disk='10', id='100',
+                is_public=True)
+
+    def test_delete_flavor_fails_as_user(self):
+        with self.assertRaises(ItemNotFound):
+            self.flavors_client.delete_flavor(self.flavor_ref)

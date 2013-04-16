@@ -95,10 +95,26 @@ class TokenRequiredTests(ComputeFixture):
             self.servers_client.list_servers_with_detail(
                 requestslib_kwargs=self.auth_token)
 
+    def test_list_server_addresses_with_invalid_token(self):
+        with self.assertRaises(Unauthorized):
+            self.servers_client.list_addresses(
+                self.server.id, requestslib_kwargs=self.auth_token)
+
+    def test_list_server_addresses_by_network_with_invalid_token(self):
+        with self.assertRaises(Unauthorized):
+            self.servers_client.list_addresses_by_network(
+                self.server.id, 'prviate', requestslib_kwargs=self.auth_token)
+
     def test_create_server_with_invalid_token(self):
         with self.assertRaises(Unauthorized):
             self.servers_client.create_server(
                 'test', self.image_ref, self.flavor_ref,
+                requestslib_kwargs=self.auth_token)
+
+    def test_get_server_unauthorized(self):
+        with self.assertRaises(Unauthorized):
+            self.servers_client.get_server(
+                self.server.id,
                 requestslib_kwargs=self.auth_token)
 
     def test_delete_server_with_invalid_token(self):
