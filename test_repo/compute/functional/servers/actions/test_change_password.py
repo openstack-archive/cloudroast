@@ -15,6 +15,8 @@ limitations under the License.
 """
 
 from cafe.drivers.unittest.decorators import tags
+from cloudcafe.compute.common.types import NovaServerStatusTypes as \
+    ServerStates
 from test_repo.compute.fixtures import CreateServerFixture
 
 
@@ -27,12 +29,18 @@ class ChangeServerPasswordTests(CreateServerFixture):
         cls.new_password = "newslice129690TuG72Bgj2"
 
         # Change password and wait for server to return to active state
-        cls.server_behaviors.change_password_and_await(cls.server.id,
-                                                       cls.new_password)
+        cls.resp = cls.servers_client.change_password(cls.server.id,
+                                                      cls.new_password)
+        cls.server_behaviors.wait_for_server_status(cls.server.id,
+                                                    ServerStates.ACTIVE)
 
     @classmethod
     def tearDownClass(cls):
         super(ChangeServerPasswordTests, cls).tearDownClass()
+
+    @tags(type='smoke', net='no')
+    def test_change_password_response(self):
+        self.assertEqual(202, self.resp.status_code)
 
     @tags(type='smoke', net='yes')
     def test_can_log_in_with_new_password(self):
