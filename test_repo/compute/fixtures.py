@@ -20,6 +20,8 @@ from cloudcafe.compute.common.exceptions import TimeoutException, \
     BuildErrorException
 from cloudcafe.compute.common.types import NovaServerStatusTypes as ServerStates
 from cloudcafe.compute.common.datagen import rand_name
+from cloudcafe.compute.config import ComputeEndpointConfig, \
+    ComputeAdminEndpointConfig
 from cloudcafe.compute.common.exception_handler import ExceptionHandler
 from cloudcafe.compute.flavors_api.client import FlavorsClient
 from cloudcafe.compute.servers_api.client import ServersClient
@@ -30,17 +32,12 @@ from cloudcafe.compute.extensions.security_groups_api.client import \
 from cloudcafe.compute.extensions.rescue_api.client import RescueClient
 from cloudcafe.compute.servers_api.behaviors import ServerBehaviors
 from cloudcafe.compute.images_api.behaviors import ImageBehaviors
-from cloudcafe.compute.config import ComputeConfig
+from cloudcafe.auth.config import UserAuthConfig, UserConfig, \
+    ComputeAdminAuthConfig, ComputeAdminUserConfig
+from cloudcafe.auth.provider import AuthProvider
 from cloudcafe.compute.flavors_api.config import FlavorsConfig
 from cloudcafe.compute.images_api.config import ImagesConfig
 from cloudcafe.compute.servers_api.config import ServersConfig
-from cloudcafe.extensions.rax_auth.v2_0.tokens_api.client import TokenAPI_Client
-from cloudcafe.extensions.rax_auth.v2_0.tokens_api.behaviors import TokenAPI_Behaviors
-from cloudcafe.extensions.rax_auth.v2_0.tokens_api.config import TokenAPI_Config
-from cloudcafe.identity.v2_0.tokens_api.client import TokenAPI_Client as OSTokenAPI_Client
-from cloudcafe.identity.v2_0.tokens_api.behaviors import TokenAPI_Behaviors as OSTokenAPI_Behaviors
-from cloudcafe.identity.v2_0.tokens_api.config import TokenAPI_Config as OSTokenAPI_Config
-from cloudcafe.compute.config import ComputeAdminConfig
 
 
 class ComputeFixture(BaseTestFixture):
@@ -54,7 +51,7 @@ class ComputeFixture(BaseTestFixture):
         cls.flavors_config = FlavorsConfig()
         cls.images_config = ImagesConfig()
         cls.servers_config = ServersConfig()
-        cls.compute_config = ComputeConfig()
+        compute_endpoint = ComputeEndpointConfig()
 
         cls.flavor_ref = cls.flavors_config.primary_flavor
         cls.flavor_ref_alt = cls.flavors_config.secondary_flavor
@@ -62,18 +59,15 @@ class ComputeFixture(BaseTestFixture):
         cls.image_ref_alt = cls.images_config.secondary_image
         cls.disk_path = cls.servers_config.instance_disk_path
 
-        cls.identity_config = OSTokenAPI_Config()
-        token_client = OSTokenAPI_Client(
-            cls.identity_config.authentication_endpoint, 'json', 'json')
-        token_behaviors = OSTokenAPI_Behaviors(token_client)
-        access_data = token_behaviors.get_access_data(cls.identity_config.username,
-                                                      cls.identity_config.password,
-                                                      cls.identity_config.tenant_name)
+        endpoint_config = UserAuthConfig()
+        user_config = UserConfig()
+        access_data = AuthProvider.get_access_data(endpoint_config,
+                                                   user_config)
 
         compute_service = access_data.get_service(
-            cls.compute_config.compute_endpoint_name)
+            compute_endpoint.compute_endpoint_name)
         url = compute_service.get_endpoint(
-            cls.compute_config.region).public_url
+            compute_endpoint.region).public_url
         cls.flavors_client = FlavorsClient(url, access_data.token.id_,
                                            'json', 'json')
         cls.servers_client = ServersClient(url, access_data.token.id_,
@@ -194,17 +188,15 @@ class ComputeAdminFixture(ComputeFixture):
         super(ComputeAdminFixture, cls).setUpClass()
 
         # Setup admin client
-        compute_admin_config = ComputeAdminConfig()
-        token_client = OSTokenAPI_Client(compute_admin_config.authentication_endpoint,
-                                         'json', 'json')
-        token_behaviors = OSTokenAPI_Behaviors(token_client)
-        access_data = token_behaviors.get_access_data(compute_admin_config.username,
-                                                      compute_admin_config.password,
-                                                      compute_admin_config.tenant_name)
+        auth_config = ComputeAdminAuthConfig()
+        user_config = ComputeAdminUserConfig()
+        access_data = AuthProvider.get_access_data(auth_config,
+                                                   user_config)
+        admin_endpoint_config = ComputeAdminEndpointConfig()
         compute_service = access_data.get_service(
-            compute_admin_config.compute_endpoint_name)
+            admin_endpoint_config.compute_endpoint_name)
         url = compute_service.get_endpoint(
-            compute_admin_config.region).public_url
+            admin_endpoint_config.region).public_url
         cls.admin_flavors_client = FlavorsClient(url, access_data.token.id_,
                                                  'json', 'json')
         cls.admin_servers_client = ServersClient(url, access_data.token.id_,
