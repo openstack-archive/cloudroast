@@ -120,7 +120,8 @@ class RebuildServerTests(ComputeFixture):
     @tags(type='smoke', net='yes')
     def test_server_ram_after_rebuild(self):
         remote_instance = self.server_behaviors.get_remote_instance_client(self.server,
-                                                                           self.servers_config)
+                                                                           self.servers_config,
+                                                                           password=self.password)
         lower_limit = int(self.flavor.ram) - (int(self.flavor.ram) * .1)
         server_ram_size = int(remote_instance.get_ram_size_in_mb())
         self.assertTrue(int(self.flavor.ram) == server_ram_size or lower_limit <= server_ram_size,
