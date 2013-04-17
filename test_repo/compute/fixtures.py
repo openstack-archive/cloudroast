@@ -27,6 +27,7 @@ from cloudcafe.compute.images_api.client import ImagesClient
 from cloudcafe.compute.extensions.keypairs_api.client import KeypairsClient
 from cloudcafe.compute.extensions.security_groups_api.client import \
     SecurityGroupsClient
+from cloudcafe.compute.extensions.rescue_api.client import RescueClient
 from cloudcafe.compute.servers_api.behaviors import ServerBehaviors
 from cloudcafe.compute.images_api.behaviors import ImageBehaviors
 from cloudcafe.compute.config import ComputeConfig
@@ -61,13 +62,13 @@ class ComputeFixture(BaseTestFixture):
         cls.image_ref_alt = cls.images_config.secondary_image
         cls.disk_path = cls.servers_config.instance_disk_path
 
-        cls.identity_config = OSTokenAPI_Config()
-        token_client = OSTokenAPI_Client(
+        cls.identity_config = TokenAPI_Config()
+        token_client = TokenAPI_Client(
             cls.identity_config.authentication_endpoint, 'json', 'json')
-        token_behaviors = OSTokenAPI_Behaviors(token_client)
+        token_behaviors = TokenAPI_Behaviors(token_client)
         access_data = token_behaviors.get_access_data(cls.identity_config.username,
-                                                      cls.identity_config.password,
-                                                      cls.identity_config.tenant_name)
+                                                      cls.identity_config.api_key,
+                                                      cls.identity_config.tenant_id)
 
         compute_service = access_data.get_service(
             cls.compute_config.compute_endpoint_name)
@@ -83,6 +84,8 @@ class ComputeFixture(BaseTestFixture):
                                              'json', 'json')
         cls.sec_groups_client = SecurityGroupsClient(
             url, access_data.token.id_, 'json', 'json')
+        cls.rescue_client = RescueClient(url, access_data.token.id_,
+                                         'json', 'json')
         cls.server_behaviors = ServerBehaviors(cls.servers_client,
                                                cls.servers_config,
                                                cls.images_config,
