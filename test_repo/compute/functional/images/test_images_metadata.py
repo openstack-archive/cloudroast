@@ -28,20 +28,22 @@ class ImagesMetadataTest(ComputeFixture):
     @classmethod
     def setUpClass(cls):
         super(ImagesMetadataTest, cls).setUpClass()
+        cls.server_resp = cls.server_behaviors.create_active_server()
+        cls.server_id = cls.server_resp.entity.id
+        cls.resources.add(cls.server_id, cls.servers_client.delete_server)
+        meta = {'key1': 'value1', 'key2': 'value2'}
+        name = rand_name('testimage')
+        image_resp = cls.servers_client.create_image(cls.server_id, name, meta)
+        cls.image_id = cls.parse_image_id(image_resp)
+        cls.resources.add(cls.image_id, cls.images_client.delete_image)
+        cls.image_behaviors.wait_for_image_resp_code(cls.image_id, 200)
+        cls.image_behaviors.wait_for_image_status(cls.image_id, NovaImageStatusTypes.ACTIVE)
+        cls.image = cls.images_client.get_image(cls.image_id).entity
 
     def setUp(self):
         super(ImagesMetadataTest, self).setUp()
-        self.server_resp = self.server_behaviors.create_active_server()
-        self.server_id = self.server_resp.entity.id
-        self.resources.add(self.server_id, self.servers_client.delete_server)
         meta = {'key1': 'value1', 'key2': 'value2'}
-        name = rand_name('testimage')
-        image_resp = self.servers_client.create_image(self.server_id, name, meta)
-        self.image_id = self.parse_image_id(image_resp)
-        self.resources.add(self.image_id, self.images_client.delete_image)
-        self.image_behaviors.wait_for_image_resp_code(self.image_id, 200)
-        self.image_behaviors.wait_for_image_status(self.image_id, NovaImageStatusTypes.ACTIVE)
-        self.image = self.images_client.get_image(self.image_id)
+        self.images_client.set_image_metadata(self.image.id, meta)
 
     @classmethod
     def tearDownClass(cls):

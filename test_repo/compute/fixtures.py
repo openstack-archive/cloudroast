@@ -62,13 +62,13 @@ class ComputeFixture(BaseTestFixture):
         cls.image_ref_alt = cls.images_config.secondary_image
         cls.disk_path = cls.servers_config.instance_disk_path
 
-        cls.identity_config = TokenAPI_Config()
-        token_client = TokenAPI_Client(
+        cls.identity_config = OSTokenAPI_Config()
+        token_client = OSTokenAPI_Client(
             cls.identity_config.authentication_endpoint, 'json', 'json')
-        token_behaviors = TokenAPI_Behaviors(token_client)
+        token_behaviors = OSTokenAPI_Behaviors(token_client)
         access_data = token_behaviors.get_access_data(cls.identity_config.username,
-                                                      cls.identity_config.api_key,
-                                                      cls.identity_config.tenant_id)
+                                                      cls.identity_config.password,
+                                                      cls.identity_config.tenant_name)
 
         compute_service = access_data.get_service(
             cls.compute_config.compute_endpoint_name)
