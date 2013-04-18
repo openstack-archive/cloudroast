@@ -40,45 +40,6 @@ class ServersTest(ComputeFixture):
     def tearDownClass(cls):
         super(ServersTest, cls).tearDownClass()
 
-    @tags(type='smoke', net='no')
-    def test_update_server_details(self):
-        """The server name and access ip addresses should be changed to the provided values"""
-        active_server_response = self.server_behaviors.create_active_server()
-        active_server = active_server_response.entity
-        updated_server_response = self.servers_client.update_server(active_server.id,
-                                                                    name='newname',
-                                                                    accessIPv4=self.accessIPv4,
-                                                                    accessIPv6=self.accessIPv6)
-        updated_server = updated_server_response.entity
-        updated_server_details_response = self.servers_client.get_server(active_server.id)
-        updated_server_details = updated_server_details_response.entity
-        self.server_behaviors.wait_for_server_status(active_server.id,
-                                                     NovaServerStatusTypes.ACTIVE)
-        # Verify the name and access IPs of the server have changed
-        self.assertEqual('newname', updated_server.name,
-                         msg="The name was not updated")
-        self.assertEqual(self.accessIPv4, updated_server.accessIPv4,
-                         msg="AccessIPv4 was not updated")
-        self.assertEqual(self.accessIPv6, updated_server.accessIPv6,
-                         msg="AccessIPv6 was not updated")
-        self.assertEqual(active_server.created, updated_server.created,
-                         msg="The creation date was updated")
-
-        # Verify details changed on get updated server call
-        self.assertEqual('newname', updated_server_details.name,
-                         msg="The name was not updated")
-        self.assertEqual(self.accessIPv4, updated_server_details.accessIPv4,
-                         msg="AccessIPv4 was not updated")
-        self.assertEqual(self.accessIPv6, updated_server_details.accessIPv6,
-                         msg="AccessIPv6 was not updated")
-        self.assertEqual(active_server.created, updated_server_details.created,
-                         msg="The creation date was updated")
-        self.assertNotEqual(active_server.updated, updated_server_details.updated,
-                            msg="Server %s updated time did not change after a modification to the server." % updated_server_details.id)
-
-        #Teardown
-        self.servers_client.delete_server(updated_server_details.id)
-
     def _assert_server_details(self, server, expected_name,
                                expected_accessIPv4, expected_accessIPv6,
                                expected_flavor):
