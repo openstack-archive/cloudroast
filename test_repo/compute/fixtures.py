@@ -51,7 +51,7 @@ class ComputeFixture(BaseTestFixture):
         cls.flavors_config = FlavorsConfig()
         cls.images_config = ImagesConfig()
         cls.servers_config = ServersConfig()
-        compute_endpoint = ComputeEndpointConfig()
+        cls.compute_endpoint = ComputeEndpointConfig()
 
         cls.flavor_ref = cls.flavors_config.primary_flavor
         cls.flavor_ref_alt = cls.flavors_config.secondary_flavor
@@ -59,15 +59,15 @@ class ComputeFixture(BaseTestFixture):
         cls.image_ref_alt = cls.images_config.secondary_image
         cls.disk_path = cls.servers_config.instance_disk_path
 
-        endpoint_config = UserAuthConfig()
+        cls.endpoint_config = UserAuthConfig()
         user_config = UserConfig()
-        access_data = AuthProvider.get_access_data(endpoint_config,
+        access_data = AuthProvider.get_access_data(cls.endpoint_config,
                                                    user_config)
 
         compute_service = access_data.get_service(
-            compute_endpoint.compute_endpoint_name)
+            cls.compute_endpoint.compute_endpoint_name)
         url = compute_service.get_endpoint(
-            compute_endpoint.region).public_url
+            cls.compute_endpoint.region).public_url
         cls.flavors_client = FlavorsClient(url, access_data.token.id_,
                                            'json', 'json')
         cls.servers_client = ServersClient(url, access_data.token.id_,
