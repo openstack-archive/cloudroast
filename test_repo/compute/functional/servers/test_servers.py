@@ -132,31 +132,6 @@ class ServersTest(ComputeFixture):
                                 ipv6_public_address.addr is not None,
                                 msg="Server does not have a Public IPv6 set")
 
-    @tags(type='positive', net='no')
-    def test_delete_server(self):
-        """A server should be built using the specified image and flavor"""
-        active_server_response = self.server_behaviors.create_active_server()
-        active_server = active_server_response.entity
-        deleted_server_response = self.servers_client.delete_server(active_server.id)
-        self.assertEqual(204, deleted_server_response.status_code,
-                         msg='The delete call response was: %s'
-                             % (deleted_server_response.status_code))
-        self.server_behaviors.wait_for_server_status(active_server.id,
-                                                     NovaServerStatusTypes.DELETED)
-        # Verify the server is now in deleted status
-        parameter = str(active_server.created)
-        list_servers = self.servers_client.list_servers_with_detail(changes_since=parameter)
-        found = False
-        for server in list_servers.entity:
-            if server.id == active_server.id:
-                deleted_server = server
-                found = True
-
-        self.assertTrue(found,
-                        msg="The server which was deleted was not found in the server list")
-        self.assertEqual('DELETED', deleted_server.status,
-                         msg="The server which was deleted was not in DELETED status")
-
     @tags(type='positive', net='yes')
     def test_create_server_with_admin_password(self):
         """
