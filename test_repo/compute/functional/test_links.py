@@ -69,7 +69,6 @@ class TestLinks(ComputeFixture):
         retrieved_flavor_resp = self.flavors_client.get_flavor_details(str(flavor_self_link))
         self.assertEqual(retrieved_flavor_resp.entity.id, flavor_resp.entity.id)
         self.assertEqual(retrieved_flavor_resp.entity.ram, flavor_resp.entity.ram)
-        self.assertEqual(retrieved_flavor_resp.entity.swap, flavor_resp.entity.swap)
 
     @tags(type='positive', net='no')
     @unittest.skip('V1 Bug:D-03447')
