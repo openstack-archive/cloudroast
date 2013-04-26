@@ -16,7 +16,6 @@ limitations under the License.
 
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.compute.common.exceptions import ItemNotFound
-from cloudcafe.compute.common.types import NovaServerStatusTypes
 from test_repo.compute.fixtures import ComputeFixture
 
 
@@ -27,8 +26,7 @@ class ServersTest(ComputeFixture):
         super(ServersTest, cls).setUpClass()
         cls.server = cls.server_behaviors.create_active_server().entity
         cls.resp = cls.servers_client.delete_server(cls.server.id)
-        cls.server_behaviors.wait_for_server_status(cls.server.id,
-                                                    NovaServerStatusTypes.DELETED)
+        cls.server_behaviors.wait_for_server_to_be_deleted(cls.server.id)
 
     def test_delete_server_response(self):
         self.assertEqual(204, self.resp.status_code)
