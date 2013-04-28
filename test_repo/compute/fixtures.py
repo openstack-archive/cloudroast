@@ -85,6 +85,7 @@ class ComputeFixture(BaseTestFixture):
                                                cls.images_config,
                                                cls.flavors_config)
         cls.image_behaviors = ImageBehaviors(cls.images_client,
+                                             cls.servers_client,
                                              cls.images_config)
         cls.flavors_client.add_exception_handler(ExceptionHandler())
         cls.resources = ResourcePool()
