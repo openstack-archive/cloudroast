@@ -21,6 +21,7 @@ from cloudcafe.compute.common.datagen import rand_name
 from cloudcafe.compute.common.exceptions import ActionInProgress
 from test_repo.compute.fixtures import ComputeAdminFixture
 
+
 class CreateFlavorsAdminTest(ComputeAdminFixture):
 
     @classmethod
@@ -29,7 +30,7 @@ class CreateFlavorsAdminTest(ComputeAdminFixture):
         cls.flavor_id = randint(1, 99999)
         cls.flavor_name = rand_name('flavor')
         cls.admin_flavors_client.create_flavor(
-            name=cls.flavor_name, ram='64',vcpus='1', disk='10',
+            name=cls.flavor_name, ram='64', vcpus='1', disk='10',
             id=cls.flavor_id, is_public=True)
 
     @classmethod
@@ -38,11 +39,13 @@ class CreateFlavorsAdminTest(ComputeAdminFixture):
         cls.admin_flavors_client.delete_flavor(cls.flavor_id)
 
     def test_create_server_from_new_flavor(self):
-        self.server_behaviors.create_active_server(flavor_ref=self.flavor_id)
+        resp = self.server_behaviors.create_active_server(
+            flavor_ref=self.flavor_id)
+        server = resp.entity
+        self.resources.add(server.id, self.servers_client.delete_server)
 
     def test_create_flavor_with_duplicate(self):
         with self.assertRaises(ActionInProgress):
             self.admin_flavors_client.create_flavor(
-                name=self.flavor_name, ram='64',vcpus='1', disk='10',
+                name=self.flavor_name, ram='64', vcpus='1', disk='10',
                 id=self.flavor_id, is_public=True)
-
