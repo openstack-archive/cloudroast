@@ -40,6 +40,7 @@ class UpdateServerTest(ComputeFixture):
 
         cls.server = cls.servers_client.get_server(cls.original_server.id).entity
 
+    @tags(type='smoke', net='no')
     def test_update_server_response(self):
         updated_server = self.resp.entity
         self.assertEqual(updated_server.name, self.new_name,

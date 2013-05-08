@@ -14,11 +14,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+from cafe.drivers.unittest.decorators import tags
 from test_repo.compute.fixtures import ComputeFixture
 
 
 class SecurityGroupTest(ComputeFixture):
 
+    @tags(type='positive', net='no')
     def test_create_delete_security_group(self):
         resp = self.sec_groups_client.create_security_group(name='test',
                                                             description='test group')

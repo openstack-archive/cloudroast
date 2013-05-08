@@ -27,6 +27,7 @@ class FlavorsAdminTest(ComputeAdminFixture):
     def tearDownClass(cls):
         super(FlavorsAdminTest, cls).tearDownClass()
 
+    @tags(type='positive', net='no')
     def test_create_delete_flavors(self):
         self.admin_flavors_client.create_flavor(name='test2', ram='128', vcpus='1',
                                                 disk='10', id='99', is_public=True)

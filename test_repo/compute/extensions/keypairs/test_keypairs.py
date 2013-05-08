@@ -14,11 +14,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+from cafe.drivers.unittest.decorators import tags
 from test_repo.compute.fixtures import ComputeFixture
 
 
 class KeypairsTest(ComputeFixture):
 
+    @tags(type='positive', net='no')
     def test_create_delete_keypair(self):
         resp = self.keypairs_client.create_keypair('test3')
         self.assertEqual(resp.status_code, 200)

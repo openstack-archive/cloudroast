@@ -38,12 +38,14 @@ class CreateFlavorsAdminTest(ComputeAdminFixture):
         super(CreateFlavorsAdminTest, cls).tearDownClass()
         cls.admin_flavors_client.delete_flavor(cls.flavor_id)
 
+    @tags(type='positive', net='no')
     def test_create_server_from_new_flavor(self):
         resp = self.server_behaviors.create_active_server(
             flavor_ref=self.flavor_id)
         server = resp.entity
         self.resources.add(server.id, self.servers_client.delete_server)
 
+    @tags(type='positive', net='no')
     def test_create_flavor_with_duplicate(self):
         with self.assertRaises(ActionInProgress):
             self.admin_flavors_client.create_flavor(
