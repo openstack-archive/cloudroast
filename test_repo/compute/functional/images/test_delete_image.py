@@ -17,6 +17,7 @@ limitations under the License.
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.compute.common.datagen import rand_name
 from cloudcafe.compute.common.exceptions import ItemNotFound, BadRequest
+from cloudcafe.compute.common.types import NovaImageStatusTypes as ImageStates
 from test_repo.compute.fixtures import CreateServerFixture
 
 
@@ -66,10 +67,25 @@ class DeleteImageTest(CreateServerFixture):
         self.assertIn(self.image.id, image_ids)
 
     @tags(type='negative', net='no')
-    def test_get_for_deleted_image_fails(self):
+    def test_get_for_deleted_image(self):
+        """Validates behavior for GETs on a deleted image."""
+        if self.images_config.can_get_deleted_image:
+            self.get_deleted_image()
+        else:
+            self.get_deleted_image_fails()
+
+    def get_deleted_image_fails(self):
         """A get image request for a deleted image should fail."""
         with self.assertRaises(ItemNotFound):
             self.images_client.get_image(self.image.id)
+
+    def get_deleted_image(self):
+        """A get image request for a deleted image should return the image."""
+        image = self.images_client.get_image(self.image.id).entity
+        self.assertEqual(
+            image.status, ImageStates.DELETED,
+            msg="Expected image state to be DELETED, was {}".format(
+                image.status))
 
     @tags(type='negative', net='no')
     def test_delete_for_deleted_image_fails(self):
