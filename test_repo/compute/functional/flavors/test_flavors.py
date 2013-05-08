@@ -21,6 +21,7 @@ from test_repo.compute.fixtures import ComputeFixture
 
 class FlavorsTest(ComputeFixture):
 
+    @tags(type='smoke', net='no')
     def test_list_flavors(self):
         """ List of all flavors should contain the expected flavor """
         response = self.flavors_client.list_flavors()
@@ -33,6 +34,7 @@ class FlavorsTest(ComputeFixture):
                 return
         self.fail("The expected flavor: %s not found in the flavor list." % flavor.id)
 
+    @tags(type='smoke', net='no')
     def test_list_flavors_with_detail(self):
         """ Detailed list of all flavors should contain the expected flavor """
         response = self.flavors_client.list_flavors_with_detail()
@@ -42,12 +44,14 @@ class FlavorsTest(ComputeFixture):
         flavor = response.entity
         self.assertIn(flavor, flavors, "The expected flavor: %s not found in the flavor list." % flavor.id)
 
+    @tags(type='smoke', net='no')
     def test_get_flavor(self):
         """ The expected flavor details should be returned """
         response = self.flavors_client.get_flavor_details(self.flavor_ref)
         flavor = response.entity
         self.assertEqual(self.flavor_ref, flavor.id, "Could not retrieve the expected flavor.")
 
+    @tags(type='negative', net='no')
     def test_get_non_existent_flavor(self):
         """flavor details are not returned for non existent flavors"""
         try:
@@ -56,6 +60,7 @@ class FlavorsTest(ComputeFixture):
         except ItemNotFound:
             pass
 
+    @tags(type='positive', net='no')
     def test_list_flavors_limit_results(self):
         """Only the expected number of flavors should be returned"""
         response = self.flavors_client.list_flavors(limit=1)
@@ -63,6 +68,7 @@ class FlavorsTest(ComputeFixture):
         self.assertEqual(1, len(flavors),
                          "The length of flavor list was %s instead of 1" % len(flavors))
 
+    @tags(type='positive', net='no')
     def test_list_flavors_detailed_limit_results(self):
         """Only the expected number of flavors (detailed) should be returned"""
         response = self.flavors_client.list_flavors_with_detail(limit=1)
@@ -70,6 +76,7 @@ class FlavorsTest(ComputeFixture):
         self.assertEqual(1, len(flavors),
                          "The length of flavor list was %s instead of 1" % len(flavors))
 
+    @tags(type='positive', net='no')
     def test_list_flavors_using_marker(self):
         """The list of flavors should start from the provided marker"""
         response = self.flavors_client.list_flavors()
@@ -88,6 +95,7 @@ class FlavorsTest(ComputeFixture):
                          msg='Filtered flavor was incorrectly \
                          included in the list of returned flavors')
 
+    @tags(type='positive', net='no')
     def test_list_flavors_detailed_using_marker(self):
         """The list of flavors should start from the provided marker"""
         response = self.flavors_client.list_flavors_with_detail()
@@ -104,6 +112,7 @@ class FlavorsTest(ComputeFixture):
         self.assertEqual(actual_flavors, expected_flavors,
                          msg='Filtered flavors list does not begin at provided marker')
 
+    @tags(type='positive', net='no')
     def test_list_flavors_detailed_filter_by_min_disk(self):
         """The detailed list of flavors should be filtered by disk space"""
         response = self.flavors_client.list_flavors_with_detail()
@@ -120,6 +129,7 @@ class FlavorsTest(ComputeFixture):
         self.assertEqual(actual_flavors, expected_flavors,
                          msg="A flavor with min_disk lower than %s was returned" % (flavors[1].disk))
 
+    @tags(type='positive', net='no')
     def test_list_flavors_detailed_filter_by_min_ram(self):
         """The detailed list of flavors should be filtered by RAM"""
         response = self.flavors_client.list_flavors_with_detail()
@@ -135,6 +145,7 @@ class FlavorsTest(ComputeFixture):
         self.assertEqual(actual_flavors, expected_flavors,
                          msg="A flavor with min_ram lower than %s was returned" % (flavors[1].ram))
 
+    @tags(type='positive', net='no')
     def test_list_flavors_filter_by_min_disk(self):
         """The list of flavors should be filtered by disk space"""
         response = self.flavors_client.list_flavors_with_detail()
@@ -151,6 +162,7 @@ class FlavorsTest(ComputeFixture):
         self.assertEqual(actual_flavors, expected_flavors,
                          msg="A flavor with min_disk lower than %s was returned" % (flavors[1].disk))
 
+    @tags(type='positive', net='no')
     def test_list_flavors_filter_by_min_ram(self):
         """The list of flavors should be filtered by RAM"""
         response = self.flavors_client.list_flavors_with_detail()
@@ -167,6 +179,7 @@ class FlavorsTest(ComputeFixture):
         self.assertEqual(actual_flavors, expected_flavors,
                          msg="A flavor with min_disk lower than %s was returned" % flavors[1].ram)
 
+    @tags(type='negative', net='no')
     def test_list_flavors_detailed_filter_by_invalid_min_disk(self):
         """The detailed list of flavors should be filtered by disk space"""
         with self.assertRaises(BadRequest):
@@ -176,6 +189,7 @@ class FlavorsTest(ComputeFixture):
                             msg="The list of flavors is not empty for \
                             an invalid min disk value")
 
+    @tags(type='negative', net='no')
     def test_list_flavors_detailed_filter_by_invalid_min_ram(self):
         """The detailed list of flavors should be filtered by RAM"""
         with self.assertRaises(BadRequest):
@@ -185,6 +199,7 @@ class FlavorsTest(ComputeFixture):
                             msg="The list of flavors is not empty for \
                             an invalid min RAM value")
 
+    @tags(type='negative', net='no')
     def test_list_flavors_filter_by_invalid_min_disk(self):
         """The detailed list of flavors should be filtered by disk space"""
         with self.assertRaises(BadRequest):
@@ -194,6 +209,7 @@ class FlavorsTest(ComputeFixture):
                             msg="The list of flavors is not empty for an \
                             invalid min disk value")
 
+    @tags(type='negative', net='no')
     def test_list_flavors_filter_by_invalid_min_ram(self):
         """The detailed list of flavors should be filtered by RAM"""
         with self.assertRaises(BadRequest):
@@ -203,6 +219,7 @@ class FlavorsTest(ComputeFixture):
                             msg="The list of flavors is not empty for \
                             an invalid min RAM value")
 
+    @tags(type='negative', net='no')
     def test_list_flavors_detailed_filter_min_disk_value_greater_than_max_flavor_disk(self):
         """The detailed list of flavors should be filtered by disk space"""
         response = self.flavors_client.list_flavors_with_detail(min_disk='99999')
@@ -211,6 +228,7 @@ class FlavorsTest(ComputeFixture):
                         msg="The list of flavors is not empty for the value \
                         of min disk greater then max flavor disk size.")
 
+    @tags(type='negative', net='no')
     def test_list_flavors_detailed_filter_min_ram_value_greater_than_max_flavor_ram(self):
         """The detailed list of flavors should be filtered by RAM"""
         response = self.flavors_client.list_flavors_with_detail(min_ram='99999')
@@ -219,6 +237,7 @@ class FlavorsTest(ComputeFixture):
                         msg="The list of flavors is not empty for the value \
                         of min RAM greater then max flavor RAM size.")
 
+    @tags(type='negative', net='no')
     def test_list_flavors_filter_min_disk_value_greater_than_max_flavor_disk(self):
         """The detailed list of flavors should be filtered by disk space"""
         response = self.flavors_client.list_flavors(min_disk='99999')
@@ -227,6 +246,7 @@ class FlavorsTest(ComputeFixture):
                         msg="The list of flavors is not empty for the value \
                         of min disk greater then max flavor disk size.")
 
+    @tags(type='negative', net='no')
     def test_list_flavors_filter_min_disk_value_greater_than_max_flavor_ram(self):
         """The detailed list of flavors should be filtered by RAM"""
         response = self.flavors_client.list_flavors(min_ram='99999')
