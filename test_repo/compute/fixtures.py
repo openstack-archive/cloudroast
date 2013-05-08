@@ -18,7 +18,8 @@ from cafe.drivers.unittest.fixtures import BaseTestFixture
 from cloudcafe.common.resources import ResourcePool
 from cloudcafe.compute.common.exceptions import TimeoutException, \
     BuildErrorException
-from cloudcafe.compute.common.types import NovaServerStatusTypes as ServerStates
+from cloudcafe.compute.common.types import NovaServerStatusTypes\
+    as ServerStates
 from cloudcafe.compute.common.datagen import rand_name
 from cloudcafe.compute.config import ComputeEndpointConfig, \
     ComputeAdminEndpointConfig
@@ -89,7 +90,6 @@ class ComputeFixture(BaseTestFixture):
                                              cls.images_config)
         cls.flavors_client.add_exception_handler(ExceptionHandler())
         cls.resources = ResourcePool()
-
 
     @classmethod
     def tearDownClass(cls):
@@ -206,12 +206,15 @@ class ComputeAdminFixture(ComputeFixture):
                                                      cls.servers_config,
                                                      cls.images_config,
                                                      cls.flavors_config)
+        cls.admin_images_client = ImagesClient(url, access_data.token.id_,
+                                               'json', 'json')
+        cls.admin_images_behaviors = ImageBehaviors(cls.admin_images_client,
+                                                    cls.admin_servers_client,
+                                                    cls.images_config)
         cls.admin_servers_client.add_exception_handler(ExceptionHandler())
-
 
     @classmethod
     def tearDownClass(cls):
         super(ComputeAdminFixture, cls).tearDownClass()
         cls.flavors_client.delete_exception_handler(ExceptionHandler())
         cls.resources.release()
-
