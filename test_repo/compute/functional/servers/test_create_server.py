@@ -27,17 +27,21 @@ class CreateServerTest(ComputeFixture):
     @classmethod
     def setUpClass(cls):
         super(CreateServerTest, cls).setUpClass()
-        cls.name = rand_name("cctestserver")
+        cls.name = rand_name("server")
         cls.metadata = {'meta_key_1': 'meta_value_1',
                         'meta_key_2': 'meta_value_2'}
-        cls.create_resp = cls.servers_client.create_server(cls.name, cls.image_ref, cls.flavor_ref,
-                                                           metadata=cls.metadata)
+        cls.create_resp = cls.servers_client.create_server(
+            cls.name, cls.image_ref, cls.flavor_ref,
+            metadata=cls.metadata)
         created_server = cls.create_resp.entity
-        wait_response = cls.server_behaviors.wait_for_server_status(created_server.id,
-                                                                    NovaServerStatusTypes.ACTIVE)
+        cls.resources.add(created_server.id,
+                          cls.servers_client.delete_server)
+        wait_response = cls.server_behaviors.wait_for_server_status(
+            created_server.id, NovaServerStatusTypes.ACTIVE)
         wait_response.entity.admin_pass = created_server.admin_pass
         cls.image = cls.images_client.get_image(cls.image_ref).entity
-        cls.flavor = cls.flavors_client.get_flavor_details(cls.flavor_ref).entity
+        cls.flavor = cls.flavors_client.get_flavor_details(
+            cls.flavor_ref).entity
         cls.server = wait_response.entity
 
     @classmethod
@@ -70,68 +74,94 @@ class CreateServerTest(ComputeFixture):
                          msg=message.format('flavor id', self.flavor_ref,
                                             self.server.flavor.id))
         self.assertTrue(self.server.created is not None,
-                        msg="Expected server created date to be set, was null.")
+                        msg="Expected server created date to be set")
         self.assertTrue(self.server.updated is not None,
-                        msg="Expected server updated date to be set, was null.")
+                        msg="Expected server updated date to be set.")
         self.assertGreaterEqual(self.server.updated, self.server.created,
-                                msg="Expected server updated date to be before the created date.")
+                                msg='Expected server updated date to be'
+                                    'before the created date.')
 
     @tags(type='smoke', net='no')
     def test_server_access_addresses(self):
-        """If the server has public addresses, the access IP addresses should be same as the public addresses"""
+        """
+        If the server has public addresses, the access IP addresses
+        should be same as the public addresses
+        """
         addresses = self.server.addresses
         if addresses.public is not None:
-            self.assertTrue(addresses.public.ipv4 is not None,
-                            msg="Expected server to have a public IPv4 address set.")
-            self.assertTrue(addresses.public.ipv6 is not None,
-                            msg="Expected server to have a public IPv6 address set.")
-            self.assertTrue(addresses.private.ipv4 is not None,
-                            msg="Expected server to have a private IPv4 address set.")
-            self.assertEqual(addresses.public.ipv4, self.server.accessIPv4,
-                             msg="Expected access IPv4 address to be {0}, was {1}.".format(
-                                 addresses.public.ipv4, self.server.accessIPv4))
-            self.assertEqual(addresses.public.ipv6, self.server.accessIPv6,
-                             msg="Expected access IPv6 address to be {0}, was {1}.".format(
-                                 addresses.public.ipv6, self.server.accessIPv6))
+            self.assertTrue(
+                addresses.public.ipv4 is not None,
+                msg="Expected server to have a public IPv4 address set.")
+            self.assertTrue(
+                addresses.public.ipv6 is not None,
+                msg="Expected server to have a public IPv6 address set.")
+            self.assertTrue(
+                addresses.private.ipv4 is not None,
+                msg="Expected server to have a private IPv4 address set.")
+            self.assertEqual(
+                addresses.public.ipv4, self.server.accessIPv4,
+                msg="Expected access IPv4 address to be {0}, was {1}.".format(
+                    addresses.public.ipv4, self.server.accessIPv4))
+            self.assertEqual(
+                addresses.public.ipv6, self.server.accessIPv6,
+                msg="Expected access IPv6 address to be {0}, was {1}.".format(
+                    addresses.public.ipv6, self.server.accessIPv6))
 
     @tags(type='smoke', net='yes')
     def test_created_server_vcpus(self):
-        """Verify the number of vCPUs reported matches the amount set by the flavor"""
+        """
+        Verify the number of vCPUs reported matches the amount set
+        by the flavor
+        """
 
-        remote_client = self.server_behaviors.get_remote_instance_client(self.server,
-                                                                         self.servers_config)
+        remote_client = self.server_behaviors.get_remote_instance_client(
+            self.server, self.servers_config)
         server_actual_vcpus = remote_client.get_number_of_vcpus()
-        self.assertEqual(server_actual_vcpus, self.flavor.vcpus,
-                         msg="Expected number of vcpus to be {0}, was {1}.".format(
-                             self.flavor.vcpus, server_actual_vcpus))
+        self.assertEqual(
+            server_actual_vcpus, self.flavor.vcpus,
+            msg="Expected number of vcpus to be {0}, was {1}.".format(
+                self.flavor.vcpus, server_actual_vcpus))
 
     @tags(type='smoke', net='yes')
     def test_created_server_disk_size(self):
-        """Verify the size of the virtual disk matches the size set by the flavor"""
-        remote_client = self.server_behaviors.get_remote_instance_client(self.server,
-                                                                         self.servers_config)
-        disk_size = remote_client.get_disk_size_in_gb(self.servers_config.instance_disk_path)
+        """
+        Verify the size of the virtual disk matches the size
+        set by the flavor
+        """
+        remote_client = self.server_behaviors.get_remote_instance_client(
+            self.server, self.servers_config)
+        disk_size = remote_client.get_disk_size_in_gb(
+            self.servers_config.instance_disk_path)
         self.assertEqual(disk_size, self.flavor.disk,
                          msg="Expected disk to be {0} GB, was {1} GB".format(
                              self.flavor.disk, disk_size))
 
     @tags(type='smoke', net='yes')
     def test_created_server_ram(self):
-        """The server's RAM and should be set to the amount specified in the flavor"""
+        """
+        The server's RAM and should be set to the amount specified
+        in the flavor
+        """
 
-        remote_instance = self.server_behaviors.get_remote_instance_client(self.server,
-                                                                           self.servers_config)
+        remote_instance = self.server_behaviors.get_remote_instance_client(
+            self.server, self.servers_config)
         lower_limit = int(self.flavor.ram) - (int(self.flavor.ram) * .1)
         server_ram_size = int(remote_instance.get_ram_size_in_mb())
-        self.assertTrue(int(self.flavor.ram) == server_ram_size or lower_limit <= server_ram_size,
-                        msg="Ram size after confirm-resize did not match. Expected ram size : %s, Actual ram size : %s" %
-                            (self.flavor.ram, server_ram_size))
+        self.assertTrue(
+            (int(self.flavor.ram) == server_ram_size
+             or lower_limit <= server_ram_size),
+            msg='Ram size after confirm-resize did not match.'
+                'Expected ram size : %s, Actual ram size : %s'.format(
+                self.flavor.ram, server_ram_size))
 
     @tags(type='smoke', net='yes')
     def test_created_server_hostname(self):
-        """Verify that the hostname of the server is the same as the server name"""
-        remote_client = self.server_behaviors.get_remote_instance_client(self.server,
-                                                                         self.servers_config)
+        """
+        Verify that the hostname of the server is the same as
+        the server name
+        """
+        remote_client = self.server_behaviors.get_remote_instance_client(
+            self.server, self.servers_config)
         hostname = remote_client.get_hostname()
         self.assertEqual(hostname, self.name,
                          msg="Expected hostname to be {0}, was {1}".format(
@@ -140,7 +170,7 @@ class CreateServerTest(ComputeFixture):
     @tags(type='smoke', net='yes')
     def test_can_log_into_created_server(self):
         """Tests that we can log into the created server"""
-        remote_client = self.server_behaviors.get_remote_instance_client(self.server,
-                                                                         self.servers_config)
+        remote_client = self.server_behaviors.get_remote_instance_client(
+            self.server, self.servers_config)
         self.assertTrue(remote_client.can_connect_to_public_ip(),
                         msg="Cannot connect to server using public ip")
