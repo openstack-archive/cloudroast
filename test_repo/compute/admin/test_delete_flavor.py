@@ -18,35 +18,32 @@ from random import randint
 
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.compute.common.datagen import rand_name
-from cloudcafe.compute.common.exceptions import ActionInProgress
+from cloudcafe.compute.common.exceptions import BadRequest, ItemNotFound
 from test_repo.compute.fixtures import ComputeAdminFixture
 
 
-class CreateFlavorTest(ComputeAdminFixture):
+class DeleteFlavorTest(ComputeAdminFixture):
 
     @classmethod
     def setUpClass(cls):
-        super(CreateFlavorTest, cls).setUpClass()
+        super(DeleteFlavorTest, cls).setUpClass()
         cls.flavor_name = rand_name('flavor')
         cls.flavor = cls.admin_flavors_client.create_flavor(
             name=cls.flavor_name, ram='64', vcpus='1', disk='10',
             is_public=True).entity
-
-    @classmethod
-    def tearDownClass(cls):
-        super(CreateFlavorTest, cls).tearDownClass()
         cls.admin_flavors_client.delete_flavor(cls.flavor.id)
 
     @tags(type='positive', net='no')
-    def test_create_server_from_new_flavor(self):
-        resp = self.server_behaviors.create_active_server(
-            flavor_ref=self.flavor.id)
-        server = resp.entity
-        self.resources.add(server.id, self.servers_client.delete_server)
+    def test_get_deleted_flavor(self):
+        self.admin_flavors_client.get_flavor_details(self.flavor.id)
 
     @tags(type='negative', net='no')
-    def test_create_flavor_with_duplicate_id(self):
-        with self.assertRaises(ActionInProgress):
-            self.admin_flavors_client.create_flavor(
-                name=self.flavor_name, ram='64', vcpus='1', disk='10',
-                id=self.flavor.id, is_public=True)
+    def test_create_server_from_deleted_flavor(self):
+        with self.assertRaises(BadRequest):
+            self.server_behaviors.create_active_server(
+                flavor_ref=self.flavor.id)
+
+    @tags(type='negative', net='no')
+    def test_delete_deleted_flavor_fails(self):
+        with self.assertRaises(ItemNotFound):
+            self.admin_flavors_client.delete_flavor(self.flavor.id)
