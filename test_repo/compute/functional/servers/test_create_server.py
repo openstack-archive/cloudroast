@@ -30,9 +30,12 @@ class CreateServerTest(ComputeFixture):
         cls.name = rand_name("server")
         cls.metadata = {'meta_key_1': 'meta_value_1',
                         'meta_key_2': 'meta_value_2'}
+        cls.file_contents = 'This is a test file.'
+        files = [{'path': '/root/test.txt', 'contents': base64.b64encode(
+            cls.file_contents)}]
         cls.create_resp = cls.servers_client.create_server(
             cls.name, cls.image_ref, cls.flavor_ref,
-            metadata=cls.metadata)
+            metadata=cls.metadata, personality=files)
         created_server = cls.create_resp.entity
         cls.resources.add(created_server.id,
                           cls.servers_client.delete_server)
@@ -79,7 +82,7 @@ class CreateServerTest(ComputeFixture):
                         msg="Expected server updated date to be set.")
         self.assertGreaterEqual(self.server.updated, self.server.created,
                                 msg='Expected server updated date to be'
-                                    'before the created date.')
+                                    'after the created date.')
 
     @tags(type='smoke', net='no')
     def test_server_access_addresses(self):
@@ -150,7 +153,7 @@ class CreateServerTest(ComputeFixture):
         self.assertTrue(
             (int(self.flavor.ram) == server_ram_size
              or lower_limit <= server_ram_size),
-            msg='Ram size after confirm-resize did not match.'
+            msg='Unexpected ram size.'
                 'Expected ram size : %s, Actual ram size : %s'.format(
                 self.flavor.ram, server_ram_size))
 
@@ -169,8 +172,34 @@ class CreateServerTest(ComputeFixture):
 
     @tags(type='smoke', net='yes')
     def test_can_log_into_created_server(self):
-        """Tests that we can log into the created server"""
+        """Validate that the server instance can be accessed"""
         remote_client = self.server_behaviors.get_remote_instance_client(
             self.server, self.servers_config)
         self.assertTrue(remote_client.can_connect_to_public_ip(),
                         msg="Cannot connect to server using public ip")
+
+    @tags(type='smoke', net='yes')
+    def test_personality_file_created(self):
+        """
+        Validate the injected file was created on the server with
+        the correct contents
+        """
+
+        remote_client = self.server_behaviors.get_remote_instance_client(
+            self.server, self.servers_config)
+        self.assertTrue(remote_client.is_file_present('/root/test.txt'))
+        self.assertEqual(
+            remote_client.get_file_details('/root/test.txt').content,
+            self.file_contents)
+
+    @tags(type='smoke', net='no')
+    def test_created_server_metadata(self):
+        """Verify the provided metadata was set for the server"""
+
+        # Verify the metadata items were added to the server
+        self.assertTrue(hasattr(self.server.metadata, 'meta_key_1'))
+        self.assertTrue(hasattr(self.server.metadata, 'meta_key_2'))
+
+        # Verify the values of the metadata items are correct
+        self.assertEqual(self.server.metadata.meta_key_1, 'meta_value_1')
+        self.assertEqual(self.server.metadata.meta_key_2, 'meta_value_2')
