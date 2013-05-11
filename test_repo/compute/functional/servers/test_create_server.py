@@ -31,7 +31,7 @@ class CreateServerTest(ComputeFixture):
         cls.metadata = {'meta_key_1': 'meta_value_1',
                         'meta_key_2': 'meta_value_2'}
         cls.file_contents = 'This is a test file.'
-        files = [{'path': '/root/test.txt', 'contents': base64.b64encode(
+        files = [{'path': '/test.txt', 'contents': base64.b64encode(
             cls.file_contents)}]
         cls.create_resp = cls.servers_client.create_server(
             cls.name, cls.image_ref, cls.flavor_ref,
@@ -187,9 +187,9 @@ class CreateServerTest(ComputeFixture):
 
         remote_client = self.server_behaviors.get_remote_instance_client(
             self.server, self.servers_config)
-        self.assertTrue(remote_client.is_file_present('/root/test.txt'))
+        self.assertTrue(remote_client.is_file_present('/test.txt'))
         self.assertEqual(
-            remote_client.get_file_details('/root/test.txt').content,
+            remote_client.get_file_details('/test.txt').content,
             self.file_contents)
 
     @tags(type='smoke', net='no')
