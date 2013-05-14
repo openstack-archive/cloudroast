@@ -29,9 +29,11 @@ class CreateImageTest(CreateServerFixture):
         cls.server = cls.server_response.entity
 
         cls.image_name = rand_name('image')
+        cls.metadata = {'key1': 'value1',
+                        'key2': 'value2'}
         server_id = cls.server.id
         cls.image_response = cls.servers_client.create_image(
-            server_id, cls.image_name)
+            server_id, cls.image_name, metadata=cls.metadata)
         cls.image_id = cls.parse_image_id(cls.image_response)
         cls.resources.add(cls.image_id, cls.images_client.delete_image)
         cls.image_behaviors.wait_for_image_status(
@@ -66,6 +68,22 @@ class CreateImageTest(CreateServerFixture):
         self.assertTrue(self.image.updated is not None)
         self.assertGreaterEqual(self.image.updated, self.image.created)
 
+    def test_image_provided_metadata(self):
+        """Verify the provided metadata was set for the image"""
+        for key, value in self.metadata.iteritems():
+            self.assertTrue(hasattr(self.image.metadata, key))
+            self.assertEqual(getattr(self.image.metadata, key), value)
+
+    def test_image_inherited_metadata(self):
+        """
+        Verify the metadata of the parent image was transferred
+        to the new image
+        """
+        original_image = self.images_client.get_image(self.image_ref).entity
+        for key, value in original_image.metadata.__dict__.iteritems():
+            self.assertTrue(hasattr(self.image.metadata, key))
+            self.assertEqual(getattr(self.image.metadata, key), value)
+
     @tags(type='positive', net='no')
     def test_can_create_server_from_image(self):
         """Verify that a new server can be created from the image."""
@@ -74,4 +92,3 @@ class CreateImageTest(CreateServerFixture):
         self.resources.add(
             server.id, self.servers_client.delete_server)
         self.assertEqual(server.image.id, self.image_id)
-
