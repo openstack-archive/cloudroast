@@ -14,12 +14,22 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import unittest2 as unittest
+
 from cafe.drivers.unittest.decorators import tags
+from cloudcafe.compute.common.types import ComputeHypervisors
 from cloudcafe.compute.common.types import NovaServerStatusTypes as \
     ServerStates
+from cloudcafe.compute.config import ComputeConfig
 from test_repo.compute.fixtures import CreateServerFixture
 
+compute_config = ComputeConfig()
+hypervisor = compute_config.hypervisor.lower()
 
+
+@unittest.skipIf(hypervisor in [ComputeHypervisors.KVM,
+                                ComputeHypervisors.QEMU],
+                 'Change password not supported in current configuration.')
 class ChangeServerPasswordTests(CreateServerFixture):
 
     @classmethod
@@ -49,14 +59,15 @@ class ChangeServerPasswordTests(CreateServerFixture):
         # Get server details
         server = self.servers_client.get_server(self.server.id).entity
 
-        # Set the server's adminPass attribute to the new password,vas this field is not set in getServer
+        # Set the server's admin_pass attribute to the new password
         server.admin_pass = self.new_password
 
         public_address = self.server_behaviors.get_public_ip_address(server)
         # Get an instance of the remote client
-        remote_client = self.server_behaviors.get_remote_instance_client(server,
-                                                                         config=self.servers_config)
+        remote_client = self.server_behaviors.get_remote_instance_client(
+            server, config=self.servers_config)
 
-        self.assertTrue(remote_client.can_connect_to_public_ip(),
-                        "Could not connect to server (%s) using new admin password %s" %
-                        (public_address, self.new_password))
+        self.assertTrue(
+            remote_client.can_connect_to_public_ip(),
+            "Could not connect to server (%s) using new admin password %s" %
+            (public_address, self.new_password))
