@@ -38,3 +38,14 @@ class HostsAdminTest(ComputeAdminFixture):
                 return
         self.fail("The expected host: %s"
                   " is not found in hosts list." % HostServiceTypes.COMPUTE)
+
+    @tags(type='smoke', net='no')
+    def test_get_host(self):
+        hosts = self.admin_hosts_client.list_hosts().entity
+        host_name = hosts[0].host_name
+        host = self.admin_hosts_client.get_host(host_name).entity
+        self.assertTrue(len(host.resources) > 0,
+                        "The resources list is empty.")
+        for resource in host.resources:
+            self.assertEqual(resource.host, host_name,
+                             "Resource is not mapped to host %s." % host_name)
