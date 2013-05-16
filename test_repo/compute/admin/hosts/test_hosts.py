@@ -13,10 +13,15 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
+import unittest2 as unittest
 
 from cafe.drivers.unittest.decorators import tags
-from cloudcafe.compute.common.types import HostServiceTypes
+from cloudcafe.compute.common.types import HostServiceTypes, ComputeHypervisors
+from cloudcafe.compute.config import ComputeConfig
 from test_repo.compute.fixtures import ComputeAdminFixture
+
+compute_config = ComputeConfig()
+hypervisor = compute_config.hypervisor.lower()
 
 
 class HostsAdminTest(ComputeAdminFixture):
@@ -24,6 +29,7 @@ class HostsAdminTest(ComputeAdminFixture):
     @classmethod
     def setUpClass(cls):
         super(HostsAdminTest, cls).setUpClass()
+        cls.hosts = cls.admin_hosts_client.list_hosts().entity
 
     @classmethod
     def tearDownClass(cls):
@@ -31,9 +37,8 @@ class HostsAdminTest(ComputeAdminFixture):
 
     @tags(type='smoke', net='no')
     def test_list_hosts(self):
-        hosts = self.admin_hosts_client.list_hosts().entity
-        self.assertTrue(len(hosts) > 0, "The hosts list is empty.")
-        for host in hosts:
+        self.assertTrue(len(self.hosts) > 0, "The hosts list is empty.")
+        for host in self.hosts:
             if host.service == HostServiceTypes.COMPUTE:
                 return
         self.fail("The expected host: %s"
@@ -41,11 +46,11 @@ class HostsAdminTest(ComputeAdminFixture):
 
     @tags(type='smoke', net='no')
     def test_get_host(self):
-        hosts = self.admin_hosts_client.list_hosts().entity
-        host_name = hosts[0].host_name
+        host_name = self.hosts[0].host_name
         host = self.admin_hosts_client.get_host(host_name).entity
         self.assertTrue(len(host.resources) > 0,
                         "The resources list is empty.")
         for resource in host.resources:
             self.assertEqual(resource.host, host_name,
                              "Resource is not mapped to host %s." % host_name)
+
