@@ -240,6 +240,9 @@ class ComputeAdminFixture(ComputeFixture):
                                              'json', 'json')
         cls.admin_quotas_client = QuotasClient(url, access_data.token.id_,
                                                'json', 'json')
+        cls.admin_hypervisors_client = HypervisorsClient(url,
+                                                         access_data.token.id_,
+                                                         'json', 'json')
         cls.admin_servers_client.add_exception_handler(ExceptionHandler())
 
     @classmethod
