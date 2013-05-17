@@ -28,6 +28,7 @@ from cloudcafe.compute.flavors_api.client import FlavorsClient
 from cloudcafe.compute.servers_api.client import ServersClient
 from cloudcafe.compute.images_api.client import ImagesClient
 from cloudcafe.compute.hosts_api.client import HostsClient
+from cloudcafe.compute.hypervisors_api.client import HypervisorsClient
 from cloudcafe.compute.extensions.keypairs_api.client import KeypairsClient
 from cloudcafe.compute.extensions.security_groups_api.client import \
     SecurityGroupsClient
@@ -214,6 +215,8 @@ class ComputeAdminFixture(ComputeFixture):
                                                     cls.images_config)
         cls.admin_hosts_client = HostsClient(url, access_data.token.id_,
                                              'json', 'json')
+        cls.admin_hypervisors_client = HypervisorsClient(url, access_data.token.id_,
+                                                         'xml', 'xml')
         cls.admin_servers_client.add_exception_handler(ExceptionHandler())
 
     @classmethod
