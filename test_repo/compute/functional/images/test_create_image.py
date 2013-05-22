@@ -81,8 +81,14 @@ class CreateImageTest(CreateServerFixture):
         """
         original_image = self.images_client.get_image(self.image_ref).entity
         for key, value in original_image.metadata.__dict__.iteritems():
-            self.assertTrue(hasattr(self.image.metadata, key))
-            self.assertEqual(getattr(self.image.metadata, key), value)
+            # The image_type field should be the only field that differs
+            # from the original image
+            if key != 'image_type':
+                self.assertTrue(hasattr(self.image.metadata, key))
+                self.assertEqual(getattr(self.image.metadata, key), value)
+            else:
+                # Then its image type should be 'snapshot'
+                self.assertEqual(getattr(self.image.metadata, key), 'snapshot')
 
     @tags(type='positive', net='no')
     def test_can_create_server_from_image(self):
