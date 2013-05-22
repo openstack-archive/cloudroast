@@ -15,6 +15,7 @@ limitations under the License.
 """
 
 import base64
+import unittest2 as unittest
 
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.compute.common.types import NovaServerStatusTypes
@@ -131,6 +132,7 @@ class RebuildServerTests(ComputeFixture):
                             (self.flavor.ram, server_ram_size))
 
     @tags(type='smoke', net='yes')
+    @unittest.skip("Known issue")
     def test_personality_file_created_on_rebuild(self):
         """
         Validate the injected file was created on the rebuilt server with
