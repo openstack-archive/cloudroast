@@ -37,7 +37,7 @@ class RebuildServerTests(ComputeFixture):
         cls.file_contents = 'Test server rebuild.'
         personality = [{'path': '/rebuild.txt',
                         'contents': base64.b64encode(cls.file_contents)}]
-        cls.password = 'rebuild'
+        cls.password = 'R3builds3ver'
 
         cls.rebuilt_server_response = cls.servers_client.rebuild(
             cls.server.id, cls.image_ref_alt, name=cls.name,
