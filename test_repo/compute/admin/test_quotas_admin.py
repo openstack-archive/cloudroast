@@ -49,3 +49,18 @@ class QuotasAdminTest(ComputeAdminFixture):
         quota = self.admin_quotas_client.\
             get_quota(self.tenant_id).entity
         self.assertEqual(quota.instances, 20)
+
+    @tags(type='smoke', net='no')
+    def test_delete_quota(self):
+        self.admin_quotas_client.\
+            update_quota(self.tenant_id, instances=20)
+        quota = self.admin_quotas_client.\
+            get_quota(self.tenant_id).entity
+        self.assertEqual(quota.instances, 20)
+
+        self.admin_quotas_client.delete_quota(self.tenant_id)
+        quota = self.admin_quotas_client.\
+            get_quota(self.tenant_id).entity
+        self.assertEqual(quota.instances, self.default_quota_set.instances,
+                         "Instances in quota set is not equal to"
+                         " the default value.")
