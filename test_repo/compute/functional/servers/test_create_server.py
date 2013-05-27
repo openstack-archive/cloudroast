@@ -203,3 +203,21 @@ class CreateServerTest(ComputeFixture):
         # Verify the values of the metadata items are correct
         self.assertEqual(self.server.metadata.meta_key_1, 'meta_value_1')
         self.assertEqual(self.server.metadata.meta_key_2, 'meta_value_2')
+
+    @tags(type='smoke', net='no')
+    def test_created_server_instance_actions(self):
+        """Verify the correct actions are logged while creating a server."""
+
+        actions = self.servers_client.get_instance_actions(
+            self.server.id).entity
+
+        # Verify the create action is listed
+        self.assertTrue(any(a.action == 'create' for a in actions))
+        filtered_actions = [a for a in actions if a.action == 'create']
+        self.assertEquals(len(filtered_actions), 1)
+
+        create_action = filtered_actions[0]
+        self.validate_instance_action(
+            create_action, self.server.id, self.user_config.user_id,
+            self.user_config.tenant_id,
+            self.create_resp.headers['x-compute-request-id'])
