@@ -63,9 +63,9 @@ class ComputeFixture(BaseTestFixture):
         cls.disk_path = cls.servers_config.instance_disk_path
 
         cls.endpoint_config = UserAuthConfig()
-        user_config = UserConfig()
+        cls.user_config = UserConfig()
         access_data = AuthProvider.get_access_data(cls.endpoint_config,
-                                                   user_config)
+                                                   cls.user_config)
 
         compute_service = access_data.get_service(
             cls.compute_endpoint.compute_endpoint_name)
@@ -110,6 +110,29 @@ class ComputeFixture(BaseTestFixture):
         """
         image_ref = image_response.headers['location']
         return image_ref.rsplit('/')[-1]
+
+    def validate_instance_action(self, action, server_id,
+                                 user_id, project_id, request_id):
+        message = "Expected {0} to be {1}, was {2}."
+
+        self.assertEqual(action.instance_uuid, server_id,
+                         msg=message.format('instance id',
+                                            action.instance_uuid,
+                                            server_id))
+        self.assertEqual(action.user_id, user_id,
+                         msg=message.format('user id',
+                                            action.user_id,
+                                            user_id))
+        self.assertEqual(action.project_id, project_id,
+                         msg=message.format('project id',
+                                            action.project_id,
+                                            project_id))
+        self.assertIsNotNone(action.start_time)
+        self.assertEquals(action.request_id, request_id,
+                          msg=message.format('request id',
+                                             action.request_id,
+                                             request_id))
+        self.assertIsNone(action.message)
 
 
 class CreateServerFixture(ComputeFixture):

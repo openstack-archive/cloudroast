@@ -71,3 +71,26 @@ class ChangeServerPasswordTests(CreateServerFixture):
             remote_client.can_connect_to_public_ip(),
             "Could not connect to server (%s) using new admin password %s" %
             (public_address, self.new_password))
+
+    @tags(type='smoke', net='no')
+    @unittest.skip("lp1183712")
+    def test_password_changed_server_instance_actions(self):
+        """
+        Verify the correct actions are logged during a password change.
+        """
+
+        actions = self.servers_client.get_instance_actions(
+            self.server.id).entity
+
+        # Verify the change password action is listed
+        self.assertTrue(any(a.action == 'changePassword' for a in actions))
+        filtered_actions = [a for a in actions
+                            if a.action == 'changePassword']
+        self.assertEquals(len(filtered_actions), 1)
+
+        password_action = filtered_actions[0]
+        self.validate_instance_action(
+            password_action, self.server.id, self.user_config.user_id,
+            self.user_config.tenant_id,
+            self.resp.headers['x-compute-request-id'])
+
