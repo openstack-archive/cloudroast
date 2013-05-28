@@ -14,6 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import unittest2 as unittest
+
 from cafe.drivers.unittest.decorators import tags
 from test_repo.compute.fixtures import ComputeFixture
 
@@ -263,6 +265,7 @@ class ServerListTest(ComputeFixture):
                         msg="Server with id %s was not found in the list" % self.server_third.id)
 
     @tags(type='positive', net='no')
+    @unittest.skip("Known issue")
     def test_list_servers_detailed_filter_by_changes_since(self):
         """Create a filter for the server with the second server created date"""
         change_time = self.server_second.created
