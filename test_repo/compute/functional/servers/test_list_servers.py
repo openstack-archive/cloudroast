@@ -265,7 +265,6 @@ class ServerListTest(ComputeFixture):
                         msg="Server with id %s was not found in the list" % self.server_third.id)
 
     @tags(type='positive', net='no')
-    @unittest.skip("Known issue")
     def test_list_servers_detailed_filter_by_changes_since(self):
         """Create a filter for the server with the second server created date"""
         change_time = self.server_second.created
