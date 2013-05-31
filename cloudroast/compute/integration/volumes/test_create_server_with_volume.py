@@ -17,6 +17,7 @@ limitations under the License.
 from unittest2.suite import TestSuite
 
 from cafe.drivers.unittest.decorators import tags
+from cloudcafe.blockstorage.v1.volumes_api.models import statuses
 from cloudroast.compute.fixtures import BlockstorageIntegrationFixture
 
 
@@ -37,11 +38,11 @@ class CreateServerVolumeIntegrationTest(BlockstorageIntegrationFixture):
         cls.server = cls.server_behaviors.create_active_server().entity
         cls.resources.add(cls.server.id,
                           cls.servers_client.delete_server)
-        cls.volume = cls.storage_behavior.create_available_volume(
+        cls.volume = cls.blockstorage_behavior.create_available_volume(
             'test-volume', cls.volume_size, cls.volume_type,
             timeout=cls.volume_status_timeout)
         cls.resources.add(cls.volume.id_,
-                          cls.storage_client.delete_volume)
+                          cls.blockstorage_client.delete_volume)
         cls.device = '/dev/xvdm'
         cls.mount_directory = '/mnt/test'
         cls.filesystem_type = 'ext3'
@@ -50,8 +51,8 @@ class CreateServerVolumeIntegrationTest(BlockstorageIntegrationFixture):
     def tearDownClass(cls):
         cls.volume_attachments_client.delete_volume_attachment(
             cls.volume.id_, cls.server.id)
-        cls.storage_behavior.wait_for_volume_status(
-            cls.volume.id_, 'available',
+        cls.blockstorage_behavior.wait_for_volume_status(
+            cls.volume.id_, statuses.Volume.AVAILABLE,
             timeout=cls.volume_status_timeout,
             wait_period=cls.poll_frequency)
         super(CreateServerVolumeIntegrationTest, cls).tearDownClass()
@@ -61,8 +62,8 @@ class CreateServerVolumeIntegrationTest(BlockstorageIntegrationFixture):
         """Verify that a volume can be attached to a server."""
         self.volume_attachments_client.attach_volume(
             self.server.id, self.volume.id_, device=self.device)
-        self.storage_behavior.wait_for_volume_status(
-            self.volume.id_, 'in-use',
+        self.blockstorage_behavior.wait_for_volume_status(
+            self.volume.id_, statuses.Volume.IN_USE,
             timeout=self.volume_status_timeout,
             wait_period=self.poll_frequency)
 

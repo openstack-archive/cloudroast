@@ -54,7 +54,7 @@ from cloudcafe.auth.provider import AuthProvider
 from cloudcafe.compute.flavors_api.config import FlavorsConfig
 from cloudcafe.compute.images_api.config import ImagesConfig
 from cloudcafe.compute.servers_api.config import ServersConfig
-from cloudcafe.compute.volume_attachments_api.volume_attachments_client \
+from cloudcafe.compute.volume_attachments_api.client \
     import VolumeAttachmentsAPIClient
 
 
@@ -264,7 +264,7 @@ class BlockstorageIntegrationFixture(ComputeFixture):
         block_config = BlockStorageConfig()
         volumes_config = VolumesAPIConfig()
         cls.poll_frequency = volumes_config.volume_status_poll_frequency
-        cls.volume_status_timeout = volumes_config.volume_create_max_timeout
+        cls.volume_status_timeout = volumes_config.volume_create_timeout
         cls.volume_size = int(volumes_config.min_volume_size)
         cls.volume_type = volumes_config.default_volume_type
 
@@ -272,11 +272,11 @@ class BlockstorageIntegrationFixture(ComputeFixture):
             block_config.identity_service_name)
         block_url = block_service.get_endpoint(
             block_config.region).public_url
-        cls.storage_client = VolumesClient(
+        cls.blockstorage_client = VolumesClient(
             block_url, cls.access_data.token.id_,
             cls.marshalling.serializer, cls.marshalling.deserializer)
-        cls.storage_behavior = VolumesAPI_Behaviors(
-            volumes_api_client=cls.storage_client,
+        cls.blockstorage_behavior = VolumesAPI_Behaviors(
+            volumes_api_client=cls.blockstorage_client,
             volumes_api_config=volumes_config)
 
 
