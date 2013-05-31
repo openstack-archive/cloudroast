@@ -19,6 +19,7 @@ from unittest2.suite import TestSuite
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.compute.common.types import NovaServerStatusTypes
 from cloudcafe.common.tools.datagen import rand_name
+from cloudcafe.blockstorage.v1.volumes_api.models import statuses
 from cloudroast.compute.fixtures import BlockstorageIntegrationFixture
 
 
@@ -47,15 +48,15 @@ class RebuildServerVolumeIntegrationTest(BlockstorageIntegrationFixture):
         response = cls.flavors_client.get_flavor_details(cls.flavor_ref)
         cls.flavor = response.entity
         cls.resources.add(cls.server.id, cls.servers_client.delete_server)
-        cls.volume = cls.storage_behavior.create_available_volume(
+        cls.volume = cls.blockstorage_behavior.create_available_volume(
             'test-volume', cls.volume_size, cls.volume_type,
             timeout=cls.volume_status_timeout)
         cls.resources.add(cls.volume.id_,
-                          cls.storage_client.delete_volume)
+                          cls.blockstorage_client.delete_volume)
         cls.volume_attachments_client.attach_volume(
             cls.server.id, cls.volume.id_)
-        cls.storage_behavior.wait_for_volume_status(
-            cls.volume.id_, 'in-use',
+        cls.blockstorage_behavior.wait_for_volume_status(
+            cls.volume.id_, statuses.Volume.IN_USE,
             timeout=cls.volume_status_timeout,
             wait_period=cls.poll_frequency)
 
