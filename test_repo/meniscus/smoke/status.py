@@ -21,6 +21,7 @@ class TestStatus(StatusFixture):
     def setUp(self):
         super(TestStatus, self).setUp()
         self.pairing_resp = self.pairing_behaviors.pair_worker_from_config()
+        self.assertEqual(self.pairing_resp.status_code, 202)
         self.pairing_info = self.pairing_resp.entity
 
     def get_worker_entity(self):
