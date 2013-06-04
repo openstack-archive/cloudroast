@@ -14,6 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import unittest2 as unittest
+
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.compute.common.types import NovaServerStatusTypes
 from test_repo.compute.fixtures import ComputeFixture
@@ -29,11 +31,13 @@ class ResizeServerUpRevertTests(ComputeFixture):
         cls.resources.add(server_to_resize.id, cls.servers_client.delete_server)
 
         # resize server and confirm
-        cls.servers_client.resize(server_to_resize.id, cls.flavor_ref_alt)
+        cls.resize_resp = cls.servers_client.resize(
+            server_to_resize.id, cls.flavor_ref_alt)
         cls.server_behaviors.wait_for_server_status(server_to_resize.id,
                                                     NovaServerStatusTypes.VERIFY_RESIZE)
 
-        cls.servers_client.revert_resize(server_to_resize.id)
+        cls.revert_resize_resp = cls.servers_client.revert_resize(
+            server_to_resize.id)
         cls.server_behaviors.wait_for_server_status(server_to_resize.id,
                                                     NovaServerStatusTypes.ACTIVE)
         resized_server_response = cls.servers_client.get_server(server_to_resize.id)
@@ -89,3 +93,33 @@ class ResizeServerUpRevertTests(ComputeFixture):
         self.assertTrue(int(self.flavor.ram) == server_ram_size or lower_limit <= server_ram_size,
                         msg="Ram size after confirm-resize did not match. Expected ram size : %s, Actual ram size : %s" %
                             (self.flavor.ram, server_ram_size))
+
+    @tags(type='smoke', net='no')
+    @unittest.skip("lp1183712")
+    def test_resize_reverted_server_instance_actions(self):
+        """Verify the correct actions are logged during a resize revert."""
+
+        actions = self.servers_client.get_instance_actions(
+            self.server.id).entity
+
+        # Verify the resize action is listed
+        self.assertTrue(any(a.action == 'resize' for a in actions))
+        filtered_actions = [a for a in actions if a.action == 'resize']
+        self.assertEquals(len(filtered_actions), 1)
+
+        resize_action = filtered_actions[0]
+        self.validate_instance_action(
+            resize_action, self.server.id, self.user_config.user_id,
+            self.user_config.tenant_id,
+            self.resize_resp.headers['x-compute-request-id'])
+
+        # Verify the revert resize action is listed
+        self.assertTrue(any(a.action == 'revertResize' for a in actions))
+        filtered_actions = [a for a in actions if a.action == 'revertResize']
+        self.assertEquals(len(filtered_actions), 1)
+
+        resize_action = filtered_actions[0]
+        self.validate_instance_action(
+            resize_action, self.server.id, self.user_config.user_id,
+            self.user_config.tenant_id,
+            self.revert_resize_resp.headers['x-compute-request-id'])

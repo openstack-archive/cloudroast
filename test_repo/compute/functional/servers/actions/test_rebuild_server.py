@@ -156,3 +156,22 @@ class RebuildServerTests(ComputeFixture):
 
         # Verify the values of the metadata items are correct
         self.assertEqual(rebuilt_server.metadata.key, 'value')
+
+    @tags(type='smoke', net='no')
+    def test_rebuilt_server_instance_actions(self):
+        """Verify the correct actions are logged during a rebuild."""
+
+        actions = self.servers_client.get_instance_actions(
+            self.server.id).entity
+
+        # Verify the rebuild action is listed
+        self.assertTrue(any(a.action == 'rebuild' for a in actions))
+        filtered_actions = [a for a in actions if a.action == 'rebuild']
+        self.assertEquals(len(filtered_actions), 1)
+
+        rebuild_action = filtered_actions[0]
+        self.validate_instance_action(
+            rebuild_action, self.server.id, self.user_config.user_id,
+            self.user_config.tenant_id,
+            self.rebuilt_server_response.headers['x-compute-request-id'])
+
