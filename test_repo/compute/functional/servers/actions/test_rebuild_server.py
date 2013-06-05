@@ -18,12 +18,17 @@ import base64
 import unittest2 as unittest
 
 from cafe.drivers.unittest.decorators import tags
+from cloudcafe.compute.common.types import ComputeHypervisors
 from cloudcafe.compute.common.types import NovaServerStatusTypes
 from cloudcafe.compute.common.datagen import rand_name
+from cloudcafe.compute.config import ComputeConfig
 from test_repo.compute.fixtures import ComputeFixture
 
 
 class RebuildServerTests(ComputeFixture):
+
+    compute_config = ComputeConfig()
+    hypervisor = compute_config.hypervisor.lower()
 
     @classmethod
     def setUpClass(cls):
@@ -175,3 +180,15 @@ class RebuildServerTests(ComputeFixture):
             self.user_config.tenant_id,
             self.rebuilt_server_response.headers['x-compute-request-id'])
 
+    @tags(type='smoke', net='yes')
+    @unittest.skipUnless(
+        hypervisor == ComputeHypervisors.XEN_SERVER,
+        'Requires Xen Server.')
+    def test_rebuilt_server_xenstore_metadata(self):
+        """Verify the provided metadata was set for the server"""
+
+        remote_client = self.server_behaviors.get_remote_instance_client(
+            self.server, self.servers_config, password=self.password)
+        xen_meta = remote_client.get_xen_user_metadata()
+        for key, value in self.metadata.iteritems():
+            self.assertEqual(xen_meta[key], value)
