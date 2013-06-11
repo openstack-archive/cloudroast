@@ -29,6 +29,7 @@ from cloudcafe.compute.quotas_api.client import QuotasClient
 from cloudcafe.compute.servers_api.client import ServersClient
 from cloudcafe.compute.images_api.client import ImagesClient
 from cloudcafe.compute.hosts_api.client import HostsClient
+from cloudcafe.compute.hypervisors_api.client import HypervisorsClient
 from cloudcafe.compute.extensions.keypairs_api.client import KeypairsClient
 from cloudcafe.compute.extensions.security_groups_api.client import \
     SecurityGroupsClient
@@ -240,6 +241,9 @@ class ComputeAdminFixture(ComputeFixture):
                                              'json', 'json')
         cls.admin_quotas_client = QuotasClient(url, access_data.token.id_,
                                                'json', 'json')
+        cls.admin_hypervisors_client = HypervisorsClient(url,
+                                                         access_data.token.id_,
+                                                         'json', 'json')
         cls.admin_servers_client.add_exception_handler(ExceptionHandler())
 
     @classmethod
