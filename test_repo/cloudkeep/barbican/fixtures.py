@@ -15,8 +15,13 @@ limitations under the License.
 """
 from os import path
 from cafe.drivers.unittest.fixtures import BaseTestFixture
-from cloudcafe.cloudkeep.barbican.client import VersionClient
-from cloudcafe.cloudkeep.config import MarshallingConfig, CloudKeepConfig
+from cloudcafe.cloudkeep.barbican.version.client import VersionClient
+from cloudcafe.cloudkeep.barbican.secrets.client import SecretsClient
+from cloudcafe.cloudkeep.barbican.orders.client import OrdersClient
+from cloudcafe.cloudkeep.barbican.secrets.behaviors import SecretsBehaviors
+from cloudcafe.cloudkeep.barbican.orders.behaviors import OrdersBehavior
+from cloudcafe.cloudkeep.config import MarshallingConfig, CloudKeepConfig, \
+    CloudKeepSecretsConfig
 
 
 class BarbicanFixture(BaseTestFixture):
@@ -46,3 +51,48 @@ class VersionFixture(BarbicanFixture):
             url=cls.cloudkeep.base_url,
             serialize_format=cls.marshalling.serializer,
             deserialize_format=cls.marshalling.deserializer)
+
+
+class SecretsFixture(BarbicanFixture):
+
+    @classmethod
+    def setUpClass(cls):
+        super(SecretsFixture, cls).setUpClass()
+        cls.config = CloudKeepSecretsConfig()
+        cls.client = SecretsClient(
+            url=cls.cloudkeep.base_url,
+            api_version=cls.cloudkeep.api_version,
+            tenant_id=cls.cloudkeep.tenant_id,
+            serialize_format=cls.marshalling.serializer,
+            deserialize_format=cls.marshalling.deserializer)
+        cls.behaviors = SecretsBehaviors(client=cls.client, config=cls.config)
+
+    def tearDown(self):
+        self.behaviors.delete_all_created_secrets()
+        super(SecretsFixture, self).tearDown()
+
+
+class OrdersFixture(BarbicanFixture):
+    @classmethod
+    def setUpClass(cls):
+        super(OrdersFixture, cls).setUpClass()
+        cls.config = CloudKeepSecretsConfig()
+        cls.client = OrdersClient(
+            url=cls.cloudkeep.base_url,
+            api_version=cls.cloudkeep.api_version,
+            tenant_id=cls.cloudkeep.tenant_id,
+            serialize_format=cls.marshalling.serializer,
+            deserialize_format=cls.marshalling.deserializer)
+        cls.secrets_client = SecretsClient(
+            url=cls.cloudkeep.base_url,
+            api_version=cls.cloudkeep.api_version,
+            tenant_id=cls.cloudkeep.tenant_id,
+            serialize_format=cls.marshalling.serializer,
+            deserialize_format=cls.marshalling.deserializer)
+        cls.behaviors = OrdersBehavior(client=cls.client,
+                                       secrets_client=cls.secrets_client,
+                                       config=cls.config)
+
+    def tearDown(self):
+        self.behaviors.delete_all_created_orders_and_secrets()
+        super(OrdersFixture, self).tearDown()
