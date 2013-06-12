@@ -101,7 +101,7 @@ class CreateRegisterImagesTest(ImageV1Fixture):
             image_meta_container_format=ImageContainerFormat.BARE,
             image_meta_disk_format=ImageDiskFormat.RAW,
             image_meta_is_public=True,
-            image_meta_location='http://example.com/someimage.iso',
+            image_meta_location=self.remote_image,
             image_meta_property={'key1': 'value1',
                                  'key2': 'value2'})
 
@@ -111,6 +111,8 @@ class CreateRegisterImagesTest(ImageV1Fixture):
         self.assertIsNotNone(new_image.id_)
         self.assertEqual('New Remote Image', new_image.name)
         self.assertTrue(new_image.is_public)
+
+        self.behaviors.wait_for_image_status(new_image.id_, ImageStatus.ACTIVE)
         self.assertEqual('active', new_image.status)
 
         for key, value in properties.items():
@@ -123,8 +125,8 @@ class CreateRegisterImagesTest(ImageV1Fixture):
             image_meta_container_format=ImageContainerFormat.BARE,
             image_meta_disk_format=ImageDiskFormat.RAW,
             image_meta_is_public=True,
-            image_meta_location='http://download.cirros-cloud.net/0.3.1/'
-            'cirros-0.3.1-arm-uec.tar.gz')
+            image_meta_location=self.http_image
+        )
 
         new_image = response.entity
         self.resources.add(new_image.id_, self.api_client.delete_image)
