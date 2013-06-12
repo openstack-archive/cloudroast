@@ -15,30 +15,35 @@ limitations under the License.
 """
 
 from cafe.drivers.unittest.fixtures import BaseTestFixture
+from cloudcafe.images.config import ImagesConfig
+from cloudcafe.auth.provider import AuthProvider
+from cloudcafe.common.resources import ResourcePool
 from cloudcafe.images.v1_0.client import ImagesClient as ImagesV1Client
-from cloudcafe.images.v2_0.client import ImageClient as ImagesV2Client
+from cloudcafe.images.behaviors import ImageBehaviors
 
 
 class ImageFixture(BaseTestFixture):
     @classmethod
     def setUpClass(cls):
         super(ImageFixture, cls).setUpClass()
+        cls.config = ImagesConfig()
+        cls.resources = ResourcePool()
 
     @classmethod
     def tearDownClass(cls):
-        super(ImageFixture, cls).tearDownClass()
         cls.resources.release()
+        super(ImageFixture, cls).tearDownClass()
 
 
 class ImageV1Fixture(ImageFixture):
     @classmethod
     def setUpClass(cls):
-        super(ImageFixture, cls).setUpClass()
-        cls.api_client = ImagesV1Client()
+        super(ImageV1Fixture, cls).setUpClass()
+        access_data = AuthProvider().get_access_data()
+        images_endpoint = '{base_url}/{api_version}'.format(
+            base_url=cls.config.base_url,
+            api_version=cls.config.api_version)
 
-
-class ImageV2Fixture(ImageFixture):
-    @classmethod
-    def setUpClass(cls):
-        super(ImageFixture, cls).setUpClass()
-        cls.api_client = ImagesV2Client()
+        cls.api_client = ImagesV1Client(images_endpoint, access_data.token.id_,
+                                        'json', 'json')
+        cls.behaviors = ImageBehaviors(cls.api_client, cls.config)
