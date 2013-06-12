@@ -125,6 +125,8 @@ class CreateRegisterImagesTest(ImageV1Fixture):
         self.assertIsNotNone(new_image.id)
         self.assertEqual('New Remote Image', new_image.name)
         self.assertTrue(new_image.is_public)
+
+        self.behaviors.wait_for_image_status(new_image.id, ImageStatus.ACTIVE)
         self.assertEqual('active', new_image.status)
 
         for key, value in properties.items():
