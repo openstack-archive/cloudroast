@@ -17,6 +17,7 @@ limitations under the License.
 import time
 
 from cafe.drivers.unittest.decorators import tags
+from cloudcafe.compute.common.datagen import rand_name
 from cloudcafe.compute.common.types import NovaServerRebootTypes
 from test_repo.compute.fixtures import ComputeFixture
 
@@ -26,7 +27,8 @@ class RebootServerSoftTests(ComputeFixture):
     @classmethod
     def setUpClass(cls):
         super(RebootServerSoftTests, cls).setUpClass()
-        response = cls.server_behaviors.create_active_server()
+        cls.key = cls.keypairs_client.create_keypair(rand_name("key")).entity
+        response = cls.server_behaviors.create_active_server(key_name=cls.key.name)
         cls.server = response.entity
         cls.resources.add(cls.server.id, cls.servers_client.delete_server)
 
@@ -37,15 +39,14 @@ class RebootServerSoftTests(ComputeFixture):
     @tags(type='smoke', net='yes')
     def test_reboot_server_soft(self):
         """ The server should be signaled to reboot gracefully """
-        public_address = self.server_behaviors.get_public_ip_address(self.server)
-        remote_instance = self.server_behaviors.get_remote_instance_client(self.server,
-                                                                           config=self.servers_config)
+        remote_instance = self.server_behaviors.get_remote_instance_client(
+            self.server, config=self.servers_config, key=self.key.private_key)
         uptime_start = remote_instance.get_uptime()
         start = time.time()
 
         self.server_behaviors.reboot_and_await(self.server.id, NovaServerRebootTypes.SOFT)
-        remote_client = self.server_behaviors.get_remote_instance_client(self.server,
-                                                                         config=self.servers_config)
+        remote_client = self.server_behaviors.get_remote_instance_client(
+            self.server, config=self.servers_config, key=self.key.private_key)
         finish = time.time()
         uptime_post_reboot = remote_client.get_uptime()
         self.assertLess(uptime_post_reboot, (uptime_start + (finish - start)))

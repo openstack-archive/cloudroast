@@ -20,6 +20,7 @@ from cafe.drivers.unittest.decorators import tags
 from cloudcafe.compute.common.types import ComputeHypervisors
 from cloudcafe.compute.common.types import NovaServerStatusTypes as \
     ServerStates
+from cloudcafe.compute.common.types import InstanceAuthStrategies
 from cloudcafe.compute.config import ComputeConfig
 from test_repo.compute.fixtures import CreateServerFixture
 
@@ -65,7 +66,8 @@ class ChangeServerPasswordTests(CreateServerFixture):
         public_address = self.server_behaviors.get_public_ip_address(server)
         # Get an instance of the remote client
         remote_client = self.server_behaviors.get_remote_instance_client(
-            server, config=self.servers_config)
+            server, config=self.servers_config,
+            auth_strategy=InstanceAuthStrategies.PASSWORD)
 
         self.assertTrue(
             remote_client.can_connect_to_public_ip(),
