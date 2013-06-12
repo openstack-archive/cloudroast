@@ -102,7 +102,7 @@ class CreateRegisterImagesTest(ImageV1Fixture):
             image_meta_container_format=ImageContainerFormat.BARE,
             image_meta_disk_format=ImageDiskFormat.RAW,
             image_meta_is_public=True,
-            image_meta_location='http://example.com/someimage.iso',
+            image_meta_location=self.remote_image,
             image_meta_property={'key1': 'value1',
                                  'key2': 'value2'})
 
@@ -112,6 +112,8 @@ class CreateRegisterImagesTest(ImageV1Fixture):
         self.assertIsNotNone(new_image.id)
         self.assertEqual('New Remote Image', new_image.name)
         self.assertTrue(new_image.is_public)
+
+        self.behaviors.wait_for_image_status(new_image.id, ImageStatus.ACTIVE)
         self.assertEqual('active', new_image.status)
 
         for key, value in properties.items():
@@ -124,8 +126,8 @@ class CreateRegisterImagesTest(ImageV1Fixture):
             image_meta_container_format=ImageContainerFormat.BARE,
             image_meta_disk_format=ImageDiskFormat.RAW,
             image_meta_is_public=True,
-            image_meta_location='http://download.cirros-cloud.net/0.3.1/'
-            'cirros-0.3.1-arm-uec.tar.gz')
+            image_meta_location=self.http_image
+        )
 
         new_image = response.entity
         self.resources.add(new_image.id, self.api_client.delete_image)
@@ -160,3 +162,109 @@ class CreateRegisterImagesTest(ImageV1Fixture):
 
         for key, val in properties.items():
             self.assertEqual(val, new_image.properties.get(key))
+
+
+class ListImagesTest(ImageV1Fixture):
+    """
+        Test the listing of image information
+    """
+
+    @tags(type='positive', net='no')
+    def test_index_no_params(self):
+        response = self.api_client.list_images()
+        self.assertEqual(200, response.status_code)
+        image_list = set([x.id for x in response.entity])
+
+        self.assertTrue(self.created_images <= image_list)
+
+    @tags(type='positive', net='no')
+    def test_index_disk_format(self):
+        response = self.api_client.filter_images_list({'disk_format': 'ami'})
+        images_list = response.entity
+
+        self.assertEqual(200, response.status_code)
+
+        for image in images_list:
+            self.assertEqual(ImageDiskFormat.AMI, image.disk_format)
+
+        result_set = set([x.id for x in images_list])
+        self.assertTrue(self.ami_set <= result_set)
+        self.assertFalse(self.created_images - self.ami_set <= result_set)
+
+    @tags(type='positive', net='no')
+    def test_index_container_format(self):
+        response = self.api_client.filter_images_list(
+            {'container_format': 'bare'}
+        )
+        images_list = response.entity
+
+        self.assertEqual(200, response.status_code)
+
+        for image in response.entity:
+            self.assertEqual(ImageContainerFormat.BARE, image.container_format)
+
+        result_set = set([x.id for x in images_list])
+        self.assertTrue(self.bare_set <= result_set)
+        self.assertFalse(self.created_images - self.bare_set <= result_set)
+
+    @tags(type='positive', net='no')
+    def test_index_max_size(self):
+        response = self.api_client.filter_images_list({'size_max': '42'})
+        images_list = response.entity
+
+        self.assertEqual(200, response.status_code)
+
+        for image in images_list:
+            self.assertTrue(image.size <= 42)
+
+        result_set = set([x.id for x in images_list])
+        self.assertTrue(self.size42_set <= result_set)
+        self.assertFalse(self.created_images - self.size42_set <= result_set)
+
+    @tags(type='positive', net='no')
+    def test_index_min_size(self):
+        response = self.api_client.filter_images_list({'size_min': '142'})
+        images_list = response.entity
+
+        self.assertEqual(200, response.status_code)
+
+        for image in images_list:
+            self.assertTrue(image.size >= 142)
+
+        result_set = set([x.id for x in images_list])
+        self.assertTrue(self.size142_set <= result_set)
+        self.assertFalse(self.size42_set <= result_set)
+
+    @tags(type='positive', net='no')
+    def test_index_status_active_detail(self):
+        response = self.api_client.list_images_detail(
+            {'status': 'active',
+             'sort_key': 'size',
+             'sort_dir': 'desc'}
+        )
+        images_list = response.entity
+
+        self.assertEqual(200, response.status_code)
+
+        top_size = images_list[0].size
+        for image in images_list:
+            size = image.size
+            self.assertTrue(size <= top_size)
+            top_size = size
+            self.assertEqual(ImageStatus.ACTIVE, image.status)
+
+    @tags(type='positive', net='no')
+    def test_index_name(self):
+        response = self.api_client.list_images_detail(
+            {'name': 'New Remote Image Dup'}
+        )
+        images_list = response.entity
+
+        self.assertEqual(200, response.status_code)
+
+        result_set = set([x.id for x in images_list])
+        for image in images_list:
+            self.assertEqual(u'New Remote Image dup', image.name)
+
+        self.assertTrue(self.dup_set <= result_set)
+        self.assertFalse(self.created_images - self.dup_set <= result_set)
