@@ -13,12 +13,16 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
+from cloudcafe.auth.config import ComputeAdminUserConfig, ComputeAdminAuthConfig
 
 import unittest2 as unittest
 
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.compute.common.types import NovaServerStatusTypes
 from test_repo.compute.fixtures import ComputeFixture
+from cloudcafe.auth.provider import AuthProvider
+from cloudcafe.compute.config import ComputeEndpointConfig
+from cloudcafe.compute.quotas_api.client import QuotasClient
 
 
 class ResizeServerUpConfirmTests(ComputeFixture):
