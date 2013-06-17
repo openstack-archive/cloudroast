@@ -22,7 +22,7 @@ class SecurityGroupTest(ComputeFixture):
 
     @tags(type='positive', net='no')
     def test_create_delete_security_group(self):
-        resp = self.sec_groups_client.create_security_group(
+        resp = self.security_groups_client.create_security_group(
             name='test', description='test group')
         group = resp.entity
-        self.sec_groups_client.delete_security_group(group.id)
+        self.security_groups_client.delete_security_group(group.id)
