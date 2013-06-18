@@ -33,7 +33,8 @@ class RebuildServerTests(ComputeFixture):
     @classmethod
     def setUpClass(cls):
         super(RebuildServerTests, cls).setUpClass()
-        response = cls.server_behaviors.create_active_server()
+        cls.key = cls.keypairs_client.create_keypair(rand_name("key")).entity
+        response = cls.server_behaviors.create_active_server(key_name=cls.key.name)
         cls.server = response.entity
         response = cls.flavors_client.get_flavor_details(cls.flavor_ref)
         cls.flavor = response.entity
@@ -48,7 +49,7 @@ class RebuildServerTests(ComputeFixture):
         cls.rebuilt_server_response = cls.servers_client.rebuild(
             cls.server.id, cls.image_ref_alt, name=cls.name,
             metadata=cls.metadata, personality=personality,
-            admin_pass=cls.password)
+            admin_pass=cls.password, key_name=cls.key.name)
         cls.server_behaviors.wait_for_server_status(
             cls.server.id, NovaServerStatusTypes.ACTIVE)
 
@@ -95,7 +96,8 @@ class RebuildServerTests(ComputeFixture):
         public_address = self.server_behaviors.get_public_ip_address(
             rebuilt_server)
         remote_instance = self.server_behaviors.get_remote_instance_client(
-            server, config=self.servers_config, password=self.password)
+            server, config=self.servers_config, password=self.password,
+            key=self.key.private_key)
         self.assertTrue(
             remote_instance.can_connect_to_public_ip(),
             msg="Could not connect to server (%s) using new admin password %s"
@@ -106,7 +108,8 @@ class RebuildServerTests(ComputeFixture):
         """Verify the number of vCPUs reported is the correct after rebuild"""
 
         remote_client = self.server_behaviors.get_remote_instance_client(
-            self.server, config=self.servers_config, password=self.password)
+            self.server, config=self.servers_config, password=self.password,
+            key=self.key.private_key)
         server_actual_vcpus = remote_client.get_number_of_vcpus()
         self.assertEqual(
             server_actual_vcpus, self.flavor.vcpus,
@@ -117,7 +120,8 @@ class RebuildServerTests(ComputeFixture):
     def test_rebuilt_server_disk_size(self):
         """Verify the size of the virtual disk after the server rebuild"""
         remote_client = self.server_behaviors.get_remote_instance_client(
-            self.server, self.servers_config, password=self.password)
+            self.server, self.servers_config, password=self.password,
+            key=self.key.private_key)
         disk_size = remote_client.get_disk_size_in_gb(
             self.servers_config.instance_disk_path)
         self.assertEqual(disk_size, self.flavor.disk,
@@ -127,7 +131,8 @@ class RebuildServerTests(ComputeFixture):
     @tags(type='smoke', net='yes')
     def test_server_ram_after_rebuild(self):
         remote_instance = self.server_behaviors.get_remote_instance_client(
-            self.server, self.servers_config, password=self.password)
+            self.server, self.servers_config, password=self.password,
+            key=self.key.private_key)
         lower_limit = int(self.flavor.ram) - (int(self.flavor.ram) * .1)
         server_ram_size = int(remote_instance.get_ram_size_in_mb())
         self.assertTrue((int(self.flavor.ram) == server_ram_size
@@ -145,7 +150,8 @@ class RebuildServerTests(ComputeFixture):
         """
 
         remote_client = self.server_behaviors.get_remote_instance_client(
-            self.server, self.servers_config, password=self.password)
+            self.server, self.servers_config, password=self.password,
+            key=self.key.private_key)
         self.assertTrue(remote_client.is_file_present('/rebuild.txt'))
         self.assertEqual(
             remote_client.get_file_details('/rebuild.txt').content,
@@ -188,7 +194,8 @@ class RebuildServerTests(ComputeFixture):
         """Verify the provided metadata was set for the server"""
 
         remote_client = self.server_behaviors.get_remote_instance_client(
-            self.server, self.servers_config, password=self.password)
+            self.server, self.servers_config, password=self.password,
+            key=self.key.private_key)
         xen_meta = remote_client.get_xen_user_metadata()
         for key, value in self.metadata.iteritems():
             self.assertEqual(xen_meta[key], value)

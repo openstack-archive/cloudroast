@@ -15,6 +15,7 @@ limitations under the License.
 """
 
 from cafe.drivers.unittest.decorators import tags
+from cloudcafe.compute.common.types import InstanceAuthStrategies
 from test_repo.compute.fixtures import ComputeFixture
 
 
@@ -44,13 +45,15 @@ class ServerRescueTests(ComputeFixture):
                         msg="The password did not change after Rescue.")
 
         #Enter rescue mode
-        rescue_server_response = self.server_behaviors.wait_for_server_status(self.server.id, 'RESCUE')
+        rescue_server_response = self.server_behaviors.wait_for_server_status(
+            self.server.id, 'RESCUE')
         rescue_server = rescue_server_response.entity
         rescue_server.admin_pass = changed_password
 
         #Verify if hard drives are attached
-        remote_client = self.server_behaviors.get_remote_instance_client(rescue_server,
-                                                                         self.servers_config)
+        remote_client = self.server_behaviors.get_remote_instance_client(
+            rescue_server, self.servers_config,
+            auth_strategy=InstanceAuthStrategies.PASSWORD)
         partitions = remote_client.get_partition_details()
         self.assertEqual(3, len(partitions))
 
@@ -60,7 +63,8 @@ class ServerRescueTests(ComputeFixture):
                         msg="The response code while unrescuing a server is %s instead of 202" % rescue_response.status_code)
 
         self.server_behaviors.wait_for_server_status(self.server.id, 'ACTIVE')
-        remote_client = self.server_behaviors.get_remote_instance_client(self.server,
-                                                                         self.servers_config)
+        remote_client = self.server_behaviors.get_remote_instance_client(
+            self.server, self.servers_config,
+            auth_strategy=InstanceAuthStrategies.PASSWORD)
         partitions = remote_client.get_partition_details()
         self.assertEqual(2, len(partitions), msg="The number of partitions after unrescue were not two.")

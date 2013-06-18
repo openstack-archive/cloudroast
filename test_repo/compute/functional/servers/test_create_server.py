@@ -39,9 +39,10 @@ class CreateServerTest(ComputeFixture):
         cls.file_contents = 'This is a test file.'
         files = [{'path': '/test.txt', 'contents': base64.b64encode(
             cls.file_contents)}]
+        cls.key = cls.keypairs_client.create_keypair(rand_name("key")).entity
         cls.create_resp = cls.servers_client.create_server(
-            cls.name, cls.image_ref, cls.flavor_ref,
-            metadata=cls.metadata, personality=files)
+            cls.name, cls.image_ref, cls.flavor_ref, metadata=cls.metadata,
+            personality=files, key_name=cls.key.name)
         created_server = cls.create_resp.entity
         cls.resources.add(created_server.id,
                           cls.servers_client.delete_server)
@@ -124,7 +125,7 @@ class CreateServerTest(ComputeFixture):
         """
 
         remote_client = self.server_behaviors.get_remote_instance_client(
-            self.server, self.servers_config)
+            self.server, self.servers_config, key=self.key.private_key)
         server_actual_vcpus = remote_client.get_number_of_vcpus()
         self.assertEqual(
             server_actual_vcpus, self.flavor.vcpus,
@@ -138,7 +139,7 @@ class CreateServerTest(ComputeFixture):
         set by the flavor
         """
         remote_client = self.server_behaviors.get_remote_instance_client(
-            self.server, self.servers_config)
+            self.server, self.servers_config, key=self.key.private_key)
         disk_size = remote_client.get_disk_size_in_gb(
             self.servers_config.instance_disk_path)
         self.assertEqual(disk_size, self.flavor.disk,
@@ -153,7 +154,7 @@ class CreateServerTest(ComputeFixture):
         """
 
         remote_instance = self.server_behaviors.get_remote_instance_client(
-            self.server, self.servers_config)
+            self.server, self.servers_config, key=self.key.private_key)
         lower_limit = int(self.flavor.ram) - (int(self.flavor.ram) * .1)
         server_ram_size = int(remote_instance.get_ram_size_in_mb())
         self.assertTrue(
@@ -170,7 +171,7 @@ class CreateServerTest(ComputeFixture):
         the server name
         """
         remote_client = self.server_behaviors.get_remote_instance_client(
-            self.server, self.servers_config)
+            self.server, self.servers_config, key=self.key.private_key)
         hostname = remote_client.get_hostname()
         self.assertEqual(hostname, self.name,
                          msg="Expected hostname to be {0}, was {1}".format(
@@ -180,7 +181,7 @@ class CreateServerTest(ComputeFixture):
     def test_can_log_into_created_server(self):
         """Validate that the server instance can be accessed"""
         remote_client = self.server_behaviors.get_remote_instance_client(
-            self.server, self.servers_config)
+            self.server, self.servers_config, key=self.key.private_key)
         self.assertTrue(remote_client.can_connect_to_public_ip(),
                         msg="Cannot connect to server using public ip")
 
@@ -192,7 +193,7 @@ class CreateServerTest(ComputeFixture):
         """
 
         remote_client = self.server_behaviors.get_remote_instance_client(
-            self.server, self.servers_config)
+            self.server, self.servers_config, key=self.key.private_key)
         self.assertTrue(remote_client.is_file_present('/test.txt'))
         self.assertEqual(
             remote_client.get_file_details('/test.txt').content,
@@ -236,7 +237,7 @@ class CreateServerTest(ComputeFixture):
         """Verify the provided metadata was set for the server"""
 
         remote_client = self.server_behaviors.get_remote_instance_client(
-            self.server, self.servers_config)
+            self.server, self.servers_config, key=self.key.private_key)
         xen_meta = remote_client.get_xen_user_metadata()
         for key, value in self.metadata.iteritems():
             self.assertEqual(xen_meta[key], value)

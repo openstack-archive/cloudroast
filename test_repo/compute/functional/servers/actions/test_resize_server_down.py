@@ -17,6 +17,7 @@ limitations under the License.
 import unittest2 as unittest
 
 from cafe.drivers.unittest.decorators import tags
+from cloudcafe.compute.common.datagen import rand_name
 from cloudcafe.compute.common.types import NovaServerStatusTypes
 from test_repo.compute.fixtures import ComputeFixture
 
@@ -26,8 +27,9 @@ class ResizeServerDownConfirmTests(ComputeFixture):
     @classmethod
     def setUpClass(cls):
         super(ResizeServerDownConfirmTests, cls).setUpClass()
+        cls.key = cls.keypairs_client.create_keypair(rand_name("key")).entity
         server_response = cls.server_behaviors.create_active_server(
-            flavor_ref=cls.flavor_ref_alt)
+            flavor_ref=cls.flavor_ref_alt, key_name=cls.key.name)
         server_to_resize = server_response.entity
         cls.resources.add(server_to_resize.id, cls.servers_client.delete_server)
 
@@ -53,14 +55,14 @@ class ResizeServerDownConfirmTests(ComputeFixture):
 
     @tags(type='positive', net='no')
     def test_server_properties_after_resize(self):
-        self.assertEqual(self.flavor_ref_alt, self.server.flavor.id)
+        self.assertEqual(self.server.flavor.id, self.resized_flavor.id)
 
     @tags(type='positive', net='yes')
     def test_resized_server_vcpus(self):
         """Verify the number of vCPUs is modified to the value of the new flavor"""
 
-        remote_client = self.server_behaviors.get_remote_instance_client(self.server,
-                                                                         config=self.servers_config)
+        remote_client = self.server_behaviors.get_remote_instance_client(
+            self.server, config=self.servers_config, key=self.key.private_key)
         server_actual_vcpus = remote_client.get_number_of_vcpus()
         self.assertEqual(server_actual_vcpus, self.resized_flavor.vcpus,
                          msg="Expected number of vcpus to be {0}, was {1}.".format(
@@ -69,8 +71,8 @@ class ResizeServerDownConfirmTests(ComputeFixture):
     @tags(type='positive', net='yes')
     def test_created_server_disk_size(self):
         """Verify the size of the virtual disk matches that of the new flavor"""
-        remote_client = self.server_behaviors.get_remote_instance_client(self.server,
-                                                                         config=self.servers_config)
+        remote_client = self.server_behaviors.get_remote_instance_client(
+            self.server, config=self.servers_config, key=self.key.private_key)
         disk_size = remote_client.get_disk_size_in_gb(self.servers_config.instance_disk_path)
         self.assertEqual(disk_size, self.resized_flavor.disk,
                          msg="Expected disk to be {0} GB, was {1} GB".format(
@@ -79,8 +81,8 @@ class ResizeServerDownConfirmTests(ComputeFixture):
     @tags(type='positive', net='yes')
     def test_can_log_into_resized_server(self):
         """Tests that we can log into the created server after resizing"""
-        remote_client = self.server_behaviors.get_remote_instance_client(self.server,
-                                                                         config=self.servers_config)
+        remote_client = self.server_behaviors.get_remote_instance_client(
+            self.server, config=self.servers_config, key=self.key.private_key)
         self.assertTrue(remote_client.can_connect_to_public_ip(),
                         msg="Cannot connect to server using public ip")
 
@@ -88,8 +90,8 @@ class ResizeServerDownConfirmTests(ComputeFixture):
     def test_server_ram_after_resize(self):
         """The server's RAM and should be modified to that of the new flavor"""
 
-        remote_instance = self.server_behaviors.get_remote_instance_client(self.server,
-                                                                           self.servers_config)
+        remote_instance = self.server_behaviors.get_remote_instance_client(
+            self.server, self.servers_config, key=self.key.private_key)
         lower_limit = int(self.resized_flavor.ram) - (int(self.resized_flavor.ram) * .1)
         server_ram_size = int(remote_instance.get_ram_size_in_mb())
         self.assertTrue(int(self.resized_flavor.ram) == server_ram_size or lower_limit <= server_ram_size,
