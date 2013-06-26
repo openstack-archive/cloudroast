@@ -119,13 +119,14 @@ class SecretsAPI(SecretsFixture):
                          'name doesn\'t match UUID of secret')
 
     def test_creating_w_empty_mime_type(self):
-        resps = self.behaviors.create_and_check_secret(mime_type='')
-        self.assertEqual(resps['create_resp']['status_code'], 400,
+        resp = self.behaviors.create_secret(mime_type='')
+        self.assertEqual(resp['status_code'], 400,
                          'Should have failed with 400')
 
     def test_creating_w_empty_secret(self):
-        resps = self.behaviors.create_and_check_secret(plain_text='')
-        self.assertEqual(resps['create_resp']['status_code'], 400,
+        resp = self.behaviors.create_secret(mime_type=self.config.mime_type,
+                                            plain_text='')
+        self.assertEqual(resp['status_code'], 400,
                          'Should have failed with 400')
 
     def test_creating_w_oversized_secret(self):
@@ -177,3 +178,125 @@ class SecretsAPI(SecretsFixture):
         self.assertGreaterEqual(len(sec_group2.secrets), 1)
         self.assertEqual(len(duplicates), 0,
                          'Using offset didn\'t return unique secrets')
+
+    def test_putting_secret_that_doesnt_exist(self):
+        """ Covers case of putting secret information to a non-existent
+        secret. Should return 404.
+        """
+        resp = self.client.add_secret_plain_text(
+            secret_id='not_a_uuid',
+            mime_type=self.config.mime_type,
+            plain_text='testing putting to non-existent secret')
+        self.assertEqual(resp.status_code, 404,
+                         'Should have failed with 404')
+
+    def test_putting_w_invalid_mime_type(self):
+        """ Covers case of putting secret information with an
+        invalid mime-type. Should return 400.
+        """
+        resp = self.behaviors.create_secret(mime_type=self.config.mime_type)
+        put_resp = self.client.add_secret_plain_text(
+            secret_id=resp['secret_id'],
+            mime_type='crypto/boom',
+            plain_text='testing putting with invalid mime type')
+        self.assertEqual(put_resp.status_code, 400,
+                         'Should have failed with 400')
+
+    def test_putting_secret_w_data_already(self):
+        """ Covers case of putting secret information to a secret that already
+        has encrypted data associated with it. Should return 409.
+        """
+        resp = self.behaviors.create_secret_from_config(use_expiration=False)
+        put_resp = self.client.add_secret_plain_text(
+            secret_id=resp['secret_id'],
+            mime_type=self.config.mime_type,
+            plain_text='testing putting to a secret that already has data')
+        self.assertEqual(put_resp.status_code, 409,
+                         'Should have failed with 409')
+
+    def test_putting_w_empty_data(self):
+        """
+        Covers case of putting empty data to a secret. Should return 400.
+        """
+        resp = self.behaviors.create_secret(mime_type=self.config.mime_type)
+        put_resp = self.client.add_secret_plain_text(
+            secret_id=resp['secret_id'],
+            mime_type=self.config.mime_type,
+            plain_text=None)
+        self.assertEqual(put_resp.status_code, 400,
+                         'Should have failed with 400')
+
+    def test_putting_w_oversized_data(self):
+        """ Covers case of putting secret data that is beyond size limit.
+        Current size limit is 10k bytes. Beyond that it should return 413.
+        """
+        data = bytearray().zfill(10001)
+        resp = self.behaviors.create_secret(mime_type=self.config.mime_type)
+        put_resp = self.client.add_secret_plain_text(
+            secret_id=resp['secret_id'],
+            mime_type=self.config.mime_type,
+            plain_text=str(data))
+        self.assertEqual(put_resp.status_code, 413,
+                         'Should have failed with 413')
+
+    def test_deleting_secret_that_doesnt_exist(self):
+        """
+        Covers case of deleting a non-existent secret. Should return 404.
+        """
+        resp = self.behaviors.delete_secret(secret_id='not_a_uuid')
+        self.assertEqual(resp.status_code, 404, 'Should have failed with 404')
+
+    def test_creating_secret_w_invalid_expiration(self):
+        """
+        Covers creating secret with expiration that has already passed.
+        """
+        resp = self.behaviors.create_secret_overriding_cfg(
+            expiration='2000-01-10T14:58:52.546795')
+        self.assertEqual(resp['status_code'], 400,
+                         'Should have failed with 400')
+
+    def test_checking_content_types_when_data(self):
+        """ Covers checking that content types attribute is shown when secret
+        has encrypted data associated with it.
+        """
+        resps = self.behaviors.create_and_check_secret()
+        secret = resps['get_resp'].entity
+        self.assertIsNotNone(secret.content_types,
+                             'Should not have had content types')
+
+    def test_checking_no_content_types_when_no_data(self):
+        """ Covers checking that the content types attribute is not shown if
+        the secret does not have encrypted data associated with it.
+        """
+        create_resp = self.behaviors.create_secret(
+            mime_type=self.config.mime_type)
+        secret_id = create_resp['secret_id']
+        resp = self.client.get_secret(secret_id=secret_id)
+        secret = resp.entity
+        self.assertIsNone(secret.content_types,
+                          'Should have had content types')
+
+    def test_creating_secret_w_invalid_bit_length(self):
+        """ Cover case of creating a secret with a bit length that is not
+        an integer. Should return 400.
+        """
+        resp = self.behaviors.create_secret_overriding_cfg(
+            bit_length='not-an-int')
+        self.assertEqual(resp['status_code'], 400,
+                         'Should have failed with 400')
+
+    def test_creating_secret_w_negative_bit_length(self):
+        """ Covers case of creating a secret with a bit length
+        that is negative. Should return 400.
+        """
+        resp = self.behaviors.create_secret_overriding_cfg(
+            bit_length=-1)
+        self.assertEqual(resp['status_code'], 400,
+                         'Should have failed with 400')
+
+    def test_creating_secret_w_only_mime_type(self):
+        """ Covers creating secret with only required fields. In this case,
+        only mime type is required.
+        """
+        resp = self.behaviors.create_secret(mime_type=self.config.mime_type)
+        self.assertEqual(resp['status_code'], 201, 'Returned bad status code')
