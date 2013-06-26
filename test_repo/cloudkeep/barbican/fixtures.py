@@ -77,7 +77,7 @@ class OrdersFixture(BarbicanFixture):
     def setUpClass(cls):
         super(OrdersFixture, cls).setUpClass()
         cls.config = CloudKeepSecretsConfig()
-        cls.client = OrdersClient(
+        cls.orders_client = OrdersClient(
             url=cls.cloudkeep.base_url,
             api_version=cls.cloudkeep.api_version,
             tenant_id=cls.cloudkeep.tenant_id,
@@ -89,7 +89,7 @@ class OrdersFixture(BarbicanFixture):
             tenant_id=cls.cloudkeep.tenant_id,
             serialize_format=cls.marshalling.serializer,
             deserialize_format=cls.marshalling.deserializer)
-        cls.behaviors = OrdersBehavior(client=cls.client,
+        cls.behaviors = OrdersBehavior(orders_client=cls.orders_client,
                                        secrets_client=cls.secrets_client,
                                        config=cls.config)
 
