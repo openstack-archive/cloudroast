@@ -14,6 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import cStringIO as StringIO
+
 from cafe.drivers.unittest.fixtures import BaseTestFixture
 from cloudcafe.images.config import ImagesConfig
 from cloudcafe.auth.provider import AuthProvider
@@ -21,6 +23,7 @@ from cloudcafe.common.resources import ResourcePool
 from cloudcafe.images.v1_0.client import ImagesClient as ImagesV1Client
 from cloudcafe.images.v2_0.client import ImageClient as ImagesV2Client
 from cloudcafe.images.behaviors import ImageBehaviors
+from cloudcafe.images.common.types import ImageContainerFormat, ImageDiskFormat
 
 
 class ImageFixture(BaseTestFixture):
@@ -48,6 +51,76 @@ class ImageV1Fixture(ImageFixture):
         cls.api_client = ImagesV1Client(images_endpoint, access_data.token.id_,
                                         'json', 'json')
         cls.behaviors = ImageBehaviors(cls.api_client, cls.config)
+
+        if cls.__name__ == 'ListImagesTest':
+            cls._setup_test_data()
+
+    @classmethod
+    def _setup_test_data(cls):  # setupClass doesn't run in fixture subclasses
+        img1 = cls._create_remote_image('one', ImageContainerFormat.BARE,
+                                     ImageDiskFormat.RAW)
+        img2 = cls._create_remote_image('two', ImageContainerFormat.AMI,
+                                     ImageDiskFormat.AMI)
+        img3 = cls._create_remote_image('dup', ImageContainerFormat.BARE,
+                                     ImageDiskFormat.RAW)
+        img4 = cls._create_remote_image('dup', ImageContainerFormat.BARE,
+                                     ImageDiskFormat.RAW)
+        img5 = cls._create_standard_image('1', ImageContainerFormat.AMI,
+                                       ImageDiskFormat.AMI, 42)
+        img6 = cls._create_standard_image('2', ImageContainerFormat.AMI,
+                                       ImageDiskFormat.AMI, 142)
+        img7 = cls._create_standard_image('33', ImageContainerFormat.BARE,
+                                       ImageDiskFormat.RAW, 142)
+        img8 = cls._create_standard_image('33', ImageContainerFormat.BARE,
+                                       ImageDiskFormat.RAW, 142)
+        cls.created_images = set((img1, img2, img3, img4, img5, img6, img7, img8))
+        cls.remote_set = set((img1, img2, img3, img4))
+        cls.standard_set = set((img5, img6, img7, img8))
+        cls.bare_set = set((img1, img3, img4, img7, img8))
+        cls.ami_set = set((img2, img5, img6))
+        cls.size42_set = set((img5,))
+        cls.size142_set = set((img6, img7, img8))
+        cls.dup_set = set((img3, img4))
+
+        for img_id in cls.created_images:
+            cls.resources.add(img_id, cls.api_client.delete_image)
+
+    @classmethod
+    def _create_remote_image(cls, name, container_format, disk_format):
+        """
+            Create new remote image.
+            @return ID of the newly registered image
+        """
+        name = 'New Remote Image {0}'.format(name)
+        location = 'http://example.com/someimage_{0}.iso'.format(name)
+
+        response = cls.api_client.add_image(
+            name,
+            None,
+            image_meta_container_format=container_format,
+            image_meta_disk_format=disk_format,
+            image_meta_is_public=True,
+            image_meta_location=location)
+
+        return response.entity.id
+
+    @classmethod
+    def _create_standard_image(cls, name, container_format, disk_format, size):
+        """
+            Create new standard image.
+            @return ID of the newly registered image
+        """
+        image_data = StringIO.StringIO('*' * size)
+        name = 'New Standard Image {0}'.format(name)
+
+        response = cls.api_client.add_image(
+            name,
+            image_data,
+            image_meta_container_format=container_format,
+            image_meta_disk_format=disk_format,
+            image_meta_is_public=True)
+
+        return response.entity.id
 
 
 class ImageV2Fixture(ImageFixture):
