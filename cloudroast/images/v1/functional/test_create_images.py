@@ -125,8 +125,7 @@ class CreateRegisterImagesTest(ImageV1Fixture):
             image_meta_container_format=ImageContainerFormat.BARE,
             image_meta_disk_format=ImageDiskFormat.RAW,
             image_meta_is_public=True,
-            image_meta_location=self.http_image
-        )
+            image_meta_location=self.http_image)
 
         new_image = response.entity
         self.resources.add(new_image.id_, self.api_client.delete_image)
