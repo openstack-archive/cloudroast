@@ -23,7 +23,9 @@ from cloudcafe.auth.provider import AuthProvider
 from cloudcafe.common.resources import ResourcePool
 from cloudcafe.identity.v2_0.tenants_api.client import TenantsAPI_Client
 from cloudcafe.images.v1_0.client import ImagesClient as ImagesV1Client
+from cloudcafe.images.v2_0.client import ImageClient as ImagesV2Client
 from cloudcafe.images.behaviors import ImageBehaviors
+from cloudcafe.images.common.types import ImageContainerFormat, ImageDiskFormat
 
 
 class ImageFixture(BaseTestFixture):
@@ -51,9 +53,10 @@ class ImageV1Fixture(ImageFixture):
         cls.remote_image = cls.config.remote_image
         cls.http_image = cls.config.http_image
 
-        cls.tenants_client = TenantsAPI_Client(UserAuthConfig().auth_endpoint,
-                                               access_data.token.id_,
-                                               'json', 'json')
+        cls.tenants_client = TenantsAPI_Client(
+            UserAuthConfig().auth_endpoint,
+            access_data.token.id_,
+            'json', 'json')
         cls.tenants = cls._get_all_tenant_ids()
 
         cls.api_client = ImagesV1Client(images_endpoint, access_data.token.id_,
@@ -111,4 +114,11 @@ class ImageV1Fixture(ImageFixture):
 class ImageV2Fixture(ImageFixture):
     @classmethod
     def setUpClass(cls):
-        super(ImageFixture, cls).setUpClass()
+        super(ImageV2Fixture, cls).setUpClass()
+        access_data = AuthProvider().get_access_data()
+        images_endpoint = '{base_url}/{api_version}'.format(
+            base_url=cls.config.base_url,
+            api_version=cls.config.api_version)
+
+        cls.api_client = ImagesV2Client(images_endpoint, access_data.token.id_,
+                                        'json', 'json')
