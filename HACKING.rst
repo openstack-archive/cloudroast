@@ -22,6 +22,7 @@ Development Guidelines
 - Avoid single letter variable names except in the case of iterators,
   in which case a descriptive variable name would still be preferable
   if possible.
+- Do not leave trailing whitespace or whitespace in blank lines.
 - Put two newlines between top-level code (funcs, classes, etc).
 - Use only UNIX style newlines ("\n"), not Windows style ("\r\n").
 - Put one newline between methods in classes and anywhere else.
@@ -100,8 +101,8 @@ Before Committing
 -----------------
 - Follow the general OpenStack submission workflow
   (https://wiki.openstack.org/wiki/Gerrit_Workflow). This means all
-  all submissions should be squashed into one and be submitted from a
-  feature branch, not master.
+  all submissions should be squashed into one commit with one commit id
+  and be submitted from a feature branch, not master.
 - Always run a PEP8 check on your modified code before committing.
   You can do this with a plethora of tools such as flake8, pylint,
   and pyflakes.  **Once gating on PEP-8 rules is enabled, Gerrit will
