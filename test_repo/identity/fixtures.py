@@ -16,7 +16,9 @@ limitations under the License.
 import json
 
 from cafe.drivers.unittest.fixtures import BaseTestFixture
-from cloudcafe.identity.config import IdentityTokenConfig
+from cloudcafe.identity.config import \
+    IdentityTokenConfig, IdentityExtensionConfig
+from cloudcafe.identity.v2_0.extensions_api.client import ExtensionAPI_Client
 from cloudcafe.identity.v2_0.tenants_api.client import TenantsAPI_Client
 from cloudcafe.identity.v2_0.tokens_api.client import TokenAPI_Client
 from cloudcafe.identity.v2_0.tokens_api.models.responses.access import Access
@@ -27,6 +29,7 @@ class BaseIdentityAdminTest(BaseTestFixture):
     def setUpClass(cls):
         super(BaseIdentityAdminTest, cls).setUpClass()
         cls.token_config = IdentityTokenConfig()
+        cls.extension_config = IdentityExtensionConfig()
         cls.endpoint_url = cls.token_config.authentication_endpoint
         cls.serialize_format = cls.token_config.serialize_format
         cls.deserialize_format = cls.token_config.deserialize_format
@@ -51,6 +54,13 @@ class BaseIdentityAdminTest(BaseTestFixture):
             auth_token=cls.token.id_,
             deserialize_format=cls.deserialize_format,
             serialize_format=cls.serialize_format)
+
+        cls.extension_client = ExtensionAPI_Client(
+            url=cls.endpoint_url,
+            auth_token=cls.token.id_,
+            serialized_format=cls.deserialize_format,
+            deserialized_format=cls.deserialize_format,
+            keystone_admin=cls.extension_config.openstack_keystone_admin)
 
     @classmethod
     def tearDownClass(cls):
