@@ -13,16 +13,19 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-import json
 
+import json
 from cafe.drivers.unittest.fixtures import BaseTestFixture
-from cloudcafe.identity.config import IdentityTokenConfig
+from cloudcafe.identity.config import \
+    IdentityTokenConfig
+from cloudcafe.identity.v2_0.extensions_api.client import ExtensionsAPI_Client
 from cloudcafe.identity.v2_0.tenants_api.client import TenantsAPI_Client
 from cloudcafe.identity.v2_0.tokens_api.client import TokenAPI_Client
 from cloudcafe.identity.v2_0.tokens_api.models.responses.access import Access
 
 
 class BaseIdentityAdminTest(BaseTestFixture):
+
     @classmethod
     def setUpClass(cls):
         super(BaseIdentityAdminTest, cls).setUpClass()
@@ -51,6 +54,12 @@ class BaseIdentityAdminTest(BaseTestFixture):
             auth_token=cls.token.id_,
             deserialize_format=cls.deserialize_format,
             serialize_format=cls.serialize_format)
+
+        cls.extension_client = ExtensionsAPI_Client(
+            url=cls.endpoint_url,
+            auth_token=cls.token.id_,
+            serialized_format=cls.deserialize_format,
+            deserialized_format=cls.deserialize_format)
 
     @classmethod
     def tearDownClass(cls):
