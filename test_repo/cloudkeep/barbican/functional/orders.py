@@ -15,6 +15,7 @@ limitations under the License.
 """
 import unittest2
 from datetime import datetime, timedelta
+from cafe.drivers.unittest.decorators import tags
 from test_repo.cloudkeep.barbican.fixtures import OrdersFixture
 
 
@@ -52,6 +53,7 @@ class OrdersAPI(OrdersFixture):
             expiration=timestamp)
         self.assertEqual(resp['status_code'], 400)
 
+    @tags(type='negative')
     def test_create_order_with_null_mime_type(self):
         """ Covers issue where you attempt to create an order with the
         mime_type attribute set to null and the request appears to fail
@@ -66,6 +68,7 @@ class OrdersAPI(OrdersFixture):
             cypher_type=self.config.cypher_type)
         self.assertEqual(resp['status_code'], 400, 'Returned bad status code')
 
+    @tags(type='positive')
     def test_create_order_wout_name(self):
         """ When you attempt to create an order without the name attribute the
          request appears to fail without a status code.
@@ -79,6 +82,7 @@ class OrdersAPI(OrdersFixture):
             cypher_type=self.config.cypher_type)
         self.assertEqual(resp['status_code'], 202, 'Returned bad status code')
 
+    @tags(type='negative')
     def test_create_order_with_invalid_mime_type(self):
         """ Covers defect where you attempt to create an order with an invalid
          mime_type and the request fails without a status code.
@@ -93,6 +97,7 @@ class OrdersAPI(OrdersFixture):
         self.assertEqual(resp['status_code'], 400, 'Returned bad status code')
 
     @unittest2.skip('Issue #140')
+    @tags(type='positive')
     def test_getting_secret_data_as_plain_text(self):
         """ Covers defect where you attempt to get secret information in
         text/plain, and the request fails to decrypt the information.
@@ -107,6 +112,7 @@ class OrdersAPI(OrdersFixture):
         self.assertEqual(resps['get_secret_resp'].status_code, 200,
                          'Returned bad status code')
 
+    @tags(type='negative')
     def test_get_order_that_doesnt_exist(self):
         """
         Covers case of getting a non-existent order. Should return 404.
@@ -114,6 +120,7 @@ class OrdersAPI(OrdersFixture):
         resp = self.orders_client.get_order('not_an_order')
         self.assertEqual(resp.status_code, 404, 'Should have failed with 404')
 
+    @tags(type='negative')
     def test_delete_order_that_doesnt_exist(self):
         """
         Covers case of deleting a non-existent order. Should return 404.
@@ -121,6 +128,7 @@ class OrdersAPI(OrdersFixture):
         resp = self.orders_client.delete_order('not_an_order')
         self.assertEqual(resp.status_code, 404, 'Should have failed with 404')
 
+    @tags(type='positive')
     def test_order_paging_limit_and_offset(self):
         """
         Covers testing paging limit and offset attributes when getting orders.
@@ -145,6 +153,7 @@ class OrdersAPI(OrdersFixture):
         self.assertEqual(len(duplicates), 0,
                          'Using offset didn\'t return unique orders.')
 
+    @tags(type='positive')
     def test_find_a_single_order_via_paging(self):
         """
         Covers finding an order with paging.
@@ -155,6 +164,7 @@ class OrdersAPI(OrdersFixture):
         order = self.behaviors.find_order(resp['order_id'])
         self.assertIsNotNone(order, 'Couldn\'t find created order')
 
+    @tags(type='positive')
     def test_create_order_w_expiration(self):
         """
         Covers creating order with expiration.
@@ -162,6 +172,7 @@ class OrdersAPI(OrdersFixture):
         resp = self.behaviors.create_order_from_config(use_expiration=True)
         self.assertEqual(resp['status_code'], 202, 'Returned bad status code')
 
+    @tags(type='negative')
     def test_create_order_w_invalid_expiration(self):
         """
         Covers creating order with expiration that has already passed.
@@ -171,6 +182,7 @@ class OrdersAPI(OrdersFixture):
         self.assertEqual(resp['status_code'], 400,
                          'Should have failed with 400')
 
+    @tags(type='negative')
     def test_create_order_w_null_entries(self):
         """
         Covers creating order with all null entries.
@@ -179,6 +191,7 @@ class OrdersAPI(OrdersFixture):
         self.assertEqual(resp['status_code'], 400,
                          'Should have failed with 400')
 
+    @tags(type='positive')
     def test_create_order_wout_name_checking_name(self):
         """ When an order is created with an empty or null name attribute, the
         system should return the secret's UUID on a get. Extends coverage of
@@ -199,6 +212,7 @@ class OrdersAPI(OrdersFixture):
         self.assertEqual(secret.name, secret_id,
                          'Name did not match secret\'s UUID')
 
+    @tags(type='positive')
     def test_create_order_with_long_expiration_timezone(self):
         """ Covers case of a timezone being added to the expiration.
         The server should convert it into zulu time.
@@ -207,6 +221,7 @@ class OrdersAPI(OrdersFixture):
         self.check_expiration_iso8601_timezone('-05:00', 5)
         self.check_expiration_iso8601_timezone('+05:00', -5)
 
+    @tags(type='positive')
     def test_create_order_with_short_expiration_timezone(self):
         """ Covers case of a timezone being added to the expiration.
         The server should convert it into zulu time.
@@ -215,12 +230,14 @@ class OrdersAPI(OrdersFixture):
         self.check_expiration_iso8601_timezone('-01', 1)
         self.check_expiration_iso8601_timezone('+01', -1)
 
+    @tags(type='negative')
     def test_create_order_with_bad_expiration_timezone(self):
         """ Covers case of a malformed timezone being added to the expiration.
         - Reported in Barbican GitHub Issue #134
         """
         self.check_invalid_expiration_timezone('-5:00')
 
+    @tags(type='positive')
     def test_create_order_w_bit_length_str(self):
         """
         Covers case of creating an order with a bit length.
@@ -231,6 +248,7 @@ class OrdersAPI(OrdersFixture):
         self.assertIs(type(secret.bit_length), int)
         self.assertEqual(secret.bit_length, 128)
 
+    @tags(type='positive')
     def test_order_and_secret_metadata_same(self):
         """ Covers checking that secret metadata from a get on the order and
         secret metadata from a get on the secret are the same. Assumes
@@ -256,6 +274,7 @@ class OrdersAPI(OrdersFixture):
                          secret_metadata.cypher_type,
                          'Cypher types were not the same')
 
+    @tags(type='negative')
     def test_creating_order_w_invalid_bit_length(self):
         """ Cover case of creating an order with a bit length that is not
         an integer. Should return 400.
@@ -265,6 +284,7 @@ class OrdersAPI(OrdersFixture):
         self.assertEqual(resp['status_code'], 400,
                          'Should have failed with 400')
 
+    @tags(type='negative')
     def test_creating_order_w_negative_bit_length(self):
         """ Covers case of creating an order with a bit length that is
         negative. Should return 400.
@@ -274,6 +294,7 @@ class OrdersAPI(OrdersFixture):
         self.assertEqual(resp['status_code'], 400,
                          'Should have failed with 400')
 
+    @tags(type='positive')
     def test_creating_order_wout_bit_length(self):
         """Covers case where order creation fails when bit length is not
         provided.
