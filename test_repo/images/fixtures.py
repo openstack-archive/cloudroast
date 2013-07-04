@@ -15,6 +15,7 @@ limitations under the License.
 """
 
 import cStringIO as StringIO
+import random
 
 from cafe.drivers.unittest.fixtures import BaseTestFixture
 from cloudcafe.images.config import ImagesConfig
@@ -153,3 +154,31 @@ class ImageV2Fixture(ImageFixture):
 
         cls.api_client = ImagesV2Client(images_endpoint, access_data.token.id_,
                                         'json', 'json')
+
+        cls.created_images = []
+        for x in range(0, 10):
+            new_image_id = cls._create_standard_image(x)
+            cls.created_images.append(new_image_id)
+            cls.resources.add(
+                new_image_id,
+                cls.api_client.delete_image
+            )
+
+    @classmethod
+    def _create_standard_image(cls, number):
+        image_data = StringIO.StringIO('*' * random.randint(1024, 4096))
+        name = 'New Standard Image {0}'.format(number)
+        
+        response = cls.api_client.create_image(
+            name=name,
+            disk_format=ImageDiskFormat.RAW,
+            container_format=ImageContainerFormat.BARE
+        )
+        image_id = response.entity.id_
+
+        response = cls.api_client.store_raw_image_data(
+            image_id=image_id,
+            image_data=image_data,
+        )
+
+        return image_id

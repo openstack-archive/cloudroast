@@ -72,3 +72,17 @@ class CreateRegisterImagesTest(ImageV2Fixture):
         response = self.api_client.get_image(new_image.id_)
         image = response.entity
         self.assertEqual(1024, image.size)
+
+class ListImagesTest(ImageV2Fixture):
+    """
+        Test listing of Image information.
+    """
+
+    @tags(type='positive', net='no')
+    def test_index_no_params(self):
+        response = self.api_client.list_images()
+        self.assertEqual(200, response.status_code)
+
+        image_list = [x.id_ for x in response.entity]
+        for image in self.created_images:
+            self.assertTrue(image in image_list)
