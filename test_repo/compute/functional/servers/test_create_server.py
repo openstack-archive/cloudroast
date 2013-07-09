@@ -20,7 +20,7 @@ import unittest2 as unittest
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.compute.common.types import ComputeHypervisors
 from cloudcafe.compute.common.types import NovaServerStatusTypes
-from cloudcafe.compute.common.datagen import rand_name
+from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.compute.config import ComputeConfig
 from test_repo.compute.fixtures import ComputeFixture
 

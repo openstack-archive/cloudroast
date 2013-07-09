@@ -17,7 +17,7 @@ limitations under the License.
 from random import randint
 
 from cafe.drivers.unittest.decorators import tags
-from cloudcafe.compute.common.datagen import rand_name
+from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.compute.common.exceptions import ActionInProgress
 from test_repo.compute.fixtures import ComputeAdminFixture
 

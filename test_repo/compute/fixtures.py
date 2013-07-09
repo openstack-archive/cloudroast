@@ -20,7 +20,7 @@ from cloudcafe.compute.common.exceptions import TimeoutException, \
     BuildErrorException
 from cloudcafe.compute.common.types import NovaServerStatusTypes\
     as ServerStates
-from cloudcafe.compute.common.datagen import rand_name
+from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.compute.config import ComputeEndpointConfig, \
     ComputeAdminEndpointConfig
 from cloudcafe.compute.common.exception_handler import ExceptionHandler

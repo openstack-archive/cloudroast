@@ -19,7 +19,7 @@ import time
 
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.compute.common.models.metadata import Metadata
-from cloudcafe.compute.common.datagen import rand_name
+from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.compute.common.types import NovaServerStatusTypes
 from test_repo.compute.fixtures import ComputeFixture
 

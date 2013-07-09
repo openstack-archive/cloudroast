@@ -17,7 +17,7 @@ limitations under the License.
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.auth.provider import AuthProvider
 from cloudcafe.auth.config import ComputeAuthorizationConfig
-from cloudcafe.compute.common.datagen import rand_name
+from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.compute.common.types import NovaImageStatusTypes
 from cloudcafe.compute.common.types import NovaServerRebootTypes
 from cloudcafe.compute.common.exceptions import ItemNotFound
