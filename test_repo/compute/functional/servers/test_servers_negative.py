@@ -26,7 +26,6 @@ class ServersNegativeTest(ComputeFixture):
     def setUpClass(cls):
         super(ServersNegativeTest, cls).setUpClass()
 
-
     @classmethod
     def tearDownClass(cls):
         super(ServersNegativeTest, cls).tearDownClass()
@@ -34,40 +33,37 @@ class ServersNegativeTest(ComputeFixture):
     @tags(type='negative', net='no')
     def test_server_name_blank(self):
         with self.assertRaises(BadRequest):
-            self.servers_client.create_server('', self.image_ref, self.flavor_ref)
+            self.servers_client.create_server('', self.image_ref,
+                                              self.flavor_ref)
 
     @tags(type='negative', net='no')
     def test_personality_file_contents_not_encoded(self):
-        """Server should not get created with a personality file whose content is not encoded"""
+        """Server creation should fail if the injected file is not encoded"""
         file_contents = 'This is a test file.'
         personality = [{'path': '/etc/testfile.txt',
                         'contents': file_contents}]
         with self.assertRaises(BadRequest):
-            server = self.servers_client.create_server('blankfile',
-                                                       self.image_ref, self.flavor_ref,
-                                                       personality=personality)
+            self.servers_client.create_server(
+                'blankfile', self.image_ref, self.flavor_ref,
+                personality=personality)
 
     @tags(type='negative', net='no')
     def test_invalid_ip_v4_access_address(self):
-        """Negative test: Server should not get created with invalid ipv4 address"""
+        """A server should not be created with an invalid ipv4 address"""
         accessIPv4 = '1.1.1.1.1.1'
         name = rand_name("testserver")
         with self.assertRaises(BadRequest):
-            server_response = self.servers_client.create_server(name,
-                                                                self.image_ref,
-                                                                self.flavor_ref,
-                                                                accessIPv4=accessIPv4)
+            self.servers_client.create_server(
+                name, self.image_ref, self.flavor_ref, accessIPv4=accessIPv4)
 
     @tags(type='negative', net='no')
     def test_invalid_ip_v6_access_address(self):
-        """Negative test: Server should not get created with invalid ipv6 address"""
+        """A server should not be created with invalid ipv6 address"""
         accessIPv6 = '2.2.2.2'
         name = rand_name("testserver")
         with self.assertRaises(BadRequest):
-            server_response = self.servers_client.create_server(name,
-                                                                self.image_ref,
-                                                                self.flavor_ref,
-                                                                accessIPv6=accessIPv6)
+            self.servers_client.create_server(
+                name, self.image_ref, self.flavor_ref, accessIPv6=accessIPv6)
 
     @tags(type='negative', net='no')
     def test_server_metadata_item_nonexistent_server(self):
@@ -87,7 +83,7 @@ class ServersNegativeTest(ComputeFixture):
         meta = {'meta1': 'data1'}
 
         with self.assertRaises(ItemNotFound):
-            metadata_response = self.servers_client.set_server_metadata(999, meta)
+            self.servers_client.set_server_metadata(999, meta)
 
     @tags(type='negative', net='no')
     def test_update_server_metadata_nonexistent_server(self):
@@ -98,43 +94,49 @@ class ServersNegativeTest(ComputeFixture):
 
     @tags(type='negative', net='no')
     def test_delete_server_metadata_item_nonexistent_server(self):
-        """Should not be able to delete metadata item from a non existent server"""
+        """Deleting a metadata item from a non existent server should fail"""
         with self.assertRaises(ItemNotFound):
             self.servers_client.delete_server_metadata_item(999, 'delkey')
 
     @tags(type='negative', net='no')
     def test_create_server_with_unknown_flavor(self):
-        """Server creation with a flavor ID which does not exist, should not be allowed"""
+        """Server creation with a flavor which does not exist should fail"""
         with self.assertRaises(BadRequest):
-            self.servers_client.create_server('testserver', self.image_ref, 999)
+            self.servers_client.create_server(
+                'testserver', self.image_ref, 999)
 
     @tags(type='negative', net='no')
     def test_create_server_with_unknown_image(self):
-        """Server creation with an image ID which does not exist,should not be allowed"""
+        """Server creation with an image which does not exist should fail"""
         with self.assertRaises(BadRequest):
-            self.servers_client.create_server('testserver', 999, self.flavor_ref)
+            self.servers_client.create_server(
+                'testserver', 999, self.flavor_ref)
 
     @tags(type='negative', net='no')
     def test_get_nonexistent_server_fails(self):
-        """Making a get request for a server that does not exist should cause a 404"""
+        """A GET request for a server that does not exist should fail"""
         with self.assertRaises(ItemNotFound):
             self.servers_client.get_server(999)
 
     @tags(type='negative', net='no')
     def test_delete_nonexistent_server_fails(self):
-        """Making a delete request for a server that does not exist should cause a 404"""
+        """A delete request for a server that does not exist should fail"""
         with self.assertRaises(ItemNotFound):
             self.servers_client.delete_server(999)
 
     @tags(type='negative', net='no')
     def test_list_addresses_for_nonexistant_server_fails(self):
-        """Making a list address request for a server that does not exist should cause a 404"""
+        """
+        A list address request for a server that does not exist should fail
+        """
         with self.assertRaises(ItemNotFound):
             self.servers_client.list_addresses(999)
 
     @tags(type='negative', net='no')
     def test_list_addresses_for_invalid_network_id_fails(self):
-        """Making a list address request for a server that does not exist should cause a 404"""
+        """
+        List addresses by network with a network id that not exist should fail
+        """
         server_response = self.server_behaviors.create_active_server()
         server = server_response.entity
         with self.assertRaises(ItemNotFound):
@@ -142,13 +144,15 @@ class ServersNegativeTest(ComputeFixture):
 
     @tags(type='negative', net='no')
     def test_list_addresses_by_network_for_nonexistant_server_fails(self):
-        """Making a list address by network request for a server that does not exist should cause a 404"""
+        """
+        List addresses by network for a server that does not exist should fail
+        """
         with self.assertRaises(ItemNotFound):
             self.servers_client.list_addresses_by_network(999, 'public')
 
     @tags(type='negative', net='no')
     def test_cannot_get_deleted_server(self):
-        """A 400 response should be returned when you get a server which is deleted"""
+        """A 404 response is expected for server which is deleted"""
         server = self.server_behaviors.create_active_server()
         delete_resp = self.servers_client.delete_server(server.entity.id)
         self.assertEqual(204, delete_resp.status_code)
@@ -160,4 +164,5 @@ class ServersNegativeTest(ComputeFixture):
     def test_create_server_with_invalid_name(self):
         """Server creation with a blank/invalid name should not be allowed"""
         with self.assertRaises(BadRequest):
-            self.servers_client.create_server('', self.image_ref, self.flavor_ref)
+            self.servers_client.create_server(
+                '', self.image_ref, self.flavor_ref)
