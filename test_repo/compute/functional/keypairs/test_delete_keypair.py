@@ -29,7 +29,6 @@ class DeleteKeypairTest(ComputeFixture):
         cls.keypair = cls.keypairs_client.create_keypair(cls.name).entity
         cls.delete_resp = cls.keypairs_client.delete_keypair(cls.name)
 
-
     @tags(type='positive', net='no')
     def test_delete_keypair_response(self):
         self.assertEqual(self.delete_resp.status_code, 202)
@@ -37,7 +36,7 @@ class DeleteKeypairTest(ComputeFixture):
     @tags(type='positive', net='no')
     def test_deleted_keypair_not_listed(self):
         keypairs_list = self.keypairs_client.list_keypairs().entity
-        self.assertNotIn(self.keypair,keypairs_list)
+        self.assertNotIn(self.keypair, keypairs_list)
 
     @tags(type='negative', net='no')
     def test_get_deleted_keypair_fails(self):
