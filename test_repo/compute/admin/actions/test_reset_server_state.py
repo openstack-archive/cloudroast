@@ -14,8 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from cafe.drivers.unittest.decorators import tags
 from test_repo.compute.fixtures import ComputeAdminFixture
+
 
 class ResetServerStateTests(ComputeAdminFixture):
 
@@ -33,10 +33,12 @@ class ResetServerStateTests(ComputeAdminFixture):
 
         # Set the active server into error status
         self.admin_servers_client.reset_state(self.server.id, 'error')
-        current_server = self.admin_servers_client.get_server(self.server.id).entity
+        current_server = self.admin_servers_client.get_server(
+            self.server.id).entity
         self.assertEqual(current_server.status.lower(), 'error')
 
         # Reset the server's error status back to active
         self.admin_servers_client.reset_state(self.server.id, 'active')
-        current_server = self.admin_servers_client.get_server(self.server.id).entity
+        current_server = self.admin_servers_client.get_server(
+            self.server.id).entity
         self.assertEqual(current_server.status.lower(), 'active')

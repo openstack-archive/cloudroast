@@ -14,7 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from cafe.drivers.unittest.decorators import tags
 from test_repo.compute.fixtures import ComputeAdminFixture
 
 
@@ -32,6 +31,8 @@ class PauseServerTests(ComputeAdminFixture):
 
     def test_pause_unpause_server(self):
         self.admin_servers_client.pause_server(self.server.id)
-        self.admin_server_behaviors.wait_for_server_status(self.server.id, 'PAUSED')
+        self.admin_server_behaviors.wait_for_server_status(
+            self.server.id, 'PAUSED')
         self.admin_servers_client.unpause_server(self.server.id)
-        self.admin_server_behaviors.wait_for_server_status(self.server.id, 'ACTIVE')
+        self.admin_server_behaviors.wait_for_server_status(
+            self.server.id, 'ACTIVE')

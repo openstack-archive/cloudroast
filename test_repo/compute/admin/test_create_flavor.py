@@ -14,8 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from random import randint
-
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.compute.common.datagen import rand_name
 from cloudcafe.compute.common.exceptions import ActionInProgress

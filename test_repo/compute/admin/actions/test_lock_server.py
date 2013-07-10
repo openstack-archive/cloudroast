@@ -54,4 +54,3 @@ class LockServerTests(ComputeAdminFixture):
     def test_cannot_resize_locked_server(self):
         with self.assertRaises(ActionInProgress):
             self.servers_client.resize(self.server.id, self.flavor_ref)
-
