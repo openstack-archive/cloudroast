@@ -14,8 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import unittest2 as unittest
-
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.compute.common.datagen import rand_name
 from cloudcafe.compute.common.exceptions import ItemNotFound
@@ -37,7 +35,8 @@ class ImagesMetadataTest(ComputeFixture):
         cls.image_id = cls.parse_image_id(image_resp)
         cls.resources.add(cls.image_id, cls.images_client.delete_image)
         cls.image_behaviors.wait_for_image_resp_code(cls.image_id, 200)
-        cls.image_behaviors.wait_for_image_status(cls.image_id, NovaImageStatusTypes.ACTIVE)
+        cls.image_behaviors.wait_for_image_status(
+            cls.image_id, NovaImageStatusTypes.ACTIVE)
         cls.image = cls.images_client.get_image(cls.image_id).entity
 
     def setUp(self):
@@ -51,17 +50,17 @@ class ImagesMetadataTest(ComputeFixture):
 
     @tags(type='negative', net='no')
     def test_delete_nonexistant_image_metadata_item(self):
-        """User should not be able to delete a metadata which does not exist"""
+        """User should not be able to delete a key which does not exist"""
         with self.assertRaises(ItemNotFound):
-            self.images_client.delete_image_metadata_item(self.image_id,
-                                                          'meta_key_5')
+            self.images_client.delete_image_metadata_item(
+                self.image_id, 'meta_key_5')
 
     @tags(type='negative', net='no')
     def test_get_nonexistent_image_metadata_item(self):
-        """User should not be able to perform a get on an image metadata which does not exist"""
+        """A GET on a key which does not exist should fail"""
         with self.assertRaises(ItemNotFound):
-            self.images_client.get_image_metadata_item(self.image_id,
-                                                       'meta_key_5')
+            self.images_client.get_image_metadata_item(
+                self.image_id, 'meta_key_5')
 
     @tags(type='positive', net='no')
     def test_list_image_metadata(self):
@@ -89,7 +88,8 @@ class ImagesMetadataTest(ComputeFixture):
     @tags(type='positive', net='no')
     def test_get_image_metadata_item(self):
         """The value for a specific metadata key should be returned"""
-        meta_resp = self.images_client.get_image_metadata_item(self.image_id, 'key2')
+        meta_resp = self.images_client.get_image_metadata_item(
+            self.image_id, 'key2')
         self.assertTrue('value2', meta_resp.text)
 
     @tags(type='positive', net='no')
