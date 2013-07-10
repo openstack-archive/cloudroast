@@ -45,8 +45,7 @@ class ResizeServerUpConfirmTests(ComputeFixture):
         cls.confirm_resize_resp = cls.servers_client.confirm_resize(
             server_to_resize.id)
         cls.server_behaviors.wait_for_server_status(
-            server_to_resize.id,
-            NovaServerStatusTypes.ACTIVE)
+            server_to_resize.id, NovaServerStatusTypes.ACTIVE)
         resized_server_response = cls.servers_client.get_server(
             server_to_resize.id)
 
@@ -65,8 +64,7 @@ class ResizeServerUpConfirmTests(ComputeFixture):
 
     @tags(type='smoke', net='yes')
     def test_resized_server_vcpus(self):
-        """Verify the number of vCPUs is modified
-         to the value of the new flavor"""
+        """Verify the number of vCPUs is modified to the new flavor"""
 
         remote_client = self.server_behaviors.get_remote_instance_client(
             self.server, config=self.servers_config, key=self.key.private_key)
@@ -78,12 +76,9 @@ class ResizeServerUpConfirmTests(ComputeFixture):
 
     @tags(type='smoke', net='yes')
     def test_created_server_disk_size(self):
-        """Verify the size of the virtual disk matches
-        that of the new flavor.
-        """
+        """Verify the size of the virtual disk matches the new flavor"""
         remote_client = self.server_behaviors.get_remote_instance_client(
-            self.server,
-            config=self.servers_config)
+            self.server, config=self.servers_config, key=self.key.private_key)
         disk_size = remote_client.get_disk_size_in_gb(
             self.servers_config.instance_disk_path)
         self.assertEqual(disk_size, self.resized_flavor.disk,
@@ -100,8 +95,7 @@ class ResizeServerUpConfirmTests(ComputeFixture):
 
     @tags(type='smoke', net='yes')
     def test_server_ram_after_resize(self):
-        """The server's RAM and should be modified to that of the new flavor"""
-
+        """The server's RAM and should be modified to the new flavor"""
         remote_instance = self.server_behaviors.get_remote_instance_client(
             self.server, self.servers_config, key=self.key.private_key)
         lower_limit = (int(self.resized_flavor.ram) -

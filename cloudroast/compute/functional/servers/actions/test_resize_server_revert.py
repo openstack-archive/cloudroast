@@ -59,18 +59,19 @@ class ResizeServerUpRevertTests(ComputeFixture):
 
     @tags(type='smoke', net='yes')
     def test_resize_reverted_server_vcpus(self):
-        """Verify the number of vCPUs reported matches the amount set by the original flavor"""
+        """Verify the number of vCPUs reported matches the original flavor"""
 
         remote_client = self.server_behaviors.get_remote_instance_client(
             self.server, config=self.servers_config, key=self.key.private_key)
         server_actual_vcpus = remote_client.get_number_of_vcpus()
-        self.assertEqual(server_actual_vcpus, self.flavor.vcpus,
-                         msg="Expected number of vcpus to be {0}, was {1}.".format(
-                             self.flavor.vcpus, server_actual_vcpus))
+        self.assertEqual(
+            server_actual_vcpus, self.flavor.vcpus,
+            msg="Expected number of vcpus to be {0}, was {1}.".format(
+                self.flavor.vcpus, server_actual_vcpus))
 
     @tags(type='smoke', net='yes')
     def test_resize_reverted_server_disk_size(self):
-        """Verify the size of the virtual disk matches the size set by the original flavor"""
+        """Verify the size of the virtual disk matches the original flavor"""
         remote_client = self.server_behaviors.get_remote_instance_client(
             self.server, config=self.servers_config, key=self.key.private_key)
         disk_size = remote_client.get_disk_size_in_gb(
@@ -81,7 +82,7 @@ class ResizeServerUpRevertTests(ComputeFixture):
 
     @tags(type='smoke', net='yes')
     def test_can_log_into_resize_reverted_server(self):
-        """Tests that we can log into the created server after reverting the resize"""
+        """Tests that we can log into the server after reverting the resize"""
         remote_client = self.server_behaviors.get_remote_instance_client(
             self.server, config=self.servers_config, key=self.key.private_key)
         self.assertTrue(remote_client.can_connect_to_public_ip(),
@@ -89,20 +90,22 @@ class ResizeServerUpRevertTests(ComputeFixture):
 
     @tags(type='smoke', net='yes')
     def test_ram_after_resize_revert(self):
-        """The server's RAM should still be set to the amount from the original flavor"""
+        """The server's RAM should be set to the original flavor"""
 
         remote_instance = self.server_behaviors.get_remote_instance_client(
             self.server, self.servers_config, key=self.key.private_key)
         lower_limit = int(self.flavor.ram) - (int(self.flavor.ram) * .1)
         server_ram_size = int(remote_instance.get_ram_size_in_mb())
-        self.assertTrue(int(self.flavor.ram) == server_ram_size or lower_limit <= server_ram_size,
-                        msg="Ram size after confirm-resize did not match. Expected ram size : %s, Actual ram size : %s" %
+        self.assertTrue((int(self.flavor.ram) == server_ram_size
+                         or lower_limit <= server_ram_size),
+                        msg='Ram size after revert-resize did not match.'
+                            'Expected ram size : %s, Actual ram size : %s' %
                             (self.flavor.ram, server_ram_size))
 
     @tags(type='smoke', net='no')
     @unittest.skip("lp1183712")
     def test_resize_reverted_server_instance_actions(self):
-        """Verify the correct actions are logged during a resize revert."""
+        """Verify the correct actions are logged during a resize revert"""
 
         actions = self.servers_client.get_instance_actions(
             self.server.id).entity
