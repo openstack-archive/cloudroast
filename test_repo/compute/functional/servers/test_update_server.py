@@ -25,7 +25,8 @@ class UpdateServerTest(ComputeFixture):
     @classmethod
     def setUpClass(cls):
         super(UpdateServerTest, cls).setUpClass()
-        cls.original_server = cls.server_behaviors.create_active_server().entity
+        create_response = cls.server_behaviors.create_active_server()
+        cls.original_server = create_response.entity
         cls.resources.add(cls.original_server.id,
                           cls.servers_client.delete_server)
 
@@ -33,12 +34,13 @@ class UpdateServerTest(ComputeFixture):
         cls.accessIPv6 = '3ffe:1900:4545:3:200:f8ff:fe21:67cf'
         cls.new_name = rand_name("newname")
         cls.resp = cls.servers_client.update_server(
-            cls.original_server.id, name=cls.new_name, accessIPv4=cls.accessIPv4,
-            accessIPv6=cls.accessIPv6)
+            cls.original_server.id, name=cls.new_name,
+            accessIPv4=cls.accessIPv4, accessIPv6=cls.accessIPv6)
         cls.server_behaviors.wait_for_server_status(
             cls.original_server.id, NovaServerStatusTypes.ACTIVE)
 
-        cls.server = cls.servers_client.get_server(cls.original_server.id).entity
+        cls.server = cls.servers_client.get_server(
+            cls.original_server.id).entity
 
     @tags(type='smoke', net='no')
     def test_update_server_response(self):
@@ -60,5 +62,7 @@ class UpdateServerTest(ComputeFixture):
                          msg="AccessIPv6 was not updated")
         self.assertEqual(self.server.created, self.original_server.created,
                          msg="The creation date was updated")
-        self.assertNotEqual(self.server.updated, self.original_server.updated,
-                            msg="Server %s updated time did not change after a modification to the server." % self.server.id)
+        self.assertNotEqual(
+            self.server.updated, self.original_server.updated,
+            msg='Updated time for server %s did not change '
+                'after a modification to the server.' % self.server.id)
