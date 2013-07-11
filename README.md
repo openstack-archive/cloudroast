@@ -58,7 +58,7 @@ Basic CloudRoast Package Anatomy
 -------------------------------
 Below is a short description of the top level CloudRoast Packages.
 
-##test_repo
+##cloudroast
 This is the root package for all automated tests. This is namespace is currently **required** by the cafe-runner for any Test Repository plug-in.
 
 ##identity
