@@ -17,8 +17,7 @@ limitations under the License.
 import os
 import sys
 
-import test_repo
-
+import cloudroast
 try:
     from setuptools import setup, find_packages
 except ImportError:
@@ -31,8 +30,8 @@ if sys.argv[-1] == 'publish':
 requires = open('pip-requires').readlines()
 
 setup(
-    name='test_repo',
-    version=test_repo.__version__,
+    name='cloudroast',
+    version=cloudroast.__version__,
     description='CloudCAFE based automated test repository for OpenStack',
     long_description='{0}\n\n{1}'.format(
         open('README.md').read(),
@@ -42,7 +41,7 @@ setup(
     url='http://rackspace.com',
     packages=find_packages(exclude=[]),
     package_data={'': ['LICENSE', 'NOTICE']},
-    package_dir={'test_repo': 'test_repo'},
+    package_dir={'cloudroast': 'cloudroast'},
     include_package_data=True,
     install_requires=requires,
     license=open('LICENSE').read(),
