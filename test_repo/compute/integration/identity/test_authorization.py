@@ -131,11 +131,6 @@ class AuthorizationTests(ComputeFixture):
             self.servers_client.list_server_metadata(self.server.id)
 
     @tags(type='negative', net='no')
-    def test_list_server_metadata_unauthorized(self):
-        with self.assertRaises(ItemNotFound):
-            self.servers_client.list_server_metadata(self.server.id)
-
-    @tags(type='negative', net='no')
     def test_set_server_metadata_unauthorized(self):
         with self.assertRaises(ItemNotFound):
             new_meta = {'meta2': 'data2', 'meta3': 'data3'}

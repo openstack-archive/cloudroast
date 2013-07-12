@@ -178,13 +178,6 @@ class TokenRequiredTests(ComputeFixture):
                 requestslib_kwargs=self.auth_token)
 
     @tags(type='negative', net='no')
-    def test_list_server_metadata_with_invalid_token(self):
-        with self.assertRaises(Unauthorized):
-            self.servers_client.list_server_metadata(
-                self.server.id,
-                requestslib_kwargs=self.auth_token)
-
-    @tags(type='negative', net='no')
     def test_set_server_metadata_with_invalid_token(self):
         with self.assertRaises(Unauthorized):
             new_meta = {'meta2': 'data2', 'meta3': 'data3'}
