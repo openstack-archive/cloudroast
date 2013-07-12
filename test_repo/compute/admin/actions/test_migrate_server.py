@@ -17,6 +17,7 @@ limitations under the License.
 from cloudcafe.compute.common.types import NovaServerStatusTypes
 from test_repo.compute.fixtures import ComputeAdminFixture
 
+
 class MigrateServerTests(ComputeAdminFixture):
 
     @classmethod

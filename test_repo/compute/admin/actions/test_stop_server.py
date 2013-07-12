@@ -14,8 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from cafe.drivers.unittest.decorators import tags
 from test_repo.compute.fixtures import ComputeAdminFixture
+
 
 class StopServerTests(ComputeAdminFixture):
 
