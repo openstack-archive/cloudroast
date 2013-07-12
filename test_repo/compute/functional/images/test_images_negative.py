@@ -49,7 +49,7 @@ class ImagesTest(CreateServerFixture):
         else:
             image_id = self.parse_image_id(image_resp)
             self.image_behaviors.wait_for_image_resp_code(image_id, 200)
-            self.image_behaviors.wait_for_image_status(image_id,
-                                                       NovaImageStatusTypes.ACTIVE)
+            self.image_behaviors.wait_for_image_status(
+                image_id, NovaImageStatusTypes.ACTIVE)
             self.images_client.delete_image(image_id)
-            self.fail('The create request should have failed since the name was blank.')
+            self.fail('The create request should fail when the name is blank')

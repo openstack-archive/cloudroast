@@ -36,7 +36,6 @@ class ImagesMetadataNegativeTest(ComputeFixture):
     @tags(type='negative', net='no')
     def test_set_image_metadata_item_for_nonexistent_image(self):
         """"Metadata item should not be set for a nonexistent image"""
-        meta = {'meta_key_1': 'meta_value_1'}
         with self.assertRaises(ItemNotFound):
             self.images_client.set_image_metadata_item(999, 'meta_key_1',
                                                        'meta_value_1')
@@ -44,8 +43,5 @@ class ImagesMetadataNegativeTest(ComputeFixture):
     @tags(type='negative', net='no')
     def test_delete_image_metadata_item_for_nonexistent_image(self):
         """Should not be able to delete metadata item of nonexistent image"""
-        try:
+        with self.assertRaises(ItemNotFound):
             self.images_client.delete_image_metadata_item(999, 'key1')
-            self.fail("No exception thrown for delete image metadata for non existent image")
-        except:
-            pass

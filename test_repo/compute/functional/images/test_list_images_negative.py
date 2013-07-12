@@ -23,7 +23,7 @@ class ImagesListTestNegative(ComputeFixture):
 
     @tags(type='negative', net='no')
     def test_list_images_filter_by_nonexistent_server_id(self):
-        """Negative Test: Images should not get listed with invalid server ID"""
+        """Images should not get listed with invalid server ID"""
         server_id = 'sjlfdlkjfldjlkdjfldjf'
         images = self.images_client.list_images(server_ref=server_id)
         self.assertEqual(200, images.status_code,
@@ -33,7 +33,9 @@ class ImagesListTestNegative(ComputeFixture):
 
     @tags(type='negative', net='no')
     def test_list_images_filter_by_nonexistent_image_name(self):
-        """Images should not get listed when filtered with invalid image name"""
+        """
+        An empty list should be returned if the filter does not match names
+        """
         image_name = 'aljsdjfsjkljlkjdfkjs999'
         images = self.images_client.list_images(image_name=image_name)
         self.assertEqual(200, images.status_code,
