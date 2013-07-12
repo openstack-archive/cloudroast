@@ -17,7 +17,7 @@ limitations under the License.
 import unittest2 as unittest
 
 from cafe.drivers.unittest.decorators import tags
-from cloudcafe.compute.common.datagen import rand_name
+from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.compute.common.types import NovaImageStatusTypes
 from test_repo.compute.fixtures import CreateServerFixture
 

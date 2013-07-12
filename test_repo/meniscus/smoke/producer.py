@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 from test_repo.meniscus.fixtures import ProducerFixture
-from cloudcafe.compute.common.datagen import random_string
+from cloudcafe.common.tools.datagen import random_string
 
 
 class TestProducer(ProducerFixture):
