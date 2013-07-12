@@ -37,10 +37,6 @@ class HostActionsAdminTest(ComputeAdminFixture):
             host.host_name for host in cls.hosts
             if host.service == HostServiceTypes.COMPUTE)
 
-    @classmethod
-    def tearDownClass(cls):
-        super(HostActionsAdminTest, cls).tearDownClass()
-
     def test_disable_host(self):
         host_response = self.admin_hosts_client.\
             update_host(self.compute_host_name, status="disable").entity

@@ -27,10 +27,6 @@ class ImagesTest(CreateServerFixture):
         super(ImagesTest, cls).setUpClass()
         cls.server = cls.server_response.entity
 
-    @classmethod
-    def tearDownClass(cls):
-        super(ImagesTest, cls).tearDownClass()
-
     @tags(type='negative', net='no')
     def test_create_image_invalid_server_id(self):
         """Image creation should fail if the server id does not exist"""

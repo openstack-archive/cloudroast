@@ -20,14 +20,6 @@ from test_repo.compute.fixtures import ComputeAdminFixture
 
 class HypervisorsAdminTest(ComputeAdminFixture):
 
-    @classmethod
-    def setUpClass(cls):
-        super(HypervisorsAdminTest, cls).setUpClass()
-
-    @classmethod
-    def tearDownClass(cls):
-        super(HypervisorsAdminTest, cls).tearDownClass()
-
     @tags(type='smoke', net='no')
     def test_list_hypervisors(self):
         hypervisors = self.admin_hypervisors_client.list_hypervisors().entity

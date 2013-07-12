@@ -30,10 +30,6 @@ class ServerRescueTests(ComputeFixture):
         flavor_response = cls.flavors_client.get_flavor_details(cls.flavor_ref)
         cls.flavor = flavor_response.entity
 
-    @classmethod
-    def tearDownClass(cls):
-        super(ServerRescueTests, cls).tearDownClass()
-
     @tags(type='smoke', net='yes')
     def test_rescue_and_unrescue_server_test(self):
         """Verify that a server can enter and exit rescue mode"""

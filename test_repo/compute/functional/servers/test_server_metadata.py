@@ -31,10 +31,6 @@ class ServerMetadataTest(ComputeFixture):
         cls.server = server_response.entity
         cls.resources.add(cls.server.id, cls.servers_client.delete_server)
 
-    @classmethod
-    def tearDownClass(cls):
-        super(ServerMetadataTest, cls).tearDownClass()
-
     def setUp(self):
         super(ServerMetadataTest, self).setUp()
         self.meta = {'meta_key_1': 'meta_value_1', 'meta_key_2': 'meta_value_2'}

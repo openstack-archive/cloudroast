@@ -36,10 +36,6 @@ class ServersTest(ComputeFixture):
         cls.accessIPv4 = '192.168.32.16'
         cls.accessIPv6 = '3ffe:1900:4545:3:200:f8ff:fe21:67cf'
 
-    @classmethod
-    def tearDownClass(cls):
-        super(ServersTest, cls).tearDownClass()
-
     def _assert_server_details(self, server, expected_name,
                                expected_accessIPv4, expected_accessIPv6,
                                expected_flavor):

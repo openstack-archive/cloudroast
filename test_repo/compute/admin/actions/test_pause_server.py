@@ -26,10 +26,6 @@ class PauseServerTests(ComputeAdminFixture):
         cls.server = cls.server_behaviors.create_active_server().entity
         cls.resources.add(cls.server.id, cls.servers_client.delete_server)
 
-    @classmethod
-    def tearDownClass(cls):
-        super(PauseServerTests, cls).tearDownClass()
-
     def test_pause_unpause_server(self):
         self.admin_servers_client.pause_server(self.server.id)
         self.admin_server_behaviors.wait_for_server_status(self.server.id, 'PAUSED')

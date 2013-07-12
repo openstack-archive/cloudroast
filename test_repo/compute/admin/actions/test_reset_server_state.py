@@ -25,10 +25,6 @@ class ResetServerStateTests(ComputeAdminFixture):
         cls.server = cls.server_behaviors.create_active_server().entity
         cls.resources.add(cls.server.id, cls.servers_client.delete_server)
 
-    @classmethod
-    def tearDownClass(cls):
-        super(ResetServerStateTests, cls).tearDownClass()
-
     def test_set_server_state(self):
 
         # Set the active server into error status

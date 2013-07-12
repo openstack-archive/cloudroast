@@ -22,15 +22,6 @@ from test_repo.compute.fixtures import ComputeFixture
 
 class ServersNegativeTest(ComputeFixture):
 
-    @classmethod
-    def setUpClass(cls):
-        super(ServersNegativeTest, cls).setUpClass()
-
-
-    @classmethod
-    def tearDownClass(cls):
-        super(ServersNegativeTest, cls).tearDownClass()
-
     @tags(type='negative', net='no')
     def test_server_name_blank(self):
         with self.assertRaises(BadRequest):

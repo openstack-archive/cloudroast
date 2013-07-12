@@ -43,10 +43,6 @@ class ServerListTest(ComputeFixture):
         cls.resources.add(cls.server_third.id,
                           cls.servers_client.delete_server)
 
-    @classmethod
-    def tearDownClass(cls):
-        super(ServerListTest, cls).tearDownClass()
-
     @tags(type='smoke', net='no')
     def test_get_server(self):
         """Return the full details of a single server"""

@@ -45,10 +45,6 @@ class TokenRequiredTests(ComputeFixture):
         cls.resources.add(cls.image_id, cls.images_client.delete_image)
         cls.auth_token = {'headers': {'X-Auth-Token': None}}
 
-    @classmethod
-    def tearDownClass(cls):
-        super(TokenRequiredTests, cls).tearDownClass()
-
     @tags(type='negative', net='no')
     def test_list_flavors_with_invalid_token(self):
         with self.assertRaises(Unauthorized):

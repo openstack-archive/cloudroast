@@ -30,10 +30,6 @@ class HostsAdminTest(ComputeAdminFixture):
         super(HostsAdminTest, cls).setUpClass()
         cls.hosts = cls.admin_hosts_client.list_hosts().entity
 
-    @classmethod
-    def tearDownClass(cls):
-        super(HostsAdminTest, cls).tearDownClass()
-
     @tags(type='smoke', net='no')
     def test_list_hosts(self):
         self.assertTrue(len(self.hosts) > 0, "The hosts list is empty.")

@@ -53,10 +53,6 @@ class RebuildServerTests(ComputeFixture):
         cls.server_behaviors.wait_for_server_status(
             cls.server.id, NovaServerStatusTypes.ACTIVE)
 
-    @classmethod
-    def tearDownClass(cls):
-        super(RebuildServerTests, cls).tearDownClass()
-
     @tags(type='smoke', net='no')
     def test_verify_rebuild_server_response(self):
         # Verify the properties in the initial response are correct

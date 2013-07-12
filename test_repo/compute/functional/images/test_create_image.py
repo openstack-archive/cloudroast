@@ -42,10 +42,6 @@ class CreateImageTest(CreateServerFixture):
             cls.image_id, NovaImageStatusTypes.ACTIVE)
         cls.image = cls.images_client.get_image(cls.image_id).entity
 
-    @classmethod
-    def tearDownClass(cls):
-        super(CreateImageTest, cls).tearDownClass()
-
     @tags(type='smoke', net='no')
     def test_create_image_response_code(self):
         """Verify the response code for a create image request is correct."""

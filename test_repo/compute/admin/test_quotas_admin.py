@@ -28,10 +28,6 @@ class QuotasAdminTest(ComputeAdminFixture):
         cls.tenant_id = UserConfig().tenant_id
         cls.default_quota_set = DefaultQuotaSetConfig()
 
-    @classmethod
-    def tearDownClass(cls):
-        super(QuotasAdminTest, cls).tearDownClass()
-
     @tags(type='smoke', net='no')
     def test_get_default_quota_set(self):
         quota = self.admin_quotas_client.\

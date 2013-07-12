@@ -54,10 +54,6 @@ class CreateServerTest(ComputeFixture):
             cls.flavor_ref).entity
         cls.server = wait_response.entity
 
-    @classmethod
-    def tearDownClass(cls):
-        super(CreateServerTest, cls).tearDownClass()
-
     @tags(type='smoke', net='no')
     def test_create_server_response(self):
         """Verify the parameters are correct in the initial response"""

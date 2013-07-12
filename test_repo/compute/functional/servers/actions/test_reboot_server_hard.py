@@ -32,10 +32,6 @@ class RebootServerHardTests(ComputeFixture):
         cls.server = response.entity
         cls.resources.add(cls.server.id, cls.servers_client.delete_server)
 
-    @classmethod
-    def tearDownClass(cls):
-        super(RebootServerHardTests, cls).tearDownClass()
-
     @tags(type='smoke', net='yes')
     def test_reboot_server_hard(self):
         """ The server should be power cycled """

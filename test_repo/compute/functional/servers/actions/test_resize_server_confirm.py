@@ -48,10 +48,6 @@ class ResizeServerUpConfirmTests(ComputeFixture):
         cls.server.admin_pass = server_to_resize.admin_pass
         cls.resized_flavor = cls.flavors_client.get_flavor_details(cls.flavor_ref_alt).entity
 
-    @classmethod
-    def tearDownClass(cls):
-        super(ResizeServerUpConfirmTests, cls).tearDownClass()
-
     @tags(type='smoke', net='no')
     def test_verify_confirm_resize_response(self):
         pass

@@ -45,10 +45,6 @@ class ChangeServerPasswordTests(CreateServerFixture):
         cls.server_behaviors.wait_for_server_status(cls.server.id,
                                                     ServerStates.ACTIVE)
 
-    @classmethod
-    def tearDownClass(cls):
-        super(ChangeServerPasswordTests, cls).tearDownClass()
-
     @tags(type='smoke', net='no')
     def test_change_password_response(self):
         self.assertEqual(202, self.resp.status_code)

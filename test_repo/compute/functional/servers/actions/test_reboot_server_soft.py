@@ -32,10 +32,6 @@ class RebootServerSoftTests(ComputeFixture):
         cls.server = response.entity
         cls.resources.add(cls.server.id, cls.servers_client.delete_server)
 
-    @classmethod
-    def tearDownClass(cls):
-        super(RebootServerSoftTests, cls).tearDownClass()
-
     @tags(type='smoke', net='yes')
     def test_reboot_server_soft(self):
         """ The server should be signaled to reboot gracefully """

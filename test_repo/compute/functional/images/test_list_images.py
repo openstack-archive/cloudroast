@@ -51,10 +51,6 @@ class ImageListTest(ComputeFixture):
         cls.resources.add(cls.image1_id, cls.images_client.delete_image)
         cls.resources.add(cls.image2_id, cls.images_client.delete_image)
 
-    @classmethod
-    def tearDownClass(cls):
-        super(ImageListTest, cls).tearDownClass()
-
     @tags(type='smoke', net='no')
     def test_list_images_with_detail(self):
         """Detailed list of all images should contain the expected images"""

@@ -67,10 +67,6 @@ class AuthorizationTests(ComputeFixture):
                                          'json', 'json')
         cls.flavors_client.add_exception_handler(ExceptionHandler())
 
-    @classmethod
-    def tearDownClass(cls):
-        super(AuthorizationTests, cls).tearDownClass()
-
     @tags(type='negative', net='no')
     def test_get_image_unauthorized(self):
         with self.assertRaises(ItemNotFound):

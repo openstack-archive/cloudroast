@@ -27,10 +27,6 @@ class CreateBackupTests(ComputeAdminFixture):
         cls.server = cls.server_behaviors.create_active_server().entity
         cls.resources.add(cls.server.id, cls.servers_client.delete_server)
 
-    @classmethod
-    def tearDownClass(cls):
-        super(CreateBackupTests, cls).tearDownClass()
-
     def test_create_backup_for_server(self):
         image_response = self.admin_images_behaviors.\
             create_active_backup(self.server.id,

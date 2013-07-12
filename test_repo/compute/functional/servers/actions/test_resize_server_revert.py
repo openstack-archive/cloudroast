@@ -51,10 +51,6 @@ class ResizeServerUpRevertTests(ComputeFixture):
         cls.flavor = cls.flavors_client.get_flavor_details(
             cls.flavor_ref).entity
 
-    @classmethod
-    def tearDownClass(cls):
-        super(ResizeServerUpRevertTests, cls).tearDownClass()
-
     @tags(type='smoke', net='no')
     def test_server_properties_after_resize(self):
         self.assertEqual(self.flavor_ref, self.server.flavor.id)

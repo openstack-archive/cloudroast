@@ -45,10 +45,6 @@ class ImagesMetadataTest(ComputeFixture):
         meta = {'key1': 'value1', 'key2': 'value2'}
         self.images_client.set_image_metadata(self.image.id, meta)
 
-    @classmethod
-    def tearDownClass(cls):
-        super(ImagesMetadataTest, cls).tearDownClass()
-
     @tags(type='negative', net='no')
     def test_delete_nonexistant_image_metadata_item(self):
         """User should not be able to delete a metadata which does not exist"""

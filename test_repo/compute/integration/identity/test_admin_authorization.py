@@ -27,10 +27,6 @@ class AdminAuthorizationTest(ComputeFixture):
         cls.server = cls.server_behaviors.create_active_server().entity
         cls.resources.add(cls.server.id, cls.servers_client.delete_server)
 
-    @classmethod
-    def tearDownClass(cls):
-        super(AdminAuthorizationTest, cls).tearDownClass()
-
     @tags(type='negative', net='no')
     def test_lock_server_fails_as_user(self):
         """A lock request should fail when not made by an admin"""
