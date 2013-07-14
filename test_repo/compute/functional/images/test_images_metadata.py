@@ -25,19 +25,24 @@ class ImagesMetadataTest(ComputeFixture):
 
     @classmethod
     def setUpClass(cls):
-        super(ImagesMetadataTest, cls).setUpClass()
-        cls.server_resp = cls.server_behaviors.create_active_server()
-        cls.server_id = cls.server_resp.entity.id
-        cls.resources.add(cls.server_id, cls.servers_client.delete_server)
-        meta = {'key1': 'value1', 'key2': 'value2'}
-        name = rand_name('testimage')
-        image_resp = cls.servers_client.create_image(cls.server_id, name, meta)
-        cls.image_id = cls.parse_image_id(image_resp)
-        cls.resources.add(cls.image_id, cls.images_client.delete_image)
-        cls.image_behaviors.wait_for_image_resp_code(cls.image_id, 200)
-        cls.image_behaviors.wait_for_image_status(
-            cls.image_id, NovaImageStatusTypes.ACTIVE)
-        cls.image = cls.images_client.get_image(cls.image_id).entity
+        try:
+            super(ImagesMetadataTest, cls).setUpClass()
+            cls.server_resp = cls.server_behaviors.create_active_server()
+            cls.server_id = cls.server_resp.entity.id
+            cls.resources.add(cls.server_id, cls.servers_client.delete_server)
+            meta = {'key1': 'value1', 'key2': 'value2'}
+            name = rand_name('testimage')
+            image_resp = cls.servers_client.create_image(cls.server_id, name, meta)
+            cls.image_id = cls.parse_image_id(image_resp)
+            cls.resources.add(cls.image_id, cls.images_client.delete_image)
+            cls.image_behaviors.wait_for_image_resp_code(cls.image_id, 200)
+            cls.image_behaviors.wait_for_image_status(
+                cls.image_id, NovaImageStatusTypes.ACTIVE)
+            cls.image = cls.images_client.get_image(cls.image_id).entity
+        except:
+            # Release any resources before the exception is raised
+            cls.resources.release()
+            raise
 
     def setUp(self):
         super(ImagesMetadataTest, self).setUp()

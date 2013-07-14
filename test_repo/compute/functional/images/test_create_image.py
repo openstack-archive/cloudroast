@@ -26,21 +26,26 @@ class CreateImageTest(CreateServerFixture):
 
     @classmethod
     def setUpClass(cls):
-        super(CreateImageTest, cls).setUpClass()
-        cls.name = rand_name('testserver')
-        cls.server = cls.server_response.entity
+        try:
+            super(CreateImageTest, cls).setUpClass()
+            cls.name = rand_name('testserver')
+            cls.server = cls.server_response.entity
 
-        cls.image_name = rand_name('image')
-        cls.metadata = {'key1': 'value1',
-                        'key2': 'value2'}
-        server_id = cls.server.id
-        cls.image_response = cls.servers_client.create_image(
-            server_id, cls.image_name, metadata=cls.metadata)
-        cls.image_id = cls.parse_image_id(cls.image_response)
-        cls.resources.add(cls.image_id, cls.images_client.delete_image)
-        cls.image_behaviors.wait_for_image_status(
-            cls.image_id, NovaImageStatusTypes.ACTIVE)
-        cls.image = cls.images_client.get_image(cls.image_id).entity
+            cls.image_name = rand_name('image')
+            cls.metadata = {'key1': 'value1',
+                            'key2': 'value2'}
+            server_id = cls.server.id
+            cls.image_response = cls.servers_client.create_image(
+                server_id, cls.image_name, metadata=cls.metadata)
+            cls.image_id = cls.parse_image_id(cls.image_response)
+            cls.resources.add(cls.image_id, cls.images_client.delete_image)
+            cls.image_behaviors.wait_for_image_status(
+                cls.image_id, NovaImageStatusTypes.ACTIVE)
+            cls.image = cls.images_client.get_image(cls.image_id).entity
+        except:
+            # Release any resources before the exception is raised
+            cls.resources.release()
+            raise
 
     @tags(type='smoke', net='no')
     def test_create_image_response_code(self):

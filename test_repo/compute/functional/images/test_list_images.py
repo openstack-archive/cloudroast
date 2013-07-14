@@ -24,32 +24,36 @@ class ImageListTest(ComputeFixture):
 
     @classmethod
     def setUpClass(cls):
-        super(ImageListTest, cls).setUpClass()
-        cls.server1 = cls.server_behaviors.create_active_server()
-        cls.server2 = cls.server_behaviors.create_active_server()
-        cls.server1_id = cls.server1.entity.id
-        cls.server2_id = cls.server2.entity.id
-        cls.resources.add(cls.server1_id, cls.servers_client.delete_server)
-        cls.resources.add(cls.server2_id, cls.servers_client.delete_server)
+        try:
+            super(ImageListTest, cls).setUpClass()
+            cls.server1 = cls.server_behaviors.create_active_server()
+            cls.server2 = cls.server_behaviors.create_active_server()
+            cls.server1_id = cls.server1.entity.id
+            cls.server2_id = cls.server2.entity.id
+            cls.resources.add(cls.server1_id, cls.servers_client.delete_server)
+            cls.resources.add(cls.server2_id, cls.servers_client.delete_server)
 
-        image1_name = rand_name('testimage')
-        image1_resp = cls.servers_client.create_image(cls.server1_id,
-                                                      image1_name)
-        assert image1_resp.status_code == 202
-        cls.image1_id = cls.parse_image_id(image1_resp)
-        cls.image_behaviors.wait_for_image_status(cls.image1_id, NovaImageStatusTypes.ACTIVE)
+            image1_name = rand_name('testimage')
+            image1_resp = cls.servers_client.create_image(cls.server1_id,
+                                                          image1_name)
+            assert image1_resp.status_code == 202
+            cls.image1_id = cls.parse_image_id(image1_resp)
+            cls.image_behaviors.wait_for_image_status(cls.image1_id, NovaImageStatusTypes.ACTIVE)
+            cls.image_1 = cls.images_client.get_image(cls.image1_id).entity
+            cls.resources.add(cls.image1_id, cls.images_client.delete_image)
 
-        image2_name = rand_name('testimage')
-        image2_resp = cls.servers_client.create_image(cls.server2_id,
-                                                      image2_name)
-        assert image2_resp.status_code == 202
-        cls.image2_id = cls.parse_image_id(image2_resp)
-        cls.image_behaviors.wait_for_image_status(cls.image2_id, NovaImageStatusTypes.ACTIVE)
-
-        cls.image_1 = cls.images_client.get_image(cls.image1_id).entity
-        cls.image_2 = cls.images_client.get_image(cls.image2_id).entity
-        cls.resources.add(cls.image1_id, cls.images_client.delete_image)
-        cls.resources.add(cls.image2_id, cls.images_client.delete_image)
+            image2_name = rand_name('testimage')
+            image2_resp = cls.servers_client.create_image(cls.server2_id,
+                                                          image2_name)
+            assert image2_resp.status_code == 202
+            cls.image2_id = cls.parse_image_id(image2_resp)
+            cls.image_behaviors.wait_for_image_status(cls.image2_id, NovaImageStatusTypes.ACTIVE)
+            cls.image_2 = cls.images_client.get_image(cls.image2_id).entity
+            cls.resources.add(cls.image2_id, cls.images_client.delete_image)
+        except:
+            # Release any resources before the exception is raised
+            cls.resources.release()
+            raise
 
     @tags(type='smoke', net='no')
     def test_list_images_with_detail(self):

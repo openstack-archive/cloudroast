@@ -25,13 +25,18 @@ class DeleteImageTest(CreateServerFixture):
 
     @classmethod
     def setUpClass(cls):
-        super(DeleteImageTest, cls).setUpClass()
-        cls.name = rand_name('server')
-        cls.server = cls.server_response.entity
-        cls.image = cls.image_behaviors.create_active_image(
-            cls.server.id).entity
-        cls.resp = cls.images_client.delete_image(cls.image.id)
-        cls.image_behaviors.wait_for_image_to_be_deleted(cls.image.id)
+        try:
+            super(DeleteImageTest, cls).setUpClass()
+            cls.name = rand_name('server')
+            cls.server = cls.server_response.entity
+            cls.image = cls.image_behaviors.create_active_image(
+                cls.server.id).entity
+            cls.resp = cls.images_client.delete_image(cls.image.id)
+            cls.image_behaviors.wait_for_image_to_be_deleted(cls.image.id)
+        except:
+            # Release any resources before the exception is raised
+            cls.resources.release()
+            raise
 
     @tags(type='smoke', net='no')
     def test_delete_image_response_code(self):

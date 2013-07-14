@@ -26,24 +26,29 @@ class TokenRequiredTests(ComputeFixture):
 
     @classmethod
     def setUpClass(cls):
-        super(TokenRequiredTests, cls).setUpClass()
-        cls.metadata = {'meta_key_1': 'meta_value_1',
-                        'meta_key_2': 'meta_value_2'}
-        cls.server = cls.server_behaviors.create_active_server(
-            metadata=cls.metadata).entity
-        cls.resources.add(cls.server.id, cls.servers_client.delete_server)
+        try:
+            super(TokenRequiredTests, cls).setUpClass()
+            cls.metadata = {'meta_key_1': 'meta_value_1',
+                            'meta_key_2': 'meta_value_2'}
+            cls.server = cls.server_behaviors.create_active_server(
+                metadata=cls.metadata).entity
+            cls.resources.add(cls.server.id, cls.servers_client.delete_server)
 
-        image_name = rand_name('testimage')
-        cls.image_meta = {'key1': 'value1', 'key2': 'value2'}
-        image_resp = cls.servers_client.create_image(cls.server.id,
-                                                     image_name,
-                                                     cls.image_meta)
-        assert image_resp.status_code == 202
-        cls.image_id = cls.parse_image_id(image_resp)
-        cls.image_behaviors.wait_for_image_status(
-            cls.image_id, NovaImageStatusTypes.ACTIVE)
-        cls.resources.add(cls.image_id, cls.images_client.delete_image)
-        cls.auth_token = {'headers': {'X-Auth-Token': None}}
+            image_name = rand_name('testimage')
+            cls.image_meta = {'key1': 'value1', 'key2': 'value2'}
+            image_resp = cls.servers_client.create_image(cls.server.id,
+                                                         image_name,
+                                                         cls.image_meta)
+            assert image_resp.status_code == 202
+            cls.image_id = cls.parse_image_id(image_resp)
+            cls.image_behaviors.wait_for_image_status(
+                cls.image_id, NovaImageStatusTypes.ACTIVE)
+            cls.resources.add(cls.image_id, cls.images_client.delete_image)
+            cls.auth_token = {'headers': {'X-Auth-Token': None}}
+        except:
+            # Release any resources before the exception is raised
+            cls.resources.release()
+            raise
 
     @tags(type='negative', net='no')
     def test_list_flavors_with_invalid_token(self):

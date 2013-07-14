@@ -24,24 +24,29 @@ class ServerListTest(ComputeFixture):
 
     @classmethod
     def setUpClass(cls):
-        super(ServerListTest, cls).setUpClass()
-        # Creation of 3 servers needed for the tests
-        active_server_response = cls.server_behaviors.create_active_server()
-        cls.server = active_server_response.entity
-        cls.resources.add(cls.server.id,
-                          cls.servers_client.delete_server)
+        try:
+            super(ServerListTest, cls).setUpClass()
+            # Creation of 3 servers needed for the tests
+            active_server_response = cls.server_behaviors.create_active_server()
+            cls.server = active_server_response.entity
+            cls.resources.add(cls.server.id,
+                              cls.servers_client.delete_server)
 
-        active_server_response = cls.server_behaviors.create_active_server()
-        cls.server_second = active_server_response.entity
-        cls.resources.add(cls.server_second.id,
-                          cls.servers_client.delete_server)
+            active_server_response = cls.server_behaviors.create_active_server()
+            cls.server_second = active_server_response.entity
+            cls.resources.add(cls.server_second.id,
+                              cls.servers_client.delete_server)
 
-        active_server_response = cls.server_behaviors.create_active_server(
-            image_ref=cls.image_ref_alt,
-            flavor_ref=cls.flavor_ref_alt)
-        cls.server_third = active_server_response.entity
-        cls.resources.add(cls.server_third.id,
-                          cls.servers_client.delete_server)
+            active_server_response = cls.server_behaviors.create_active_server(
+                image_ref=cls.image_ref_alt,
+                flavor_ref=cls.flavor_ref_alt)
+            cls.server_third = active_server_response.entity
+            cls.resources.add(cls.server_third.id,
+                              cls.servers_client.delete_server)
+        except:
+            # Release any resources before the exception is raised
+            cls.resources.release()
+            raise
 
     @tags(type='smoke', net='no')
     def test_get_server(self):
