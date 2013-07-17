@@ -112,4 +112,3 @@ class ImageV2Fixture(ImageFixture):
     @classmethod
     def setUpClass(cls):
         super(ImageFixture, cls).setUpClass()
-        cls.api_client = ImagesV2Client()
