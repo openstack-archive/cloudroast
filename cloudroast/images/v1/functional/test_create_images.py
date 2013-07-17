@@ -17,7 +17,7 @@ limitations under the License.
 import cStringIO as StringIO
 
 from cafe.drivers.unittest.decorators import tags
-from cloudcafe.compute.common.datagen import rand_name
+from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.images.common.types import ImageDiskFormat, \
     ImageContainerFormat, ImageStatus
 from cloudroast.images.fixtures import ImageV1Fixture
