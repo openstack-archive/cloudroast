@@ -32,7 +32,7 @@ from cloudcafe.compute.hosts_api.client import HostsClient
 from cloudcafe.compute.hypervisors_api.client import HypervisorsClient
 from cloudcafe.compute.extensions.keypairs_api.client import KeypairsClient
 from cloudcafe.compute.extensions.security_groups_api.client import \
-    SecurityGroupsClient
+    SecurityGroupsClient, SecurityGroupRulesClient
 from cloudcafe.compute.extensions.rescue_api.client import RescueClient
 from cloudcafe.compute.servers_api.behaviors import ServerBehaviors
 from cloudcafe.compute.images_api.behaviors import ImageBehaviors
@@ -75,12 +75,14 @@ class ComputeFixture(BaseTestFixture):
         cls.flavors_client = FlavorsClient(url, access_data.token.id_,
                                            'json', 'json')
         cls.servers_client = ServersClient(url, access_data.token.id_,
-                                           'json', 'json')
+                                           'xml', 'xml')
         cls.images_client = ImagesClient(url, access_data.token.id_,
                                          'json', 'json')
         cls.keypairs_client = KeypairsClient(url, access_data.token.id_,
                                              'json', 'json')
-        cls.sec_groups_client = SecurityGroupsClient(
+        cls.security_groups_client = SecurityGroupsClient(
+            url, access_data.token.id_, 'json', 'json')
+        cls.security_group_rule_client = SecurityGroupRulesClient(
             url, access_data.token.id_, 'json', 'json')
         cls.rescue_client = RescueClient(url, access_data.token.id_,
                                          'json', 'json')
