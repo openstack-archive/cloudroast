@@ -110,6 +110,17 @@ class ImageV1Fixture(ImageFixture):
 
         return [x.id_ for x in tenants]
 
+    @classmethod
+    def _get_all_tenant_ids(cls):
+        """
+            Get a list of all tenants
+            @return list of Tenant IDs
+        """
+        response = cls.tenants_client.list_tenants()
+        tenants = response.entity
+
+        return [x.id_ for x in tenants]
+
 
 class ImageV2Fixture(ImageFixture):
     @classmethod
