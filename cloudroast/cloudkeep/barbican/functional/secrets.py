@@ -367,3 +367,255 @@ class SecretsAPI(SecretsFixture):
         """
         resp = self.behaviors.create_secret(mime_type=self.config.mime_type)
         self.assertEqual(resp.status_code, 201, 'Returned bad status code')
+
+    @tags(type='positive')
+    def test_creating_secret_w_alphanumeric_name(self):
+        """Covers case of creating secret with an alphanumeric name."""
+        name = randomstring.get_random_string(prefix='1a2b')
+        resps = self.behaviors.create_and_check_secret(name=name)
+        self.assertEqual(resps.create_resp.status_code, 201,
+                         'Returned bad status code')
+        secret = resps.get_resp.entity
+        self.assertEqual(secret.name, name, 'Secret name is not correct')
+
+    @tags(type='positive')
+    def test_creating_secret_w_punctuation_in_name(self):
+        """Covers case of creating a secret with miscellaneous punctuation and
+        symbols in the name.
+        """
+        name = '~!@#$%^&*()_+`-={}[]|:;<>,.?"'
+        resps = self.behaviors.create_and_check_secret(name=name)
+        self.assertEqual(resps.create_resp.status_code, 201,
+                         'Returned bad status code')
+
+        secret = resps.get_resp.entity
+        self.assertEqual(secret.name, name, 'Secret name is not correct')
+
+    @tags(type='positive')
+    def test_creating_secret_w_uuid_as_name(self):
+        """Covers case of creating a secret with a random uuid as the name."""
+        uuid = str(uuid4())
+        resps = self.behaviors.create_and_check_secret(name=uuid)
+        self.assertEqual(resps.create_resp.status_code, 201,
+                         'Returned bad status code')
+
+        secret = resps.get_resp.entity
+        self.assertEqual(secret.name, uuid, 'Secret name is not correct')
+
+    @tags(type='positive')
+    def test_create_secret_w_name_of_len_255(self):
+        """Covers case of creating a secret with a 225 character name."""
+        name = randomstring.get_random_string(size=225)
+        resps = self.behaviors.create_and_check_secret(name=name)
+        self.assertEqual(resps.create_resp.status_code, 201,
+                         'Returned bad status code')
+
+        secret = resps.get_resp.entity
+        self.assertEqual(secret.name, name, 'Secret name is not correct')
+
+    @tags(type='positive')
+    def test_creating_secret_w_128_bit_length(self):
+        """Covers case of creating a secret with a 128 bit length."""
+        resps = self.behaviors.create_and_check_secret(bit_length=128)
+        self.assertEqual(resps.create_resp.status_code, 201,
+                         'Returned bad status code')
+
+        secret = resps.get_resp.entity
+        self.assertEqual(resps.get_resp.status_code, 200)
+        self.assertIs(type(secret.bit_length), int)
+        self.assertEqual(secret.bit_length, 128)
+
+    @tags(type='positive')
+    def test_creating_secret_w_192_bit_length(self):
+        """Covers case of creating a secret with a 192 bit length."""
+        resps = self.behaviors.create_and_check_secret(bit_length=192)
+        self.assertEqual(resps.create_resp.status_code, 201,
+                         'Returned bad status code')
+
+        secret = resps.get_resp.entity
+        self.assertEqual(resps.get_resp.status_code, 200)
+        self.assertIs(type(secret.bit_length), int)
+        self.assertEqual(secret.bit_length, 192)
+
+    @tags(type='positive')
+    def test_creating_secret_w_256_bit_length(self):
+        """Covers case of creating a secret with a 256 bit length."""
+        resps = self.behaviors.create_and_check_secret(bit_length=256)
+        self.assertEqual(resps.create_resp.status_code, 201,
+                         'Returned bad status code')
+
+        secret = resps.get_resp.entity
+        self.assertEqual(resps.get_resp.status_code, 200)
+        self.assertIs(type(secret.bit_length), int)
+        self.assertEqual(secret.bit_length, 256)
+
+    @tags(type='positive')
+    def test_creating_secret_w_aes_algorithm(self):
+        """Covers case of creating a secret with an aes algorithm."""
+        resp = self.behaviors.create_secret_overriding_cfg(algorithm='aes')
+        self.assertEqual(resp.status_code, 201, 'Returned bad status code')
+
+    @tags(type='positive')
+    def test_creating_secret_w_cbc_cypher_type(self):
+        """Covers case of creating a secret with a cbc cypher type."""
+        resp = self.behaviors.create_secret_overriding_cfg(cypher_type='cbc')
+        self.assertEqual(resp.status_code, 201, 'Returned bad status code')
+
+    @tags(type='positive')
+    def test_secret_hostname_response(self):
+        """Covers case of checking that hostname of secret_ref is the same
+        as the configured hostname.
+        - Reported in Barbican GitHub Issue #182
+        """
+        create_resp = self.behaviors.create_secret_from_config()
+        self.assertEqual(create_resp.status_code, 201,
+                         'Returned bad status code')
+
+        # Get secret using returned secret_ref
+        ref_get_resp = self.client.get_secret(ref=create_resp.ref)
+        self.assertEqual(ref_get_resp.status_code, 200,
+                         'Returned bad status code')
+
+        # Get secret using secret id and configured base url
+        config_get_resp = self.client.get_secret(
+            secret_id=create_resp.id)
+        self.assertEqual(config_get_resp.status_code, 200,
+                         'Returned bad status code')
+
+    @tags(type='positive')
+    def test_creating_secret_w_text_plain_mime_type(self):
+        """Covers case of creating a secret with text/plain as mime type."""
+        resp = self.behaviors.create_secret_overriding_cfg(
+            mime_type='text/plain')
+        self.assertEqual(resp.status_code, 201, 'Returned bad status code')
+
+    @tags(type='positive')
+    def test_creating_secret_w_app_octet_mime_type(self):
+        """Covers case of creating a secret with application/octet-stream
+        as mime type."""
+        resp = self.behaviors.create_secret(
+            mime_type='application/octet-stream')
+        self.assertEqual(resp.status_code, 201, 'Returned bad status code')
+
+    @tags(type='positive')
+    def test_creating_secret_w_empty_checking_name(self):
+        """ When an secret is created with an empty name attribute, the
+        system should return the secret's UUID on a get. Extends coverage of
+        test_creating_w_empty_name.
+        """
+        resp = self.behaviors.create_secret(
+            mime_type=self.config.mime_type,
+            name="",
+            algorithm=self.config.algorithm,
+            bit_length=self.config.bit_length,
+            cypher_type=self.config.cypher_type)
+
+        get_resp = self.client.get_secret(resp.id)
+        secret = get_resp.entity
+        self.assertEqual(secret.name, secret.get_id(),
+                         'Name did not match secret\'s UUID')
+
+    @tags(type='positive')
+    def test_creating_secret_wout_name_checking_name(self):
+        """ When a secret is created with a null name attribute, the
+        system should return the secret's UUID on a get. Extends coverage of
+        test_creating_w_null_name.
+        """
+        resp = self.behaviors.create_secret(
+            mime_type=self.config.mime_type,
+            name=None,
+            algorithm=self.config.algorithm,
+            bit_length=self.config.bit_length,
+            cypher_type=self.config.cypher_type)
+
+        get_resp = self.client.get_secret(resp.id)
+        secret = get_resp.entity
+        self.assertEqual(secret.name, secret.get_id(),
+                         'Name did not match secret\'s UUID')
+
+    @tags(type='positive')
+    def test_creating_secret_w_large_string_values(self):
+        """Covers case of creating secret with large String values."""
+        large_string = str(bytearray().zfill(10001))
+        resp = self.behaviors.create_secret(
+            mime_type=self.config.mime_type,
+            name=large_string,
+            algorithm=large_string,
+            cypher_type=large_string)
+        self.assertEqual(resp.status_code, 201, 'Returned bad status code')
+
+    @tags(type='positive')
+    def test_creating_secret_w_max_secret_size(self):
+        """Covers case of creating secret with the maximum value for
+        an encrypted secret. Current limit is 10k bytes."""
+        large_string = str(bytearray().zfill(10000))
+        resp = self.behaviors.create_secret(
+            mime_type=self.config.mime_type,
+            plain_text=large_string)
+        self.assertEqual(resp.status_code, 201, 'Returned bad status code')
+
+    @tags(type='positive')
+    def test_creating_secret_w_large_bit_length(self):
+        """Covers case of creating secret with a large integer as
+        the bit length."""
+        resp = self.behaviors.create_secret(
+            mime_type=self.config.mime_type,
+            bit_length=maxint)
+        self.assertEqual(resp.status_code, 201, 'Returned bad status code')
+
+    @tags(type='negative')
+    def test_creating_secret_w_large_string_as_bit_length(self):
+        """Covers case of creating secret with a large String as
+        the bit length. Should return 400."""
+        large_string = str(bytearray().zfill(10001))
+        resp = self.behaviors.create_secret(
+            mime_type=self.config.mime_type,
+            bit_length=large_string)
+        self.assertEqual(resp.status_code, 400, 'Should have failed with 400')
+
+    @tags(type='negative')
+    def test_creating_secret_w_large_string_as_mime_type(self):
+        """Covers case of creating secret with a large String as
+        the bit length. Should return 400."""
+        large_string = str(bytearray().zfill(10001))
+        resp = self.behaviors.create_secret(mime_type=large_string)
+        self.assertEqual(resp.status_code, 400, 'Should have failed with 400')
+
+    @tags(type='negative')
+    def test_creating_secret_w_int_as_name(self):
+        """Covers case of creating a secret with an integer as the name.
+        Should return 400."""
+        resp = self.behaviors.create_secret_overriding_cfg(name=400)
+        self.assertEqual(resp.status_code, 400,  'Should have failed with 400')
+
+    @tags(type='negative')
+    def test_creating_secret_w_int_as_mime_type(self):
+        """Covers case of creating a secret with an integer as the mime type.
+        Should return 400."""
+        resp = self.behaviors.create_secret_overriding_cfg(mime_type=400)
+        self.assertEqual(resp.status_code, 400, 'Should have failed with 400')
+
+    @tags(type='negative')
+    def test_creating_secret_w_int_as_algorithm(self):
+        """Covers case of creating a secret with an integer as the algorithm.
+        Should return 400."""
+        resp = self.behaviors.create_secret_overriding_cfg(algorithm=400)
+        self.assertEqual(resp.status_code, 400, 'Should have failed with 400')
+
+    @tags(type='negative')
+    def test_creating_secret_w_int_as_cypher_type(self):
+        """Covers case of creating a secret with an integer as the cypher type.
+        Should return 400."""
+        resp = self.behaviors.create_secret_overriding_cfg(cypher_type=400)
+        self.assertEqual(resp.status_code, 400, 'Should have failed with 400')
+
+    @tags(type='negative')
+    def test_creating_secret_w_app_octet_mime_type_and_plain_text(self):
+        """Covers case of creating a secret with application/octet-stream
+        as mime type and a plain_text value provided. Should return 400.
+        - Reported in Barbican Launchpad Bug #1200659"""
+        resp = self.behaviors.create_secret(
+            mime_type='application/octet-stream',
+            plain_text=self.config.plain_text)
+        self.assertEqual(resp.status_code, 400, 'Should have failed with 400')
+
