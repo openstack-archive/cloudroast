@@ -28,6 +28,8 @@ class ResizeServerDownConfirmTests(ComputeFixture):
     def setUpClass(cls):
         super(ResizeServerDownConfirmTests, cls).setUpClass()
         cls.key = cls.keypairs_client.create_keypair(rand_name("key")).entity
+        cls.resources.add(cls.key.name,
+                          cls.keypairs_client.delete_keypair)
         server_response = cls.server_behaviors.create_active_server(
             flavor_ref=cls.flavor_ref_alt, key_name=cls.key.name)
         server_to_resize = server_response.entity

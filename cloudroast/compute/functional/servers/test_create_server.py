@@ -40,6 +40,8 @@ class CreateServerTest(ComputeFixture):
         files = [{'path': '/test.txt', 'contents': base64.b64encode(
             cls.file_contents)}]
         cls.key = cls.keypairs_client.create_keypair(rand_name("key")).entity
+        cls.resources.add(cls.key.name,
+                          cls.keypairs_client.delete_keypair)
         cls.create_resp = cls.servers_client.create_server(
             cls.name, cls.image_ref, cls.flavor_ref, metadata=cls.metadata,
             personality=files, key_name=cls.key.name)
