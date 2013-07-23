@@ -19,6 +19,7 @@ from cloudroast.cloudkeep.barbican.fixtures import VersionFixture
 class TestVersion(VersionFixture):
 
     def test_get_version(self):
+        """Covers getting the version of Barbican."""
         response = self.client.get_version()
         version = response.entity
 

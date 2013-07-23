@@ -15,7 +15,13 @@ limitations under the License.
 """
 import unittest2
 from datetime import datetime, timedelta
-from cloudroast.cloudkeep.barbican.fixtures import OrdersFixture
+from uuid import uuid4
+from sys import maxint
+
+from cloudroast.cloudkeep.barbican.fixtures import OrdersFixture, \
+    OrdersPagingFixture
+from cafe.drivers.unittest.decorators import tags
+from cloudcafe.common.tools import randomstring
 
 
 class OrdersAPI(OrdersFixture):
@@ -32,9 +38,9 @@ class OrdersAPI(OrdersFixture):
 
         resp = self.behaviors.create_order_overriding_cfg(
             expiration=timestamp)
-        self.assertEqual(resp['status_code'], 202)
+        self.assertEqual(resp.status_code, 202)
 
-        order = self.orders_client.get_order(resp['order_id']).entity
+        order = self.orders_client.get_order(resp.id).entity
         exp = datetime.strptime(order.secret.expiration,
                                 '%Y-%m-%dT%H:%M:%S.%f')
         self.assertEqual(exp, one_day_ahead + timedelta(hours=offset),
@@ -50,8 +56,9 @@ class OrdersAPI(OrdersFixture):
 
         resp = self.behaviors.create_order_overriding_cfg(
             expiration=timestamp)
-        self.assertEqual(resp['status_code'], 400)
+        self.assertEqual(resp.status_code, 400)
 
+    @tags(type='negative')
     def test_create_order_with_null_mime_type(self):
         """ Covers issue where you attempt to create an order with the
         mime_type attribute set to null and the request appears to fail
@@ -64,8 +71,22 @@ class OrdersAPI(OrdersFixture):
             algorithm=self.config.algorithm,
             bit_length=self.config.bit_length,
             cypher_type=self.config.cypher_type)
-        self.assertEqual(resp['status_code'], 400, 'Returned bad status code')
+        self.assertEqual(resp.status_code, 400, 'Returned bad status code')
 
+    @tags(type='negative')
+    def test_create_order_with_empty_mime_type(self):
+        """ Covers case of creating an order with an empty String as the
+        mime type. Should return 400.
+        """
+        resp = self.behaviors.create_order(
+            mime_type='',
+            name=self.config.name,
+            algorithm=self.config.algorithm,
+            bit_length=self.config.bit_length,
+            cypher_type=self.config.cypher_type)
+        self.assertEqual(resp.status_code, 400, 'Returned bad status code')
+
+    @tags(type='positive')
     def test_create_order_wout_name(self):
         """ When you attempt to create an order without the name attribute the
          request appears to fail without a status code.
@@ -73,12 +94,25 @@ class OrdersAPI(OrdersFixture):
         """
         resp = self.behaviors.create_order(
             mime_type=self.config.mime_type,
-            name=None,
             algorithm=self.config.algorithm,
             bit_length=self.config.bit_length,
             cypher_type=self.config.cypher_type)
-        self.assertEqual(resp['status_code'], 202, 'Returned bad status code')
+        self.assertEqual(resp.status_code, 202, 'Returned bad status code')
 
+    @tags(type='positive')
+    def test_create_order_w_empty_name(self):
+        """ Covers case of creating an order with an empty String as the name
+        attribute.
+        """
+        resp = self.behaviors.create_order(
+            mime_type=self.config.mime_type,
+            name='',
+            algorithm=self.config.algorithm,
+            bit_length=self.config.bit_length,
+            cypher_type=self.config.cypher_type)
+        self.assertEqual(resp.status_code, 202, 'Returned bad status code')
+
+    @tags(type='negative')
     def test_create_order_with_invalid_mime_type(self):
         """ Covers defect where you attempt to create an order with an invalid
          mime_type and the request fails without a status code.
@@ -90,9 +124,10 @@ class OrdersAPI(OrdersFixture):
             algorithm=self.config.algorithm,
             bit_length=self.config.bit_length,
             cypher_type=self.config.cypher_type)
-        self.assertEqual(resp['status_code'], 400, 'Returned bad status code')
+        self.assertEqual(resp.status_code, 400, 'Returned bad status code')
 
     @unittest2.skip('Issue #140')
+    @tags(type='positive')
     def test_getting_secret_data_as_plain_text(self):
         """ Covers defect where you attempt to get secret information in
         text/plain, and the request fails to decrypt the information.
@@ -104,9 +139,14 @@ class OrdersAPI(OrdersFixture):
             algorithm=self.config.algorithm,
             bit_length=self.config.bit_length,
             cypher_type=self.config.cypher_type)
-        self.assertEqual(resps['get_secret_resp'].status_code, 200,
+
+        secret_ref = resps.get_resp.entity.secret_href
+        secret_resp = self.secrets_client.get_secret(ref=secret_ref,
+                                                     mime_type='text/plain')
+        self.assertEqual(secret_resp.status_code, 200,
                          'Returned bad status code')
 
+    @tags(type='negative')
     def test_get_order_that_doesnt_exist(self):
         """
         Covers case of getting a non-existent order. Should return 404.
@@ -114,6 +154,7 @@ class OrdersAPI(OrdersFixture):
         resp = self.orders_client.get_order('not_an_order')
         self.assertEqual(resp.status_code, 404, 'Should have failed with 404')
 
+    @tags(type='negative')
     def test_delete_order_that_doesnt_exist(self):
         """
         Covers case of deleting a non-existent order. Should return 404.
@@ -121,84 +162,87 @@ class OrdersAPI(OrdersFixture):
         resp = self.orders_client.delete_order('not_an_order')
         self.assertEqual(resp.status_code, 404, 'Should have failed with 404')
 
-    def test_order_paging_limit_and_offset(self):
-        """
-        Covers testing paging limit and offset attributes when getting orders.
-        """
-        # Create order pool
-        for count in range(1, 20):
-            self.behaviors.create_order_from_config()
-
-        # First set of orders
-        resp = self.orders_client.get_orders(limit=10, offset=0)
-        ord_group1 = resp.entity
-
-        # Second set of orders
-        resp = self.orders_client.get_orders(limit=20, offset=10)
-        ord_group2 = resp.entity
-
-        duplicates = [order for order in ord_group1.orders
-                      if order in ord_group2.orders]
-
-        self.assertEqual(len(ord_group1.orders), 10)
-        self.assertGreaterEqual(len(ord_group2.orders), 1)
-        self.assertEqual(len(duplicates), 0,
-                         'Using offset didn\'t return unique orders.')
-
-    def test_find_a_single_order_via_paging(self):
-        """
-        Covers finding an order with paging.
-        """
-        resp = self.behaviors.create_order_from_config()
-        for count in range(1, 11):
-            self.behaviors.create_order_from_config()
-        order = self.behaviors.find_order(resp['order_id'])
-        self.assertIsNotNone(order, 'Couldn\'t find created order')
-
+    @tags(type='positive')
     def test_create_order_w_expiration(self):
         """
         Covers creating order with expiration.
         """
         resp = self.behaviors.create_order_from_config(use_expiration=True)
-        self.assertEqual(resp['status_code'], 202, 'Returned bad status code')
+        self.assertEqual(resp.status_code, 202, 'Returned bad status code')
 
+    @tags(type='negative')
     def test_create_order_w_invalid_expiration(self):
         """
         Covers creating order with expiration that has already passed.
         """
         resp = self.behaviors.create_order_overriding_cfg(
             expiration='2000-01-10T14:58:52.546795')
-        self.assertEqual(resp['status_code'], 400,
+        self.assertEqual(resp.status_code, 400,
                          'Should have failed with 400')
 
+    @tags(type='negative')
     def test_create_order_w_null_entries(self):
         """
         Covers creating order with all null entries.
         """
         resp = self.behaviors.create_order()
-        self.assertEqual(resp['status_code'], 400,
+        self.assertEqual(resp.status_code, 400,
                          'Should have failed with 400')
 
+    @tags(type='negative')
+    def test_create_order_w_empty_entries(self):
+        """ Covers case of creating an order with empty Strings for all
+        entries. Should return a 400.
+        """
+        resp = self.behaviors.create_order(name='', expiration='',
+                                           algorithm='', cypher_type='',
+                                           mime_type='')
+        self.assertEqual(resp.status_code, 400,
+                         'Should have failed with 400')
+
+    @tags(type='positive')
+    def test_create_order_w_empty_checking_name(self):
+        """ When an order is created with an empty name attribute, the
+        system should return the secret's UUID on a get. Extends coverage of
+        test_create_order_w_empty_name. Assumes that the order status will be
+        active and not pending.
+        """
+        resp = self.behaviors.create_order(
+            mime_type=self.config.mime_type,
+            name='',
+            algorithm=self.config.algorithm,
+            bit_length=self.config.bit_length,
+            cypher_type=self.config.cypher_type)
+
+        get_resp = self.orders_client.get_order(resp.id)
+        order = get_resp.entity
+        secret_id = order.get_secret_id()
+        secret = get_resp.entity.secret
+        self.assertEqual(secret.name, secret_id,
+                         'Name did not match secret\'s UUID')
+
+    @tags(type='positive')
     def test_create_order_wout_name_checking_name(self):
-        """ When an order is created with an empty or null name attribute, the
+        """ When an order is created with a null name attribute, the
         system should return the secret's UUID on a get. Extends coverage of
         test_create_order_wout_name. Assumes that the order status will be
         active and not pending.
         """
         resp = self.behaviors.create_order(
             mime_type=self.config.mime_type,
-            name="",
+            name=None,
             algorithm=self.config.algorithm,
             bit_length=self.config.bit_length,
             cypher_type=self.config.cypher_type)
 
-        get_resp = self.orders_client.get_order(resp['order_id'])
-        secret_id = self.behaviors.get_id_from_ref(
-            ref=get_resp.entity.secret_href)
+        get_resp = self.orders_client.get_order(resp.id)
+        order = get_resp.entity
+        secret_id = order.get_secret_id()
         secret = get_resp.entity.secret
         self.assertEqual(secret.name, secret_id,
                          'Name did not match secret\'s UUID')
 
+    @tags(type='positive')
     def test_create_order_with_long_expiration_timezone(self):
         """ Covers case of a timezone being added to the expiration.
         The server should convert it into zulu time.
@@ -207,6 +251,8 @@ class OrdersAPI(OrdersFixture):
         self.check_expiration_iso8601_timezone('-05:00', 5)
         self.check_expiration_iso8601_timezone('+05:00', -5)
 
+    @unittest2.skip('Issue #135')
+    @tags(type='positive')
     def test_create_order_with_short_expiration_timezone(self):
         """ Covers case of a timezone being added to the expiration.
         The server should convert it into zulu time.
@@ -215,31 +261,63 @@ class OrdersAPI(OrdersFixture):
         self.check_expiration_iso8601_timezone('-01', 1)
         self.check_expiration_iso8601_timezone('+01', -1)
 
+    @unittest2.skip('Issue #134')
+    @tags(type='negative')
     def test_create_order_with_bad_expiration_timezone(self):
         """ Covers case of a malformed timezone being added to the expiration.
         - Reported in Barbican GitHub Issue #134
         """
         self.check_invalid_expiration_timezone('-5:00')
 
-    def test_create_order_w_bit_length_str(self):
-        """
-        Covers case of creating an order with a bit length.
-        """
+    @tags(type='positive')
+    def test_create_order_w_128_bit_length(self):
+        """Covers case of creating an order with a 128 bit length."""
         resps = self.behaviors.create_and_check_order(bit_length=128)
-        secret = resps['get_order_resp'].entity.secret
-        self.assertEqual(resps['get_order_resp'].status_code, 200)
+        self.assertEqual(resps.create_resp.status_code,
+                         202, 'Returned bad status code')
+
+        secret = resps.get_resp.entity.secret
+        self.assertEqual(resps.get_resp.status_code, 200)
         self.assertIs(type(secret.bit_length), int)
         self.assertEqual(secret.bit_length, 128)
 
+    @tags(type='positive')
+    def test_create_order_w_192_bit_length(self):
+        """Covers case of creating an order with a 192 bit length."""
+        resps = self.behaviors.create_and_check_order(bit_length=192)
+        self.assertEqual(resps.create_resp.status_code,
+                         202, 'Returned bad status code')
+
+        secret = resps.get_resp.entity.secret
+        self.assertEqual(resps.get_resp.status_code, 200)
+        self.assertIs(type(secret.bit_length), int)
+        self.assertEqual(secret.bit_length, 192)
+
+    @tags(type='positive')
+    def test_create_order_w_256_bit_length(self):
+        """Covers case of creating an order with a 256 bit length."""
+        resps = self.behaviors.create_and_check_order(bit_length=256)
+        self.assertEqual(resps.create_resp.status_code,
+                         202, 'Returned bad status code')
+
+        secret = resps.get_resp.entity.secret
+        self.assertEqual(resps.get_resp.status_code, 200)
+        self.assertIs(type(secret.bit_length), int)
+        self.assertEqual(secret.bit_length, 256)
+
+    @tags(type='positive')
     def test_order_and_secret_metadata_same(self):
         """ Covers checking that secret metadata from a get on the order and
         secret metadata from a get on the secret are the same. Assumes
         that the order status will be active and not pending.
         """
-        resps = self.behaviors.create_and_check_order()
+        resp = self.behaviors.create_and_check_order()
+        order = resp.get_resp.entity
+        order_metadata = order.secret
+        secret_ref = order.secret_href
+        secret_resp = self.secrets_client.get_secret(ref=secret_ref)
+        secret_metadata = secret_resp.entity
 
-        order_metadata = resps['get_order_resp'].entity.secret
-        secret_metadata = resps['get_secret_resp'].entity
         self.assertEqual(order_metadata.name, secret_metadata.name,
                          'Names were not the same')
         self.assertEqual(order_metadata.algorithm, secret_metadata.algorithm,
@@ -256,32 +334,69 @@ class OrdersAPI(OrdersFixture):
                          secret_metadata.cypher_type,
                          'Cypher types were not the same')
 
+    @tags(type='negative')
     def test_creating_order_w_invalid_bit_length(self):
         """ Cover case of creating an order with a bit length that is not
         an integer. Should return 400.
         """
         resp = self.behaviors.create_order_overriding_cfg(
             bit_length='not-an-int')
-        self.assertEqual(resp['status_code'], 400,
+        self.assertEqual(resp.status_code, 400,
                          'Should have failed with 400')
 
+    @tags(type='negative')
     def test_creating_order_w_negative_bit_length(self):
         """ Covers case of creating an order with a bit length that is
         negative. Should return 400.
         """
         resp = self.behaviors.create_order_overriding_cfg(
             bit_length=-1)
-        self.assertEqual(resp['status_code'], 400,
+        self.assertEqual(resp.status_code, 400,
                          'Should have failed with 400')
 
+    @tags(type='negative')
     def test_creating_order_wout_bit_length(self):
-        """Covers case where order creation fails when bit length is not
-        provided.
+        """Covers case where order is created without bit length.
+        Should return 400.
         - Reported in Barbican GitHub Issue #156
         """
         resp = self.behaviors.create_order(
             mime_type=self.config.mime_type,
             name=self.config.name,
             algorithm=self.config.algorithm,
-            cypher_type=self.config.cypher_type)
-        self.assertEqual(resp['status_code'], 202, 'Returned bad status code')
+            cypher_type=self.config.cypher_type,
+            bit_length=None)
+        self.assertEqual(resp.status_code, 400,
+                         'Should have failed with 400')
+
+    @tags(type='positive')
+    def test_create_order_w_cbc_cypher_type(self):
+        """Covers case of creating an order with a cbc cypher type."""
+        resp = self.behaviors.create_order_overriding_cfg(cypher_type='cbc')
+        self.assertEqual(resp.status_code, 202, 'Returned bad status code')
+
+    @tags(type='positive')
+    def test_create_order_w_aes_algorithm(self):
+        """Covers case of creating an order with an aes algorithm."""
+        resp = self.behaviors.create_order_overriding_cfg(algorithm='aes')
+        self.assertEqual(resp.status_code, 202, 'Returned bad status code')
+
+    @tags(type='positive')
+    def test_create_order_w_app_octet_stream_mime_type(self):
+        """Covers case of creating an order with an application/octet-stream
+        mime type.
+        """
+        resp = self.behaviors.create_order_overriding_cfg(
+            mime_type='application/octet-stream')
+        self.assertEqual(resp.status_code, 202, 'Returned bad status code')
+
+    @tags(type='positive')
+    def test_create_order_w_alphanumeric_name(self):
+        """Covers case of creating an order with an alphanumeric name."""
+        name = randomstring.get_random_string(prefix='1a2b')
+        resps = self.behaviors.create_and_check_order(name=name)
+        self.assertEqual(resps.create_resp.status_code, 202,
+                         'Returned bad status code')
+
+        secret = resps.get_resp.entity.secret
+        self.assertEqual(secret.name, name, 'Secret name is not correct')
