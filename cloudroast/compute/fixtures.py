@@ -18,11 +18,11 @@ from cafe.drivers.unittest.fixtures import BaseTestFixture
 from cloudcafe.common.resources import ResourcePool
 from cloudcafe.compute.common.exceptions import TimeoutException, \
     BuildErrorException
-from cloudcafe.compute.common.types import NovaServerStatusTypes\
+from cloudcafe.compute.common.types import NovaServerStatusTypes \
     as ServerStates
 from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.compute.config import ComputeEndpointConfig, \
-    ComputeAdminEndpointConfig
+    ComputeAdminEndpointConfig, MarshallingConfig
 from cloudcafe.compute.common.exception_handler import ExceptionHandler
 from cloudcafe.compute.flavors_api.client import FlavorsClient
 from cloudcafe.compute.quotas_api.client import QuotasClient
@@ -56,6 +56,7 @@ class ComputeFixture(BaseTestFixture):
         cls.images_config = ImagesConfig()
         cls.servers_config = ServersConfig()
         cls.compute_endpoint = ComputeEndpointConfig()
+        cls.marshalling = MarshallingConfig()
 
         cls.flavor_ref = cls.flavors_config.primary_flavor
         cls.flavor_ref_alt = cls.flavors_config.secondary_flavor
@@ -73,19 +74,26 @@ class ComputeFixture(BaseTestFixture):
         url = compute_service.get_endpoint(
             cls.compute_endpoint.region).public_url
         cls.flavors_client = FlavorsClient(url, access_data.token.id_,
-                                           'json', 'json')
+                                           cls.marshalling.serializer,
+                                           cls.marshalling.deserializer)
         cls.servers_client = ServersClient(url, access_data.token.id_,
-                                           'xml', 'xml')
+                                           cls.marshalling.serializer,
+                                           cls.marshalling.deserializer)
         cls.images_client = ImagesClient(url, access_data.token.id_,
-                                         'json', 'json')
+                                         cls.marshalling.serializer,
+                                         cls.marshalling.deserializer)
         cls.keypairs_client = KeypairsClient(url, access_data.token.id_,
-                                             'json', 'json')
+                                             cls.marshalling.serializer,
+                                             cls.marshalling.deserializer)
         cls.security_groups_client = SecurityGroupsClient(
-            url, access_data.token.id_, 'json', 'json')
+            url, access_data.token.id_, cls.marshalling.serializer,
+            cls.marshalling.deserializer)
         cls.security_group_rule_client = SecurityGroupRulesClient(
-            url, access_data.token.id_, 'json', 'json')
+            url, access_data.token.id_, cls.marshalling.serializer,
+            cls.marshalling.deserializer)
         cls.rescue_client = RescueClient(url, access_data.token.id_,
-                                         'json', 'json')
+                                         cls.marshalling.serializer,
+                                         cls.marshalling.deserializer)
         cls.server_behaviors = ServerBehaviors(cls.servers_client,
                                                cls.servers_config,
                                                cls.images_config,
@@ -227,25 +235,30 @@ class ComputeAdminFixture(ComputeFixture):
         url = compute_service.get_endpoint(
             admin_endpoint_config.region).public_url
         cls.admin_flavors_client = FlavorsClient(url, access_data.token.id_,
-                                                 'json', 'json')
+                                                 cls.marshalling.serializer,
+                                                 cls.marshalling.deserializer)
         cls.admin_servers_client = ServersClient(url, access_data.token.id_,
-                                                 'json', 'json')
+                                                 cls.marshalling.serializer,
+                                                 cls.marshalling.deserializer)
         cls.admin_server_behaviors = ServerBehaviors(cls.admin_servers_client,
                                                      cls.servers_config,
                                                      cls.images_config,
                                                      cls.flavors_config)
         cls.admin_images_client = ImagesClient(url, access_data.token.id_,
-                                               'json', 'json')
+                                               cls.marshalling.serializer,
+                                               cls.marshalling.deserializer)
         cls.admin_images_behaviors = ImageBehaviors(cls.admin_images_client,
                                                     cls.admin_servers_client,
                                                     cls.images_config)
         cls.admin_hosts_client = HostsClient(url, access_data.token.id_,
-                                             'json', 'json')
+                                             cls.marshalling.serializer,
+                                             cls.marshalling.deserializer)
         cls.admin_quotas_client = QuotasClient(url, access_data.token.id_,
-                                               'json', 'json')
-        cls.admin_hypervisors_client = HypervisorsClient(url,
-                                                         access_data.token.id_,
-                                                         'json', 'json')
+                                               cls.marshalling.serializer,
+                                               cls.marshalling.deserializer)
+        cls.admin_hypervisors_client = HypervisorsClient(
+            url, access_data.token.id_, cls.marshalling.serializer,
+            cls.marshalling.deserializer)
         cls.admin_servers_client.add_exception_handler(ExceptionHandler())
 
     @classmethod
