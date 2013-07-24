@@ -17,14 +17,14 @@ limitations under the License.
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.images.common.types import ImageContainerFormat, ImageDiskFormat
-from cloudroast.images.fixtures import ImageV1Fixture
+from cloudroast.images.v1.fixtures import ImagesV1Fixture
 
 
-class ImageMembersTests(ImageV1Fixture):
+class ImageMembersTests(ImagesV1Fixture):
 
     @classmethod
     def _create_image(cls):
-        image_id = cls._create_standard_image(
+        image_id = cls.behaviors._create_standard_image(
             rand_name,
             ImageContainerFormat.BARE,
             ImageDiskFormat.RAW, 1024)

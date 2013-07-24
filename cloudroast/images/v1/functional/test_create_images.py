@@ -20,10 +20,10 @@ from cafe.drivers.unittest.decorators import tags
 from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.images.common.types import ImageDiskFormat, \
     ImageContainerFormat, ImageStatus
-from cloudroast.images.fixtures import ImageV1Fixture
+from cloudroast.images.v1.fixtures import ImagesV1Fixture
 
 
-class CreateRegisterImagesTest(ImageV1Fixture):
+class CreateRegisterImagesTest(ImagesV1Fixture):
     """
         Test the creation and registration of images
     """
