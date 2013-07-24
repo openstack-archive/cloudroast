@@ -16,10 +16,11 @@ limitations under the License.
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.images.common.types import ImageDiskFormat, \
     ImageContainerFormat, ImageStatus
-from cloudroast.images.fixtures import ImageV1Fixture
+from cloudcafe.images.behaviors import ImageBehaviors
+from cloudroast.images.v1.fixtures import ImagesV1Fixture
 
 
-class ListImagesTest(ImageV1Fixture):
+class ListImagesTest(ImagesV1Fixture):
     """
         Test the listing of image information
     """
@@ -27,21 +28,21 @@ class ListImagesTest(ImageV1Fixture):
     def setUpClass(cls):
         super(ListImagesTest, cls).setUpClass()
 
-        img1 = cls._create_remote_image('one', ImageContainerFormat.BARE,
+        img1 = cls.behaviors._create_remote_image('one', ImageContainerFormat.BARE,
                                         ImageDiskFormat.RAW)
-        img2 = cls._create_remote_image('two', ImageContainerFormat.AMI,
+        img2 = cls.behaviors._create_remote_image('two', ImageContainerFormat.AMI,
                                         ImageDiskFormat.AMI)
-        img3 = cls._create_remote_image('dup', ImageContainerFormat.BARE,
+        img3 = cls.behaviors.create_remote_image('dup', ImageContainerFormat.BARE,
                                         ImageDiskFormat.RAW)
-        img4 = cls._create_remote_image('dup', ImageContainerFormat.BARE,
+        img4 = cls.behaviors.create_remote_image('dup', ImageContainerFormat.BARE,
                                         ImageDiskFormat.RAW)
-        img5 = cls._create_standard_image('1', ImageContainerFormat.AMI,
+        img5 = cls.behaviors.create_standard_image('1', ImageContainerFormat.AMI,
                                           ImageDiskFormat.AMI, 42)
-        img6 = cls._create_standard_image('2', ImageContainerFormat.AMI,
+        img6 = cls.behaviors.create_standard_image('2', ImageContainerFormat.AMI,
                                           ImageDiskFormat.AMI, 142)
-        img7 = cls._create_standard_image('33', ImageContainerFormat.BARE,
+        img7 = cls.behaviors.create_standard_image('33', ImageContainerFormat.BARE,
                                           ImageDiskFormat.RAW, 142)
-        img8 = cls._create_standard_image('33', ImageContainerFormat.BARE,
+        img8 = cls.behaviors.create_standard_image('33', ImageContainerFormat.BARE,
                                           ImageDiskFormat.RAW, 142)
         cls.created_images = set((img1, img2, img3, img4, img5, img6, img7,
                                   img8))

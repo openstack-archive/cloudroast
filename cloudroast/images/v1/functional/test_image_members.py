@@ -17,14 +17,14 @@ limitations under the License.
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.images.common.types import ImageContainerFormat, ImageDiskFormat
-from cloudroast.images.fixtures import ImageV1Fixture
+from cloudroast.images.v1.fixtures import ImagesV1Fixture
 
 
-class ImageMembersTests(ImageV1Fixture):
+class ImageMembersTests(ImagesV1Fixture):
 
     @classmethod
     def _create_image(cls):
-        image_id = cls._create_standard_image(
+        image_id = cls.behaviors._create_standard_image(
             rand_name,
             ImageContainerFormat.BARE,
             ImageDiskFormat.RAW, 1024)
@@ -36,7 +36,7 @@ class ImageMembersTests(ImageV1Fixture):
         image_id = self._create_image()
         response = self.api_client.add_member_to_image(
             image_id,
-            self.tenants[0])
+            self.tenant_ids[0])
         self.assertEquals(204, response.status_code)
 
         response = self.api_client.list_image_membership(image_id)
@@ -44,23 +44,23 @@ class ImageMembersTests(ImageV1Fixture):
         members = response.entity
         member_ids = [x.member_id for x in members]
 
-        self.assertIn(self.tenants[0], member_ids)
+        self.assertIn(self.tenant_ids[0], member_ids)
 
     @tags(type='positive', net='no')
     def test_get_shared_images(self):
         image_id = self._create_image()
         response = self.api_client.add_member_to_image(
             image_id,
-            self.tenants[0])
+            self.tenant_ids[0])
 
         self.assertEquals(204, response.status_code)
 
         shared_image = self._create_image()
         response = self.api_client.add_member_to_image(
             shared_image,
-            self.tenants[0])
+            self.tenant_ids[0])
 
-        response = self.api_client.list_shared_images(self.tenants[0])
+        response = self.api_client.list_shared_images(self.tenant_ids[0])
         self.assertEqual(200, response.status_code)
 
         images = response.entity
@@ -73,7 +73,7 @@ class ImageMembersTests(ImageV1Fixture):
     def test_remove_member(self):
         image_id = self._create_image()
         response = self.api_client.add_member_to_image(image_id,
-                                                       self.tenants[0])
+                                                       self.tenant_ids[0])
         self.assertEqual(204, response.status_code)
 
         response = self.api_client.list_image_membership(image_id)
@@ -81,7 +81,7 @@ class ImageMembersTests(ImageV1Fixture):
         self.assertEqual(1, len(response.entity))
 
         response = self.api_client.delete_member_from_image(image_id,
-                                                            self.tenants[0])
+                                                            self.tenant_ids[0])
         self.assertEqual(204, response.status_code)
 
         response = self.api_client.list_image_membership(image_id)
