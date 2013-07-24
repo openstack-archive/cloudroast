@@ -177,8 +177,7 @@ class OrdersAPI(OrdersFixture):
         """
         resp = self.behaviors.create_order_overriding_cfg(
             expiration='2000-01-10T14:58:52.546795')
-        self.assertEqual(resp.status_code, 400,
-                         'Should have failed with 400')
+        self.assertEqual(resp.status_code, 400, 'Should have failed with 400')
 
     @tags(type='negative')
     def test_create_order_w_null_entries(self):
@@ -186,8 +185,7 @@ class OrdersAPI(OrdersFixture):
         Covers creating order with all null entries.
         """
         resp = self.behaviors.create_order()
-        self.assertEqual(resp.status_code, 400,
-                         'Should have failed with 400')
+        self.assertEqual(resp.status_code, 400, 'Should have failed with 400')
 
     @tags(type='negative')
     def test_create_order_w_empty_entries(self):
@@ -341,8 +339,7 @@ class OrdersAPI(OrdersFixture):
         """
         resp = self.behaviors.create_order_overriding_cfg(
             bit_length='not-an-int')
-        self.assertEqual(resp.status_code, 400,
-                         'Should have failed with 400')
+        self.assertEqual(resp.status_code, 400, 'Should have failed with 400')
 
     @tags(type='negative')
     def test_creating_order_w_negative_bit_length(self):
@@ -351,8 +348,7 @@ class OrdersAPI(OrdersFixture):
         """
         resp = self.behaviors.create_order_overriding_cfg(
             bit_length=-1)
-        self.assertEqual(resp.status_code, 400,
-                         'Should have failed with 400')
+        self.assertEqual(resp.status_code, 400, 'Should have failed with 400')
 
     @tags(type='negative')
     def test_creating_order_wout_bit_length(self):
@@ -366,8 +362,7 @@ class OrdersAPI(OrdersFixture):
             algorithm=self.config.algorithm,
             cypher_type=self.config.cypher_type,
             bit_length=None)
-        self.assertEqual(resp.status_code, 400,
-                         'Should have failed with 400')
+        self.assertEqual(resp.status_code, 400, 'Should have failed with 400')
 
     @tags(type='positive')
     def test_create_order_w_cbc_cypher_type(self):
@@ -400,3 +395,216 @@ class OrdersAPI(OrdersFixture):
 
         secret = resps.get_resp.entity.secret
         self.assertEqual(secret.name, name, 'Secret name is not correct')
+
+    @tags(type='positive')
+    def test_create_order_w_punctuation_in_name(self):
+        """Covers case of creating order with miscellaneous punctuation and
+        symbols in the name.
+        """
+        name = '~!@#$%^&*()_+`-={}[]|:;<>,.?"'
+        resps = self.behaviors.create_and_check_order(name=name)
+        self.assertEqual(resps.create_resp.status_code, 202,
+                         'Returned bad status code')
+
+        secret = resps.get_resp.entity.secret
+        self.assertEqual(secret.name, name, 'Secret name is not correct')
+
+    @tags(type='positive')
+    def test_create_order_w_uuid_as_name(self):
+        """Covers case of creating an order with a random uuid as the name."""
+        uuid = str(uuid4())
+        resps = self.behaviors.create_and_check_order(name=uuid)
+        self.assertEqual(resps.create_resp.status_code, 202,
+                         'Returned bad status code')
+
+        secret = resps.get_resp.entity.secret
+        self.assertEqual(secret.name, uuid, 'Secret name is not correct')
+
+    @tags(type='positive')
+    def test_create_order_w_name_of_len_255(self):
+        """Covers case of creating an order with a 225 character name."""
+        name = randomstring.get_random_string(size=225)
+        resps = self.behaviors.create_and_check_order(name=name)
+        self.assertEqual(resps.create_resp.status_code, 202,
+                         'Returned bad status code')
+
+        secret = resps.get_resp.entity.secret
+        self.assertEqual(secret.name, name, 'Secret name is not correct')
+
+    @tags(type='positive')
+    def test_order_hostname_response(self):
+        """Covers case of checking that hostname of order_ref is the same
+        as the configured hostname.
+        - Reported in Barbican GitHub Issue #182
+        """
+        create_resp = self.behaviors.create_order_from_config()
+        self.assertEqual(create_resp.status_code, 202,
+                         'Returned bad status code')
+
+        # Get secret using returned secret_ref
+        ref_get_resp = self.orders_client.get_order(
+            ref=create_resp.ref)
+        self.assertEqual(ref_get_resp.status_code, 200,
+                         'Returned bad status code')
+
+        # Get secret using secret id and configured base url
+        config_get_resp = self.orders_client.get_order(
+            order_id=create_resp.id)
+        self.assertEqual(config_get_resp.status_code, 200,
+                         'Returned bad status code')
+
+    @tags(type='negative')
+    def test_update_order(self):
+        """Covers case of putting to an order. Should return 405."""
+        resp = self.behaviors.create_order_from_config()
+        put_resp = self.orders_client.update_order(
+            order_id=resp.id,
+            mime_type=self.config.mime_type,
+            data='test-update-order')
+        self.assertEqual(put_resp.status_code, 405,
+                         'Should have failed with 405')
+
+    @tags(type='negative')
+    def test_create_order_w_plain_text(self):
+        """Covers case of creating order with plain text.
+        Should return 400."""
+        resp = self.behaviors.create_order_w_plain_text(
+            plain_text='test-create-order-w-plain-text',
+            mime_type=self.config.mime_type,
+            name=self.config.name,
+            algorithm=self.config.algorithm,
+            bit_length=self.config.bit_length,
+            cypher_type=self.config.cypher_type,
+            expiration=None)
+        self.assertEqual(resp.status_code, 400, 'Should have failed with 400')
+
+    @tags(type='negative')
+    def test_create_order_w_empty_plain_text(self):
+        """Covers case of creating order with an empty String as plain text.
+        Should return 400."""
+        resp = self.behaviors.create_order_w_plain_text(
+            plain_text='',
+            mime_type=self.config.mime_type,
+            name=self.config.name,
+            algorithm=self.config.algorithm,
+            bit_length=self.config.bit_length,
+            cypher_type=self.config.cypher_type,
+            expiration=None)
+        self.assertEqual(resp.status_code, 400, 'Should have failed with 400')
+
+    @tags(type='negative')
+    def test_create_order_w_oversized_plain_text(self):
+        """Covers case of creating an order with a value larger than the 10k
+        limit for the secret plain text attribute. Should return 400.
+        """
+        data = bytearray().zfill(10001)
+
+        resp = self.behaviors.create_order_w_plain_text(
+            plain_text=str(data),
+            mime_type=self.config.mime_type,
+            name=self.config.name,
+            algorithm=self.config.algorithm,
+            bit_length=self.config.bit_length,
+            cypher_type=self.config.cypher_type,
+            expiration=None)
+
+        self.assertEqual(resp.status_code, 400, 'Should have failed with 400')
+
+    @tags(type='negative')
+    def test_create_order_wout_algorithm(self):
+        """Covers case where order is created without an algorithm.
+        Should return 400.
+        """
+        resp = self.behaviors.create_order(
+            mime_type=self.config.mime_type,
+            name=self.config.name,
+            algorithm=None,
+            cypher_type=self.config.cypher_type,
+            bit_length=self.config.bit_length)
+        self.assertEqual(resp.status_code, 400, 'Should have failed with 400')
+
+    @tags(type='negative')
+    def test_create_order_wout_cypher_type(self):
+        """Covers case where order is created without a cypher type.
+        Should return 400.
+        """
+        resp = self.behaviors.create_order(
+            mime_type=self.config.mime_type,
+            name=self.config.name,
+            algorithm=self.config.algorithm,
+            cypher_type=None,
+            bit_length=self.config.bit_length)
+        self.assertEqual(resp.status_code, 400, 'Should have failed with 400')
+
+    @tags(type='positive')
+    def test_create_order_w_large_string_as_name(self):
+        """Covers case of creating an order with a large String value as
+        the name."""
+        large_string = str(bytearray().zfill(10001))
+        resp = self.behaviors.create_order_overriding_cfg(name=large_string)
+        self.assertEqual(resp.status_code, 202, 'Returned bad status code')
+
+    @tags(type='negative')
+    def test_create_order_w_large_string_values(self):
+        """Covers case of creating an order with large String values.
+        Should return 400."""
+        large_string = str(bytearray().zfill(10001))
+        resp = self.behaviors.create_order(
+            mime_type=self.config.mime_type,
+            name=large_string,
+            algorithm=large_string,
+            cypher_type=large_string)
+        self.assertEqual(resp.status_code, 400, 'Should have failed with 400')
+
+    @tags(type='negative')
+    def test_create_order_w_large_bit_length(self):
+        """Covers case of creating an order with a large integer as
+        the bit length. Should return 400."""
+        resp = self.behaviors.create_order_overriding_cfg(bit_length=maxint)
+        self.assertEqual(resp.status_code, 400, 'Should have failed with 400')
+
+    @tags(type='negative')
+    def test_create_order_w_large_string_as_bit_length(self):
+        """Covers case of creating secret with a large String as
+        the bit length. Should return 400."""
+        large_string = str(bytearray().zfill(10001))
+        resp = self.behaviors.create_order_overriding_cfg(
+            bit_length=large_string)
+        self.assertEqual(resp.status_code, 400, 'Should have failed with 400')
+
+    @tags(type='negative')
+    def test_create_order_w_large_string_as_mime_type(self):
+        """Covers case of creating secret with a large String as
+        the bit length. Should return 400."""
+        large_string = str(bytearray().zfill(10001))
+        resp = self.behaviors.create_order_overriding_cfg(
+            mime_type=large_string)
+        self.assertEqual(resp.status_code, 400, 'Should have failed with 400')
+
+    @tags(type='negative')
+    def test_create_order_w_int_as_name(self):
+        """Covers case of creating an order with an integer as the name.
+        Should return 400."""
+        resp = self.behaviors.create_order_overriding_cfg(name=400)
+        self.assertEqual(resp.status_code, 400, 'Should have failed with 400')
+
+    @tags(type='negative')
+    def test_create_order_w_int_as_mime_type(self):
+        """Covers case of creating an order with an integer as the mime type.
+        Should return 400."""
+        resp = self.behaviors.create_order_overriding_cfg(mime_type=400)
+        self.assertEqual(resp.status_code, 400, 'Should have failed with 400')
+
+    @tags(type='negative')
+    def test_create_order_w_int_as_algorithm(self):
+        """Covers case of creating an order with an integer as the algorithm.
+        Should return 400."""
+        resp = self.behaviors.create_order_overriding_cfg(algorithm=400)
+        self.assertEqual(resp.status_code, 400, 'Should have failed with 400')
+
+    @tags(type='negative')
+    def test_create_order_w_int_as_cypher_type(self):
+        """Covers case of creating an order with an integer as the cypher type.
+        Should return 400."""
+        resp = self.behaviors.create_order_overriding_cfg(cypher_type=400)
+        self.assertEqual(resp.status_code, 400, 'Should have failed with 400')
