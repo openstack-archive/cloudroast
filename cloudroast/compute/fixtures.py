@@ -72,6 +72,10 @@ class ComputeFixture(BaseTestFixture):
             cls.compute_endpoint.compute_endpoint_name)
         url = compute_service.get_endpoint(
             cls.compute_endpoint.region).public_url
+        # If a url override was provided, use that value instead
+        url = '{0}/{1}'.format(cls.compute_endpoint.compute_endpoint_url,
+                               cls.user_config.tenant_id) or url
+
         cls.flavors_client = FlavorsClient(url, access_data.token.id_,
                                            'json', 'json')
         cls.servers_client = ServersClient(url, access_data.token.id_,
