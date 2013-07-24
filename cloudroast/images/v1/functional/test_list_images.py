@@ -16,7 +16,7 @@ limitations under the License.
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.images.common.types import ImageDiskFormat, \
     ImageContainerFormat, ImageStatus
-from cloudroast.images.fixtures import ImageV1Fixture
+from cloudroast.images.v1.fixtures import ImageV1Fixture
 
 
 class ListImagesTest(ImageV1Fixture):
