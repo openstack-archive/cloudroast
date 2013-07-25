@@ -28,6 +28,8 @@ class RebootServerHardTests(ComputeFixture):
     def setUpClass(cls):
         super(RebootServerHardTests, cls).setUpClass()
         cls.key = cls.keypairs_client.create_keypair(rand_name("key")).entity
+        cls.resources.add(cls.key.name,
+                          cls.keypairs_client.delete_keypair)
         response = cls.server_behaviors.create_active_server(key_name=cls.key.name)
         cls.server = response.entity
         cls.resources.add(cls.server.id, cls.servers_client.delete_server)

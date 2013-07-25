@@ -28,6 +28,8 @@ class ResizeServerUpRevertTests(ComputeFixture):
     def setUpClass(cls):
         super(ResizeServerUpRevertTests, cls).setUpClass()
         cls.key = cls.keypairs_client.create_keypair(rand_name("key")).entity
+        cls.resources.add(cls.key.name,
+                          cls.keypairs_client.delete_keypair)
         server_response = cls.server_behaviors.create_active_server(
             key_name=cls.key.name)
         server_to_resize = server_response.entity
