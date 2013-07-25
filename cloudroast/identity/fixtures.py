@@ -13,45 +13,68 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-import json
 
 from cafe.drivers.unittest.fixtures import BaseTestFixture
+from cloudcafe.auth.config import UserConfig
+from cloudcafe.common.resources import ResourcePool
 from cloudcafe.identity.config import IdentityTokenConfig
+from cloudcafe.identity.v2_0.tenants_api.behaviors import TenantsBehaviors
 from cloudcafe.identity.v2_0.tenants_api.client import TenantsAPI_Client
 from cloudcafe.identity.v2_0.tokens_api.client import TokenAPI_Client
-from cloudcafe.identity.v2_0.tokens_api.models.responses.access import Access
 
 
 class BaseIdentityAdminTest(BaseTestFixture):
+    """
+    @summary: Base fixture for identity tests
+    """
+
     @classmethod
     def setUpClass(cls):
         super(BaseIdentityAdminTest, cls).setUpClass()
         cls.token_config = IdentityTokenConfig()
+        cls.user_config = UserConfig()
         cls.endpoint_url = cls.token_config.authentication_endpoint
         cls.serialize_format = cls.token_config.serialize_format
         cls.deserialize_format = cls.token_config.deserialize_format
+        cls.auth_token = {'headers': {'X-Auth-Token': None}}
 
         cls.token_client = TokenAPI_Client(
             url=cls.endpoint_url,
             deserialize_format=cls.deserialize_format,
             serialize_format=cls.serialize_format)
 
-        cls.auth_response = cls.token_client.authenticate(
+        cls.admin_auth_response = cls.token_client.authenticate(
             username=cls.token_config.username,
             password=cls.token_config.password,
             tenant_name=cls.token_config.tenant_name)
+        cls.access_data = cls.admin_auth_response.entity
+        cls.admin_token = cls.access_data.token
+        cls.admin = cls.access_data.user
 
-        cls.access_dict = json.loads(cls.auth_response.content).get('access')
-        cls.access_data = Access._dict_to_obj(cls.access_dict)
-        cls.token = cls.access_data.token
-        cls.user = cls.access_data.user
+        cls.demo_auth_response = cls.token_client.authenticate(
+            username=cls.user_config.username,
+            password=cls.user_config.password,
+            tenant_name=cls.user_config.tenant_name)
+        cls.demo_access_data = cls.demo_auth_response.entity
+        cls.demo_token = cls.demo_access_data.token
+        cls.demo_user = cls.demo_access_data.user
 
         cls.tenant_client = TenantsAPI_Client(
             url=cls.endpoint_url,
-            auth_token=cls.token.id_,
+            auth_token=cls.admin_token.id_,
             deserialize_format=cls.deserialize_format,
             serialize_format=cls.serialize_format)
+
+        cls.tenant_behavior = TenantsBehaviors(cls.tenant_client)
+
+        cls.demo_tenant_client = TenantsAPI_Client(
+            url=cls.endpoint_url,
+            auth_token=cls.demo_token.id_,
+            deserialize_format=cls.deserialize_format,
+            serialize_format=cls.serialize_format)
+        cls.resources = ResourcePool()
 
     @classmethod
     def tearDownClass(cls):
         super(BaseIdentityAdminTest, cls).tearDownClass()
+        cls.resources.release()
