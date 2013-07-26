@@ -34,6 +34,8 @@ from cloudcafe.compute.extensions.keypairs_api.client import KeypairsClient
 from cloudcafe.compute.extensions.security_groups_api.client import \
     SecurityGroupsClient, SecurityGroupRulesClient
 from cloudcafe.compute.extensions.rescue_api.client import RescueClient
+from cloudcafe.compute.extensions.vnc_console_api.client import \
+    VncConsoleClient
 from cloudcafe.compute.servers_api.behaviors import ServerBehaviors
 from cloudcafe.compute.images_api.behaviors import ImageBehaviors
 from cloudcafe.auth.config import UserAuthConfig, UserConfig, \
@@ -91,6 +93,8 @@ class ComputeFixture(BaseTestFixture):
             url, access_data.token.id_, 'json', 'json')
         cls.rescue_client = RescueClient(url, access_data.token.id_,
                                          'json', 'json')
+        cls.vnc_client = VncConsoleClient(url, access_data.token.id_,
+                                          'json', 'json')
         cls.server_behaviors = ServerBehaviors(cls.servers_client,
                                                cls.servers_config,
                                                cls.images_config,
