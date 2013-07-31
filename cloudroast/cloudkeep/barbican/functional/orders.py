@@ -71,7 +71,8 @@ class OrdersAPI(OrdersFixture):
             algorithm=self.config.algorithm,
             bit_length=self.config.bit_length,
             cypher_type=self.config.cypher_type)
-        self.assertEqual(resp.status_code, 400, 'Returned bad status code')
+        self.assertEqual(resp.status_code, 400,
+                         'Returned unexpected response code')
 
     @tags(type='negative')
     def test_create_order_with_empty_mime_type(self):
@@ -84,7 +85,8 @@ class OrdersAPI(OrdersFixture):
             algorithm=self.config.algorithm,
             bit_length=self.config.bit_length,
             cypher_type=self.config.cypher_type)
-        self.assertEqual(resp.status_code, 400, 'Returned bad status code')
+        self.assertEqual(resp.status_code, 400,
+                         'Returned unexpected response code')
 
     @tags(type='positive')
     def test_create_order_wout_name(self):
@@ -97,7 +99,8 @@ class OrdersAPI(OrdersFixture):
             algorithm=self.config.algorithm,
             bit_length=self.config.bit_length,
             cypher_type=self.config.cypher_type)
-        self.assertEqual(resp.status_code, 202, 'Returned bad status code')
+        self.assertEqual(resp.status_code, 202,
+                         'Returned unexpected response code')
 
     @tags(type='positive')
     def test_create_order_w_empty_name(self):
@@ -110,7 +113,8 @@ class OrdersAPI(OrdersFixture):
             algorithm=self.config.algorithm,
             bit_length=self.config.bit_length,
             cypher_type=self.config.cypher_type)
-        self.assertEqual(resp.status_code, 202, 'Returned bad status code')
+        self.assertEqual(resp.status_code, 202,
+                         'Returned unexpected response code')
 
     @tags(type='negative')
     def test_create_order_with_invalid_mime_type(self):
@@ -124,7 +128,8 @@ class OrdersAPI(OrdersFixture):
             algorithm=self.config.algorithm,
             bit_length=self.config.bit_length,
             cypher_type=self.config.cypher_type)
-        self.assertEqual(resp.status_code, 400, 'Returned bad status code')
+        self.assertEqual(resp.status_code, 400,
+                         'Returned unexpected response code')
 
     @unittest2.skip('Issue #140')
     @tags(type='positive')
@@ -144,7 +149,7 @@ class OrdersAPI(OrdersFixture):
         secret_resp = self.secrets_client.get_secret(ref=secret_ref,
                                                      mime_type='text/plain')
         self.assertEqual(secret_resp.status_code, 200,
-                         'Returned bad status code')
+                         'Returned unexpected response code')
 
     @tags(type='negative')
     def test_get_order_that_doesnt_exist(self):
@@ -168,7 +173,8 @@ class OrdersAPI(OrdersFixture):
         Covers creating order with expiration.
         """
         resp = self.behaviors.create_order_from_config(use_expiration=True)
-        self.assertEqual(resp.status_code, 202, 'Returned bad status code')
+        self.assertEqual(resp.status_code, 202,
+                         'Returned unexpected response code')
 
     @tags(type='negative')
     def test_create_order_w_invalid_expiration(self):
@@ -272,7 +278,7 @@ class OrdersAPI(OrdersFixture):
         """Covers case of creating an order with a 128 bit length."""
         resps = self.behaviors.create_and_check_order(bit_length=128)
         self.assertEqual(resps.create_resp.status_code,
-                         202, 'Returned bad status code')
+                         202, 'Returned unexpected response code')
 
         secret = resps.get_resp.entity.secret
         self.assertEqual(resps.get_resp.status_code, 200)
@@ -284,7 +290,7 @@ class OrdersAPI(OrdersFixture):
         """Covers case of creating an order with a 192 bit length."""
         resps = self.behaviors.create_and_check_order(bit_length=192)
         self.assertEqual(resps.create_resp.status_code,
-                         202, 'Returned bad status code')
+                         202, 'Returned unexpected response code')
 
         secret = resps.get_resp.entity.secret
         self.assertEqual(resps.get_resp.status_code, 200)
@@ -296,7 +302,7 @@ class OrdersAPI(OrdersFixture):
         """Covers case of creating an order with a 256 bit length."""
         resps = self.behaviors.create_and_check_order(bit_length=256)
         self.assertEqual(resps.create_resp.status_code,
-                         202, 'Returned bad status code')
+                         202, 'Returned unexpected response code')
 
         secret = resps.get_resp.entity.secret
         self.assertEqual(resps.get_resp.status_code, 200)
@@ -368,13 +374,15 @@ class OrdersAPI(OrdersFixture):
     def test_create_order_w_cbc_cypher_type(self):
         """Covers case of creating an order with a cbc cypher type."""
         resp = self.behaviors.create_order_overriding_cfg(cypher_type='cbc')
-        self.assertEqual(resp.status_code, 202, 'Returned bad status code')
+        self.assertEqual(resp.status_code, 202,
+                         'Returned unexpected response code')
 
     @tags(type='positive')
     def test_create_order_w_aes_algorithm(self):
         """Covers case of creating an order with an aes algorithm."""
         resp = self.behaviors.create_order_overriding_cfg(algorithm='aes')
-        self.assertEqual(resp.status_code, 202, 'Returned bad status code')
+        self.assertEqual(resp.status_code, 202,
+                         'Returned unexpected response code')
 
     @tags(type='positive')
     def test_create_order_w_app_octet_stream_mime_type(self):
@@ -383,7 +391,8 @@ class OrdersAPI(OrdersFixture):
         """
         resp = self.behaviors.create_order_overriding_cfg(
             mime_type='application/octet-stream')
-        self.assertEqual(resp.status_code, 202, 'Returned bad status code')
+        self.assertEqual(resp.status_code, 202,
+                         'Returned unexpected response code')
 
     @tags(type='positive')
     def test_create_order_w_alphanumeric_name(self):
@@ -391,7 +400,7 @@ class OrdersAPI(OrdersFixture):
         name = randomstring.get_random_string(prefix='1a2b')
         resps = self.behaviors.create_and_check_order(name=name)
         self.assertEqual(resps.create_resp.status_code, 202,
-                         'Returned bad status code')
+                         'Returned unexpected response code')
 
         secret = resps.get_resp.entity.secret
         self.assertEqual(secret.name, name, 'Secret name is not correct')

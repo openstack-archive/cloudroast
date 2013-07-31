@@ -13,11 +13,13 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
+from cafe.drivers.unittest.decorators import tags
 from cloudroast.cloudkeep.barbican.fixtures import VersionFixture
 
 
 class TestVersion(VersionFixture):
 
+    @tags(type='positive')
     def test_get_version(self):
         """Covers getting the version of Barbican."""
         response = self.client.get_version()

@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 from os import path
+
 from cafe.drivers.unittest.fixtures import BaseTestFixture
 from cloudcafe.cloudkeep.barbican.version.client import VersionClient
 from cloudcafe.cloudkeep.barbican.secrets.client import SecretsClient
@@ -21,7 +22,11 @@ from cloudcafe.cloudkeep.barbican.orders.client import OrdersClient
 from cloudcafe.cloudkeep.barbican.secrets.behaviors import SecretsBehaviors
 from cloudcafe.cloudkeep.barbican.orders.behaviors import OrdersBehavior
 from cloudcafe.cloudkeep.config import MarshallingConfig, CloudKeepConfig, \
-    CloudKeepSecretsConfig
+    CloudKeepSecretsConfig, CloudKeepOrdersConfig
+from cloudcafe.identity.config import IdentityTokenConfig
+from cloudcafe.identity.v2_0.tokens_api.behaviors import \
+    TokenAPI_Behaviors
+from cloudcafe.identity.v2_0.tokens_api.client import TokenAPI_Client
 
 
 class BarbicanFixture(BaseTestFixture):
@@ -31,6 +36,7 @@ class BarbicanFixture(BaseTestFixture):
         super(BarbicanFixture, cls).setUpClass()
         cls.marshalling = MarshallingConfig()
         cls.cloudkeep = CloudKeepConfig()
+        cls.keystone = IdentityTokenConfig()
 
     def get_id(self, request):
         """
@@ -76,7 +82,7 @@ class OrdersFixture(BarbicanFixture):
     @classmethod
     def setUpClass(cls):
         super(OrdersFixture, cls).setUpClass()
-        cls.config = CloudKeepSecretsConfig()
+        cls.config = CloudKeepOrdersConfig()
         cls.orders_client = OrdersClient(
             url=cls.cloudkeep.base_url,
             api_version=cls.cloudkeep.api_version,
@@ -96,3 +102,18 @@ class OrdersFixture(BarbicanFixture):
     def tearDown(self):
         self.behaviors.delete_all_created_orders_and_secrets()
         super(OrdersFixture, self).tearDown()
+
+
+class AuthenticationFixture(BarbicanFixture):
+    @classmethod
+    def setUpClass(cls):
+        super(AuthenticationFixture, cls).setUpClass()
+        cls.auth_client = TokenAPI_Client(
+            url=cls.keystone.authentication_endpoint,
+            serialize_format=cls.marshalling.serializer,
+            deserialize_format=cls.marshalling.deserializer)
+        cls.auth_behaviors = TokenAPI_Behaviors(cls.auth_client)
+        cls.version_client = VersionClient(
+            url=cls.cloudkeep.base_url,
+            serialize_format=cls.marshalling.serializer,
+            deserialize_format=cls.marshalling.deserializer)
