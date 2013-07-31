@@ -618,3 +618,135 @@ class OrdersAPI(OrdersFixture):
         Should return 400."""
         resp = self.behaviors.create_order_overriding_cfg(cypher_type=400)
         self.assertEqual(resp.status_code, 400, 'Should have failed with 400')
+
+
+class OrdersPagingAPI(OrdersPagingFixture):
+
+    def check_list_of_orders(self, resp, limit):
+        """Checks that the response from getting list of orders
+        returns a 200 status code and the correct number of orders.
+        Also returns the list of orders from the response.
+        """
+        self.assertEqual(resp.status_code, 200,
+                         'Returned unexpected response code')
+        ord_group = resp.entity
+        self.assertEqual(len(ord_group.orders), limit,
+                         'Returned wrong number of orders')
+        return resp.entity
+
+    def check_for_duplicates(self, ord_group1, ord_group2):
+        """Checks for duplicated orders between two groups of orders."""
+        duplicates = [order for order in ord_group1.orders
+                      if order in ord_group2.orders]
+        self.assertEqual(len(duplicates), 0,
+                         'Lists of orders did not return unique orders')
+
+    @tags(type='positive')
+    def test_order_paging_limit_and_offset(self):
+        """Covers testing paging limit and offset attributes
+        when getting orders.
+        """
+        # First set of orders
+        resp = self.orders_client.get_orders(limit=10, offset=0)
+        ord_group1 = self.check_list_of_orders(resp=resp, limit=10)
+
+        # Second set of orders
+        resp = self.orders_client.get_orders(limit=10, offset=10)
+        ord_group2 = self.check_list_of_orders(resp=resp, limit=10)
+
+        self.check_for_duplicates(ord_group1=ord_group1, ord_group2=ord_group2)
+
+    @tags(type='positive')
+    def test_find_a_single_order_via_paging(self):
+        """Covers finding an order with paging."""
+        resp = self.behaviors.create_order_from_config()
+        self.assertEqual(resp.status_code, 202,
+                         'Returned unexpected response code')
+        order = self.behaviors.find_order(resp.id)
+        self.assertIsNotNone(order, 'Couldn\'t find created order')
+
+    @tags(type='positive')
+    def test_order_paging_next_option(self):
+        """Covers getting a list of orders and using the next
+        reference.
+        """
+        # First set of orders
+        resp = self.orders_client.get_orders(limit=15, offset=115)
+        ord_group1 = self.check_list_of_orders(resp=resp, limit=15)
+        next_ref = ord_group1.next
+        self.assertIsNotNone(next_ref)
+
+        #Next set of orders
+        resp = self.orders_client.get_orders(ref=next_ref)
+        ord_group2 = self.check_list_of_orders(resp=resp, limit=15)
+
+        self.check_for_duplicates(ord_group1=ord_group1, ord_group2=ord_group2)
+
+    @tags(type='positive')
+    def test_order_paging_previous_option(self):
+        """Covers getting a list of orders and using the previous
+        reference.
+        """
+        # First set of orders
+        resp = self.orders_client.get_orders(limit=15, offset=115)
+        ord_group1 = self.check_list_of_orders(resp=resp, limit=15)
+        prev_ref = ord_group1.previous
+        self.assertIsNotNone(prev_ref)
+
+        #Previous set of orders
+        resp = self.orders_client.get_orders(ref=prev_ref)
+        ord_group2 = self.check_list_of_orders(resp=resp, limit=15)
+
+        self.check_for_duplicates(ord_group1=ord_group1, ord_group2=ord_group2)
+
+    @tags(type='positive')
+    def test_orders_paging_max_limit(self):
+        """Covers case of listing secrets with a limit more than the current
+        maximum of 100.
+        """
+        resp = self.orders_client.get_orders(limit=101, offset=0)
+        self.check_list_of_orders(resp=resp, limit=100)
+
+    @tags(type='positive')
+    def test_order_paging_limit(self):
+        """Covers listing orders with limit attribute from limits
+        of 2 to 25.
+        """
+        for limit in range(2, 25):
+            resp = self.orders_client.get_orders(limit=limit, offset=0)
+            self.check_list_of_orders(resp=resp, limit=limit)
+
+    @tags(type='positive')
+    def test_order_paging_offset(self):
+        """Covers listing orders with offset attribute from offsets
+        of 2 to 25.
+        """
+        # Covers offsets between 1 and 25
+        for offset in range(1, 24):
+            resp = self.orders_client.get_orders(limit=2, offset=offset)
+            orders_group1 = self.check_list_of_orders(resp=resp, limit=2)
+            previous_ref1 = orders_group1.previous
+            self.assertIsNotNone(previous_ref1)
+            next_ref1 = orders_group1.next
+            self.assertIsNotNone(next_ref1)
+
+            resp = self.orders_client.get_orders(limit=2, offset=offset + 2)
+            orders_group2 = self.check_list_of_orders(resp=resp, limit=2)
+            previous_ref2 = orders_group2.previous
+            self.assertIsNotNone(previous_ref2)
+            next_ref2 = orders_group2.next
+            self.assertIsNotNone(next_ref2)
+
+            self.check_for_duplicates(ord_group1=orders_group1,
+                                      ord_group2=orders_group2)
+
+    @tags(type='positive')
+    def test_order_paging_w_invalid_parameters(self):
+        """ Covers listing orders with invalid limit and offset parameters.
+        - Reported in Barbican GitHub Issue #171
+        """
+        self.behaviors.create_order_from_config(use_expiration=False)
+        resp = self.orders_client.get_orders(
+            limit='not-an-int', offset='not-an-int')
+        self.assertEqual(resp.status_code, 200,
+                         'Returned unexpected response code')
