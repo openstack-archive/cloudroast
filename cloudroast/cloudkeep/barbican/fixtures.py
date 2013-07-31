@@ -47,6 +47,13 @@ class BarbicanFixture(BaseTestFixture):
         extracted_id = int(path.split(location)[1])
         return extracted_id
 
+    def _check_for_duplicates(self, group1, group2):
+        """Checks for duplicated entities between two lists
+        of secrets/orders."""
+        duplicates = [entity for entity in group1 if entity in group2]
+        self.assertEqual(len(duplicates), 0,
+                         'Lists of entities did not return unique entities')
+
 
 class VersionFixture(BarbicanFixture):
 
@@ -73,9 +80,41 @@ class SecretsFixture(BarbicanFixture):
             deserialize_format=cls.marshalling.deserializer)
         cls.behaviors = SecretsBehaviors(client=cls.client, config=cls.config)
 
+    def _check_list_of_secrets(self, resp, limit):
+        """Checks that the response from getting list of secrets
+        returns a 200 status code and the correct number of secrets.
+        Also returns the list of secrets from the response.
+        """
+        self.assertEqual(resp.status_code, 200,
+                         'Returned unexpected response code')
+        sec_group = resp.entity
+        self.assertEqual(len(sec_group.secrets), limit,
+                         'Returned wrong number of secrets')
+        return sec_group
+
     def tearDown(self):
         self.behaviors.delete_all_created_secrets()
         super(SecretsFixture, self).tearDown()
+
+
+class SecretsPagingFixture(SecretsFixture):
+
+    @classmethod
+    def setUpClass(cls):
+        super(SecretsPagingFixture, cls).setUpClass()
+        for count in range(150):
+            cls.behaviors.create_secret_from_config(use_expiration=False)
+
+    def tearDown(self):
+        """ Overrides superclass method so that secrets are not deleted
+        between tests.
+        """
+        pass
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.behaviors.delete_all_created_secrets()
+        super(SecretsPagingFixture, cls).tearDownClass()
 
 
 class OrdersFixture(BarbicanFixture):
@@ -99,9 +138,41 @@ class OrdersFixture(BarbicanFixture):
                                        secrets_client=cls.secrets_client,
                                        config=cls.config)
 
+    def _check_list_of_orders(self, resp, limit):
+        """Checks that the response from getting list of orders
+        returns a 200 status code and the correct number of orders.
+        Also returns the list of orders from the response.
+        """
+        self.assertEqual(resp.status_code, 200,
+                         'Returned unexpected response code')
+        ord_group = resp.entity
+        self.assertEqual(len(ord_group.orders), limit,
+                         'Returned wrong number of orders')
+        return ord_group
+
     def tearDown(self):
         self.behaviors.delete_all_created_orders_and_secrets()
         super(OrdersFixture, self).tearDown()
+
+
+class OrdersPagingFixture(OrdersFixture):
+
+    @classmethod
+    def setUpClass(cls):
+        super(OrdersPagingFixture, cls).setUpClass()
+        for count in range(150):
+            cls.behaviors.create_order_from_config(use_expiration=False)
+
+    def tearDown(self):
+        """ Overrides superclass method so that orders are not deleted
+        between tests.
+        """
+        pass
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.behaviors.delete_all_created_orders_and_secrets()
+        super(OrdersPagingFixture, cls).tearDownClass()
 
 
 class AuthenticationFixture(BarbicanFixture):

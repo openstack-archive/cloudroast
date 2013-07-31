@@ -87,6 +87,4 @@ class OrdersAPI(OrdersFixture):
             self.behaviors.create_order_from_config()
 
         resp = self.orders_client.get_orders()
-        order_group = resp.entity
-        self.assertEqual(resp.status_code, 200)
-        self.assertEqual(len(order_group.orders), 10)
+        self._check_list_of_orders(resp=resp, limit=10)
