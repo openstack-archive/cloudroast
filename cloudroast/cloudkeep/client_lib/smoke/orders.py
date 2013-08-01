@@ -13,8 +13,9 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-from cloudroast.cloudkeep.client_lib.fixtures import OrdersFixture
 from cafe.drivers.unittest.decorators import tags
+from cloudcafe.cloudkeep.common.states import OrdersStates
+from cloudroast.cloudkeep.client_lib.fixtures import OrdersFixture
 
 
 class OrdersAPI(OrdersFixture):
@@ -43,7 +44,7 @@ class OrdersAPI(OrdersFixture):
         order = resp.entity
         secret = order.secret
 
-        self.assertEqual(order.status, 'ACTIVE')
+        self.assertEqual(order.status, OrdersStates.ACTIVE)
         self.assertEqual(secret['mime_type'], self.config.mime_type)
         self.assertEqual(secret['name'], self.config.name)
         self.assertEqual(secret['algorithm'], self.config.algorithm)
