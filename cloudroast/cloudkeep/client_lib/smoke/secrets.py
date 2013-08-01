@@ -15,8 +15,9 @@ limitations under the License.
 """
 import unittest2
 
-from cloudroast.cloudkeep.client_lib.fixtures import SecretsFixture
 from cafe.drivers.unittest.decorators import tags
+from cloudcafe.cloudkeep.common.states import SecretsStates
+from cloudroast.cloudkeep.client_lib.fixtures import SecretsFixture
 
 
 class SecretsAPI(SecretsFixture):
@@ -136,7 +137,7 @@ class SecretsAPI(SecretsFixture):
 
         self.assertEqual(resp.status_code, 200,
                          'Returned unexpected response code')
-        self.assertEqual(metadata.status, 'ACTIVE')
+        self.assertEqual(metadata.status, SecretsStates.ACTIVE)
         self.assertEqual(metadata.name, self.config.name)
         self.assertEqual(metadata.cypher_type, self.config.cypher_type)
         self.assertEqual(metadata.algorithm, self.config.algorithm)

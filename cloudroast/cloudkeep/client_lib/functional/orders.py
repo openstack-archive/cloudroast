@@ -15,9 +15,12 @@ limitations under the License.
 """
 import unittest2
 
-from cloudroast.cloudkeep.client_lib.fixtures import OrdersFixture
 from barbicanclient.common.exceptions import ClientException
 from cafe.drivers.unittest.decorators import tags
+from cloudcafe.cloudkeep.common.responses import CloudkeepResponse
+from cloudcafe.cloudkeep.common.states import SecretsStates
+from cloudroast.cloudkeep.client_lib.fixtures import OrdersFixture, \
+    OrdersPagingFixture
 
 
 class OrdersAPI(OrdersFixture):
@@ -60,7 +63,7 @@ class OrdersAPI(OrdersFixture):
             algorithm=self.config.algorithm,
             bit_length=self.config.bit_length,
             cypher_type=self.config.cypher_type)
-        secret_id = self.cl_behaviors.get_id_from_ref(order.secret_ref)
+        secret_id = CloudkeepResponse.get_id_from_ref(order.secret_ref)
         self.assertEqual(order.secret['name'], secret_id,
                          "Name did not match secret ID")
 
@@ -85,7 +88,7 @@ class OrdersAPI(OrdersFixture):
             algorithm=self.config.algorithm,
             bit_length=self.config.bit_length,
             cypher_type=self.config.cypher_type)
-        secret_id = self.cl_behaviors.get_id_from_ref(order.secret_ref)
+        secret_id = CloudkeepResponse.get_id_from_ref(order.secret_ref)
         self.assertEqual(order.secret['name'], secret_id,
                          "Name did not match secret ID")
 
@@ -173,7 +176,7 @@ class OrdersAPI(OrdersFixture):
         """
         resp = self.barb_behaviors.create_order_from_config()
         self.assertEqual(resp.status_code, 202,
-                         'Barbican returned bad status code')
+                         'Barbican returned unexpected response code')
 
         order = self.cl_client.get_order(resp.ref)
         secret_metadata = order.secret
@@ -193,7 +196,7 @@ class OrdersAPI(OrdersFixture):
         """
         resp = self.barb_behaviors.create_order_from_config()
         self.assertEqual(resp.status_code, 202,
-                         'Barbican returned bad status code')
+                         'Barbican returned unexpected response code')
 
         order = self.cl_client.get_order_by_id(resp.id)
         secret_metadata = order.secret
@@ -213,7 +216,7 @@ class OrdersAPI(OrdersFixture):
         resp = self.barb_behaviors.create_order_from_config(
             use_expiration=True)
         self.assertEqual(resp.status_code, 202,
-                         'Barbican returned bad status code')
+                         'Barbican returned unexpected response code')
 
         order_ref = resp.ref
         order = self.cl_client.get_order(href=order_ref)
@@ -228,7 +231,7 @@ class OrdersAPI(OrdersFixture):
         resp = self.barb_behaviors.create_order_from_config(
             use_expiration=True)
         self.assertEqual(resp.status_code, 202,
-                         'Barbican returned bad status code')
+                         'Barbican returned unexpected response code')
 
         order_id = resp.id
         order = self.cl_client.get_order_by_id(order_id=order_id)
@@ -243,14 +246,56 @@ class OrdersAPI(OrdersFixture):
         """
         resp = self.barb_behaviors.create_order_from_config()
         self.assertEqual(resp.status_code, 202,
-                         'Barbican returned bad status code')
+                         'Barbican returned unexpected response code')
 
         order = self.cl_client.get_order_by_id(resp.id)
         secret = order.get_secret()
 
-        self.assertEqual(secret.status, 'ACTIVE')
+        self.assertEqual(secret.status, SecretsStates.ACTIVE)
         self.assertEqual(secret.name, self.config.name)
         self.assertEqual(secret.mime_type, self.config.mime_type)
         self.assertEqual(secret.algorithm, self.config.algorithm)
         self.assertEqual(secret.bit_length, self.config.bit_length)
         self.assertEqual(secret.cypher_type, self.config.cypher_type)
+
+
+class OrdersPagingAPI(OrdersPagingFixture):
+
+    @tags(type='positive')
+    def test_list_orders_limit_and_offset(self):
+        """Covers using the limit and offset attribute of listing orders."""
+        # First set of orders
+        list_resp = self.cl_client.list_orders(limit=10, offset=0)
+        order_group1 = list_resp[0]
+
+        # Second set of orders
+        list_resp = self.cl_client.list_orders(limit=10, offset=10)
+        order_group2 = list_resp[0]
+
+        self._check_for_duplicates(group1=order_group1, group2=order_group2)
+
+    @tags(type='positive')
+    def test_list_orders_next(self):
+        """Covers using next reference for listing orders."""
+        # First set of orders
+        order_group1, prev_ref, next_ref = self.cl_client.list_orders(
+            limit=10, offset=0)
+
+        # Next set of orders
+        list_resp = self.cl_client.list_orders_by_href(href=next_ref)
+        order_group2 = list_resp[0]
+
+        self._check_for_duplicates(group1=order_group1, group2=order_group2)
+
+    @tags(type='positive')
+    def test_list_orders_previous(self):
+        """Covers using next reference for listing orders."""
+        # First set of orders
+        order_group1, prev_ref, next_ref = self.cl_client.list_orders(
+            limit=10, offset=10)
+
+        # Previous set of orders
+        list_resp = self.cl_client.list_orders_by_href(href=prev_ref)
+        order_group2 = list_resp[0]
+
+        self._check_for_duplicates(group1=order_group1, group2=order_group2)

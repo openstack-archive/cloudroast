@@ -22,7 +22,7 @@ from cloudcafe.cloudkeep.barbican.orders.client import OrdersClient
 from cloudcafe.cloudkeep.barbican.secrets.behaviors import SecretsBehaviors
 from cloudcafe.cloudkeep.barbican.orders.behaviors import OrdersBehavior
 from cloudcafe.cloudkeep.config import MarshallingConfig, CloudKeepConfig, \
-    CloudKeepSecretsConfig, CloudKeepClientLibConfig
+    CloudKeepSecretsConfig, CloudKeepClientLibConfig, CloudKeepOrdersConfig
 from cloudcafe.cloudkeep.client_lib.secrets.clients import \
     ClientLibSecretsClient
 from cloudcafe.cloudkeep.client_lib.secrets.behaviors import \
@@ -49,6 +49,18 @@ class ClientLibFixture(BaseTestFixture):
         location = request.headers.get('location')
         extracted_id = int(path.split(location)[1])
         return extracted_id
+
+    def _check_for_duplicates(self, group1, group2, limit=10):
+        """Checks for duplicated secrets or orders between two lists and
+        checks the size of the two lists."""
+        self.assertEqual(len(group1), limit)
+        self.assertEqual(len(group2), limit)
+
+        ids1 = [entity.id for entity in group1]
+        ids2 = [entity.id for entity in group2]
+        duplicates = [id_ for id_ in ids1 if id in ids2]
+        self.assertEqual(len(duplicates), 0,
+                         'Lists of entities did not return unique entities')
 
 
 class VersionFixture(ClientLibFixture):
@@ -95,11 +107,32 @@ class SecretsFixture(ClientLibFixture):
         super(SecretsFixture, self).tearDown()
 
 
+class SecretsPagingFixture(SecretsFixture):
+
+    @classmethod
+    def setUpClass(cls):
+        super(SecretsPagingFixture, cls).setUpClass()
+        for count in range(20):
+            cls.barb_behaviors.create_secret_from_config(use_expiration=False)
+
+    def tearDown(self):
+        """ Overrides superclass method so that secrets are not deleted
+        between tests.
+        """
+        pass
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.cl_behaviors.delete_all_created_secrets()
+        cls.barb_behaviors.delete_all_created_secrets()
+        super(SecretsPagingFixture, cls).tearDownClass()
+
+
 class OrdersFixture(ClientLibFixture):
     @classmethod
     def setUpClass(cls):
         super(OrdersFixture, cls).setUpClass()
-        cls.config = CloudKeepSecretsConfig()
+        cls.config = CloudKeepOrdersConfig()
         cls.client_lib_config = CloudKeepClientLibConfig()
         cls.barb_client = OrdersClient(
             url=cls.cloudkeep.base_url,
@@ -132,3 +165,24 @@ class OrdersFixture(ClientLibFixture):
         self.cl_behaviors.delete_all_created_orders_and_secrets()
         self.barb_behaviors.delete_all_created_orders_and_secrets()
         super(OrdersFixture, self).tearDown()
+
+
+class OrdersPagingFixture(OrdersFixture):
+
+    @classmethod
+    def setUpClass(cls):
+        super(OrdersPagingFixture, cls).setUpClass()
+        for count in range(20):
+            cls.barb_behaviors.create_order_from_config(use_expiration=False)
+
+    def tearDown(self):
+        """ Overrides superclass method so that orders are not deleted
+        between tests.
+        """
+        pass
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.cl_behaviors.delete_all_created_orders_and_secrets()
+        cls.barb_behaviors.delete_all_created_orders_and_secrets()
+        super(OrdersPagingFixture, cls).tearDownClass()
