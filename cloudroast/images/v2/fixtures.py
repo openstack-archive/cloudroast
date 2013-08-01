@@ -33,9 +33,8 @@ class ImagesV2Fixture(BaseTestFixture):
 
         access_data = AuthProvider.get_access_data()
 
-        cls.images_endpoint = '{base_url}/{api_version}'.format(
-            base_url=cls.config.base_url,
-            api_version=cls.config.api_version)
+        cls.images_endpoint = '{base_url}/v2'.format(
+            base_url=cls.config.base_url)
 
         cls.api_client = ImagesV2Client(cls.images_endpoint,
                                         access_data.token.id_,
