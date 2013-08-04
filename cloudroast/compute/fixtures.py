@@ -70,6 +70,10 @@ class ComputeFixture(BaseTestFixture):
         cls.user_config = UserConfig()
         access_data = AuthProvider.get_access_data(cls.endpoint_config,
                                                    cls.user_config)
+        # If authentication fails, halt
+        if access_data is None:
+            cls.assertClassSetupFailure('Authentication failed.')
+
         compute_service = access_data.get_service(
             cls.compute_endpoint.compute_endpoint_name)
         url = compute_service.get_endpoint(
