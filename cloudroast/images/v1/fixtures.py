@@ -18,8 +18,8 @@ from cloudcafe.auth.config import UserAuthConfig
 from cloudcafe.auth.provider import AuthProvider
 from cloudcafe.identity.v2_0.tenants_api.client import TenantsAPI_Client
 from cloudcafe.identity.v2_0.tenants_api.behaviors import TenantsBehaviors
-from cloudcafe.images.v1_0.client import ImagesClient as ImagesV1Client
-from cloudcafe.images.behaviors import ImageBehaviors
+from cloudcafe.images.v1.client import ImagesClient as ImagesV1Client
+from cloudcafe.images.v1.behaviors import ImagesV1Behaviors
 
 from cloudroast.images.fixtures import ImagesFixture
 
@@ -42,5 +42,5 @@ class ImagesV1Fixture(ImagesFixture):
 
         cls.api_client = ImagesV1Client(images_endpoint, access_data.token.id_,
                                         'json', 'json')
-        cls.behaviors = ImageBehaviors(cls.api_client, cls.config)
+        cls.behaviors = ImagesV1Behaviors(cls.api_client, cls.config)
         cls.tenant_ids = TenantsBehaviors(cls.tenants_client).get_all_tenant_ids()

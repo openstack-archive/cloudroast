@@ -24,7 +24,7 @@ class ImageMembersTests(ImagesV1Fixture):
 
     @classmethod
     def _create_image(cls):
-        image_id = cls.behaviors._create_standard_image(
+        image_id = cls.behaviors.create_standard_image(
             rand_name,
             ImageContainerFormat.BARE,
             ImageDiskFormat.RAW, 1024)
