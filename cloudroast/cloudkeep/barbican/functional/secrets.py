@@ -626,3 +626,120 @@ class SecretsAPI(SecretsFixture):
             mime_type='application/octet-stream',
             plain_text=self.config.plain_text)
         self.assertEqual(resp.status_code, 400, 'Should have failed with 400')
+
+
+class SecretsPagingAPI(SecretsPagingFixture):
+
+    @tags(type='positive')
+    def test_find_a_single_secret_via_paging(self):
+        """ Covers case where when you attempt to retrieve a list of secrets,
+        if the limit is set higher than 8, the next attribute in the response
+        is not available.
+        - Reported in Barbican GitHub Issue #81
+        """
+        resp = self.behaviors.create_secret_from_config(use_expiration=False)
+        secret = self.behaviors.find_secret(resp.id)
+        self.assertIsNotNone(secret, 'Couldn\'t find created secret')
+
+    @tags(type='positive')
+    def test_paging_limit_and_offset(self):
+        """Covers testing paging limit and offset attributes
+        when getting secrets.
+        """
+        # First set of secrets
+        resp = self.client.get_secrets(limit=10, offset=0)
+        sec_group1 = self._check_list_of_secrets(resp=resp, limit=10)
+
+        # Second set of secrets
+        resp = self.client.get_secrets(limit=10, offset=10)
+        sec_group2 = self._check_list_of_secrets(resp=resp, limit=10)
+
+        self._check_for_duplicates(group1=sec_group1.secrets,
+                                   group2=sec_group2.secrets)
+
+    @tags(type='positive')
+    def test_secret_paging_next_option(self):
+        """Covers getting a list of secrets and using the next
+        reference.
+        """
+        # First set of secrets
+        resp = self.client.get_secrets(limit=15, offset=115)
+        sec_group1 = self._check_list_of_secrets(resp=resp, limit=15)
+        next_ref = sec_group1.next
+        self.assertIsNotNone(next_ref)
+
+        #Next set of secrets
+        resp = self.client.get_secrets(ref=next_ref)
+        sec_group2 = self._check_list_of_secrets(resp=resp, limit=15)
+
+        self._check_for_duplicates(group1=sec_group1.secrets,
+                                   group2=sec_group2.secrets)
+
+    @tags(type='positive')
+    def test_secret_paging_previous_option(self):
+        """Covers getting a list of secrets and using the previous
+        reference.
+        """
+        # First set of secrets
+        resp = self.client.get_secrets(limit=15, offset=115)
+        sec_group1 = self._check_list_of_secrets(resp=resp, limit=15)
+        previous_ref = sec_group1.previous
+        self.assertIsNotNone(previous_ref)
+
+        #Previous set of secrets
+        resp = self.client.get_secrets(ref=previous_ref)
+        sec_group2 = self._check_list_of_secrets(resp=resp, limit=15)
+
+        self._check_for_duplicates(group1=sec_group1.secrets,
+                                   group2=sec_group2.secrets)
+
+    @tags(type='positive')
+    def test_secret_paging_max_limit(self):
+        """Covers case of listing secrets with a limit more than the current
+        maximum of 100.
+        """
+        resp = self.client.get_secrets(limit=101, offset=0)
+        self._check_list_of_secrets(resp=resp, limit=100)
+
+    @tags(type='positive')
+    def test_secret_paging_limit(self):
+        """Covers listing secrets with limit attribute from limits
+        of 2 to 25.
+        """
+        for limit in range(2, 25):
+            resp = self.client.get_secrets(limit=limit, offset=0)
+            self._check_list_of_secrets(resp=resp, limit=limit)
+
+    @tags(type='positive')
+    def test_secret_paging_offset(self):
+        """Covers listing secrets with offset attribute from offsets
+        of 2 to 25.
+        """
+        # Covers offsets between 1 and 25
+        for offset in range(1, 24):
+            resp = self.client.get_secrets(limit=2, offset=offset)
+            sec_group1 = self._check_list_of_secrets(resp=resp, limit=2)
+            previous_ref1 = sec_group1.previous
+            self.assertIsNotNone(previous_ref1)
+            next_ref1 = sec_group1.next
+            self.assertIsNotNone(next_ref1)
+
+            resp = self.client.get_secrets(limit=2, offset=offset + 2)
+            sec_group2 = self._check_list_of_secrets(resp=resp, limit=2)
+            previous_ref2 = sec_group2.previous
+            self.assertIsNotNone(previous_ref2)
+            next_ref2 = sec_group2.next
+            self.assertIsNotNone(next_ref2)
+
+            self._check_for_duplicates(group1=sec_group1.secrets,
+                                       group2=sec_group2.secrets)
+
+    @tags(type='positive')
+    def test_secret_paging_w_invalid_parameters(self):
+        """ Covers listing secrets with invalid limit and offset parameters.
+        - Reported in Barbican GitHub Issue #171
+        """
+        self.behaviors.create_secret_from_config(use_expiration=False)
+        resp = self.client.get_secrets(limit='not-an-int', offset='not-an-int')
+        self.assertEqual(resp.status_code, 200,
+                         'Returned unexpected response code')

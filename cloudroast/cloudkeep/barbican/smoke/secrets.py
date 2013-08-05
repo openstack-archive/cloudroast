@@ -100,10 +100,9 @@ class SecretsAPI(SecretsFixture):
     @tags(type='positive')
     def test_get_secrets(self):
         """Covers getting a list of secret."""
-        # Make sure we have at least one secret to list
-        self.behaviors.create_secret_from_config(use_expiration=False)
-        get_resp = self.client.get_secrets()
-        self.assertEqual(get_resp.status_code, 200)
+        # Create 10 secrets
+        for i in range(0, 11):
+            self.behaviors.create_secret_from_config(use_expiration=False)
 
-        secrets = get_resp.entity.secrets
-        self.assertGreater(len(secrets), 0)
+        get_resp = self.client.get_secrets()
+        self._check_list_of_secrets(resp=get_resp, limit=10)
