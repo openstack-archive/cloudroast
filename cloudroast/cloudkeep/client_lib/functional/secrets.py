@@ -13,9 +13,11 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-from cloudroast.cloudkeep.client_lib.fixtures import SecretsFixture
 from barbicanclient.common.exceptions import ClientException
 from cafe.drivers.unittest.decorators import tags
+from cloudcafe.cloudkeep.common.states import SecretsStates
+from cloudroast.cloudkeep.client_lib.fixtures import SecretsFixture, \
+    SecretsPagingFixture
 
 
 class SecretsAPI(SecretsFixture):
@@ -30,7 +32,7 @@ class SecretsAPI(SecretsFixture):
 
         resp = self.barb_client.get_secret(secret.id)
         self.assertEqual(resp.status_code, 200,
-                         'Barbican returned bad status code')
+                         'Barbican returned unexpected response code')
 
     @tags(type='negative')
     def test_create_secret_w_null_values(self):
@@ -176,11 +178,11 @@ class SecretsAPI(SecretsFixture):
         resp = self.barb_behaviors.create_secret_from_config(
             use_expiration=False)
         self.assertEqual(resp.status_code, 201,
-                         'Barbican returned bad status code')
+                         'Barbican returned unexpected response code')
 
         secret = self.cl_client.get_secret(resp.ref)
 
-        self.assertEqual(secret.status, 'ACTIVE')
+        self.assertEqual(secret.status, SecretsStates.ACTIVE)
         self.assertEqual(secret.name, self.config.name)
         self.assertEqual(secret.mime_type, self.config.mime_type)
         self.assertEqual(secret.cypher_type, self.config.cypher_type)
@@ -193,11 +195,11 @@ class SecretsAPI(SecretsFixture):
         resp = self.barb_behaviors.create_secret_from_config(
             use_expiration=False)
         self.assertEqual(resp.status_code, 201,
-                         'Barbican returned bad status code')
+                         'Barbican returned unexpected response code')
 
         secret = self.cl_client.get_secret_by_id(resp.id)
 
-        self.assertEqual(secret.status, 'ACTIVE')
+        self.assertEqual(secret.status, SecretsStates.ACTIVE)
         self.assertEqual(secret.name, self.config.name)
         self.assertEqual(secret.mime_type, self.config.mime_type)
         self.assertEqual(secret.cypher_type, self.config.cypher_type)
@@ -232,7 +234,7 @@ class SecretsAPI(SecretsFixture):
         resp = self.barb_behaviors.create_secret(
             mime_type=self.config.mime_type)
         self.assertEqual(resp.status_code, 201,
-                         'Barbican returned bad status code')
+                         'Barbican returned unexpected response code')
 
         self.assertRaises(ClientException,
                           self.cl_client.get_raw_secret,
@@ -247,7 +249,7 @@ class SecretsAPI(SecretsFixture):
         resp = self.barb_behaviors.create_secret(
             mime_type=self.config.mime_type)
         self.assertEqual(resp.status_code, 201,
-                         'Barbican returned bad status code')
+                         'Barbican returned unexpected response code')
 
         self.assertRaises(ClientException,
                           self.cl_client.get_raw_secret_by_id,
@@ -262,7 +264,7 @@ class SecretsAPI(SecretsFixture):
         resp = self.barb_behaviors.create_secret(
             mime_type=self.config.mime_type)
         self.assertEqual(resp.status_code, 201,
-                         'Barbican returned bad status code')
+                         'Barbican returned unexpected response code')
 
         self.assertRaises(ClientException,
                           self.cl_client.get_raw_secret,
@@ -277,7 +279,7 @@ class SecretsAPI(SecretsFixture):
         resp = self.barb_behaviors.create_secret(
             mime_type=self.config.mime_type)
         self.assertEqual(resp.status_code, 201,
-                         'Barbican returned bad status code')
+                         'Barbican returned unexpected response code')
 
         self.assertRaises(ClientException,
                           self.cl_client.get_raw_secret_by_id,
@@ -292,7 +294,7 @@ class SecretsAPI(SecretsFixture):
         resp = self.barb_behaviors.create_secret(
             mime_type=self.config.mime_type)
         self.assertEqual(resp.status_code, 201,
-                         'Barbican returned bad status code')
+                         'Barbican returned unexpected response code')
 
         data = 'testing_cl_get_raw_secret_by_href_after_update'
         update_resp = self.barb_client.add_secret_plain_text(
@@ -300,7 +302,7 @@ class SecretsAPI(SecretsFixture):
             mime_type=self.config.mime_type,
             plain_text=data)
         self.assertEqual(update_resp.status_code, 200,
-                         'Barbican returned bad status code')
+                         'Barbican returned unexpected response code')
 
         raw_secret = self.cl_client.get_raw_secret(
             href=resp.ref,
@@ -315,7 +317,7 @@ class SecretsAPI(SecretsFixture):
         resp = self.barb_behaviors.create_secret(
             mime_type=self.config.mime_type)
         self.assertEqual(resp.status_code, 201,
-                         'Barbican returned bad status code')
+                         'Barbican returned unexpected response code')
 
         data = 'testing_cl_get_raw_secret_by_id_after_update'
         update_resp = self.barb_client.add_secret_plain_text(
@@ -323,9 +325,51 @@ class SecretsAPI(SecretsFixture):
             mime_type=self.config.mime_type,
             plain_text=data)
         self.assertEqual(update_resp.status_code, 200,
-                         'Barbican returned bad status code')
+                         'Barbican returned unexpected response code')
 
         raw_secret = self.cl_client.get_raw_secret_by_id(
             secret_id=resp.id,
             mime_type=self.config.mime_type)
         self.assertEquals(raw_secret, data, 'Secret data does not match')
+
+
+class SecretsPagingAPI(SecretsPagingFixture):
+
+    @tags(type='positive')
+    def test_list_secrets_limit_and_offset(self):
+        """Covers using the limit and offset attribute of listing secrets."""
+        # First set of secrets
+        list_resp = self.cl_client.list_secrets(limit=10, offset=0)
+        sec_group1 = list_resp[0]
+
+        # Second set of secrets
+        list_resp = self.cl_client.list_secrets(limit=10, offset=10)
+        sec_group2 = list_resp[0]
+
+        self._check_for_duplicates(group1=sec_group1, group2=sec_group2)
+
+    @tags(type='positive')
+    def test_list_secrets_next(self):
+        """Covers using next reference for listing secrets."""
+        # First set of secrets
+        sec_group1, prev_ref, next_ref = self.cl_client.list_secrets(
+            limit=10, offset=0)
+
+        # Next set of secrets
+        list_resp = self.cl_client.list_secrets_by_href(href=next_ref)
+        sec_group2 = list_resp[0]
+
+        self._check_for_duplicates(group1=sec_group1, group2=sec_group2)
+
+    @tags(type='positive')
+    def test_list_secrets_previous(self):
+        """Covers using previous reference for listing secrets."""
+        # First set of secrets
+        sec_group1, prev_ref, next_ref = self.cl_client.list_secrets(
+            limit=10, offset=10)
+
+        # Previous set of secrets
+        list_resp = self.cl_client.list_secrets_by_href(href=prev_ref)
+        sec_group2 = list_resp[0]
+
+        self._check_for_duplicates(group1=sec_group1, group2=sec_group2)
