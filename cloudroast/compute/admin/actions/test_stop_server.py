@@ -13,6 +13,9 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
+
+from cloudcafe.compute.common.types import NovaServerStatusTypes \
+    as ServerStates
 from cloudroast.compute.fixtures import ComputeAdminFixture
 
 
@@ -27,7 +30,7 @@ class StopServerTests(ComputeAdminFixture):
     def test_stop_start_server(self):
         self.admin_servers_client.stop_server(self.server.id)
         self.admin_server_behaviors.wait_for_server_status(
-            self.server.id, 'SHUTOFF')
+            self.server.id, ServerStates.SHUTOFF)
         self.admin_servers_client.start_server(self.server.id)
         self.admin_server_behaviors.wait_for_server_status(
-            self.server.id, 'ACTIVE')
+            self.server.id, ServerStates.ACTIVE)
