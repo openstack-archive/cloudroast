@@ -16,7 +16,7 @@ limitations under the License.
 import unittest2
 
 from cloudroast.cloudkeep.barbican.fixtures import SecretsFixture
-from cafe.drivers.unittest.decorators import tags
+from cafe.drivers.unittest.decorators import tags, skip_open_issue
 from cloudcafe.cloudkeep.common.states import SecretsStates
 
 
@@ -47,51 +47,56 @@ class SecretsAPI(SecretsFixture):
         self.assertEqual(resp.status_code, 201)
 
         sec_resp = self.client.get_secret(secret_id=resp.id)
+        self.assertEqual(sec_resp.status_code, 200)
         metadata = sec_resp.entity
 
         self.assertEqual(sec_resp.status_code, 200)
-        self.assertEqual(metadata.status, SecretsStates.STATUS_ACTIVE)
+        self.assertEqual(metadata.status, SecretsStates.ACTIVE)
         self.assertEqual(metadata.name, self.config.name)
         self.assertEqual(metadata.cypher_type, self.config.cypher_type)
         self.assertEqual(metadata.algorithm, self.config.algorithm)
         self.assertEqual(metadata.bit_length, self.config.bit_length)
 
+    @skip_open_issue(type='launchpad', bug_id='1208562')
     @tags(type='positive')
     def test_get_secret(self):
         """Covers getting a secret's encrypted data."""
         resp = self.behaviors.create_secret_from_config(use_expiration=False)
         self.assertEqual(resp.status_code, 201)
 
-        sec_resp = self.client.get_secret(secret_id=resp.id,
-                                          mime_type=self.config.mime_type)
+        sec_resp = self.client.get_secret(
+            secret_id=resp.id,
+            payload_content_type=self.config.payload_content_type)
         self.assertEqual(sec_resp.status_code, 200)
-        self.assertIn(self.config.plain_text, sec_resp.content)
+        self.assertIn(self.config.payload, sec_resp.content)
 
     @tags(type='positive')
     def test_updating_a_secret(self):
         """Covers giving a secret data."""
         # Create
         resp = self.behaviors.create_secret_from_config(use_expiration=False,
-                                                        use_plain_text=False)
+                                                        use_payload=False)
         self.assertEqual(resp.status_code, 201)
 
         # Update
-        update_resp = self.client.add_secret_plain_text(
+        update_resp = self.client.add_secret_payload(
             secret_id=resp.id,
-            mime_type=self.config.mime_type,
-            plain_text='testing_update_secret')
+            payload_content_type=self.config.payload_content_type,
+            payload='testing_update_secret')
         self.assertEqual(update_resp.status_code, 200)
 
         # Get/Check Updated
-        sec_resp = self.client.get_secret(secret_id=resp.id,
-                                          mime_type=self.config.mime_type)
+        sec_resp = self.client.get_secret(
+            secret_id=resp.id,
+            payload_content_type=self.config.payload_content_type)
+        self.assertEqual(sec_resp.status_code, 200)
         self.assertIn('testing_update_secret', sec_resp.content)
 
     @tags(type='positive')
     def test_deleting_a_secret(self):
         """Covers deleting a secret."""
         resp = self.behaviors.create_secret_from_config(use_expiration=False,
-                                                        use_plain_text=False)
+                                                        use_payload=False)
         self.assertEqual(resp.status_code, 201)
 
         del_resp = self.behaviors.delete_secret(resp.id)
