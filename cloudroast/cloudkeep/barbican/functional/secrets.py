@@ -18,10 +18,166 @@ from uuid import uuid4
 from sys import maxint
 import unittest2
 
-from cloudroast.cloudkeep.barbican.fixtures import SecretsFixture, \
-    SecretsPagingFixture
-from cafe.drivers.unittest.decorators import tags, skip_open_issue
+from cloudroast.cloudkeep.barbican.fixtures import (SecretsFixture,
+                                                    SecretsPagingFixture)
+from cafe.drivers.unittest.datasets import DatasetList
+from cafe.drivers.unittest.decorators import (tags, skip_open_issue,
+                                              data_driven_test,
+                                              DataDrivenFixture)
 from cloudcafe.common.tools import randomstring
+
+
+class BitLengthDataSetPositive(DatasetList):
+    def __init__(self):
+        self.append_new_dataset('192', {'bit_length': 192})
+        self.append_new_dataset('128', {'bit_length': 128})
+        self.append_new_dataset('256', {'bit_length': 256})
+        self.append_new_dataset('512', {'bit_length': 512})
+        self.append_new_dataset('large_int', {'bit_length': maxint})
+
+
+class BitLengthDataSetNegative(DatasetList):
+    def __init__(self):
+        large_string = str(bytearray().zfill(10001))
+
+        self.append_new_dataset('invalid', {'bit_length': 'not-an-int'})
+        self.append_new_dataset('negative', {'bit_length': -1})
+        self.append_new_dataset('large_string', {'bit_length': large_string})
+
+
+class NameDataSetPositive(DatasetList):
+    def __init__(self):
+        alphanumeric = randomstring.get_random_string(prefix='1a2b')
+        random255 = randomstring.get_random_string(size=255)
+        punctuation = '~!@#$%^&*()_+`-={}[]|:;<>,.?"'
+        uuid = str(uuid4())
+
+        self.append_new_dataset('alphanumeric', {'name': alphanumeric})
+        self.append_new_dataset('punctuation', {'name': punctuation})
+        self.append_new_dataset('len_255', {'name': random255})
+        self.append_new_dataset('uuid', {'name': uuid})
+
+
+class PayloadDataSetNegative(DatasetList):
+    def __init__(self):
+        self.append_new_dataset('empty', {'payload': ''})
+        self.append_new_dataset('array', {'payload': ['boom']})
+        self.append_new_dataset('int', {'payload': 123})
+
+
+class ContentTypeEncodingDataSetNegative(DatasetList):
+    def __init__(self):
+        large_string = str(bytearray().zfill(10001))
+
+        self.append_new_dataset(
+            'empty_type_and_encoding',
+            {'payload_content_type': '',
+             'payload_content_encoding': ''})
+        self.append_new_dataset(
+            'null_type_and_encoding',
+            {'payload_content_type': None,
+             'payload_content_encoding': None})
+        self.append_new_dataset(
+            'large_string_type_and_encoding',
+            {'payload_content_type': large_string,
+             'payload_content_encoding': large_string})
+        self.append_new_dataset(
+            'int_type_and_encoding',
+            {'payload_content_type': 123,
+             'payload_content_encoding': 123})
+        self.append_new_dataset(
+            'app_oct_only',
+            {'payload_content_type': 'application/octet-stream',
+             'payload_content_encoding': None})
+        self.append_new_dataset(
+            'base64_only',
+            {'payload_content_type': None,
+             'payload_content_encoding': 'base64'})
+        self.append_new_dataset(
+            'text_plain_and_base64',
+            {'payload_content_type': 'text/plain',
+             'payload_content_encoding': 'base64'})
+        self.append_new_dataset(
+            'invalid_and_base64',
+            {'payload_content_type': 'invalid',
+             'payload_content_encoding': 'base64'})
+        self.append_new_dataset(
+            'invalid_content_type',
+            {'payload_content_type': 'invalid',
+             'payload_content_encoding': None})
+        self.append_new_dataset(
+            'app_oct_and_invalid_encoding',
+            {'payload_content_type': 'application/octet-stream',
+             'payload_content_encoding': 'invalid'})
+        self.append_new_dataset(
+            'text_plain_and_invalid_encoding',
+            {'payload_content_type': 'text/plain',
+             'payload_content_encoding': 'invalid'})
+        self.append_new_dataset(
+            'invalid_encoding',
+            {'payload_content_type': None,
+             'payload_content_encoding': 'invalid'})
+
+
+@DataDrivenFixture
+class DataDriveSecretsAPI(SecretsFixture):
+
+    @data_driven_test(dataset_source=BitLengthDataSetPositive())
+    @tags(type='positive')
+    def ddtest_creating_secret_w_bit_length(self, bit_length=None):
+        """Covers cases of creating a secret with various bit lengths."""
+        resps = self.behaviors.create_and_check_secret(bit_length=bit_length)
+        self.assertEqual(resps.create_resp.status_code, 201,
+                         'Creation failed with unexpected response code')
+
+        secret = resps.get_resp.entity
+        self.assertEqual(resps.get_resp.status_code, 200,
+                         'Retrieval failed with unexpected response code')
+        self.assertIs(type(secret.bit_length), int)
+        self.assertEqual(secret.bit_length, bit_length)
+
+    @data_driven_test(dataset_source=BitLengthDataSetNegative())
+    @tags(type='negative')
+    def ddtest_negative_creating_secret_w_bit_length(self, bit_length=None):
+        """Covers cases of creating a secret with invalid bit lengths.
+        Should return 400."""
+        resp = self.behaviors.create_secret(bit_length=bit_length)
+        self.assertEqual(resp.status_code, 400,
+                         'Creation should have failed with 400')
+
+    @data_driven_test(dataset_source=NameDataSetPositive())
+    @tags(type='positive')
+    def ddtest_creating_secret_w_name(self, name=None):
+        """Covers cases of creating secret with various names."""
+        resps = self.behaviors.create_and_check_secret(name=name)
+        self.assertEqual(resps.create_resp.status_code, 201,
+                         'Creation failed with unexpected response code')
+        secret = resps.get_resp.entity
+        self.assertEqual(secret.name, name, 'Secret name is not correct')
+
+    @data_driven_test(dataset_source=PayloadDataSetNegative())
+    @tags(type='negative')
+    def ddtest_creating_secret_w_payload(self, payload=None):
+        """Covers creating secret with various payloads."""
+        resp = self.behaviors.create_secret(
+            payload_content_type=self.config.payload_content_type,
+            payload_content_encoding=self.config.payload_content_encoding,
+            payload=payload)
+        self.assertEqual(resp.status_code, 400,
+                         'Creation should have failed with 400')
+
+    @data_driven_test(dataset_source=ContentTypeEncodingDataSetNegative())
+    @tags(type='negative')
+    def ddtest_creating_secret(self, payload_content_type=None,
+                               payload_content_encoding=None):
+        """Covers creating secret with various combinations of
+        content types and encodings."""
+        resp = self.behaviors.create_secret(
+            payload_content_type=payload_content_type,
+            payload_content_encoding=payload_content_encoding,
+            payload=self.config.payload)
+        self.assertEqual(resp.status_code, 400,
+                         'Creation should have failed with 400')
 
 
 class SecretsAPI(SecretsFixture):
@@ -97,15 +253,6 @@ class SecretsAPI(SecretsFixture):
         self.check_invalid_expiration_timezone('-5:00')
 
     @tags(type='positive')
-    def test_creating_secret_w_bit_length(self):
-        """ Covers creating secret with a bit length. """
-        resps = self.behaviors.create_and_check_secret(bit_length=512)
-        secret = resps.get_resp.entity
-        self.assertEqual(resps.get_resp.status_code, 200)
-        self.assertIs(type(secret.bit_length), int)
-        self.assertEqual(secret.bit_length, 512)
-
-    @tags(type='positive')
     def test_creating_w_null_entries(self):
         """ Covers case when you create a secret full of nulls. """
         resp = self.behaviors.create_secret()
@@ -141,43 +288,10 @@ class SecretsAPI(SecretsFixture):
          system should return the secret's UUID on a get
          - Reported in Barbican GitHub Issue #89
         """
-        c_resp = self.behaviors.create_secret(
-            name=None, payload_content_type=self.config.payload_content_type)
-
+        c_resp = self.behaviors.create_secret(name=None)
         get_resp = self.client.get_secret(secret_id=c_resp.id)
         self.assertEqual(get_resp.entity.name, c_resp.id,
                          'Name doesn\'t match UUID of secret')
-
-    @tags(type='negative')
-    def test_creating_w_empty_mime_type(self):
-        """Covers creating a secret with an empty String as the mime type.
-        Should return a 400."""
-        resp = self.behaviors.create_secret(payload_content_type='')
-        self.assertEqual(resp.status_code, 400,
-                         'Should have failed with 400')
-
-    @tags(type='negative')
-    def test_creating_w_null_mime_type(self):
-        """Covers creating a secret without a mime type.
-        Should return a 400."""
-        resp = self.behaviors.create_secret(
-            name=self.config.name,
-            payload=self.config.payload,
-            algorithm=self.config.algorithm,
-            cypher_type=self.config.cypher_type,
-            bit_length=self.config.bit_length,
-            payload_content_type=None)
-        self.assertEqual(resp.status_code, 400,
-                         'Should have failed with 400')
-
-    @tags(type='negative')
-    def test_creating_w_empty_secret(self):
-        """Covers creating a secret with an empty String as the plain
-        text value."""
-        resp = self.behaviors.create_secret(
-            payload_content_type=self.config.payload_content_type, payload='')
-        self.assertEqual(resp.status_code, 400,
-                         'Should have failed with 400')
 
     @tags(type='negative')
     def test_creating_w_oversized_secret(self):
@@ -192,14 +306,6 @@ class SecretsAPI(SecretsFixture):
                          'Should have failed with 413')
 
     @tags(type='negative')
-    def test_creating_w_invalid_mime_type(self):
-        """Covers creating a secret with an invalid mime type."""
-        resps = self.behaviors.create_and_check_secret(
-            payload_content_type='crypto/boom')
-        self.assertEqual(resps.create_resp.status_code, 400,
-                         'Should have failed with 400')
-
-    @tags(type='negative')
     def test_getting_secret_that_doesnt_exist(self):
         """Covers getting a nonexistent secret."""
         resp = self.client.get_secret('not_a_uuid')
@@ -211,13 +317,6 @@ class SecretsAPI(SecretsFixture):
         resp = self.behaviors.create_secret_from_config(use_expiration=False)
         resp = self.client.get_secret(resp.id, payload_content_type='i/m')
         self.assertEqual(resp.status_code, 406, 'Should have failed with 406')
-
-    @tags(type='negative')
-    def test_creating_w_payload_as_array(self):
-        """Covers creating a secret with the plain text value as an array."""
-        resps = self.behaviors.create_and_check_secret(payload=['boom'])
-        self.assertEqual(resps.create_resp.status_code, 400,
-                         'Should have failed with 400')
 
     @tags(type='negative')
     def test_putting_secret_that_doesnt_exist(self):
@@ -237,8 +336,7 @@ class SecretsAPI(SecretsFixture):
         invalid mime-type. Should return 400.
         - Reported in Barbican Launchpad Bug #1208601
         """
-        resp = self.behaviors.create_secret(
-            payload_content_type=self.config.payload_content_type)
+        resp = self.behaviors.create_secret()
         put_resp = self.client.add_secret_payload(
             secret_id=resp.id,
             payload_content_type='crypto/boom',
@@ -278,8 +376,7 @@ class SecretsAPI(SecretsFixture):
         """Covers case of putting null String to a secret.
         Should return 400.
         """
-        resp = self.behaviors.create_secret(
-            payload_content_type=self.config.payload_content_type)
+        resp = self.behaviors.create_secret()
         put_resp = self.client.add_secret_payload(
             secret_id=resp.id,
             payload_content_type=self.config.payload_content_type,
@@ -293,8 +390,7 @@ class SecretsAPI(SecretsFixture):
         Current size limit is 10k bytes. Beyond that it should return 413.
         """
         data = bytearray().zfill(10001)
-        resp = self.behaviors.create_secret(
-            payload_content_type=self.config.payload_content_type)
+        resp = self.behaviors.create_secret()
         put_resp = self.client.add_secret_payload(
             secret_id=resp.id,
             payload_content_type=self.config.payload_content_type,
@@ -349,24 +445,6 @@ class SecretsAPI(SecretsFixture):
         self.assertIsNone(secret.content_types,
                           'Should not have had content types attribute')
 
-    @tags(type='negative')
-    def test_creating_secret_w_invalid_bit_length(self):
-        """ Cover case of creating a secret with a bit length that is not
-        an integer. Should return 400.
-        """
-        resp = self.behaviors.create_secret_overriding_cfg(
-            bit_length='not-an-int')
-        self.assertEqual(resp.status_code, 400, 'Should have failed with 400')
-
-    @tags(type='negative')
-    def test_creating_secret_w_negative_bit_length(self):
-        """ Covers case of creating a secret with a bit length
-        that is negative. Should return 400.
-        """
-        resp = self.behaviors.create_secret_overriding_cfg(
-            bit_length=-1)
-        self.assertEqual(resp.status_code, 400, 'Should have failed with 400')
-
     @skip_open_issue(type='launchpad', bug_id='1208601')
     @tags(type='negative')
     def test_creating_secret_w_only_mime_type(self):
@@ -376,87 +454,6 @@ class SecretsAPI(SecretsFixture):
         resp = self.behaviors.create_secret(
             payload_content_type=self.config.payload_content_type)
         self.assertEqual(resp.status_code, 400, 'Should have failed with 400')
-
-    @tags(type='positive')
-    def test_creating_secret_w_alphanumeric_name(self):
-        """Covers case of creating secret with an alphanumeric name."""
-        name = randomstring.get_random_string(prefix='1a2b')
-        resps = self.behaviors.create_and_check_secret(name=name)
-        self.assertEqual(resps.create_resp.status_code, 201,
-                         'Returned unexpected response code')
-        secret = resps.get_resp.entity
-        self.assertEqual(secret.name, name, 'Secret name is not correct')
-
-    @tags(type='positive')
-    def test_creating_secret_w_punctuation_in_name(self):
-        """Covers case of creating a secret with miscellaneous punctuation and
-        symbols in the name.
-        """
-        name = '~!@#$%^&*()_+`-={}[]|:;<>,.?"'
-        resps = self.behaviors.create_and_check_secret(name=name)
-        self.assertEqual(resps.create_resp.status_code, 201,
-                         'Returned unexpected response code')
-
-        secret = resps.get_resp.entity
-        self.assertEqual(secret.name, name, 'Secret name is not correct')
-
-    @tags(type='positive')
-    def test_creating_secret_w_uuid_as_name(self):
-        """Covers case of creating a secret with a random uuid as the name."""
-        uuid = str(uuid4())
-        resps = self.behaviors.create_and_check_secret(name=uuid)
-        self.assertEqual(resps.create_resp.status_code, 201,
-                         'Returned unexpected response code')
-
-        secret = resps.get_resp.entity
-        self.assertEqual(secret.name, uuid, 'Secret name is not correct')
-
-    @tags(type='positive')
-    def test_create_secret_w_name_of_len_255(self):
-        """Covers case of creating a secret with a 255 character name."""
-        name = randomstring.get_random_string(size=255)
-        resps = self.behaviors.create_and_check_secret(name=name)
-        self.assertEqual(resps.create_resp.status_code, 201,
-                         'Returned unexpected response code')
-
-        secret = resps.get_resp.entity
-        self.assertEqual(secret.name, name, 'Secret name is not correct')
-
-    @tags(type='positive')
-    def test_creating_secret_w_128_bit_length(self):
-        """Covers case of creating a secret with a 128 bit length."""
-        resps = self.behaviors.create_and_check_secret(bit_length=128)
-        self.assertEqual(resps.create_resp.status_code, 201,
-                         'Returned unexpected response code')
-
-        secret = resps.get_resp.entity
-        self.assertEqual(resps.get_resp.status_code, 200)
-        self.assertIs(type(secret.bit_length), int)
-        self.assertEqual(secret.bit_length, 128)
-
-    @tags(type='positive')
-    def test_creating_secret_w_192_bit_length(self):
-        """Covers case of creating a secret with a 192 bit length."""
-        resps = self.behaviors.create_and_check_secret(bit_length=192)
-        self.assertEqual(resps.create_resp.status_code, 201,
-                         'Returned unexpected response code')
-
-        secret = resps.get_resp.entity
-        self.assertEqual(resps.get_resp.status_code, 200)
-        self.assertIs(type(secret.bit_length), int)
-        self.assertEqual(secret.bit_length, 192)
-
-    @tags(type='positive')
-    def test_creating_secret_w_256_bit_length(self):
-        """Covers case of creating a secret with a 256 bit length."""
-        resps = self.behaviors.create_and_check_secret(bit_length=256)
-        self.assertEqual(resps.create_resp.status_code, 201,
-                         'Returned unexpected response code')
-
-        secret = resps.get_resp.entity
-        self.assertEqual(resps.get_resp.status_code, 200)
-        self.assertIs(type(secret.bit_length), int)
-        self.assertEqual(secret.bit_length, 256)
 
     @tags(type='positive')
     def test_creating_secret_w_aes_algorithm(self):
@@ -501,49 +498,15 @@ class SecretsAPI(SecretsFixture):
                          'Returned unexpected response code')
 
     @tags(type='positive')
-    def test_creating_secret_w_app_octet_mime_type(self):
+    def test_creating_secret_w_app_octet_mime_type_and_base64(self):
         """Covers case of creating a secret with application/octet-stream
-        as mime type."""
+        content type and base64 encoding."""
         resp = self.behaviors.create_secret(
-            payload_content_type='application/octet-stream')
+            payload_content_type='application/octet-stream',
+            payload_content_encoding='base64',
+            payload=self.config.payload)
         self.assertEqual(resp.status_code, 201,
                          'Returned unexpected response code')
-
-    @tags(type='positive')
-    def test_creating_secret_w_empty_checking_name(self):
-        """ When an secret is created with an empty name attribute, the
-        system should return the secret's UUID on a get. Extends coverage of
-        test_creating_w_empty_name.
-        """
-        resp = self.behaviors.create_secret(
-            payload_content_type=self.config.payload_content_type,
-            name="",
-            algorithm=self.config.algorithm,
-            bit_length=self.config.bit_length,
-            cypher_type=self.config.cypher_type)
-
-        get_resp = self.client.get_secret(resp.id)
-        secret = get_resp.entity
-        self.assertEqual(secret.name, secret.get_id(),
-                         'Name did not match secret\'s UUID')
-
-    @tags(type='positive')
-    def test_creating_secret_wout_name_checking_name(self):
-        """ When a secret is created with a null name attribute, the
-        system should return the secret's UUID on a get. Extends coverage of
-        test_creating_w_null_name.
-        """
-        resp = self.behaviors.create_secret(
-            payload_content_type=self.config.payload_content_type,
-            name=None,
-            algorithm=self.config.algorithm,
-            bit_length=self.config.bit_length,
-            cypher_type=self.config.cypher_type)
-
-        get_resp = self.client.get_secret(resp.id)
-        secret = get_resp.entity
-        self.assertEqual(secret.name, secret.get_id(),
-                         'Name did not match secret\'s UUID')
 
     @tags(type='positive')
     def test_creating_secret_w_large_string_values(self):
@@ -569,47 +532,11 @@ class SecretsAPI(SecretsFixture):
         self.assertEqual(resp.status_code, 201,
                          'Returned unexpected response code')
 
-    @tags(type='positive')
-    def test_creating_secret_w_large_bit_length(self):
-        """Covers case of creating secret with a large integer as
-        the bit length."""
-        resp = self.behaviors.create_secret(
-            payload_content_type=self.config.payload_content_type,
-            bit_length=maxint)
-        self.assertEqual(resp.status_code, 201,
-                         'Returned unexpected response code')
-
-    @tags(type='negative')
-    def test_creating_secret_w_large_string_as_bit_length(self):
-        """Covers case of creating secret with a large String as
-        the bit length. Should return 400."""
-        large_string = str(bytearray().zfill(10001))
-        resp = self.behaviors.create_secret(
-            payload_content_type=self.config.payload_content_type,
-            bit_length=large_string)
-        self.assertEqual(resp.status_code, 400, 'Should have failed with 400')
-
-    @tags(type='negative')
-    def test_creating_secret_w_large_string_as_mime_type(self):
-        """Covers case of creating secret with a large String as
-        the bit length. Should return 400."""
-        large_string = str(bytearray().zfill(10001))
-        resp = self.behaviors.create_secret(payload_content_type=large_string)
-        self.assertEqual(resp.status_code, 400, 'Should have failed with 400')
-
     @tags(type='negative')
     def test_creating_secret_w_int_as_name(self):
         """Covers case of creating a secret with an integer as the name.
         Should return 400."""
         resp = self.behaviors.create_secret_overriding_cfg(name=400)
-        self.assertEqual(resp.status_code, 400, 'Should have failed with 400')
-
-    @tags(type='negative')
-    def test_creating_secret_w_int_as_mime_type(self):
-        """Covers case of creating a secret with an integer as the mime type.
-        Should return 400."""
-        resp = self.behaviors.create_secret_overriding_cfg(
-            payload_content_type=400)
         self.assertEqual(resp.status_code, 400, 'Should have failed with 400')
 
     @tags(type='negative')
@@ -636,49 +563,6 @@ class SecretsAPI(SecretsFixture):
             payload_content_type='application/octet-stream',
             payload_content_encoding='base64',
             payload=self.config.payload)
-        self.assertEqual(resp.status_code, 400, 'Should have failed with 400')
-
-    @tags(type='negative')
-    def test_creating_secret_w_invalid_encoding(self):
-        """Covers creating secret with an invalid content type encoding.
-        Should return 400.
-        """
-        resp = self.behaviors.create_secret(
-            payload_content_type='application/octet-stream',
-            payload_content_encoding='invalid-encoding')
-        self.assertEqual(resp.status_code, 400, 'Should have failed with 400')
-
-    @tags(type='positive')
-    def test_creating_secret_w_base64_encoding(self):
-        """Covers creating secret with application/octet-stream content type
-         and base64 encoding.
-        """
-        resp = self.behaviors.create_secret(
-            payload_content_type='application/octet-stream',
-            payload_content_encoding='base64',
-            payload=self.config.payload)
-        self.assertEqual(resp.status_code, 201,
-                         'Returned unexpected response code')
-
-    @tags(type='negative')
-    def test_creating_secret_w_text_plain_base64(self):
-        """Covers creating secret with text/plain content type and base64
-        encoding. Should return 400.
-        """
-        resp = self.behaviors.create_secret(
-            payload_content_type='text/plain',
-            payload_content_encoding='base64',
-            payload=self.config.payload)
-        self.assertEqual(resp.status_code, 400, 'Should have failed with 400')
-
-    @skip_open_issue(type='launchpad', bug_id='1208601')
-    @tags(type='negative')
-    def test_creating_secret_w_only_encoding(self):
-        """Covers creating a secret with only content encoding. Should
-        return 400.
-        """
-        resp = self.behaviors.create_secret(
-            payload_content_encoding='base64')
         self.assertEqual(resp.status_code, 400, 'Should have failed with 400')
 
     @tags(type='positive')
