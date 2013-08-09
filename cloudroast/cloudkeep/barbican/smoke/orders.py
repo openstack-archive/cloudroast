@@ -34,7 +34,6 @@ class OrdersAPI(OrdersFixture):
         order status will be active and not pending.
         """
         resps = self.behaviors.create_and_check_order(
-            mime_type=self.config.mime_type,
             name=self.config.name,
             algorithm=self.config.algorithm,
             bit_length=self.config.bit_length,
@@ -44,7 +43,7 @@ class OrdersAPI(OrdersFixture):
 
         ord_resp = resps.get_resp
         self.assertEqual(ord_resp.status_code, 200)
-        self.assertEqual(ord_resp.entity.status, OrdersStates.STATUS_ACTIVE)
+        self.assertEqual(ord_resp.entity.status, OrdersStates.ACTIVE)
 
         metadata = ord_resp.entity.secret
         self.assertEqual(metadata.name, self.config.name)
@@ -62,8 +61,8 @@ class OrdersAPI(OrdersFixture):
         # Verify Creation
         get_resp = self.orders_client.get_order(resp.id)
         order = get_resp.entity
-        order_status = (order.status == OrdersStates.STATUS_ACTIVE or
-                        order.status == OrdersStates.STATUS_PENDING)
+        order_status = (order.status == OrdersStates.ACTIVE or
+                        order.status == OrdersStates.PENDING)
 
         self.assertEqual(get_resp.status_code, 200)
         self.assertIsNotNone(order.secret_href)
