@@ -64,6 +64,7 @@ class ComputeFixture(BaseTestFixture):
         cls.flavor_ref_alt = cls.flavors_config.secondary_flavor
         cls.image_ref = cls.images_config.primary_image
         cls.image_ref_alt = cls.images_config.secondary_image
+        cls.image_ref_old = cls.images_config.old_image
         cls.disk_path = cls.servers_config.instance_disk_path
 
         cls.endpoint_config = UserAuthConfig()
@@ -101,8 +102,8 @@ class ComputeFixture(BaseTestFixture):
                                          cls.marshalling.serializer,
                                          cls.marshalling.deserializer)
         cls.vnc_client = VncConsoleClient(url, access_data.token.id_,
-                                         cls.marshalling.serializer,
-                                         cls.marshalling.deserializer)
+                                          cls.marshalling.serializer,
+                                          cls.marshalling.deserializer)
         cls.server_behaviors = ServerBehaviors(cls.servers_client,
                                                cls.servers_config,
                                                cls.images_config,
