@@ -59,32 +59,11 @@ class OrdersAPI(OrdersFixture):
         self.assertEqual(resp.status_code, 400)
 
     @tags(type='negative')
-    def test_create_order_with_null_mime_type(self):
-        """ Covers issue where you attempt to create an order with the
-        mime_type attribute set to null and the request appears to fail
-        without a status code.
-        - Reported in Barbican GitHub Issue #92
-        """
-        resp = self.behaviors.create_order(
-            mime_type=None,
-            name=self.config.name,
-            algorithm=self.config.algorithm,
-            bit_length=self.config.bit_length,
-            cypher_type=self.config.cypher_type)
-        self.assertEqual(resp.status_code, 400,
-                         'Returned unexpected response code')
-
-    @tags(type='negative')
     def test_create_order_with_empty_mime_type(self):
         """ Covers case of creating an order with an empty String as the
         mime type. Should return 400.
         """
-        resp = self.behaviors.create_order(
-            mime_type='',
-            name=self.config.name,
-            algorithm=self.config.algorithm,
-            bit_length=self.config.bit_length,
-            cypher_type=self.config.cypher_type)
+        resp = self.behaviors.create_order_w_payload(payload_content_type='')
         self.assertEqual(resp.status_code, 400,
                          'Returned unexpected response code')
 
@@ -95,7 +74,6 @@ class OrdersAPI(OrdersFixture):
         - Reported in Barbican GitHub Issue #93
         """
         resp = self.behaviors.create_order(
-            mime_type=self.config.mime_type,
             algorithm=self.config.algorithm,
             bit_length=self.config.bit_length,
             cypher_type=self.config.cypher_type)
@@ -108,7 +86,6 @@ class OrdersAPI(OrdersFixture):
         attribute.
         """
         resp = self.behaviors.create_order(
-            mime_type=self.config.mime_type,
             name='',
             algorithm=self.config.algorithm,
             bit_length=self.config.bit_length,
@@ -122,14 +99,10 @@ class OrdersAPI(OrdersFixture):
          mime_type and the request fails without a status code.
         - Reported in Barbican GitHub Issue #92
         """
-        resp = self.behaviors.create_order(
-            mime_type="trace/boom",
-            name=self.config.name,
-            algorithm=self.config.algorithm,
-            bit_length=self.config.bit_length,
-            cypher_type=self.config.cypher_type)
+        resp = self.behaviors.create_order_w_payload(
+            payload_content_type="trace/boom")
         self.assertEqual(resp.status_code, 400,
-                         'Returned unexpected response code')
+                         'Creation should have failed with 400')
 
     @unittest2.skip('Issue #140')
     @tags(type='positive')
@@ -139,15 +112,15 @@ class OrdersAPI(OrdersFixture):
         - Reported in Barbican GitHub Issue #140
         """
         resps = self.behaviors.create_and_check_order(
-            mime_type="text/plain",
+            payload_content_type="text/plain",
             name=self.config.name,
             algorithm=self.config.algorithm,
             bit_length=self.config.bit_length,
             cypher_type=self.config.cypher_type)
 
         secret_ref = resps.get_resp.entity.secret_href
-        secret_resp = self.secrets_client.get_secret(ref=secret_ref,
-                                                     mime_type='text/plain')
+        secret_resp = self.secrets_client.get_secret(
+            ref=secret_ref, payload_content_type='text/plain')
         self.assertEqual(secret_resp.status_code, 200,
                          'Returned unexpected response code')
 
@@ -187,11 +160,10 @@ class OrdersAPI(OrdersFixture):
 
     @tags(type='negative')
     def test_create_order_w_null_entries(self):
-        """
-        Covers creating order with all null entries.
-        """
+        """Covers creating order with all null entries. Should return a 400."""
         resp = self.behaviors.create_order()
-        self.assertEqual(resp.status_code, 400, 'Should have failed with 400')
+        self.assertEqual(resp.status_code, 400,
+                         'Creation should have failed with 400')
 
     @tags(type='negative')
     def test_create_order_w_empty_entries(self):
@@ -200,9 +172,9 @@ class OrdersAPI(OrdersFixture):
         """
         resp = self.behaviors.create_order(name='', expiration='',
                                            algorithm='', cypher_type='',
-                                           mime_type='')
+                                           bit_length='')
         self.assertEqual(resp.status_code, 400,
-                         'Should have failed with 400')
+                         'Creation should have failed with 400')
 
     @tags(type='positive')
     def test_create_order_w_empty_checking_name(self):
@@ -212,12 +184,12 @@ class OrdersAPI(OrdersFixture):
         active and not pending.
         """
         resp = self.behaviors.create_order(
-            mime_type=self.config.mime_type,
             name='',
             algorithm=self.config.algorithm,
             bit_length=self.config.bit_length,
             cypher_type=self.config.cypher_type)
-
+        self.assertEqual(resp.status_code, 202,
+                         'Creation failed with unexpected response code')
         get_resp = self.orders_client.get_order(resp.id)
         order = get_resp.entity
         secret_id = order.get_secret_id()
@@ -233,11 +205,12 @@ class OrdersAPI(OrdersFixture):
         active and not pending.
         """
         resp = self.behaviors.create_order(
-            mime_type=self.config.mime_type,
             name=None,
             algorithm=self.config.algorithm,
             bit_length=self.config.bit_length,
             cypher_type=self.config.cypher_type)
+        self.assertEqual(resp.status_code, 202,
+                         'Creation failed with unexpected response code')
 
         get_resp = self.orders_client.get_order(resp.id)
         order = get_resp.entity
@@ -316,6 +289,8 @@ class OrdersAPI(OrdersFixture):
         that the order status will be active and not pending.
         """
         resp = self.behaviors.create_and_check_order()
+        self.assertEqual(resp.status_code, 202,
+                         'Creation failed with unexpected response code')
         order = resp.get_resp.entity
         order_metadata = order.secret
         secret_ref = order.secret_href
@@ -330,9 +305,10 @@ class OrdersAPI(OrdersFixture):
                          'Bit lengths were not the same')
         self.assertEqual(order_metadata.expiration, secret_metadata.expiration,
                          'Expirations were not the same')
-        self.assertEqual(order_metadata.mime_type, secret_metadata.mime_type,
+        self.assertEqual(order_metadata.payload_content_type,
+                         secret_metadata.payload_content_type,
                          'Mime types were not the same')
-        self.assertEqual(order_metadata.plain_text, secret_metadata.plain_text,
+        self.assertEqual(order_metadata.payload, secret_metadata.payload,
                          'Plain texts were not the same')
         self.assertEqual(order_metadata.cypher_type,
                          secret_metadata.cypher_type,
@@ -363,7 +339,6 @@ class OrdersAPI(OrdersFixture):
         - Reported in Barbican GitHub Issue #156
         """
         resp = self.behaviors.create_order(
-            mime_type=self.config.mime_type,
             name=self.config.name,
             algorithm=self.config.algorithm,
             cypher_type=self.config.cypher_type,
@@ -384,15 +359,16 @@ class OrdersAPI(OrdersFixture):
         self.assertEqual(resp.status_code, 202,
                          'Returned unexpected response code')
 
-    @tags(type='positive')
+    @tags(type='negative')
     def test_create_order_w_app_octet_stream_mime_type(self):
         """Covers case of creating an order with an application/octet-stream
-        mime type.
+        mime type. Should return 400.
         """
-        resp = self.behaviors.create_order_overriding_cfg(
-            mime_type='application/octet-stream')
-        self.assertEqual(resp.status_code, 202,
-                         'Returned unexpected response code')
+        resp = self.behaviors.create_order_w_payload(
+            payload_content_type='application/octet-stream',
+            payload_content_encoding='base64')
+        self.assertEqual(resp.status_code, 400,
+                         'Creation should have failed with 400')
 
     @tags(type='positive')
     def test_create_order_w_alphanumeric_name(self):
@@ -468,54 +444,40 @@ class OrdersAPI(OrdersFixture):
         resp = self.behaviors.create_order_from_config()
         put_resp = self.orders_client.update_order(
             order_id=resp.id,
-            mime_type=self.config.mime_type,
+            payload_content_type='application/octet-stream',
             data='test-update-order')
         self.assertEqual(put_resp.status_code, 405,
                          'Should have failed with 405')
 
     @tags(type='negative')
-    def test_create_order_w_plain_text(self):
+    def test_create_order_w_payload(self):
         """Covers case of creating order with plain text.
         Should return 400."""
-        resp = self.behaviors.create_order_w_plain_text(
-            plain_text='test-create-order-w-plain-text',
-            mime_type=self.config.mime_type,
-            name=self.config.name,
-            algorithm=self.config.algorithm,
-            bit_length=self.config.bit_length,
-            cypher_type=self.config.cypher_type,
-            expiration=None)
+        resp = self.behaviors.create_order_w_payload(
+            payload='test-create-order-w-payload',
+            payload_content_type='application/octet-stream',
+            payload_content_encoding='base64')
         self.assertEqual(resp.status_code, 400, 'Should have failed with 400')
 
     @tags(type='negative')
-    def test_create_order_w_empty_plain_text(self):
+    def test_create_order_w_empty_payload(self):
         """Covers case of creating order with an empty String as plain text.
         Should return 400."""
-        resp = self.behaviors.create_order_w_plain_text(
-            plain_text='',
-            mime_type=self.config.mime_type,
-            name=self.config.name,
-            algorithm=self.config.algorithm,
-            bit_length=self.config.bit_length,
-            cypher_type=self.config.cypher_type,
-            expiration=None)
+        resp = self.behaviors.create_order_w_payload(
+            payload='', payload_content_type='application/octet-stream',
+            payload_content_encoding='base64')
         self.assertEqual(resp.status_code, 400, 'Should have failed with 400')
 
     @tags(type='negative')
-    def test_create_order_w_oversized_plain_text(self):
+    def test_create_order_w_oversized_payload(self):
         """Covers case of creating an order with a value larger than the 10k
         limit for the secret plain text attribute. Should return 400.
         """
         data = bytearray().zfill(10001)
 
-        resp = self.behaviors.create_order_w_plain_text(
-            plain_text=str(data),
-            mime_type=self.config.mime_type,
-            name=self.config.name,
-            algorithm=self.config.algorithm,
-            bit_length=self.config.bit_length,
-            cypher_type=self.config.cypher_type,
-            expiration=None)
+        resp = self.behaviors.create_order_w_payload(
+            payload=str(data), payload_content_type='application/octet-stream',
+            payload_content_encoding='base64')
 
         self.assertEqual(resp.status_code, 400, 'Should have failed with 400')
 
@@ -525,7 +487,6 @@ class OrdersAPI(OrdersFixture):
         Should return 400.
         """
         resp = self.behaviors.create_order(
-            mime_type=self.config.mime_type,
             name=self.config.name,
             algorithm=None,
             cypher_type=self.config.cypher_type,
@@ -538,7 +499,6 @@ class OrdersAPI(OrdersFixture):
         Should return 400.
         """
         resp = self.behaviors.create_order(
-            mime_type=self.config.mime_type,
             name=self.config.name,
             algorithm=self.config.algorithm,
             cypher_type=None,
@@ -560,7 +520,6 @@ class OrdersAPI(OrdersFixture):
         Should return 400."""
         large_string = str(bytearray().zfill(10001))
         resp = self.behaviors.create_order(
-            mime_type=self.config.mime_type,
             name=large_string,
             algorithm=large_string,
             cypher_type=large_string)
@@ -587,8 +546,8 @@ class OrdersAPI(OrdersFixture):
         """Covers case of creating secret with a large String as
         the bit length. Should return 400."""
         large_string = str(bytearray().zfill(10001))
-        resp = self.behaviors.create_order_overriding_cfg(
-            mime_type=large_string)
+        resp = self.behaviors.create_order_w_payload(
+            payload_content_type=large_string)
         self.assertEqual(resp.status_code, 400, 'Should have failed with 400')
 
     @tags(type='negative')
@@ -602,7 +561,7 @@ class OrdersAPI(OrdersFixture):
     def test_create_order_w_int_as_mime_type(self):
         """Covers case of creating an order with an integer as the mime type.
         Should return 400."""
-        resp = self.behaviors.create_order_overriding_cfg(mime_type=400)
+        resp = self.behaviors.create_order_w_payload(payload_content_type=400)
         self.assertEqual(resp.status_code, 400, 'Should have failed with 400')
 
     @tags(type='negative')
