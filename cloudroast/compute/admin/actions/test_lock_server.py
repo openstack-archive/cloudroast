@@ -48,7 +48,7 @@ class LockServerTests(ComputeAdminFixture):
                                        NovaServerRebootTypes.SOFT)
 
     def test_cannot_rebuild_locked_server(self):
-        with self.assertRaises(BadRequest):
+        with self.assertRaises(ActionInProgress):
             self.servers_client.rebuild(self.server.id, self.image_ref)
 
     def test_cannot_resize_locked_server(self):
