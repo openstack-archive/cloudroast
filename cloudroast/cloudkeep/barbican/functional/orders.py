@@ -13,15 +13,115 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-import unittest2
 from datetime import datetime, timedelta
-from uuid import uuid4
 from sys import maxint
+import unittest2
 
-from cloudroast.cloudkeep.barbican.fixtures import OrdersFixture, \
-    OrdersPagingFixture
-from cafe.drivers.unittest.decorators import tags
-from cloudcafe.common.tools import randomstring
+from cafe.drivers.unittest.decorators import (tags, data_driven_test,
+                                              DataDrivenFixture)
+from cloudroast.cloudkeep.barbican.fixtures import (
+    OrdersFixture, OrdersPagingFixture, ContentTypeEncodingDataSetNegative,
+    BitLengthDataSetNegative, NameDataSetPositive, PayloadDataSetNegative,
+    BitLengthDataSetPositive)
+
+
+class OrderBitLengthDataSet(BitLengthDataSetNegative):
+    def __init__(self):
+        super(OrderBitLengthDataSet, self).__init__()
+        self.append_new_dataset('null', {'bit_length': None})
+        self.append_new_dataset('empty', {'bit_length': ''})
+        self.append_new_dataset('large_int', {'bit_length': maxint})
+
+
+class OrderContentTypeEncodingDataSet(ContentTypeEncodingDataSetNegative):
+    def __init__(self):
+        super(OrderContentTypeEncodingDataSet, self).__init__()
+        self.append_new_dataset('text_plain',
+                                {'payload_content_type': 'text/plain',
+                                 'payload_content_encoding': None})
+
+
+class OrderPayloadDataSet(PayloadDataSetNegative):
+    def __init__(self):
+        super(OrderPayloadDataSet, self).__init__()
+        large_string = str(bytearray().zfill(10001))
+        self.append_new_dataset('standard_payload',
+                                {'payload': 'test-create-order-w-payload'})
+        self.append_new_dataset('oversized_payload', {'payload': large_string})
+
+
+@DataDrivenFixture
+class DataDriveSecretsAPI(OrdersFixture):
+
+    @data_driven_test(dataset_source=OrderBitLengthDataSet())
+    @tags(type='negative')
+    def ddtest_negative_create_order_w_bit_length(self, bit_length=None):
+        """Covers creating orders with invalid bit lengths. Should return
+        400."""
+        resp = self.behaviors.create_order(
+            name=self.config.name,
+            payload_content_type=self.config.payload_content_type,
+            payload_content_encoding=self.config.payload_content_encoding,
+            algorithm=self.config.algorithm,
+            cypher_type=self.config.cypher_type,
+            bit_length=bit_length)
+        self.assertEqual(resp.status_code, 400,
+                         'Creation should have failed with 400')
+
+    @data_driven_test(dataset_source=BitLengthDataSetPositive())
+    @tags(type='positive')
+    def ddtest_create_order_w_bit_length(self, bit_length=None):
+        """Covers creating orders with various bit lengths."""
+        resps = self.behaviors.create_and_check_order(
+            bit_length=bit_length)
+        self.assertEqual(resps.status_code, 202,
+                         'Creation failed with unexpected response code')
+
+        self.assertEqual(resps.get_resp.status_code, 200)
+        secret = resps.get_resp.entity.secret
+        self.assertIs(type(secret.bit_length), int)
+        self.assertEqual(secret.bit_length, bit_length)
+
+    @data_driven_test(dataset_source=OrderContentTypeEncodingDataSet())
+    @tags(type='negative')
+    def ddtest_create_order_w_type_encoding(self, payload_content_type=None,
+                                            payload_content_encoding=None):
+        """Covers creating orders with invalid content types and content
+        encodings. Should return 400."""
+        resp = self.behaviors.create_order(
+            name=self.config.name,
+            payload_content_type=payload_content_type,
+            payload_content_encoding=payload_content_encoding,
+            algorithm=self.config.algorithm,
+            cypher_type=self.config.cypher_type,
+            bit_length=self.config.bit_length)
+        self.assertEqual(resp.status_code, 400,
+                         'Creation should have failed with 400')
+
+    @data_driven_test(dataset_source=NameDataSetPositive())
+    @tags(type='positive')
+    def ddtest_create_order_w_name(self, name=None):
+        """Covers creating orders with various names."""
+        resps = self.behaviors.create_and_check_order(
+            name=name,
+            payload_content_type=self.config.payload_content_type,
+            payload_content_encoding=self.config.payload_content_encoding,
+            algorithm=self.config.algorithm,
+            cypher_type=self.config.cypher_type,
+            bit_length=self.config.bit_length)
+        self.assertEqual(resps.status_code, 202,
+                         'Creation failed with unexpected response code')
+        secret = resps.get_resp.entity.secret
+        self.assertEqual(secret.name, name, 'Secret name is not correct')
+
+    @data_driven_test(dataset_source=OrderPayloadDataSet())
+    @tags(type='negative')
+    def ddtest_creating_order_w_payload(self, payload=None):
+        """Covers creating orders with various payloads. Should fail with
+        400."""
+        resp = self.behaviors.create_order_w_payload(payload=payload)
+        self.assertEqual(resp.status_code, 400,
+                         'Creation should have failed with 400')
 
 
 class OrdersAPI(OrdersFixture):
@@ -58,15 +158,6 @@ class OrdersAPI(OrdersFixture):
             expiration=timestamp)
         self.assertEqual(resp.status_code, 400)
 
-    @tags(type='negative')
-    def test_create_order_with_empty_mime_type(self):
-        """ Covers case of creating an order with an empty String as the
-        mime type. Should return 400.
-        """
-        resp = self.behaviors.create_order_w_payload(payload_content_type='')
-        self.assertEqual(resp.status_code, 400,
-                         'Returned unexpected response code')
-
     @tags(type='positive')
     def test_create_order_wout_name(self):
         """ When you attempt to create an order without the name attribute the
@@ -96,18 +187,6 @@ class OrdersAPI(OrdersFixture):
             cypher_type=self.config.cypher_type)
         self.assertEqual(resp.status_code, 202,
                          'Returned unexpected response code')
-
-    @tags(type='negative')
-    def test_create_order_with_invalid_mime_type(self):
-        """ Covers defect where you attempt to create an order with an invalid
-         mime_type and the request fails without a status code.
-        - Reported in Barbican GitHub Issue #92
-        """
-        resp = self.behaviors.create_order_w_payload(
-            payload_content_type="trace/boom",
-            payload='testing-order-w-invalid-mime-type')
-        self.assertEqual(resp.status_code, 400,
-                         'Creation should have failed with 400')
 
     @unittest2.skip('Issue #140')
     @tags(type='positive')
@@ -257,42 +336,6 @@ class OrdersAPI(OrdersFixture):
         self.check_invalid_expiration_timezone('-5:00')
 
     @tags(type='positive')
-    def test_create_order_w_128_bit_length(self):
-        """Covers case of creating an order with a 128 bit length."""
-        resps = self.behaviors.create_and_check_order(bit_length=128)
-        self.assertEqual(resps.create_resp.status_code,
-                         202, 'Returned unexpected response code')
-
-        secret = resps.get_resp.entity.secret
-        self.assertEqual(resps.get_resp.status_code, 200)
-        self.assertIs(type(secret.bit_length), int)
-        self.assertEqual(secret.bit_length, 128)
-
-    @tags(type='positive')
-    def test_create_order_w_192_bit_length(self):
-        """Covers case of creating an order with a 192 bit length."""
-        resps = self.behaviors.create_and_check_order(bit_length=192)
-        self.assertEqual(resps.create_resp.status_code,
-                         202, 'Returned unexpected response code')
-
-        secret = resps.get_resp.entity.secret
-        self.assertEqual(resps.get_resp.status_code, 200)
-        self.assertIs(type(secret.bit_length), int)
-        self.assertEqual(secret.bit_length, 192)
-
-    @tags(type='positive')
-    def test_create_order_w_256_bit_length(self):
-        """Covers case of creating an order with a 256 bit length."""
-        resps = self.behaviors.create_and_check_order(bit_length=256)
-        self.assertEqual(resps.create_resp.status_code,
-                         202, 'Returned unexpected response code')
-
-        secret = resps.get_resp.entity.secret
-        self.assertEqual(resps.get_resp.status_code, 200)
-        self.assertIs(type(secret.bit_length), int)
-        self.assertEqual(secret.bit_length, 256)
-
-    @tags(type='positive')
     def test_order_and_secret_metadata_same(self):
         """ Covers checking that secret metadata from a get on the order and
         secret metadata from a get on the secret are the same. Assumes
@@ -315,47 +358,9 @@ class OrdersAPI(OrdersFixture):
                          'Bit lengths were not the same')
         self.assertEqual(order_metadata.expiration, secret_metadata.expiration,
                          'Expirations were not the same')
-        self.assertEqual(order_metadata.payload_content_type,
-                         secret_metadata.payload_content_type,
-                         'Mime types were not the same')
-        self.assertEqual(order_metadata.payload, secret_metadata.payload,
-                         'Plain texts were not the same')
         self.assertEqual(order_metadata.cypher_type,
                          secret_metadata.cypher_type,
                          'Cypher types were not the same')
-
-    @tags(type='negative')
-    def test_creating_order_w_invalid_bit_length(self):
-        """ Cover case of creating an order with a bit length that is not
-        an integer. Should return 400.
-        """
-        resp = self.behaviors.create_order_overriding_cfg(
-            bit_length='not-an-int')
-        self.assertEqual(resp.status_code, 400, 'Should have failed with 400')
-
-    @tags(type='negative')
-    def test_creating_order_w_negative_bit_length(self):
-        """ Covers case of creating an order with a bit length that is
-        negative. Should return 400.
-        """
-        resp = self.behaviors.create_order_overriding_cfg(
-            bit_length=-1)
-        self.assertEqual(resp.status_code, 400, 'Should have failed with 400')
-
-    @tags(type='negative')
-    def test_creating_order_wout_bit_length(self):
-        """Covers case where order is created without bit length.
-        Should return 400.
-        - Reported in Barbican GitHub Issue #156
-        """
-        resp = self.behaviors.create_order(
-            name=self.config.name,
-            payload_content_type=self.config.payload_content_type,
-            payload_content_encoding=self.config.payload_content_encoding,
-            algorithm=self.config.algorithm,
-            cypher_type=self.config.cypher_type,
-            bit_length=None)
-        self.assertEqual(resp.status_code, 400, 'Should have failed with 400')
 
     @tags(type='positive')
     def test_create_order_w_cbc_cypher_type(self):
@@ -370,64 +375,6 @@ class OrdersAPI(OrdersFixture):
         resp = self.behaviors.create_order_overriding_cfg(algorithm='aes')
         self.assertEqual(resp.status_code, 202,
                          'Returned unexpected response code')
-
-    @tags(type='negative')
-    def test_create_order_w_app_octet_stream_mime_type(self):
-        """Covers case of creating an order with an application/octet-stream
-        mime type. Should return 400.
-        """
-        resp = self.behaviors.create_order_w_payload(
-            payload_content_type='application/octet-stream',
-            payload_content_encoding='base64',
-            payload='testing-create-order-with-app/oct')
-        self.assertEqual(resp.status_code, 400,
-                         'Creation should have failed with 400')
-
-    @tags(type='positive')
-    def test_create_order_w_alphanumeric_name(self):
-        """Covers case of creating an order with an alphanumeric name."""
-        name = randomstring.get_random_string(prefix='1a2b')
-        resps = self.behaviors.create_and_check_order(name=name)
-        self.assertEqual(resps.create_resp.status_code, 202,
-                         'Returned unexpected response code')
-
-        secret = resps.get_resp.entity.secret
-        self.assertEqual(secret.name, name, 'Secret name is not correct')
-
-    @tags(type='positive')
-    def test_create_order_w_punctuation_in_name(self):
-        """Covers case of creating order with miscellaneous punctuation and
-        symbols in the name.
-        """
-        name = '~!@#$%^&*()_+`-={}[]|:;<>,.?"'
-        resps = self.behaviors.create_and_check_order(name=name)
-        self.assertEqual(resps.create_resp.status_code, 202,
-                         'Returned unexpected response code')
-
-        secret = resps.get_resp.entity.secret
-        self.assertEqual(secret.name, name, 'Secret name is not correct')
-
-    @tags(type='positive')
-    def test_create_order_w_uuid_as_name(self):
-        """Covers case of creating an order with a random uuid as the name."""
-        uuid = str(uuid4())
-        resps = self.behaviors.create_and_check_order(name=uuid)
-        self.assertEqual(resps.create_resp.status_code, 202,
-                         'Returned unexpected response code')
-
-        secret = resps.get_resp.entity.secret
-        self.assertEqual(secret.name, uuid, 'Secret name is not correct')
-
-    @tags(type='positive')
-    def test_create_order_w_name_of_len_255(self):
-        """Covers case of creating an order with a 255 character name."""
-        name = randomstring.get_random_string(size=255)
-        resps = self.behaviors.create_and_check_order(name=name)
-        self.assertEqual(resps.create_resp.status_code, 202,
-                         'Returned unexpected response code')
-
-        secret = resps.get_resp.entity.secret
-        self.assertEqual(secret.name, name, 'Secret name is not correct')
 
     @tags(type='positive')
     def test_order_hostname_response(self):
@@ -464,39 +411,6 @@ class OrdersAPI(OrdersFixture):
                          'Should have failed with 405')
 
     @tags(type='negative')
-    def test_create_order_w_payload(self):
-        """Covers case of creating order with plain text.
-        Should return 400."""
-        resp = self.behaviors.create_order_w_payload(
-            payload='test-create-order-w-payload',
-            payload_content_type=self.config.payload_content_type,
-            payload_content_encoding=self.config.payload_content_encoding)
-        self.assertEqual(resp.status_code, 400, 'Should have failed with 400')
-
-    @tags(type='negative')
-    def test_create_order_w_empty_payload(self):
-        """Covers case of creating order with an empty String as plain text.
-        Should return 400."""
-        resp = self.behaviors.create_order_w_payload(
-            payload='', payload_content_type=self.config.payload_content_type,
-            payload_content_encoding=self.config.payload_content_encoding)
-        self.assertEqual(resp.status_code, 400, 'Should have failed with 400')
-
-    @tags(type='negative')
-    def test_create_order_w_oversized_payload(self):
-        """Covers case of creating an order with a value larger than the 10k
-        limit for the secret plain text attribute. Should return 400.
-        """
-        data = bytearray().zfill(10001)
-
-        resp = self.behaviors.create_order_w_payload(
-            payload=str(data),
-            payload_content_type=self.config.payload_content_type,
-            payload_content_encoding=self.config.payload_content_encoding)
-
-        self.assertEqual(resp.status_code, 400, 'Should have failed with 400')
-
-    @tags(type='negative')
     def test_create_order_wout_algorithm(self):
         """Covers case where order is created without an algorithm.
         Should return 400.
@@ -524,15 +438,6 @@ class OrdersAPI(OrdersFixture):
             bit_length=self.config.bit_length)
         self.assertEqual(resp.status_code, 400, 'Should have failed with 400')
 
-    @tags(type='positive')
-    def test_create_order_w_large_string_as_name(self):
-        """Covers case of creating an order with a large String value as
-        the name."""
-        large_string = str(bytearray().zfill(10001))
-        resp = self.behaviors.create_order_overriding_cfg(name=large_string)
-        self.assertEqual(resp.status_code, 202,
-                         'Returned unexpected response code')
-
     @tags(type='negative')
     def test_create_order_w_large_string_values(self):
         """Covers case of creating an order with large String values.
@@ -547,43 +452,10 @@ class OrdersAPI(OrdersFixture):
         self.assertEqual(resp.status_code, 400, 'Should have failed with 400')
 
     @tags(type='negative')
-    def test_create_order_w_large_bit_length(self):
-        """Covers case of creating an order with a large integer as
-        the bit length. Should return 400."""
-        resp = self.behaviors.create_order_overriding_cfg(bit_length=maxint)
-        self.assertEqual(resp.status_code, 400, 'Should have failed with 400')
-
-    @tags(type='negative')
-    def test_create_order_w_large_string_as_bit_length(self):
-        """Covers case of creating secret with a large String as
-        the bit length. Should return 400."""
-        large_string = str(bytearray().zfill(10001))
-        resp = self.behaviors.create_order_overriding_cfg(
-            bit_length=large_string)
-        self.assertEqual(resp.status_code, 400, 'Should have failed with 400')
-
-    @tags(type='negative')
-    def test_create_order_w_large_string_as_mime_type(self):
-        """Covers case of creating secret with a large String as
-        the bit length. Should return 400."""
-        large_string = str(bytearray().zfill(10001))
-        resp = self.behaviors.create_order_w_payload(
-            payload_content_type=large_string,
-            payload='testing-order-w-large-string-mime-type')
-        self.assertEqual(resp.status_code, 400, 'Should have failed with 400')
-
-    @tags(type='negative')
     def test_create_order_w_int_as_name(self):
         """Covers case of creating an order with an integer as the name.
         Should return 400."""
         resp = self.behaviors.create_order_overriding_cfg(name=400)
-        self.assertEqual(resp.status_code, 400, 'Should have failed with 400')
-
-    @tags(type='negative')
-    def test_create_order_w_int_as_mime_type(self):
-        """Covers case of creating an order with an integer as the mime type.
-        Should return 400."""
-        resp = self.behaviors.create_order_w_payload(payload_content_type=400)
         self.assertEqual(resp.status_code, 400, 'Should have failed with 400')
 
     @tags(type='negative')

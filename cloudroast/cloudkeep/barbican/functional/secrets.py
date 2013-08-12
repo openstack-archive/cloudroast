@@ -14,109 +14,22 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 from datetime import datetime, timedelta
-from uuid import uuid4
 from sys import maxint
 import unittest2
 
-from cloudroast.cloudkeep.barbican.fixtures import (SecretsFixture,
-                                                    SecretsPagingFixture)
-from cafe.drivers.unittest.datasets import DatasetList
+from cloudroast.cloudkeep.barbican.fixtures import (
+    SecretsFixture, SecretsPagingFixture, BitLengthDataSetPositive,
+    BitLengthDataSetNegative, NameDataSetPositive, PayloadDataSetNegative,
+    ContentTypeEncodingDataSetNegative)
 from cafe.drivers.unittest.decorators import (tags, skip_open_issue,
                                               data_driven_test,
                                               DataDrivenFixture)
-from cloudcafe.common.tools import randomstring
 
 
-class BitLengthDataSetPositive(DatasetList):
+class SecretBitLengthDataSetPositive(BitLengthDataSetPositive):
     def __init__(self):
-        self.append_new_dataset('192', {'bit_length': 192})
-        self.append_new_dataset('128', {'bit_length': 128})
-        self.append_new_dataset('256', {'bit_length': 256})
         self.append_new_dataset('512', {'bit_length': 512})
         self.append_new_dataset('large_int', {'bit_length': maxint})
-
-
-class BitLengthDataSetNegative(DatasetList):
-    def __init__(self):
-        large_string = str(bytearray().zfill(10001))
-
-        self.append_new_dataset('invalid', {'bit_length': 'not-an-int'})
-        self.append_new_dataset('negative', {'bit_length': -1})
-        self.append_new_dataset('large_string', {'bit_length': large_string})
-
-
-class NameDataSetPositive(DatasetList):
-    def __init__(self):
-        alphanumeric = randomstring.get_random_string(prefix='1a2b')
-        random255 = randomstring.get_random_string(size=255)
-        punctuation = '~!@#$%^&*()_+`-={}[]|:;<>,.?"'
-        uuid = str(uuid4())
-
-        self.append_new_dataset('alphanumeric', {'name': alphanumeric})
-        self.append_new_dataset('punctuation', {'name': punctuation})
-        self.append_new_dataset('len_255', {'name': random255})
-        self.append_new_dataset('uuid', {'name': uuid})
-
-
-class PayloadDataSetNegative(DatasetList):
-    def __init__(self):
-        self.append_new_dataset('empty', {'payload': ''})
-        self.append_new_dataset('array', {'payload': ['boom']})
-        self.append_new_dataset('int', {'payload': 123})
-
-
-class ContentTypeEncodingDataSetNegative(DatasetList):
-    def __init__(self):
-        large_string = str(bytearray().zfill(10001))
-
-        self.append_new_dataset(
-            'empty_type_and_encoding',
-            {'payload_content_type': '',
-             'payload_content_encoding': ''})
-        self.append_new_dataset(
-            'null_type_and_encoding',
-            {'payload_content_type': None,
-             'payload_content_encoding': None})
-        self.append_new_dataset(
-            'large_string_type_and_encoding',
-            {'payload_content_type': large_string,
-             'payload_content_encoding': large_string})
-        self.append_new_dataset(
-            'int_type_and_encoding',
-            {'payload_content_type': 123,
-             'payload_content_encoding': 123})
-        self.append_new_dataset(
-            'app_oct_only',
-            {'payload_content_type': 'application/octet-stream',
-             'payload_content_encoding': None})
-        self.append_new_dataset(
-            'base64_only',
-            {'payload_content_type': None,
-             'payload_content_encoding': 'base64'})
-        self.append_new_dataset(
-            'text_plain_and_base64',
-            {'payload_content_type': 'text/plain',
-             'payload_content_encoding': 'base64'})
-        self.append_new_dataset(
-            'invalid_and_base64',
-            {'payload_content_type': 'invalid',
-             'payload_content_encoding': 'base64'})
-        self.append_new_dataset(
-            'invalid_content_type',
-            {'payload_content_type': 'invalid',
-             'payload_content_encoding': None})
-        self.append_new_dataset(
-            'app_oct_and_invalid_encoding',
-            {'payload_content_type': 'application/octet-stream',
-             'payload_content_encoding': 'invalid'})
-        self.append_new_dataset(
-            'text_plain_and_invalid_encoding',
-            {'payload_content_type': 'text/plain',
-             'payload_content_encoding': 'invalid'})
-        self.append_new_dataset(
-            'invalid_encoding',
-            {'payload_content_type': None,
-             'payload_content_encoding': 'invalid'})
 
 
 @DataDrivenFixture

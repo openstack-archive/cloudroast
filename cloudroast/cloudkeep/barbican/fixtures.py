@@ -14,18 +14,21 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 from os import path
+from uuid import uuid4
 
+from cafe.drivers.unittest.datasets import DatasetList
 from cafe.drivers.unittest.fixtures import BaseTestFixture
 from cloudcafe.cloudkeep.barbican.version.client import VersionClient
 from cloudcafe.cloudkeep.barbican.secrets.client import SecretsClient
 from cloudcafe.cloudkeep.barbican.orders.client import OrdersClient
 from cloudcafe.cloudkeep.barbican.secrets.behaviors import SecretsBehaviors
 from cloudcafe.cloudkeep.barbican.orders.behaviors import OrdersBehavior
-from cloudcafe.cloudkeep.config import MarshallingConfig, CloudKeepConfig, \
-    CloudKeepSecretsConfig, CloudKeepOrdersConfig
+from cloudcafe.cloudkeep.config import (MarshallingConfig, CloudKeepConfig,
+                                        CloudKeepSecretsConfig,
+                                        CloudKeepOrdersConfig)
+from cloudcafe.common.tools import randomstring
 from cloudcafe.identity.config import IdentityTokenConfig
-from cloudcafe.identity.v2_0.tokens_api.behaviors import \
-    TokenAPI_Behaviors
+from cloudcafe.identity.v2_0.tokens_api.behaviors import TokenAPI_Behaviors
 from cloudcafe.identity.v2_0.tokens_api.client import TokenAPI_Client
 
 
@@ -188,3 +191,93 @@ class AuthenticationFixture(BarbicanFixture):
             url=cls.cloudkeep.base_url,
             serialize_format=cls.marshalling.serializer,
             deserialize_format=cls.marshalling.deserializer)
+
+
+class BitLengthDataSetPositive(DatasetList):
+    def __init__(self):
+        self.append_new_dataset('192', {'bit_length': 192})
+        self.append_new_dataset('128', {'bit_length': 128})
+        self.append_new_dataset('256', {'bit_length': 256})
+
+
+class BitLengthDataSetNegative(DatasetList):
+    def __init__(self):
+        large_string = str(bytearray().zfill(10001))
+
+        self.append_new_dataset('invalid', {'bit_length': 'not-an-int'})
+        self.append_new_dataset('negative', {'bit_length': -1})
+        self.append_new_dataset('large_string', {'bit_length': large_string})
+
+
+class NameDataSetPositive(DatasetList):
+    def __init__(self):
+        alphanumeric = randomstring.get_random_string(prefix='1a2b')
+        random255 = randomstring.get_random_string(size=255)
+        punctuation = '~!@#$%^&*()_+`-={}[]|:;<>,.?"'
+        uuid = str(uuid4())
+
+        self.append_new_dataset('alphanumeric', {'name': alphanumeric})
+        self.append_new_dataset('punctuation', {'name': punctuation})
+        self.append_new_dataset('len_255', {'name': random255})
+        self.append_new_dataset('uuid', {'name': uuid})
+
+
+class PayloadDataSetNegative(DatasetList):
+    def __init__(self):
+        self.append_new_dataset('empty', {'payload': ''})
+        self.append_new_dataset('array', {'payload': ['boom']})
+        self.append_new_dataset('int', {'payload': 123})
+
+
+class ContentTypeEncodingDataSetNegative(DatasetList):
+    def __init__(self):
+        large_string = str(bytearray().zfill(10001))
+
+        self.append_new_dataset(
+            'empty_type_and_encoding',
+            {'payload_content_type': '',
+             'payload_content_encoding': ''})
+        self.append_new_dataset(
+            'null_type_and_encoding',
+            {'payload_content_type': None,
+             'payload_content_encoding': None})
+        self.append_new_dataset(
+            'large_string_type_and_encoding',
+            {'payload_content_type': large_string,
+             'payload_content_encoding': large_string})
+        self.append_new_dataset(
+            'int_type_and_encoding',
+            {'payload_content_type': 123,
+             'payload_content_encoding': 123})
+        self.append_new_dataset(
+            'app_oct_only',
+            {'payload_content_type': 'application/octet-stream',
+             'payload_content_encoding': None})
+        self.append_new_dataset(
+            'base64_only',
+            {'payload_content_type': None,
+             'payload_content_encoding': 'base64'})
+        self.append_new_dataset(
+            'text_plain_and_base64',
+            {'payload_content_type': 'text/plain',
+             'payload_content_encoding': 'base64'})
+        self.append_new_dataset(
+            'invalid_and_base64',
+            {'payload_content_type': 'invalid',
+             'payload_content_encoding': 'base64'})
+        self.append_new_dataset(
+            'invalid_content_type',
+            {'payload_content_type': 'invalid',
+             'payload_content_encoding': None})
+        self.append_new_dataset(
+            'app_oct_and_invalid_encoding',
+            {'payload_content_type': 'application/octet-stream',
+             'payload_content_encoding': 'invalid'})
+        self.append_new_dataset(
+            'text_plain_and_invalid_encoding',
+            {'payload_content_type': 'text/plain',
+             'payload_content_encoding': 'invalid'})
+        self.append_new_dataset(
+            'invalid_encoding',
+            {'payload_content_type': None,
+             'payload_content_encoding': 'invalid'})
