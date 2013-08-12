@@ -36,7 +36,8 @@ class RebuildServerTests(ComputeFixture):
         cls.key = cls.keypairs_client.create_keypair(rand_name("key")).entity
         cls.resources.add(cls.key.name,
                           cls.keypairs_client.delete_keypair)
-        response = cls.server_behaviors.create_active_server(key_name=cls.key.name)
+        response = cls.server_behaviors.create_active_server(
+            key_name=cls.key.name)
         cls.server = response.entity
         response = cls.flavors_client.get_flavor_details(cls.flavor_ref)
         cls.flavor = response.entity

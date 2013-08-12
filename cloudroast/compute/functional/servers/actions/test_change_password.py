@@ -91,4 +91,3 @@ class ChangeServerPasswordTests(CreateServerFixture):
             password_action, self.server.id, self.user_config.user_id,
             self.user_config.tenant_id,
             self.resp.headers['x-compute-request-id'])
-

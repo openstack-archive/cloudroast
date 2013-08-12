@@ -30,7 +30,8 @@ class RebootServerHardTests(ComputeFixture):
         cls.key = cls.keypairs_client.create_keypair(rand_name("key")).entity
         cls.resources.add(cls.key.name,
                           cls.keypairs_client.delete_keypair)
-        response = cls.server_behaviors.create_active_server(key_name=cls.key.name)
+        response = cls.server_behaviors.create_active_server(
+            key_name=cls.key.name)
         cls.server = response.entity
         cls.resources.add(cls.server.id, cls.servers_client.delete_server)
 
@@ -42,10 +43,10 @@ class RebootServerHardTests(ComputeFixture):
         uptime_start = remote_instance.get_uptime()
         start = time.time()
 
-        self.server_behaviors.reboot_and_await(self.server.id, NovaServerRebootTypes.HARD)
+        self.server_behaviors.reboot_and_await(
+            self.server.id, NovaServerRebootTypes.HARD)
         remote_client = self.server_behaviors.get_remote_instance_client(
             self.server, config=self.servers_config, key=self.key.private_key)
         finish = time.time()
         uptime_post_reboot = remote_client.get_uptime()
         self.assertLess(uptime_post_reboot, (uptime_start + (finish - start)))
-
