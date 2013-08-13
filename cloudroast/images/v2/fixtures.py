@@ -18,7 +18,7 @@ from cafe.drivers.unittest.fixtures import BaseTestFixture
 from cloudcafe.images.config import ImagesConfig
 from cloudcafe.auth.provider import AuthProvider
 from cloudcafe.common.resources import ResourcePool
-from cloudcafe.images.v2_0.client import ImageClient as ImagesV2Client
+from cloudcafe.images.v2.client import ImageClient as ImagesV2Client
 
 
 class ImagesV2Fixture(BaseTestFixture):
