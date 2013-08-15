@@ -23,25 +23,34 @@ class ListImagesTest(ImagesV1Fixture):
     """
         Test the listing of image information
     """
+
     @classmethod
     def setUpClass(cls):
         super(ListImagesTest, cls).setUpClass()
 
-        img1 = cls.behaviors.create_remote_image('one', ImageContainerFormat.BARE,
+        img1 = cls.behaviors.create_remote_image('one',
+                                                 ImageContainerFormat.BARE,
                                                  ImageDiskFormat.RAW)
-        img2 = cls.behaviors.create_remote_image('two', ImageContainerFormat.AMI,
+        img2 = cls.behaviors.create_remote_image('two',
+                                                 ImageContainerFormat.AMI,
                                                  ImageDiskFormat.AMI)
-        img3 = cls.behaviors.create_remote_image('dup', ImageContainerFormat.BARE,
+        img3 = cls.behaviors.create_remote_image('dup',
+                                                 ImageContainerFormat.BARE,
                                                  ImageDiskFormat.RAW)
-        img4 = cls.behaviors.create_remote_image('dup', ImageContainerFormat.BARE,
+        img4 = cls.behaviors.create_remote_image('dup',
+                                                 ImageContainerFormat.BARE,
                                                  ImageDiskFormat.RAW)
-        img5 = cls.behaviors.create_standard_image('1', ImageContainerFormat.AMI,
+        img5 = cls.behaviors.create_standard_image('1',
+                                                   ImageContainerFormat.AMI,
                                                    ImageDiskFormat.AMI, 42)
-        img6 = cls.behaviors.create_standard_image('2', ImageContainerFormat.AMI,
+        img6 = cls.behaviors.create_standard_image('2',
+                                                   ImageContainerFormat.AMI,
                                                    ImageDiskFormat.AMI, 142)
-        img7 = cls.behaviors.create_standard_image('33', ImageContainerFormat.BARE,
+        img7 = cls.behaviors.create_standard_image('33',
+                                                   ImageContainerFormat.BARE,
                                                    ImageDiskFormat.RAW, 142)
-        img8 = cls.behaviors.create_standard_image('33', ImageContainerFormat.BARE,
+        img8 = cls.behaviors.create_standard_image('33',
+                                                   ImageContainerFormat.BARE,
                                                    ImageDiskFormat.RAW, 142)
 
         cls.created_images = set((img1, img2, img3, img4, img5, img6, img7,
@@ -109,8 +118,7 @@ class ListImagesTest(ImagesV1Fixture):
 
         result_set = set([x.id_ for x in images_list])
         self.assertTrue(self.size42_set <= result_set)
-        self.assertTrue(
-            (self.created_images - self.size42_set).isdisjoint(result_set))
+        self.assertTrue(self.size142_set.isdisjoint(result_set))
 
     @tags(type='positive', net='no')
     def test_index_min_size(self):
