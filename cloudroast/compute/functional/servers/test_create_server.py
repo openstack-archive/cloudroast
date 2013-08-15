@@ -224,7 +224,7 @@ class CreateServerTest(ComputeFixture):
         create_action = filtered_actions[0]
         self.validate_instance_action(
             create_action, self.server.id, self.user_config.user_id,
-            self.user_config.tenant_id,
+            self.user_config.project_id,
             self.create_resp.headers['x-compute-request-id'])
 
     @tags(type='smoke', net='yes')

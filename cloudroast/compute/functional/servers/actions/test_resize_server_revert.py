@@ -118,7 +118,7 @@ class ResizeServerUpRevertTests(ComputeFixture):
         resize_action = filtered_actions[0]
         self.validate_instance_action(
             resize_action, self.server.id, self.user_config.user_id,
-            self.user_config.tenant_id,
+            self.user_config.project_id,
             self.resize_resp.headers['x-compute-request-id'])
 
         # Verify the revert resize action is listed
@@ -129,5 +129,5 @@ class ResizeServerUpRevertTests(ComputeFixture):
         resize_action = filtered_actions[0]
         self.validate_instance_action(
             resize_action, self.server.id, self.user_config.user_id,
-            self.user_config.tenant_id,
+            self.user_config.project_id,
             self.revert_resize_resp.headers['x-compute-request-id'])
