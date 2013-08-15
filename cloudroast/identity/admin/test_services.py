@@ -51,7 +51,8 @@ class ServicesTest(BaseIdentityAdminTest):
         response = self.tenant_client.create_service(
             name=rand_name("service-test-"),
             type_=self.type,
-            description=self.description, requestslib_kwargs=self.auth_token)
+            description=self.description,
+            requestslib_kwargs=self.auth_token)
         self.assertEqual(response.status_code, 400)
 
     def test_create_service_with_empty_name(self):
@@ -91,12 +92,7 @@ class ServicesTest(BaseIdentityAdminTest):
                          second_service.description)
 
     def test_list_services(self):
-        create_response = self.tenant_client.create_service(
-            name=self.name,
-            type_=self.type,
-            description=self.description)
-        service = create_response.entity
-        self.assertEqual(create_response.status_code, 200)
+        service = self._create_service()
         self.addCleanup(self.tenant_client.delete_service, service.id_)
         list_services_response = self.tenant_client.list_services()
         services = list_services_response.entity
@@ -115,39 +111,25 @@ class ServicesTest(BaseIdentityAdminTest):
                       list_services_response.content)
 
     def test_delete_service(self):
-        create_response = self.tenant_client.create_service(
-            name=rand_name("service-test-"),
-            type_=self.type,
-            description=self.description)
-        service = create_response.entity
-        self.assertEqual(create_response.status_code, 200)
+        service = self._create_service()
         delete_response = self.tenant_client.delete_service(
             service_id=service.id_)
         self.assertEqual(delete_response.status_code, 204)
         self.assertNotIn(service, self.tenant_client.list_services())
 
     def test_delete_service_by_unauthorized_user(self):
-        create_response = self.tenant_client.create_service(
-            name=rand_name("service-test-"),
-            type_=self.type,
-            description=self.description)
-        service = create_response.entity
-        self.assertEqual(create_response.status_code, 200)
+        service = self._create_service()
         self.addCleanup(self.tenant_client.delete_service, service.id_)
         delete_response = self.demo_tenant_client.delete_service(
             service_id=service.id_)
         self.assertEqual(delete_response.status_code, 403)
 
     def test_delete_service_with_request_without_token(self):
-        create_response = self.tenant_client.create_service(
-            name=rand_name("service-test-"),
-            type_=self.type,
-            description=self.description)
-        service = create_response.entity
-        self.assertEqual(create_response.status_code, 200)
+        service = self._create_service()
         self.addCleanup(self.tenant_client.delete_service, service.id_)
-        delete_response = self.demo_tenant_client.delete_service(
-            service_id=service.id_, requestslib_kwargs=self.auth_token)
+        delete_response = self.tenant_client.delete_service(
+            service_id=service.id_,
+            requestslib_kwargs=self.auth_token)
         self.assertEqual(delete_response.status_code, 401)
         self.assertIn("Could not find token, None.", delete_response.content)
 
@@ -158,3 +140,43 @@ class ServicesTest(BaseIdentityAdminTest):
         self.assertEqual(delete_response.status_code, 404)
         self.assertIn("Could not find service, {0}.".format(funky_service_id),
                       delete_response.content)
+
+    def test_get_service(self):
+        service = self._create_service()
+        self.addCleanup(self.tenant_client.delete_service, service.id_)
+        response = self.tenant_client.get_service(
+            service_id=service.id_)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.entity, service)
+
+    def test_get_service_by_unauthorized_user(self):
+        service = self._create_service()
+        self.addCleanup(self.tenant_client.delete_service, service.id_)
+        response = self.demo_tenant_client.get_service(
+            service_id=service.id_)
+        self.assertEqual(response.status_code, 403)
+
+    def test_get_service_with_request_without_token(self):
+        service = self._create_service()
+        self.addCleanup(self.tenant_client.delete_service, service.id_)
+        response = self.tenant_client.get_service(
+            service_id=service.id_,
+            requestslib_kwargs=self.auth_token)
+        self.assertEqual(response.status_code, 401)
+
+    def test_get_non_existent_service(self):
+        funky_service_id = "FUNKY_SERVICE_ID"
+        response = self.tenant_client.get_service(
+            service_id=funky_service_id)
+        self.assertEqual(response.status_code, 404)
+        self.assertIn("Could not find service, {0}.".format(funky_service_id),
+                      response.content)
+
+    def _create_service(self):
+        response = self.tenant_client.create_service(
+            name=rand_name("service-test-"),
+            type_=self.type,
+            description=self.description)
+        self.assertEqual(response.status_code, 200)
+
+        return response.entity
