@@ -13,6 +13,9 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
+
+from cloudcafe.compute.common.types import NovaServerStatusTypes \
+    as ServerStates
 from cloudroast.compute.fixtures import ComputeAdminFixture
 
 
@@ -26,14 +29,20 @@ class ResetServerStateTests(ComputeAdminFixture):
 
     def test_set_server_state(self):
 
-        # Set the active server into error status
-        self.admin_servers_client.reset_state(self.server.id, 'error')
+        # Set the active server into error status.
+        # reset_state requires the state to be in lowercase
+        self.admin_servers_client.reset_state(
+            self.server.id, ServerStates.ERROR.lower())
         current_server = self.admin_servers_client.get_server(
             self.server.id).entity
-        self.assertEqual(current_server.status.lower(), 'error')
+        self.assertEqual(current_server.status.lower(),
+                         self.server.id, ServerStates.ERROR)
 
         # Reset the server's error status back to active
-        self.admin_servers_client.reset_state(self.server.id, 'active')
+        # reset_state requires the state to be in lowercase
+        self.admin_servers_client.reset_state(
+            self.server.id, ServerStates.ACTIVE.lower())
         current_server = self.admin_servers_client.get_server(
             self.server.id).entity
-        self.assertEqual(current_server.status.lower(), 'active')
+        self.assertEqual(current_server.status.lower(),
+                         ServerStates.ACTIVE.lower())
