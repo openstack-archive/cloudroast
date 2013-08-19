@@ -35,8 +35,8 @@ class ResetServerStateTests(ComputeAdminFixture):
             self.server.id, ServerStates.ERROR.lower())
         current_server = self.admin_servers_client.get_server(
             self.server.id).entity
-        self.assertEqual(current_server.status.lower(),
-                         self.server.id, ServerStates.ERROR)
+        self.assertEqual(current_server.status,
+                         ServerStates.ERROR)
 
         # Reset the server's error status back to active
         # reset_state requires the state to be in lowercase
@@ -44,5 +44,5 @@ class ResetServerStateTests(ComputeAdminFixture):
             self.server.id, ServerStates.ACTIVE.lower())
         current_server = self.admin_servers_client.get_server(
             self.server.id).entity
-        self.assertEqual(current_server.status.lower(),
-                         ServerStates.ACTIVE.lower())
+        self.assertEqual(current_server.status,
+                         ServerStates.ACTIVE)
