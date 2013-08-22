@@ -15,15 +15,24 @@ limitations under the License.
 """
 
 from cafe.drivers.unittest.fixtures import BaseTestFixture
+
 from cloudcafe.common.resources import ResourcePool
 from cloudcafe.compute.common.exceptions import TimeoutException, \
     BuildErrorException
 from cloudcafe.compute.common.types import NovaServerStatusTypes \
     as ServerStates
+
 from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.compute.config import ComputeEndpointConfig, \
     ComputeAdminEndpointConfig, MarshallingConfig
+
 from cloudcafe.compute.common.exception_handler import ExceptionHandler
+from cloudcafe.compute.extensions.vnc_console_api.client\
+    import VncConsoleClient
+
+from cloudcafe.compute.extensions.console_output_api.client\
+    import ConsoleOutputClient
+
 from cloudcafe.compute.flavors_api.client import FlavorsClient
 from cloudcafe.compute.quotas_api.client import QuotasClient
 from cloudcafe.compute.servers_api.client import ServersClient
@@ -33,13 +42,13 @@ from cloudcafe.compute.hypervisors_api.client import HypervisorsClient
 from cloudcafe.compute.extensions.keypairs_api.client import KeypairsClient
 from cloudcafe.compute.extensions.security_groups_api.client import \
     SecurityGroupsClient, SecurityGroupRulesClient
+
 from cloudcafe.compute.extensions.rescue_api.client import RescueClient
-from cloudcafe.compute.extensions.vnc_console_api.client import \
-    VncConsoleClient
 from cloudcafe.compute.servers_api.behaviors import ServerBehaviors
 from cloudcafe.compute.images_api.behaviors import ImageBehaviors
 from cloudcafe.auth.config import UserAuthConfig, UserConfig, \
     ComputeAdminAuthConfig, ComputeAdminUserConfig
+
 from cloudcafe.auth.provider import AuthProvider
 from cloudcafe.compute.flavors_api.config import FlavorsConfig
 from cloudcafe.compute.images_api.config import ImagesConfig
@@ -105,8 +114,11 @@ class ComputeFixture(BaseTestFixture):
                                          cls.marshalling.serializer,
                                          cls.marshalling.deserializer)
         cls.vnc_client = VncConsoleClient(url, access_data.token.id_,
-                                         cls.marshalling.serializer,
-                                         cls.marshalling.deserializer)
+                                          cls.marshalling.serializer,
+                                          cls.marshalling.deserializer)
+        cls.console_output_client = ConsoleOutputClient(
+            url,  access_data.token.id_, cls.marshalling.serializer,
+            cls.marshalling.deserializer)
         cls.server_behaviors = ServerBehaviors(cls.servers_client,
                                                cls.servers_config,
                                                cls.images_config,
