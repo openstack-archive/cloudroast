@@ -131,6 +131,7 @@ class ServersNegativeTest(ComputeFixture):
         """
         server_response = self.server_behaviors.create_active_server()
         server = server_response.entity
+        self.resources.add(server.id, self.servers_client.delete_server)
         with self.assertRaises(ItemNotFound):
             self.servers_client.list_addresses_by_network(server.id, 999)
 
