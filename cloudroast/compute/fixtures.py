@@ -46,6 +46,8 @@ from cloudcafe.compute.extensions.security_groups_api.client import \
 from cloudcafe.compute.extensions.rescue_api.client import RescueClient
 from cloudcafe.compute.servers_api.behaviors import ServerBehaviors
 from cloudcafe.compute.images_api.behaviors import ImageBehaviors
+from cloudcafe.compute.extensions.config_drive.behaviors import \
+    ConfigDriveBehaviors
 from cloudcafe.auth.config import UserAuthConfig, UserConfig, \
     ComputeAdminAuthConfig, ComputeAdminUserConfig
 
@@ -126,6 +128,10 @@ class ComputeFixture(BaseTestFixture):
         cls.image_behaviors = ImageBehaviors(cls.images_client,
                                              cls.servers_client,
                                              cls.images_config)
+        cls.config_drive_behaviors = ConfigDriveBehaviors(cls.servers_client,
+                                                          cls.servers_config,
+                                                          cls.images_config,
+                                                          cls.flavors_config)
         cls.flavors_client.add_exception_handler(ExceptionHandler())
         cls.resources = ResourcePool()
 
