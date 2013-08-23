@@ -46,6 +46,8 @@ from cloudcafe.compute.extensions.security_groups_api.client import \
 from cloudcafe.compute.extensions.rescue_api.client import RescueClient
 from cloudcafe.compute.servers_api.behaviors import ServerBehaviors
 from cloudcafe.compute.images_api.behaviors import ImageBehaviors
+from cloudcafe.compute.extensions.config_drive.behaviors import \
+    ConfigDriveBehaviors
 from cloudcafe.auth.config import UserAuthConfig, UserConfig, \
     ComputeAdminAuthConfig, ComputeAdminUserConfig
 
@@ -53,6 +55,7 @@ from cloudcafe.auth.provider import AuthProvider
 from cloudcafe.compute.flavors_api.config import FlavorsConfig
 from cloudcafe.compute.images_api.config import ImagesConfig
 from cloudcafe.compute.servers_api.config import ServersConfig
+from cloudcafe.compute.extensions.config_drive.config import ConfigDriveConfig
 
 
 class ComputeFixture(BaseTestFixture):
@@ -68,6 +71,7 @@ class ComputeFixture(BaseTestFixture):
         cls.servers_config = ServersConfig()
         cls.compute_endpoint = ComputeEndpointConfig()
         cls.marshalling = MarshallingConfig()
+        cls.config_drive_config = ConfigDriveConfig()
 
         cls.flavor_ref = cls.flavors_config.primary_flavor
         cls.flavor_ref_alt = cls.flavors_config.secondary_flavor
@@ -126,6 +130,9 @@ class ComputeFixture(BaseTestFixture):
         cls.image_behaviors = ImageBehaviors(cls.images_client,
                                              cls.servers_client,
                                              cls.images_config)
+        cls.config_drive_behaviors = ConfigDriveBehaviors(cls.servers_client,
+                                                          cls.servers_config,
+                                                          cls.server_behaviors)
         cls.flavors_client.add_exception_handler(ExceptionHandler())
         cls.resources = ResourcePool()
 
