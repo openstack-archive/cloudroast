@@ -68,13 +68,13 @@ class CreateImageTest(CreateServerFixture):
 
     def test_created_image_type(self):
         """Verify the image type field was set correctly"""
-        self.assertEqual(self.image.metadata.image_type, 'snapshot')
+        self.assertEqual(self.image.metadata.get('image_type'), 'snapshot')
 
     def test_image_provided_metadata(self):
         """Verify the provided metadata was set for the image"""
         for key, value in self.metadata.iteritems():
-            self.assertTrue(hasattr(self.image.metadata, key))
-            self.assertEqual(getattr(self.image.metadata, key), value)
+            self.assertIn(key, self.image.metadata)
+            self.assertEqual(self.image.metadata.get(key), value)
 
     def test_image_inherited_metadata(self):
         """
@@ -84,12 +84,12 @@ class CreateImageTest(CreateServerFixture):
         non_inherited_meta = ['image_type', 'cache_in_nova']
 
         original_image = self.images_client.get_image(self.image_ref).entity
-        for key, value in original_image.metadata.__dict__.iteritems():
+        for key, value in original_image.metadata.iteritems():
             # The image_type field should be the only field that differs
             # from the original image
             if key not in non_inherited_meta:
-                self.assertTrue(hasattr(self.image.metadata, key))
-                self.assertEqual(getattr(self.image.metadata, key), value)
+                self.assertIn(key, self.image.metadata)
+                self.assertEqual(self.image.metadata.get(key), value)
 
     @tags(type='positive', net='no')
     def test_can_create_server_from_image(self):

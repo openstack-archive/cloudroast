@@ -202,12 +202,12 @@ class CreateServerTest(ComputeFixture):
         """Verify the provided metadata was set for the server"""
 
         # Verify the metadata items were added to the server
-        self.assertTrue(hasattr(self.server.metadata, 'meta_key_1'))
-        self.assertTrue(hasattr(self.server.metadata, 'meta_key_2'))
+        self.assertIn('meta_key_1', self.server.metadata)
+        self.assertIn('meta_key_2', self.server.metadata)
 
         # Verify the values of the metadata items are correct
-        self.assertEqual(self.server.metadata.meta_key_1, 'meta_value_1')
-        self.assertEqual(self.server.metadata.meta_key_2, 'meta_value_2')
+        self.assertEqual(self.server.metadata.get('meta_key_1'), 'meta_value_1')
+        self.assertEqual(self.server.metadata.get('meta_key_2'), 'meta_value_2')
 
     @tags(type='smoke', net='no')
     def test_created_server_instance_actions(self):

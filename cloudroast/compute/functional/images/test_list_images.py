@@ -113,7 +113,7 @@ class ImageListTest(ComputeFixture):
     @tags(type='positive', net='no')
     def test_list_images_with_detail_filter_by_type(self):
         """The detailed list of servers should be filtered by image type"""
-        type = self.image_2.metadata.image_type
+        type = self.image_2.metadata.get('image_type')
         images = self.images_client.list_images_with_detail(image_type=type)
         image_3 = self.images_client.get_image(self.image_ref).entity
         filtered_images = [image.id for image in images.entity]

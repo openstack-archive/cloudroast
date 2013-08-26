@@ -80,7 +80,7 @@ class RebuildServerTests(ComputeFixture):
         self.assertEqual(rebuilt_server.links.bookmark,
                          self.server.links.bookmark,
                          msg="Bookmark links do not match")
-        self.assertEqual(rebuilt_server.metadata.key, 'value')
+        self.assertEqual(rebuilt_server.metadata.get('key'), 'value')
         self.assertEqual(rebuilt_server.created, self.server.created,
                          msg="Server Created date changed after rebuild")
         self.assertTrue(rebuilt_server.updated != self.server.updated,
@@ -162,10 +162,10 @@ class RebuildServerTests(ComputeFixture):
         rebuilt_server = self.rebuilt_server_response.entity
 
         # Verify the metadata items were added to the server
-        self.assertTrue(hasattr(rebuilt_server.metadata, 'key'))
+        self.assertIn('key', rebuilt_server.metadata)
 
         # Verify the values of the metadata items are correct
-        self.assertEqual(rebuilt_server.metadata.key, 'value')
+        self.assertEqual(rebuilt_server.metadata.get('key'), 'value')
 
     @tags(type='smoke', net='no')
     def test_rebuilt_server_instance_actions(self):

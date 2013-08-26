@@ -61,11 +61,10 @@ class ImagesMetadataTest(ComputeFixture):
     @tags(type='positive', net='no')
     def test_list_image_metadata(self):
         """All metadata key/value pairs for an image should be returned"""
-        image_metadata = self.images_client.list_image_metadata(self.image_id)
-        self.assertEqual('value1', image_metadata.entity.key1,
-                         "The metadata is not same as expected.")
-        self.assertEqual('value2', image_metadata.entity.key2,
-                         "The metadata is not same as expected.")
+        image_metadata = self.images_client.list_image_metadata(
+            self.image_id).entity
+        self.assertEqual(image_metadata.get('key1'), 'value1')
+        self.assertEqual(image_metadata.get('key2'), 'value2')
 
     @tags(type='positive', net='no')
     def test_set_image_metadata(self):
@@ -73,20 +72,20 @@ class ImagesMetadataTest(ComputeFixture):
         meta = {'key3': 'meta3', 'key4': 'meta4'}
         self.images_client.set_image_metadata(self.image_id, meta)
 
-        image_metadata = self.images_client.list_image_metadata(self.image_id)
-        self.assertEqual('meta3', image_metadata.entity.key3,
-                         "The metadata is not same as expected.")
-        self.assertEqual('meta4', image_metadata.entity.key4,
-                         "The metadata is not same as expected.")
-        self.assertFalse(hasattr(image_metadata.entity, 'key1'))
-        self.assertFalse(hasattr(image_metadata.entity, 'key2'))
+        image_metadata = self.images_client.list_image_metadata(
+            self.image_id).entity
+        self.assertEqual(image_metadata.get('key3'), 'meta3')
+        self.assertEqual(image_metadata.get('key4'), 'meta4')
+        self.assertNotIn('key1', image_metadata)
+        self.assertNotIn('key2', image_metadata)
 
     @tags(type='positive', net='no')
     def test_get_image_metadata_item(self):
         """The value for a specific metadata key should be returned"""
         meta_resp = self.images_client.get_image_metadata_item(
             self.image_id, 'key2')
-        self.assertTrue('value2', meta_resp.text)
+        meta_item = meta_resp.entity
+        self.assertEqual(meta_item.get('key2'), 'value2')
 
     @tags(type='positive', net='no')
     def test_delete_image_metadata_item(self):
@@ -94,5 +93,5 @@ class ImagesMetadataTest(ComputeFixture):
 
         self.images_client.delete_image_metadata_item(self.image_id, 'key1')
         metadata_resp = self.images_client.list_image_metadata(self.image_id)
-        self.assertFalse(hasattr(metadata_resp.entity, 'key1'),
-                         msg="The metadata did not get deleted.")
+        metadata = metadata_resp.entity
+        self.assertNotIn('key1', metadata)

@@ -44,8 +44,8 @@ class ServerMetadataTest(ComputeFixture):
             self.server.id)
         metadata = metadata_response.entity
         self.assertEqual(200, metadata_response.status_code)
-        self.assertEqual('meta_value_1', metadata.meta_key_1)
-        self.assertEqual('meta_value_2', metadata.meta_key_2)
+        self.assertEqual(metadata.get('meta_key_1'), 'meta_value_1')
+        self.assertEqual(metadata.get('meta_key_2'), 'meta_value_2')
 
     @tags(type='positive', net='no')
     def test_set_server_metadata(self):
@@ -61,20 +61,18 @@ class ServerMetadataTest(ComputeFixture):
             server.id, new_meta)
         metadata = metadata_response.entity
         self.assertEqual(200, metadata_response.status_code)
-        self.assertEqual('data2', metadata.meta2)
-        self.assertEqual('data3', metadata.meta3)
-        self.assertFalse(
-            hasattr(metadata, 'meta1'),
+        self.assertEqual(metadata.get('meta2'), 'data2')
+        self.assertEqual(metadata.get('meta3'), 'data3')
+        self.assertNotIn(
+            'meta1', metadata,
             msg='The key should have been removed after setting new metadata')
 
         actual_metadata_response = self.servers_client.list_server_metadata(
             server.id)
         actual_metadata = actual_metadata_response.entity
-        self.assertEqual('data2', actual_metadata.meta2)
-        self.assertEqual('data3', actual_metadata.meta3)
-        self.assertFalse(
-            hasattr(actual_metadata, 'meta1'),
-            msg='The key should have been removed after setting new metadata')
+        self.assertEqual(actual_metadata.get('meta2'), 'data2')
+        self.assertEqual(actual_metadata.get('meta3'), 'data3')
+        self.assertNotIn('meta1', actual_metadata)
 
     @tags(type='positive', net='no')
     def test_update_server_metadata(self):
@@ -84,19 +82,19 @@ class ServerMetadataTest(ComputeFixture):
             self.server.id, meta)
         metadata = metadata_response.entity
         self.assertEqual(200, metadata_response.status_code)
-        self.assertEqual('alt1', metadata.key1)
-        self.assertEqual('alt2', metadata.key2)
-        self.assertEqual('alt3', metadata.meta_key_1)
-        self.assertEqual('meta_value_2', metadata.meta_key_2)
+        self.assertEqual(metadata.get('key1'), 'alt1')
+        self.assertEqual(metadata.get('key2'), 'alt2')
+        self.assertEqual(metadata.get('meta_key_1'), 'alt3')
+        self.assertEqual(metadata.get('meta_key_2'), 'meta_value_2')
 
         #Verify the values have been updated to the proper values
         actual_metadata_response = self.servers_client.list_server_metadata(
             self.server.id)
         actual_metadata = actual_metadata_response.entity
-        self.assertEqual('alt1', actual_metadata.key1)
-        self.assertEqual('alt2', actual_metadata.key2)
-        self.assertEqual('alt3', actual_metadata.meta_key_1)
-        self.assertEqual('meta_value_2', actual_metadata.meta_key_2)
+        self.assertEqual(actual_metadata.get('key1'), 'alt1')
+        self.assertEqual(actual_metadata.get('key2'), 'alt2')
+        self.assertEqual(actual_metadata.get('meta_key_1'), 'alt3')
+        self.assertEqual(actual_metadata.get('meta_key_2'), 'meta_value_2')
 
     @tags(type='positive', net='no')
     def test_get_server_metadata_item(self):
@@ -104,7 +102,7 @@ class ServerMetadataTest(ComputeFixture):
         metadata_response = self.servers_client.get_server_metadata_item(
             self.server.id, 'meta_key_1')
         metadata = metadata_response.entity
-        self.assertEqual('meta_value_1', metadata.meta_key_1)
+        self.assertEqual(metadata.get('meta_key_1'), 'meta_value_1')
 
     @tags(type='positive', net='no')
     def test_set_server_metadata_item(self):
@@ -113,13 +111,13 @@ class ServerMetadataTest(ComputeFixture):
             self.server.id, 'meta_key_2', 'nova')
         metadata = metadata_response.entity
         self.assertEqual(200, metadata_response.status_code)
-        self.assertEqual('nova', metadata.meta_key_2)
+        self.assertEqual(metadata.get('meta_key_2'), 'nova')
 
         actual_metadata_response = self.servers_client.list_server_metadata(
             self.server.id)
         actual_metadata = actual_metadata_response.entity
-        self.assertEqual('nova', actual_metadata.meta_key_2)
-        self.assertEqual('meta_value_1', actual_metadata.meta_key_1)
+        self.assertEqual(actual_metadata.get('meta_key_2'), 'nova')
+        self.assertEqual(actual_metadata.get('meta_key_1'), 'meta_value_1')
 
     @tags(type='positive', net='no')
     def test_add_new_server_metadata_item(self):
@@ -128,14 +126,14 @@ class ServerMetadataTest(ComputeFixture):
             self.server.id, 'meta_key_3', 'meta_value_3')
         metadata = metadata_response.entity
         self.assertEqual(200, metadata_response.status_code)
-        self.assertEqual('meta_value_3', metadata.meta_key_3)
+        self.assertEqual(metadata.get('meta_key_3'), 'meta_value_3')
 
         actual_metadata_response = self.servers_client.list_server_metadata(
             self.server.id)
         actual_metadata = actual_metadata_response.entity
-        self.assertEqual('meta_value_3', actual_metadata.meta_key_3)
-        self.assertEqual('meta_value_2', actual_metadata.meta_key_2)
-        self.assertEqual('meta_value_1', actual_metadata.meta_key_1)
+        self.assertEqual(actual_metadata.get('meta_key_3'), 'meta_value_3')
+        self.assertEqual(actual_metadata.get('meta_key_2'), 'meta_value_2')
+        self.assertEqual(actual_metadata.get('meta_key_1'), 'meta_value_1')
 
     @tags(type='positive', net='no')
     def test_delete_server_metadata_item(self):
@@ -147,9 +145,7 @@ class ServerMetadataTest(ComputeFixture):
         metadata_response = self.servers_client.list_server_metadata(
             self.server.id)
         metadata = metadata_response.entity
-        self.assertFalse(
-            hasattr(metadata, 'meta_key_1'),
-            "The server metadata item meta_key_1 was not deleted")
+        self.assertNotIn('meta_key_1', metadata)
 
     @tags(type='negative', net='no')
     def test_delete_nonexistent_server_metadata_item(self):
