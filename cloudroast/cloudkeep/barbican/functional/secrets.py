@@ -32,9 +32,9 @@ class SecretBitLengthDataSetPositive(BitLengthDataSetPositive):
         self.append_new_dataset('large_int', {'bit_length': maxint})
 
 
-class SecretContentTypeEncodingDataSetNegative(ContentTypeEncodingDataSetNegative):
+class SecretContentTypeDataSetNegative(ContentTypeEncodingDataSetNegative):
     def __init__(self):
-        super(SecretContentTypeEncodingDataSetNegative, self).__init__()
+        super(SecretContentTypeDataSetNegative, self).__init__()
         self.append_new_dataset(
             'app_oct_only',
             {'payload_content_type': 'application/octet-stream',
@@ -88,7 +88,7 @@ class DataDriveSecretsAPI(SecretsFixture):
         self.assertEqual(resp.status_code, 400,
                          'Creation should have failed with 400')
 
-    @data_driven_test(dataset_source=SecretContentTypeEncodingDataSetNegative())
+    @data_driven_test(dataset_source=SecretContentTypeDataSetNegative())
     @tags(type='negative')
     def ddtest_creating_secret(self, payload_content_type=None,
                                payload_content_encoding=None):
