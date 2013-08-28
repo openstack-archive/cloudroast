@@ -14,8 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+from cafe.drivers.unittest.datasets import DatasetList
 from cafe.drivers.unittest.fixtures import BaseTestFixture
-
 from cloudcafe.common.resources import ResourcePool
 from cloudcafe.compute.common.exceptions import TimeoutException, \
     BuildErrorException
@@ -24,7 +24,7 @@ from cloudcafe.compute.common.types import NovaServerStatusTypes \
 
 from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.compute.config import ComputeEndpointConfig, \
-    ComputeAdminEndpointConfig, MarshallingConfig
+    ComputeAdminEndpointConfig, MarshallingConfig, ComputeFuzzingConfig
 
 from cloudcafe.compute.common.exception_handler import ExceptionHandler
 from cloudcafe.compute.extensions.vnc_console_api.client\
@@ -291,3 +291,30 @@ class ComputeAdminFixture(ComputeFixture):
         super(ComputeAdminFixture, cls).tearDownClass()
         cls.flavors_client.delete_exception_handler(ExceptionHandler())
         cls.resources.release()
+
+
+class FlavorIdNegativeDataList(DatasetList):
+    def __init__(self):
+        super(FlavorIdNegativeDataList, self).__init__()
+        fuzz_config = ComputeFuzzingConfig()
+        with open(fuzz_config.input_fuzzing_file) as f:
+            for line in f:
+                self.append_new_dataset(line, {'flavor_id': line})
+
+
+class ImageIdNegativeDataList(DatasetList):
+    def __init__(self):
+        super(ImageIdNegativeDataList, self).__init__()
+        fuzz_config = ComputeFuzzingConfig()
+        with open(fuzz_config.input_fuzzing_file) as f:
+            for line in f:
+                self.append_new_dataset(line, {'image_id': line})
+
+
+class ServerIdNegativeDataList(DatasetList):
+    def __init__(self):
+        super(ServerIdNegativeDataList, self).__init__()
+        fuzz_config = ComputeFuzzingConfig()
+        with open(fuzz_config.input_fuzzing_file) as f:
+            for line in f:
+                self.append_new_dataset(line, {'server_id': line})
