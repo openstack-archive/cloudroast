@@ -250,10 +250,6 @@ class ContentTypeEncodingDataSetNegative(DatasetList):
             {'payload_content_type': 123,
              'payload_content_encoding': 123})
         self.append_new_dataset(
-            'app_oct_only',
-            {'payload_content_type': 'application/octet-stream',
-             'payload_content_encoding': None})
-        self.append_new_dataset(
             'base64_only',
             {'payload_content_type': None,
              'payload_content_encoding': 'base64'})
