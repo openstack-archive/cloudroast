@@ -475,17 +475,16 @@ class SecretsAPI(SecretsFixture):
         resp = self.behaviors.create_secret_overriding_cfg(mode=400)
         self.assertEqual(resp.status_code, 400, 'Should have failed with 400')
 
-    @skip_open_issue(type='Launchpad', bug_id='1200659')
-    @tags(type='negative')
+    @tags(type='positive')
     def test_creating_secret_w_app_octet_mime_type_and_payload(self):
         """Covers case of creating a secret with application/octet-stream
-        as mime type and a payload value provided. Should return 400.
-        - Reported in Barbican Launchpad Bug #1200659"""
+        as mime type and a payload value provided. Should return 201.
+        """
         resp = self.behaviors.create_secret(
             payload_content_type='application/octet-stream',
             payload_content_encoding='base64',
             payload=self.config.payload)
-        self.assertEqual(resp.status_code, 400, 'Should have failed with 400')
+        self.assertEqual(resp.status_code, 201)
 
     @tags(type='positive')
     def test_creating_secret_w_charset(self):
