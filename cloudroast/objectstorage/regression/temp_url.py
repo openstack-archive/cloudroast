@@ -14,129 +14,649 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 import time
+from unittest import skipUnless
 
-from cloudcafe.common.tools import md5hash
-from cloudcafe.common.tools import randomstring
 from cloudroast.objectstorage.fixtures import ObjectStorageFixture
+from cloudcafe.common.tools.check_dict import get_value
 
+TEMPURL_DURATION = 60
+BASE_CONTAINER_NAME = 'tempurl'
 CONTENT_TYPE_TEXT = 'text/plain; charset=UTF-8'
+NOT_CONFIGURED_MSG = "this feature is not configured by default"
 
 
 class TempUrl(ObjectStorageFixture):
+    def _reset_default_key(self):
+        response = None
+        headers = {'X-Account-Meta-Temp-URL-Key': self.tempurl_key}
+        response = self.client.set_temp_url_key(headers=headers)
+        time.sleep(
+            float(self.objectstorage_api_config.tempurl_key_cache_time))
+        return response
 
-    def test_tempurl_object_upload(self):
-        time.sleep(61)
+    @classmethod
+    def setUpClass(cls):
+        super(TempUrl, cls).setUpClass()
+        cls.tempurl_key = cls.behaviors.VALID_TEMPURL_KEY
+        cls.object_name = cls.behaviors.VALID_OBJECT_NAME
+        cls.obj_name_containing_trailing_slash = \
+            cls.behaviors.VALID_OBJECT_NAME_WITH_TRAILING_SLASH
+        cls.obj_name_containing_slash = \
+            cls.behaviors.VALID_OBJECT_NAME_WITH_SLASH
+        cls.object_data = cls.behaviors.VALID_OBJECT_DATA
 
-        container_name = '{0}_{1}'.format(
-                self.base_container_name,
-                randomstring.get_random_string())
-        self.client.create_container(container_name)
-        self.addCleanup(
-                self.client.force_delete_containers,
-                [container_name])
+    def setUp(self):
+        """
+        Check if the TempURL has been changed, if so, change it back to
+        the expected key and wait the appropriate amount of time to let the
+        key propogate through the system.
+        """
+        super(TempUrl, self).setUp()
 
-        object_name = '{0}_{1}'.format(
-                self.base_object_name,
-                randomstring.get_random_string())
+        if self.tempurl_key != self.behaviors.get_tempurl_key():
+            response = self._reset_default_key()
+            if not response.ok:
+                raise Exception('Could not set TempURL key.')
 
-        headers = {'Content-Length': '0'}
+    def test_object_creation_via_tempurl(self):
+        """
+        Scenario:
+            Create a 'PUT' TempURL.  Perform a HTTP PUT to the TempURL sending
+            data for the object;.
 
-        self.client.create_object(
-                container_name,
-                object_name,
-                headers=headers)
-
-        temp_key = '{0}_{1}'.format(
-                'temp_url_dl_test_key',
-                randomstring.get_random_string())
-        key = md5hash.get_md5_hash(temp_key)
-        headers = {'X-Account-Meta-Temp-URL-Key': key}
-
-        resp = self.client.set_temp_url_key(headers=headers)
-
-        self.assertEqual(resp.status_code, 204)
-
-        tempurl_data = self.client.create_temp_url(
-                'PUT',
-                container_name,
-                object_name,
-                '86400',
-                key)
-
-        ul_tempurl = '{0}?temp_url_sig={1}&temp_url_expires={2}'.format(
-                tempurl_data['target_url'],
-                tempurl_data['signature'],
-                tempurl_data['expires'])
-
-        object_data = 'Test file data'
-        content_length = str(len(object_data))
-        etag = md5hash.get_md5_hash(object_data)
-
-        headers = {'Content-Length': content_length,
-                   'Content-Type': CONTENT_TYPE_TEXT,
-                   'Etag': etag}
-
-        resp = self.client.put(ul_tempurl, data=object_data, headers=headers)
-        self.assertEqual(resp.status_code, 201)
-
-        resp = self.client.get_object(container_name, object_name)
-        self.assertEqual(resp.content, object_data)
-
-    def test_tempurl_object_download(self):
-        time.sleep(61)
-
-        container_name = '{0}_{1}'.format(
-                self.base_container_name,
-                randomstring.get_random_string())
-        self.client.create_container(container_name)
-        self.addCleanup(
-                self.client.force_delete_containers,
-                [container_name])
-
-        object_name = '{0}_{1}'.format(
-                self.base_object_name,
-                randomstring.get_random_string())
-        object_data = 'Test file data'
-        content_length = str(len(object_data))
-        etag = md5hash.get_md5_hash(object_data)
-
-        headers = {'Content-Length': content_length,
-                   'Content-Type': CONTENT_TYPE_TEXT,
-                   'Etag': etag}
-
-        self.client.create_object(
-                container_name,
-                object_name,
-                headers=headers,
-                data=object_data)
-
-        temp_key = '{0}_{1}'.format(
-                'temp_url_dl_test_key',
-                randomstring.get_random_string())
-        key = md5hash.get_md5_hash(temp_key)
-        headers = {'X-Account-Meta-Temp-URL-Key': key}
-
-        resp = self.client.set_temp_url_key(headers=headers)
-
-        self.assertEqual(resp.status_code, 204)
+        Expected Results:
+            The object should be created containing the correct data.
+        """
+        container_name = self.create_temp_container(BASE_CONTAINER_NAME)
 
         tempurl_data = self.client.create_temp_url(
-                'GET',
-                container_name,
-                object_name,
-                '86400',
-                key)
+            'PUT',
+            container_name,
+            self.object_name,
+            TEMPURL_DURATION,
+            self.tempurl_key)
 
-        dl_tempurl = '{0}?temp_url_sig={1}&temp_url_expires={2}'.format(
-                tempurl_data['target_url'],
-                tempurl_data['signature'],
-                tempurl_data['expires'])
+        self.assertIn(
+            'target_url',
+            tempurl_data.keys(),
+            msg='target_url was not in the created tempurl')
+        self.assertIn(
+            'signature',
+            tempurl_data.keys(),
+            msg='signature was not in the created tempurl')
+        self.assertIn(
+            'expires',
+            tempurl_data.keys(),
+            msg='expires was not in the created tempurl')
 
-        resp = self.client.get(dl_tempurl)
+        self.client.auth_off()
 
-        if resp.headers['content-disposition'] is not None:
-            expected = 'attachment; filename="{0}"'.format(object_name)
-            recieved = resp.headers['content-disposition']
-            self.assertEqual(expected, recieved)
-        else:
-            self.assertIsNotNone(resp.headers['content-disposition'])
+        content_length = str(len(self.object_data))
+        headers = {'Content-Length': content_length,
+                   'Content-Type': CONTENT_TYPE_TEXT,
+                   'X-Object-Meta-Foo': 'bar'}
+        params = {'temp_url_sig': tempurl_data['signature'],
+                  'temp_url_expires': tempurl_data['expires']}
+        response = self.client.put(
+            tempurl_data['target_url'],
+            params=params,
+            headers=headers,
+            data=self.object_data)
+
+        self.client.auth_on()
+
+        response = self.client.get_object(container_name, self.object_name)
+
+        self.assertEqual(
+            response.content,
+            self.object_data,
+            msg="object should contain correct data")
+        self.assertIn(
+            'x-object-meta-foo',
+            response.headers,
+            msg="x-object-meta-foo header was not set")
+        self.assertEqual(
+            response.headers['x-object-meta-foo'],
+            'bar',
+            msg="x-object-meta-foo header value is not bar")
+
+    def test_object_retrieval_via_tempurl(self):
+        """
+        Scenario:
+            Create a 'GET' TempURL for an existing object.  Perform a HTTP GET
+            to the TempURL.
+
+        Expected Results:
+            The object should be returned containing the correct data.
+        """
+        container_name = self.create_temp_container(BASE_CONTAINER_NAME)
+
+        self.client.create_object(
+            container_name,
+            self.object_name,
+            data=self.object_data)
+
+        tempurl_data = self.client.create_temp_url(
+            'GET',
+            container_name,
+            self.object_name,
+            TEMPURL_DURATION,
+            self.tempurl_key)
+
+        self.assertIn(
+            'target_url',
+            tempurl_data.keys(),
+            msg='target_url was not in the created tempurl')
+        self.assertIn(
+            'signature',
+            tempurl_data.keys(),
+            msg='signature was not in the created tempurl')
+        self.assertIn(
+            'expires',
+            tempurl_data.keys(),
+            msg='expires was not in the created tempurl')
+
+        self.client.auth_off()
+
+        params = {'temp_url_sig': tempurl_data['signature'],
+                  'temp_url_expires': tempurl_data['expires']}
+        response = self.client.get(tempurl_data['target_url'], params=params)
+
+        self.client.auth_on()
+
+        expected_disposition = 'attachment; filename="{0}"'.format(
+            self.object_name)
+        recieved_disposition = response.headers['content-disposition']
+
+        self.assertIn(
+            'content-disposition',
+            response.headers,
+            msg='content-disposition was not found in response headers')
+        self.assertEqual(
+            expected_disposition,
+            recieved_disposition,
+            msg='expected {0} recieved {1}'.format(
+                expected_disposition,
+                recieved_disposition))
+        self.assertEqual(
+            response.content,
+            self.object_data,
+            'object should contain correct data.')
+
+    def test_tempurl_content_disposition_filename_with_trailing_slash(self):
+        """
+        Scenario:
+            Create a 'GET' TempURL for an object where the object name ends
+            with a '/'.
+
+        Expected Results:
+            The response back should contain a 'Content-Disposition' header
+            with a value of the object name having the slash stripped out.
+        """
+        container_name = self.create_temp_container('temp_url')
+
+        object_content_length = str(len(self.object_data))
+        headers = {'Content-Length': object_content_length,
+                   'Content-Type': CONTENT_TYPE_TEXT}
+        self.client.create_object(
+            container_name,
+            self.obj_name_containing_trailing_slash,
+            headers=headers,
+            data=self.object_data)
+
+        headers = {'X-Account-Meta-Temp-URL-Key': self.tempurl_key}
+        set_key_response = self.client.set_temp_url_key(headers=headers)
+
+        self.assertTrue(set_key_response.ok, msg="tempurl key was not set")
+
+        data = self.client.create_temp_url(
+            'GET',
+            container_name,
+            self.obj_name_containing_trailing_slash,
+            TEMPURL_DURATION,
+            self.tempurl_key)
+
+        self.assertIn(
+            'target_url',
+            data.keys(),
+            msg='target_url was not in the created tempurl')
+        self.assertIn(
+            'signature',
+            data.keys(),
+            msg='signature was not in the created tempurl')
+        self.assertIn(
+            'expires',
+            data.keys(),
+            msg='expires was not in the created tempurl')
+
+        self.client.auth_off()
+
+        params = {'temp_url_sig': data['signature'],
+                  'temp_url_expires': data['expires']}
+        tempurl_get_response = self.client.get(
+            data['target_url'], params=params)
+
+        self.client.auth_on()
+
+        expected_filename = \
+            self.obj_name_containing_trailing_slash.split('/')[0]
+
+        recieved_filename = None
+
+        try:
+            split_tokens = \
+                tempurl_get_response.headers['content-disposition'].split('=')
+            recieved_filename = split_tokens[1].strip('"')
+        except Exception:
+            pass
+
+        self.assertEqual(
+            expected_filename,
+            recieved_filename,
+            msg="expected filename {0} recieved filename {1}".format(
+                expected_filename,
+                recieved_filename))
+
+    def test_tempurl_content_disposition_fileobj_name_containing_slash(self):
+        """
+        Scenario:
+            Create a 'GET' TempURL for an object where the object name
+            contains a '/'.
+
+        Expected Results:
+            The response back should contain a 'Content-Disposition' header
+            with a value of a substring of the object name consisting of the
+            first character following the '/' to the end of the string.
+        """
+        container_name = self.create_temp_container('temp_url')
+
+        object_content_length = str(len(self.object_data))
+
+        headers = {'Content-Length': object_content_length,
+                   'Content-Type': CONTENT_TYPE_TEXT}
+        self.client.create_object(
+            container_name,
+            self.obj_name_containing_slash,
+            headers=headers,
+            data=self.object_data)
+
+        headers = {'X-Account-Meta-Temp-URL-Key': self.tempurl_key}
+        set_key_response = self.client.set_temp_url_key(headers=headers)
+
+        self.assertTrue(set_key_response.ok, msg="tempurl key was not set")
+
+        data = self.client.create_temp_url(
+            'GET',
+            container_name,
+            self.obj_name_containing_slash,
+            TEMPURL_DURATION,
+            self.tempurl_key)
+
+        self.assertIn(
+            'target_url',
+            data.keys(),
+            msg='target_url was not in the created tempurl')
+        self.assertIn(
+            'signature',
+            data.keys(),
+            msg='signature was not in the created tempurl')
+        self.assertIn(
+            'expires',
+            data.keys(),
+            msg='expires was not in the created tempurl')
+
+        self.client.auth_off()
+
+        params = {'temp_url_sig': data['signature'],
+                  'temp_url_expires': data['expires']}
+        tempurl_get_response = self.client.get(
+            data['target_url'], params=params)
+
+        self.assertIn(
+            'target_url',
+            data.keys(),
+            msg='target_url was not in the created tempurl')
+        self.assertIn(
+            'signature',
+            data.keys(),
+            msg='signature was not in the created tempurl')
+        self.assertIn(
+            'expires',
+            data.keys(),
+            msg='expires was not in the created tempurl')
+
+        self.client.auth_on()
+
+        expected_filename = \
+            self.obj_name_containing_slash.split('/')[1]
+
+        recieved_filename = None
+
+        try:
+            split_tokens = \
+                tempurl_get_response.headers['content-disposition'].split('=')
+            recieved_filename = split_tokens[1].strip('"')
+        except Exception:
+            pass
+
+        self.assertEqual(
+            expected_filename,
+            recieved_filename,
+            msg="expected filename {0} recieved filename {1}".format(
+                expected_filename,
+                recieved_filename))
+
+    def test_object_retrieval_with_filename_override(self):
+        """
+        Scenario:
+            Create a 'GET' TempURL.  Download the object using the TempURL,
+            adding the "filename" parameter to the query string where the
+            filename added is made up of valid ascii characters.
+
+        Expected Results:
+            The response back should contain a 'Content-Disposition' header
+            with the value set in the filename parameter.
+        """
+        container_name = self.create_temp_container(BASE_CONTAINER_NAME)
+
+        object_name_override = '{0}.override'.format(self.object_name)
+        object_content_length = str(len(self.object_data))
+
+        headers = {'Content-Length': object_content_length,
+                   'Content-Type': CONTENT_TYPE_TEXT}
+        self.client.create_object(
+            container_name,
+            self.object_name,
+            headers=headers,
+            data=self.object_data)
+
+        tempurl_data = self.client.create_temp_url(
+            'GET',
+            container_name,
+            self.object_name,
+            TEMPURL_DURATION,
+            self.tempurl_key)
+
+        self.assertIn(
+            'target_url',
+            tempurl_data.keys(),
+            msg='target_url was not in the created tempurl')
+        self.assertIn(
+            'signature',
+            tempurl_data.keys(),
+            msg='signature was not in the created tempurl')
+        self.assertIn(
+            'expires',
+            tempurl_data.keys(),
+            msg='expires was not in the created tempurl')
+
+        self.client.auth_off()
+
+        params = {'temp_url_sig': tempurl_data['signature'],
+                  'temp_url_expires': tempurl_data['expires'],
+                  'filename': object_name_override}
+        response = self.client.get(tempurl_data['target_url'], params=params)
+
+        self.client.auth_on()
+
+        self.assertIn(
+            'content-disposition',
+            response.headers,
+            'response should contain "content-disposition" header.')
+        self.assertEqual(
+            'attachment; filename="{0}"'.format(object_name_override),
+            response.headers['content-disposition'],
+            'content-disposition header should contain correct filename.')
+
+    def test_filename_override_containing_trailing_slash(self):
+        """
+        Scenario:
+            Create a 'GET' TempURL.  Download the object using the TempURL,
+            adding the "filename" parameter to the query string where the
+            filename added is made up of valid ascii characters, including a
+            trailing slash.
+
+        Expected Results:
+            The response back should contain a 'Content-Disposition' header
+            with the value set in the filename parameter (including the
+            trailing slash).
+        """
+        container_name = self.create_temp_container(BASE_CONTAINER_NAME)
+
+        object_name_override = self.obj_name_containing_trailing_slash
+
+        object_content_length = str(len(self.object_data))
+
+        headers = {'Content-Length': object_content_length,
+                   'Content-Type': CONTENT_TYPE_TEXT}
+        self.client.create_object(
+            container_name,
+            self.object_name,
+            headers=headers,
+            data=self.object_data)
+
+        tempurl_data = self.client.create_temp_url(
+            'GET',
+            container_name,
+            self.object_name,
+            TEMPURL_DURATION, self.tempurl_key)
+
+        self.assertIn(
+            'target_url',
+            tempurl_data.keys(),
+            msg='target_url was not in the created tempurl')
+        self.assertIn(
+            'signature',
+            tempurl_data.keys(),
+            msg='signature was not in the created tempurl')
+        self.assertIn(
+            'expires',
+            tempurl_data.keys(),
+            msg='expires was not in the created tempurl')
+
+        self.client.auth_off()
+
+        params = {'temp_url_sig': tempurl_data['signature'],
+                  'temp_url_expires': tempurl_data['expires'],
+                  'filename': object_name_override}
+        response = self.client.get(tempurl_data['target_url'], params=params)
+
+        self.client.auth_on()
+
+        self.assertIn(
+            'content-disposition',
+            response.headers,
+            'response should contain "content-disposition" header.')
+        self.assertEqual(
+            'attachment; filename="{0}"'.format(object_name_override),
+            response.headers['content-disposition'],
+            'content-disposition header should contain correct filename.')
+
+    def test_filename_override_containing_slash(self):
+        """
+        Scenario:
+            Create a 'GET' TempURL.  Download the object using the TempURL,
+            adding the "filename" parameter to the query string where the
+            filename added is made up of valid ascii characters, including a
+            including a slash.
+
+        Expected Results:
+            The response back should contain a 'Content-Disposition' header
+            with the value set in the filename parameter (including the
+            slash).
+        """
+        container_name = self.create_temp_container(BASE_CONTAINER_NAME)
+
+        object_name_override = self.obj_name_containing_slash
+
+        object_content_length = str(len(self.object_data))
+
+        headers = {'Content-Length': object_content_length,
+                   'Content-Type': CONTENT_TYPE_TEXT}
+        self.client.create_object(
+            container_name,
+            self.object_name,
+            headers=headers,
+            data=self.object_data)
+
+        tempurl_data = self.client.create_temp_url(
+            'GET',
+            container_name,
+            self.object_name,
+            TEMPURL_DURATION,
+            self.tempurl_key)
+
+        self.assertIn(
+            'target_url',
+            tempurl_data.keys(),
+            msg='target_url was not in the created tempurl')
+        self.assertIn(
+            'signature',
+            tempurl_data.keys(),
+            msg='signature was not in the created tempurl')
+        self.assertIn(
+            'expires',
+            tempurl_data.keys(),
+            msg='expires was not in the created tempurl')
+
+        self.client.auth_off()
+
+        params = {'temp_url_sig': tempurl_data['signature'],
+                  'temp_url_expires': tempurl_data['expires'],
+                  'filename': object_name_override}
+        response = self.client.get(tempurl_data['target_url'], params=params)
+
+        self.client.auth_on()
+
+        self.assertIn(
+            'content-disposition',
+            response.headers,
+            'response should contain "content-disposition" header.')
+        self.assertEqual(
+            'attachment; filename="{0}"'.format(object_name_override),
+            response.headers['content-disposition'],
+            'content-disposition header should contain correct filename.')
+
+    @skipUnless(get_value('configured') == 'true', NOT_CONFIGURED_MSG)
+    def test_tempurl_object_delete(self):
+        """
+        Note: -d configured=true will enable this test
+        """
+        container_name = self.create_temp_container(BASE_CONTAINER_NAME)
+
+        object_content_length = str(len(self.object_data))
+
+        headers = {'Content-Length': object_content_length,
+                   'Content-Type': CONTENT_TYPE_TEXT}
+        self.client.create_object(
+            container_name,
+            self.object_name,
+            headers=headers,
+            data=self.object_data)
+
+        tempurl_data = self.client.create_temp_url(
+            'DELETE',
+            container_name,
+            self.object_name,
+            TEMPURL_DURATION,
+            self.tempurl_key)
+
+        self.assertIn(
+            'target_url',
+            tempurl_data.keys(),
+            msg='target_url was not in the created tempurl')
+        self.assertIn(
+            'signature',
+            tempurl_data.keys(),
+            msg='signature was not in the created tempurl')
+        self.assertIn(
+            'expires',
+            tempurl_data.keys(),
+            msg='expires was not in the created tempurl')
+
+        self.client.auth_off()
+
+        params = {'temp_url_sig': tempurl_data['signature'],
+                  'temp_url_expires': tempurl_data['expires']}
+        delete_response = self.client.delete(
+            tempurl_data['target_url'],
+            params=params)
+
+        self.client.auth_on()
+
+        self.assertEqual(delete_response.status_code, 204)
+
+        get_response = self.client.get_object(container_name, self.object_name)
+
+        self.assertEqual(get_response.status_code, 404)
+
+    def test_tempurl_expiration(self):
+        """
+        Scenario:
+            Create a 'GET' TempURL for an existing object.  Perform a HTTP GET
+            to the TempURL.
+
+        Expected Results:
+            The object should be returned containing the correct data.
+        """
+        container_name = self.create_temp_container(BASE_CONTAINER_NAME)
+
+        self.client.create_object(
+            container_name,
+            self.object_name,
+            data=self.object_data)
+
+        tempurl_data = self.client.create_temp_url(
+            'GET',
+            container_name,
+            self.object_name,
+            TEMPURL_DURATION,
+            self.tempurl_key)
+
+        self.assertIn(
+            'target_url',
+            tempurl_data.keys(),
+            msg='target_url was not in the created tempurl')
+        self.assertIn(
+            'signature',
+            tempurl_data.keys(),
+            msg='signature was not in the created tempurl')
+        self.assertIn(
+            'expires',
+            tempurl_data.keys(),
+            msg='expires was not in the created tempurl')
+
+        self.client.auth_off()
+
+        params = {'temp_url_sig': tempurl_data['signature'],
+                  'temp_url_expires': tempurl_data['expires']}
+        response = self.client.get(tempurl_data['target_url'], params=params)
+
+        expected_disposition = 'attachment; filename="{0}"'.format(
+            self.object_name)
+        recieved_disposition = response.headers['content-disposition']
+
+        self.assertIn(
+            'content-disposition',
+            response.headers,
+            msg='content-disposition was not found in response headers')
+        self.assertEqual(
+            expected_disposition,
+            recieved_disposition,
+            msg='expected {0} recieved {1}'.format(
+                expected_disposition,
+                recieved_disposition))
+        self.assertEqual(
+            response.content, self.object_data,
+            'object should contain correct data.')
+
+        time.sleep(TEMPURL_DURATION + 10)
+
+        response = self.client.get(tempurl_data['target_url'], params=params)
+
+        self.assertEqual(
+            response.status_code,
+            401,
+            msg='tempurl did not expire')
+
+        self.client.auth_on()
