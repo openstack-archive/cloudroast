@@ -20,18 +20,18 @@ from cloudcafe.common.tools.datagen import random_string
 class TestProducer(ProducerFixture):
 
     def test_create_producer(self):
-        result = self.producer_behaviors.create_producer()
+        result = self.producer_behaviors.create_producer_from_cfg()
         self.assertEqual(result['request'].status_code, 201)
 
     def test_delete_producer(self):
-        result = self.producer_behaviors.create_producer()
+        result = self.producer_behaviors.create_producer_from_cfg()
         self.assertEqual(result['request'].status_code, 201)
 
         resp = self.producer_behaviors.delete_producer(result['producer_id'])
         self.assertEqual(resp.status_code, 200, 'Wrong status code on delete')
 
     def test_get_producer(self):
-        result = self.producer_behaviors.create_producer()
+        result = self.producer_behaviors.create_producer_from_cfg()
         original_id = result['producer_id']
 
         resp = self.producer_client.get_producer(original_id)
@@ -41,9 +41,10 @@ class TestProducer(ProducerFixture):
         self.assertEqual(producer.id, original_id)
 
     def test_get_all_producers(self):
-        result = self.producer_behaviors.create_producer()
+        name = random_string()
+        result = self.producer_behaviors.create_producer_from_cfg()
         id_1 = result['producer_id']
-        result = self.producer_behaviors.create_producer(name=random_string())
+        result = self.producer_behaviors.create_producer_from_cfg(name=name)
         id_2 = result['producer_id']
 
         resp = self.producer_client.get_all_producers()
@@ -55,13 +56,14 @@ class TestProducer(ProducerFixture):
         self.assertIn(True, [producer.id == id_2 for producer in producers])
 
     def test_update_producer(self):
-        result = self.producer_behaviors.create_producer()
+        result = self.producer_behaviors.create_producer_from_cfg()
         producer_id = result['producer_id']
 
         update_name = random_string()
         resp = self.producer_client.update_producer(
             producer_id=producer_id,
-            name=update_name)
+            name=update_name,
+            pattern=self.tenant_config.producer_pattern)
 
         self.assertEqual(resp.status_code, 200)
 

@@ -13,6 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
+import unittest
 from cloudroast.meniscus.fixtures import StatusFixture
 
 
@@ -37,35 +38,31 @@ class TestStatus(StatusFixture):
             worker_token=self.pairing_info.worker_token,
             status='online')
 
-        self.assertEqual(200, response.status_code)
+        self.assertEqual(response.status_code, 200)
 
     def test_update_worker_load_average(self):
-        resp = self.status_client.update_load(
+        resp = self.status_behaviors.update_status_from_config(
             worker_id=self.pairing_info.worker_id,
             worker_token=self.pairing_info.worker_token,
             one=0.1,
             five=0.2,
             fifteen=0.3)
 
-        #TODO: We are still uncertain if this is suppose to be 200
         self.assertEqual(resp.status_code, 200)
-
-        #TODO: Add verification asserts
 
     def test_update_worker_disk_usage(self):
         total, used = 100000, 30000
-        disk = {'/dev/sda1/': {'total': total, 'used': used}}
+        disk = [{'device': '/dev/sda1/', 'total': total, 'used': used}]
 
-        resp = self.status_client.update_usage(
+        resp = self.status_behaviors.update_status_from_config(
             worker_id=self.pairing_info.worker_id,
             worker_token=self.pairing_info.worker_token,
             disks=disk)
 
-        #TODO: We are still uncertain if this is suppose to be 200
         self.assertEqual(resp.status_code, 200)
 
         worker = self.get_worker_entity()
-        partition = worker.system_info.disk_usage.partitions[0]
+        partition = worker.system_info.disk_usage[0]
         self.assertEqual(partition.total, total)
         self.assertEqual(partition.used, used)
 
@@ -73,6 +70,7 @@ class TestStatus(StatusFixture):
         worker = self.get_worker_entity()
         self.assertEqual(worker.hostname, self.pairing_config.hostname)
 
+    @unittest.skip('GitHub #316')
     def test_get_worker_statuses(self):
         resp = self.status_client.get_all_worker_statuses()
         self.assertEqual(resp.status_code, 200)
