@@ -103,7 +103,6 @@ class ResizeServerUpRevertTests(ComputeFixture):
                             (self.flavor.ram, server_ram_size))
 
     @tags(type='smoke', net='no')
-    @unittest.skip("lp1183712")
     def test_resize_reverted_server_instance_actions(self):
         """Verify the correct actions are logged during a resize revert"""
 
