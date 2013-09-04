@@ -49,7 +49,7 @@ class OrdersAPI(OrdersFixture):
             mime_type=self.config.mime_type,
             algorithm=self.config.algorithm,
             bit_length=self.config.bit_length,
-            cypher_type=self.config.cypher_type)
+            mode=self.config.mode)
         self.assertIsNotNone(order)
 
     @tags(type='positive')
@@ -62,7 +62,7 @@ class OrdersAPI(OrdersFixture):
             mime_type=self.config.mime_type,
             algorithm=self.config.algorithm,
             bit_length=self.config.bit_length,
-            cypher_type=self.config.cypher_type)
+            mode=self.config.mode)
         secret_id = CloudkeepResponse.get_id_from_ref(order.secret_ref)
         self.assertEqual(order.secret['name'], secret_id,
                          "Name did not match secret ID")
@@ -75,7 +75,7 @@ class OrdersAPI(OrdersFixture):
             mime_type=self.config.mime_type,
             algorithm=self.config.algorithm,
             bit_length=self.config.bit_length,
-            cypher_type=self.config.cypher_type)
+            mode=self.config.mode)
         self.assertIsNotNone(order)
 
     @tags(type='positive')
@@ -87,7 +87,7 @@ class OrdersAPI(OrdersFixture):
             mime_type=self.config.mime_type,
             algorithm=self.config.algorithm,
             bit_length=self.config.bit_length,
-            cypher_type=self.config.cypher_type)
+            mode=self.config.mode)
         secret_id = CloudkeepResponse.get_id_from_ref(order.secret_ref)
         self.assertEqual(order.secret['name'], secret_id,
                          "Name did not match secret ID")
@@ -129,7 +129,7 @@ class OrdersAPI(OrdersFixture):
 
         self.assertEqual(secret['name'], self.config.name)
         self.assertEqual(secret['mime_type'], self.config.mime_type)
-        self.assertEqual(secret['cypher_type'], self.config.cypher_type)
+        self.assertEqual(secret['mode'], self.config.mode)
         self.assertEqual(secret['algorithm'], self.config.algorithm)
         self.assertEqual(secret['bit_length'], self.config.bit_length)
 
@@ -185,8 +185,8 @@ class OrdersAPI(OrdersFixture):
         self.assertEqual(secret_metadata['mime_type'], self.config.mime_type)
         self.assertEqual(secret_metadata['algorithm'], self.config.algorithm)
         self.assertEqual(secret_metadata['bit_length'], self.config.bit_length)
-        self.assertEqual(secret_metadata['cypher_type'],
-                         self.config.cypher_type)
+        self.assertEqual(secret_metadata['mode'],
+                         self.config.mode)
 
     @tags(type='positive')
     def test_get_order_by_id_checking_metadata(self):
@@ -205,8 +205,8 @@ class OrdersAPI(OrdersFixture):
         self.assertEqual(secret_metadata['mime_type'], self.config.mime_type)
         self.assertEqual(secret_metadata['algorithm'], self.config.algorithm)
         self.assertEqual(secret_metadata['bit_length'], self.config.bit_length)
-        self.assertEqual(secret_metadata['cypher_type'],
-                         self.config.cypher_type)
+        self.assertEqual(secret_metadata['mode'],
+                         self.config.mode)
 
     @tags(type='positive')
     def test_get_order_w_expiration_by_href(self):
@@ -256,7 +256,7 @@ class OrdersAPI(OrdersFixture):
         self.assertEqual(secret.mime_type, self.config.mime_type)
         self.assertEqual(secret.algorithm, self.config.algorithm)
         self.assertEqual(secret.bit_length, self.config.bit_length)
-        self.assertEqual(secret.cypher_type, self.config.cypher_type)
+        self.assertEqual(secret.mode, self.config.mode)
 
 
 class OrdersPagingAPI(OrdersPagingFixture):

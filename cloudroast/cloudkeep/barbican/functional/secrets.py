@@ -187,7 +187,7 @@ class SecretsAPI(SecretsFixture):
         entries. Should return a 400.
         """
         resp = self.behaviors.create_secret(
-            name='', expiration='', algorithm='', cypher_type='',
+            name='', expiration='', algorithm='', mode='',
             payload='', payload_content_type='', payload_content_encoding='')
         self.assertEqual(resp.status_code, 400, 'Should have failed with 400')
 
@@ -385,9 +385,9 @@ class SecretsAPI(SecretsFixture):
                          'Returned unexpected response code')
 
     @tags(type='positive')
-    def test_creating_secret_w_cbc_cypher_type(self):
+    def test_creating_secret_w_cbc_mode(self):
         """Covers case of creating a secret with a cbc cypher type."""
-        resp = self.behaviors.create_secret_overriding_cfg(cypher_type='cbc')
+        resp = self.behaviors.create_secret_overriding_cfg(mode='cbc')
         self.assertEqual(resp.status_code, 201,
                          'Returned unexpected response code')
 
@@ -438,7 +438,7 @@ class SecretsAPI(SecretsFixture):
             payload_content_type=self.config.payload_content_type,
             name=large_string,
             algorithm=large_string,
-            cypher_type=large_string)
+            mode=large_string)
         self.assertEqual(resp.status_code, 201,
                          'Returned unexpected response code')
 
@@ -469,10 +469,10 @@ class SecretsAPI(SecretsFixture):
         self.assertEqual(resp.status_code, 400, 'Should have failed with 400')
 
     @tags(type='negative')
-    def test_creating_secret_w_int_as_cypher_type(self):
+    def test_creating_secret_w_int_as_mode(self):
         """Covers case of creating a secret with an integer as the cypher type.
         Should return 400."""
-        resp = self.behaviors.create_secret_overriding_cfg(cypher_type=400)
+        resp = self.behaviors.create_secret_overriding_cfg(mode=400)
         self.assertEqual(resp.status_code, 400, 'Should have failed with 400')
 
     @skip_open_issue(type='Launchpad', bug_id='1200659')

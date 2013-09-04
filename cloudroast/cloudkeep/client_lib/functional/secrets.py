@@ -185,7 +185,7 @@ class SecretsAPI(SecretsFixture):
         self.assertEqual(secret.status, SecretsStates.ACTIVE)
         self.assertEqual(secret.name, self.config.name)
         self.assertEqual(secret.mime_type, self.config.mime_type)
-        self.assertEqual(secret.cypher_type, self.config.cypher_type)
+        self.assertEqual(secret.mode, self.config.mode)
         self.assertEqual(secret.algorithm, self.config.algorithm)
         self.assertEqual(secret.bit_length, self.config.bit_length)
 
@@ -202,7 +202,7 @@ class SecretsAPI(SecretsFixture):
         self.assertEqual(secret.status, SecretsStates.ACTIVE)
         self.assertEqual(secret.name, self.config.name)
         self.assertEqual(secret.mime_type, self.config.mime_type)
-        self.assertEqual(secret.cypher_type, self.config.cypher_type)
+        self.assertEqual(secret.mode, self.config.mode)
         self.assertEqual(secret.algorithm, self.config.algorithm)
         self.assertEqual(secret.bit_length, self.config.bit_length)
 

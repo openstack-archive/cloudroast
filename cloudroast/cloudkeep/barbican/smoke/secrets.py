@@ -53,7 +53,7 @@ class SecretsAPI(SecretsFixture):
         self.assertEqual(sec_resp.status_code, 200)
         self.assertEqual(metadata.status, SecretsStates.ACTIVE)
         self.assertEqual(metadata.name, self.config.name)
-        self.assertEqual(metadata.cypher_type, self.config.cypher_type)
+        self.assertEqual(metadata.mode, self.config.mode)
         self.assertEqual(metadata.algorithm, self.config.algorithm)
         self.assertEqual(metadata.bit_length, self.config.bit_length)
 

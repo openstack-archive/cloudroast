@@ -63,7 +63,7 @@ class DataDriveSecretsAPI(OrdersFixture):
             payload_content_type=self.config.payload_content_type,
             payload_content_encoding=self.config.payload_content_encoding,
             algorithm=self.config.algorithm,
-            cypher_type=self.config.cypher_type,
+            mode=self.config.mode,
             bit_length=bit_length)
         self.assertEqual(resp.status_code, 400,
                          'Creation should have failed with 400')
@@ -93,7 +93,7 @@ class DataDriveSecretsAPI(OrdersFixture):
             payload_content_type=payload_content_type,
             payload_content_encoding=payload_content_encoding,
             algorithm=self.config.algorithm,
-            cypher_type=self.config.cypher_type,
+            mode=self.config.mode,
             bit_length=self.config.bit_length)
         self.assertEqual(resp.status_code, 400,
                          'Creation should have failed with 400')
@@ -107,7 +107,7 @@ class DataDriveSecretsAPI(OrdersFixture):
             payload_content_type=self.config.payload_content_type,
             payload_content_encoding=self.config.payload_content_encoding,
             algorithm=self.config.algorithm,
-            cypher_type=self.config.cypher_type,
+            mode=self.config.mode,
             bit_length=self.config.bit_length)
         self.assertEqual(resps.status_code, 202,
                          'Creation failed with unexpected response code')
@@ -169,7 +169,7 @@ class OrdersAPI(OrdersFixture):
             payload_content_encoding=self.config.payload_content_encoding,
             algorithm=self.config.algorithm,
             bit_length=self.config.bit_length,
-            cypher_type=self.config.cypher_type)
+            mode=self.config.mode)
         self.assertEqual(resp.status_code, 202,
                          'Returned unexpected response code')
 
@@ -184,7 +184,7 @@ class OrdersAPI(OrdersFixture):
             payload_content_encoding=self.config.payload_content_encoding,
             algorithm=self.config.algorithm,
             bit_length=self.config.bit_length,
-            cypher_type=self.config.cypher_type)
+            mode=self.config.mode)
         self.assertEqual(resp.status_code, 202,
                          'Returned unexpected response code')
 
@@ -200,7 +200,7 @@ class OrdersAPI(OrdersFixture):
             name=self.config.name,
             algorithm=self.config.algorithm,
             bit_length=self.config.bit_length,
-            cypher_type=self.config.cypher_type)
+            mode=self.config.mode)
 
         secret_ref = resps.get_resp.entity.secret_href
         secret_resp = self.secrets_client.get_secret(
@@ -255,7 +255,7 @@ class OrdersAPI(OrdersFixture):
         entries. Should return a 400.
         """
         resp = self.behaviors.create_order(
-            name='', expiration='', algorithm='', cypher_type='',
+            name='', expiration='', algorithm='', mode='',
             bit_length='', payload_content_type='',
             payload_content_encoding='')
         self.assertEqual(resp.status_code, 400,
@@ -274,7 +274,7 @@ class OrdersAPI(OrdersFixture):
             payload_content_encoding=self.config.payload_content_encoding,
             algorithm=self.config.algorithm,
             bit_length=self.config.bit_length,
-            cypher_type=self.config.cypher_type)
+            mode=self.config.mode)
         self.assertEqual(resp.status_code, 202,
                          'Creation failed with unexpected response code')
         get_resp = self.orders_client.get_order(resp.id)
@@ -297,7 +297,7 @@ class OrdersAPI(OrdersFixture):
             payload_content_encoding=self.config.payload_content_encoding,
             algorithm=self.config.algorithm,
             bit_length=self.config.bit_length,
-            cypher_type=self.config.cypher_type)
+            mode=self.config.mode)
         self.assertEqual(resp.status_code, 202,
                          'Creation failed with unexpected response code')
 
@@ -358,14 +358,14 @@ class OrdersAPI(OrdersFixture):
                          'Bit lengths were not the same')
         self.assertEqual(order_metadata.expiration, secret_metadata.expiration,
                          'Expirations were not the same')
-        self.assertEqual(order_metadata.cypher_type,
-                         secret_metadata.cypher_type,
+        self.assertEqual(order_metadata.mode,
+                         secret_metadata.mode,
                          'Cypher types were not the same')
 
     @tags(type='positive')
-    def test_create_order_w_cbc_cypher_type(self):
+    def test_create_order_w_cbc_mode(self):
         """Covers case of creating an order with a cbc cypher type."""
-        resp = self.behaviors.create_order_overriding_cfg(cypher_type='cbc')
+        resp = self.behaviors.create_order_overriding_cfg(mode='cbc')
         self.assertEqual(resp.status_code, 202,
                          'Returned unexpected response code')
 
@@ -420,12 +420,12 @@ class OrdersAPI(OrdersFixture):
             payload_content_type=self.config.payload_content_type,
             payload_content_encoding=self.config.payload_content_encoding,
             algorithm=None,
-            cypher_type=self.config.cypher_type,
+            mode=self.config.mode,
             bit_length=self.config.bit_length)
         self.assertEqual(resp.status_code, 400, 'Should have failed with 400')
 
     @tags(type='negative')
-    def test_create_order_wout_cypher_type(self):
+    def test_create_order_wout_mode(self):
         """Covers case where order is created without a cypher type.
         Should return 400.
         """
@@ -434,7 +434,7 @@ class OrdersAPI(OrdersFixture):
             payload_content_type=self.config.payload_content_type,
             payload_content_encoding=self.config.payload_content_encoding,
             algorithm=self.config.algorithm,
-            cypher_type=None,
+            mode=None,
             bit_length=self.config.bit_length)
         self.assertEqual(resp.status_code, 400, 'Should have failed with 400')
 
@@ -448,7 +448,7 @@ class OrdersAPI(OrdersFixture):
             payload_content_type=self.config.payload_content_type,
             payload_content_encoding=self.config.payload_content_encoding,
             algorithm=large_string,
-            cypher_type=large_string)
+            mode=large_string)
         self.assertEqual(resp.status_code, 400, 'Should have failed with 400')
 
     @tags(type='negative')
@@ -466,10 +466,10 @@ class OrdersAPI(OrdersFixture):
         self.assertEqual(resp.status_code, 400, 'Should have failed with 400')
 
     @tags(type='negative')
-    def test_create_order_w_int_as_cypher_type(self):
+    def test_create_order_w_int_as_mode(self):
         """Covers case of creating an order with an integer as the cypher type.
         Should return 400."""
-        resp = self.behaviors.create_order_overriding_cfg(cypher_type=400)
+        resp = self.behaviors.create_order_overriding_cfg(mode=400)
         self.assertEqual(resp.status_code, 400, 'Should have failed with 400')
 
 

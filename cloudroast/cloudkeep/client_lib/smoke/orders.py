@@ -37,7 +37,7 @@ class OrdersAPI(OrdersFixture):
             name=self.config.name,
             algorithm=self.config.algorithm,
             bit_length=self.config.bit_length,
-            cypher_type=self.config.cypher_type)
+            mode=self.config.mode)
         self.assertEqual(resp.get_status_code, 200,
                          'Returned unexpected response code')
 
@@ -49,7 +49,7 @@ class OrdersAPI(OrdersFixture):
         self.assertEqual(secret['name'], self.config.name)
         self.assertEqual(secret['algorithm'], self.config.algorithm)
         self.assertEqual(secret['bit_length'], self.config.bit_length)
-        self.assertEqual(secret['cypher_type'], self.config.cypher_type)
+        self.assertEqual(secret['mode'], self.config.mode)
 
     @tags(type='positive')
     def test_get_order_by_href(self):

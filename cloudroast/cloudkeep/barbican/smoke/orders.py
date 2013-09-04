@@ -37,7 +37,7 @@ class OrdersAPI(OrdersFixture):
             name=self.config.name,
             algorithm=self.config.algorithm,
             bit_length=self.config.bit_length,
-            cypher_type=self.config.cypher_type)
+            mode=self.config.mode)
         create_resp = resps.create_resp
         self.assertEqual(create_resp.status_code, 202)
 
@@ -47,7 +47,7 @@ class OrdersAPI(OrdersFixture):
 
         metadata = ord_resp.entity.secret
         self.assertEqual(metadata.name, self.config.name)
-        self.assertEqual(metadata.cypher_type, self.config.cypher_type)
+        self.assertEqual(metadata.mode, self.config.mode)
         self.assertEqual(metadata.algorithm, self.config.algorithm)
         self.assertEqual(metadata.bit_length, self.config.bit_length)
 
