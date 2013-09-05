@@ -13,16 +13,16 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
+import base64
+import unittest2
 from datetime import datetime, timedelta
 from sys import maxint
-import unittest2
 
 from cloudroast.cloudkeep.barbican.fixtures import (
     SecretsFixture, SecretsPagingFixture, BitLengthDataSetPositive,
     BitLengthDataSetNegative, NameDataSetPositive, PayloadDataSetNegative,
     ContentTypeEncodingDataSetNegative)
-from cafe.drivers.unittest.decorators import (tags, skip_open_issue,
-                                              data_driven_test,
+from cafe.drivers.unittest.decorators import (tags, data_driven_test,
                                               DataDrivenFixture)
 
 
@@ -251,11 +251,10 @@ class SecretsAPI(SecretsFixture):
             payload='testing putting to non-existent secret')
         self.assertEqual(resp.status_code, 404, 'Should have failed with 404')
 
-    @skip_open_issue(type='Launchpad', bug_id='1208601')
     @tags(type='negative')
-    def test_putting_w_invalid_mime_type(self):
+    def test_putting_w_invalid_content_type(self):
         """ Covers case of putting secret information with an
-        invalid mime-type. Should return 400.
+        invalid content type. Should return 400.
         - Reported in Barbican Launchpad Bug #1208601
         """
         resp = self.behaviors.create_secret()
@@ -367,15 +366,14 @@ class SecretsAPI(SecretsFixture):
         self.assertIsNone(secret.content_types,
                           'Should not have had content types attribute')
 
-    @skip_open_issue(type='launchpad', bug_id='1208601')
-    @tags(type='negative')
-    def test_creating_secret_w_only_mime_type(self):
+    @tags(type='positive')
+    def test_creating_secret_w_only_content_type(self):
         """ Covers creating secret with only content type and no payload.
-        Should return 400.
+        Should return 201.
         """
         resp = self.behaviors.create_secret(
             payload_content_type=self.config.payload_content_type)
-        self.assertEqual(resp.status_code, 400, 'Should have failed with 400')
+        self.assertEqual(resp.status_code, 201)
 
     @tags(type='positive')
     def test_creating_secret_w_aes_algorithm(self):
@@ -476,17 +474,6 @@ class SecretsAPI(SecretsFixture):
         self.assertEqual(resp.status_code, 400, 'Should have failed with 400')
 
     @tags(type='positive')
-    def test_creating_secret_w_app_octet_mime_type_and_payload(self):
-        """Covers case of creating a secret with application/octet-stream
-        as mime type and a payload value provided. Should return 201.
-        """
-        resp = self.behaviors.create_secret(
-            payload_content_type='application/octet-stream',
-            payload_content_encoding='base64',
-            payload=self.config.payload)
-        self.assertEqual(resp.status_code, 201)
-
-    @tags(type='positive')
     def test_creating_secret_w_charset(self):
         """Covers creating a secret with text/plain; charset=utf-8 as content
         type."""
@@ -496,21 +483,22 @@ class SecretsAPI(SecretsFixture):
         self.assertEqual(resp.status_code, 201,
                          'Returned unexpected response code')
 
-    @skip_open_issue(type='launchpad', bug_id='1209302')
-    @tags(type='positive')
-    def test_checking_content_encodings_when_encoded(self):
-        """Covers checking for content encodings attribute when
-        secret was created with content encoding."""
-        create_resp = self.behaviors.create_secret(
-            payload_content_type='application/octet-stream',
-            payload_content_encoding='base64',
-            payload=self.config.payload)
-        self.assertEqual(create_resp.status_code, 201,
-                         'Returned unexpected response code')
-        get_resp = self.client.get_secret(create_resp.id)
-        metadata = get_resp.entity
-        self.assertIsNotNone(metadata.content_encodings,
-                             'Should have had content encodings attribute')
+    def test_get_secret_payload_with_a_octet_stream(self):
+        content_type = 'application/octet-stream'
+        b64_payload = 'abcdef'
+        encoding = 'base64'
+
+        create_resp = self.behaviors.create_secret_overriding_cfg(
+            payload_content_type=content_type,
+            payload_content_encoding=encoding,
+            payload=base64.b64encode(b64_payload))
+
+        self.assertEqual(create_resp.status_code, 201)
+
+        get_resp = self.client.get_secret(create_resp.id,
+                                          payload_content_type=content_type,
+                                          payload_content_encoding=encoding)
+        self.assertEqual(get_resp.content, b64_payload)
 
 
 class SecretsPagingAPI(SecretsPagingFixture):
