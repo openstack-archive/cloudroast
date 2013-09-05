@@ -18,7 +18,8 @@ from sys import maxint
 import unittest2
 
 from cafe.drivers.unittest.decorators import (tags, data_driven_test,
-                                              DataDrivenFixture)
+                                              DataDrivenFixture,
+                                              skip_open_issue)
 from cloudroast.cloudkeep.barbican.fixtures import (
     OrdersFixture, OrdersPagingFixture, ContentTypeEncodingDataSetNegative,
     BitLengthDataSetNegative, NameDataSetPositive, PayloadDataSetNegative,
@@ -188,12 +189,12 @@ class OrdersAPI(OrdersFixture):
         self.assertEqual(resp.status_code, 202,
                          'Returned unexpected response code')
 
-    @unittest2.skip('Issue #140')
-    @tags(type='positive')
+    @skip_open_issue('launchpad', '1220957')
+    @tags(type='negative')
     def test_getting_secret_data_as_plain_text(self):
-        """ Covers defect where you attempt to get secret information in
-        text/plain, and the request fails to decrypt the information.
-        - Reported in Barbican GitHub Issue #140
+        """ When we attempt to get the plain/text secret payload from a
+        freshly created order we should get a 406.
+        - Reported in lp:1220957
         """
         resps = self.behaviors.create_and_check_order(
             payload_content_type="text/plain",
@@ -205,8 +206,7 @@ class OrdersAPI(OrdersFixture):
         secret_ref = resps.get_resp.entity.secret_href
         secret_resp = self.secrets_client.get_secret(
             ref=secret_ref, payload_content_type='text/plain')
-        self.assertEqual(secret_resp.status_code, 200,
-                         'Returned unexpected response code')
+        self.assertEqual(secret_resp.status_code, 406)
 
     @tags(type='negative')
     def test_get_order_that_doesnt_exist(self):
