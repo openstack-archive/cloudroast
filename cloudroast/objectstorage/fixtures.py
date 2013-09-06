@@ -30,6 +30,18 @@ class ObjectStorageFixture(BaseTestFixture):
     """
     @summary: Base fixture for objectstorage tests
     """
+    def create_temp_container(self, descriptor=''):
+        """
+        Creates a temporary container, which will be deleted upon cleanup.
+
+        rtype:   string
+        returns: The name of the container created.
+        """
+        container_name = \
+            self.behaviors.generate_unique_container_name(descriptor)
+        self.client.create_container(container_name)
+        self.addCleanup(self.client.force_delete_containers, [container_name])
+        return container_name
 
     @classmethod
     def setUpClass(cls):
@@ -56,7 +68,7 @@ class ObjectStorageFixture(BaseTestFixture):
         cls.base_object_name = objectstorage_api_config.base_object_name
 
         cls.client = ObjectStorageAPIClient(
-                storage_url,
-                auth_token)
+            storage_url,
+            auth_token)
 
         cls.behaviors = ObjectStorageAPI_Behaviors(client=cls.client)
