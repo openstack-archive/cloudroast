@@ -109,7 +109,6 @@ class ResizeServerDownConfirmTests(ComputeFixture):
                             (self.resized_flavor.ram, server_ram_size))
 
     @tags(type='positive', net='no')
-    @unittest.skip("lp1183712")
     def test_resized_server_instance_actions(self):
         """Verify the correct actions are logged during a confirmed resize."""
 

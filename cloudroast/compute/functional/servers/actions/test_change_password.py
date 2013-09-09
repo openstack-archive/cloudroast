@@ -71,7 +71,6 @@ class ChangeServerPasswordTests(CreateServerFixture):
             (public_address, self.new_password))
 
     @tags(type='smoke', net='no')
-    @unittest.skip("lp1183712")
     def test_password_changed_server_instance_actions(self):
         """
         Verify the correct actions are logged during a password change.
