@@ -13,7 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-import unittest2
+from binascii import b2a_base64
 
 from cloudroast.cloudkeep.barbican.fixtures import SecretsFixture
 from cafe.drivers.unittest.decorators import tags, skip_open_issue
@@ -68,7 +68,7 @@ class SecretsAPI(SecretsFixture):
             secret_id=resp.id,
             payload_content_type=self.config.payload_content_type)
         self.assertEqual(sec_resp.status_code, 200)
-        self.assertIn(self.config.payload, sec_resp.content)
+        self.assertIn(self.config.payload, b2a_base64(sec_resp.content))
 
     @tags(type='positive')
     def test_updating_a_secret(self):
