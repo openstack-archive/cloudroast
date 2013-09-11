@@ -15,7 +15,6 @@ limitations under the License.
 """
 
 import time
-import unittest2 as unittest
 
 from cloudroast.compute.fixtures import CreateServerFixture
 
