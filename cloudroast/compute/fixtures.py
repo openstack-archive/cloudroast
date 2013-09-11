@@ -92,33 +92,20 @@ class ComputeFixture(BaseTestFixture):
             url = '{0}/{1}'.format(cls.compute_endpoint.compute_endpoint_url,
                                    cls.user_config.tenant_id)
 
-        cls.flavors_client = FlavorsClient(url, access_data.token.id_,
-                                           cls.marshalling.serializer,
-                                           cls.marshalling.deserializer)
-        cls.servers_client = ServersClient(url, access_data.token.id_,
-                                           cls.marshalling.serializer,
-                                           cls.marshalling.deserializer)
-        cls.images_client = ImagesClient(url, access_data.token.id_,
-                                         cls.marshalling.serializer,
-                                         cls.marshalling.deserializer)
-        cls.keypairs_client = KeypairsClient(url, access_data.token.id_,
-                                             cls.marshalling.serializer,
-                                             cls.marshalling.deserializer)
-        cls.security_groups_client = SecurityGroupsClient(
-            url, access_data.token.id_, cls.marshalling.serializer,
-            cls.marshalling.deserializer)
+        client_args = {'url': url, 'auth_token': access_data.token.id_,
+                       'serialize_format': cls.marshalling.serializer,
+                       'deserialize_format': cls.marshalling.deserializer}
+
+        cls.flavors_client = FlavorsClient(**client_args)
+        cls.servers_client = ServersClient(**client_args)
+        cls.images_client = ImagesClient(**client_args)
+        cls.keypairs_client = KeypairsClient(**client_args)
+        cls.security_groups_client = SecurityGroupsClient(**client_args)
         cls.security_group_rule_client = SecurityGroupRulesClient(
-            url, access_data.token.id_, cls.marshalling.serializer,
-            cls.marshalling.deserializer)
-        cls.rescue_client = RescueClient(url, access_data.token.id_,
-                                         cls.marshalling.serializer,
-                                         cls.marshalling.deserializer)
-        cls.vnc_client = VncConsoleClient(url, access_data.token.id_,
-                                          cls.marshalling.serializer,
-                                          cls.marshalling.deserializer)
-        cls.console_output_client = ConsoleOutputClient(
-            url,  access_data.token.id_, cls.marshalling.serializer,
-            cls.marshalling.deserializer)
+            **client_args)
+        cls.rescue_client = RescueClient(**client_args)
+        cls.vnc_client = VncConsoleClient(**client_args)
+        cls.console_output_client = ConsoleOutputClient(**client_args)
         cls.server_behaviors = ServerBehaviors(cls.servers_client,
                                                cls.servers_config,
                                                cls.images_config,
@@ -259,31 +246,24 @@ class ComputeAdminFixture(ComputeFixture):
             admin_endpoint_config.compute_endpoint_name)
         url = compute_service.get_endpoint(
             admin_endpoint_config.region).public_url
-        cls.admin_flavors_client = FlavorsClient(url, access_data.token.id_,
-                                                 cls.marshalling.serializer,
-                                                 cls.marshalling.deserializer)
-        cls.admin_servers_client = ServersClient(url, access_data.token.id_,
-                                                 cls.marshalling.serializer,
-                                                 cls.marshalling.deserializer)
+
+        client_args = {'url': url, 'auth_token': access_data.token.id_,
+                       'serialize_format': cls.marshalling.serializer,
+                       'deserialize_format': cls.marshalling.deserializer}
+
+        cls.admin_flavors_client = FlavorsClient(**client_args)
+        cls.admin_servers_client = ServersClient(**client_args)
+        cls.admin_images_client = ImagesClient(**client_args)
+        cls.admin_hosts_client = HostsClient(**client_args)
+        cls.admin_quotas_client = QuotasClient(**client_args)
+        cls.admin_hypervisors_client = HypervisorsClient(**client_args)
         cls.admin_server_behaviors = ServerBehaviors(cls.admin_servers_client,
                                                      cls.servers_config,
                                                      cls.images_config,
                                                      cls.flavors_config)
-        cls.admin_images_client = ImagesClient(url, access_data.token.id_,
-                                               cls.marshalling.serializer,
-                                               cls.marshalling.deserializer)
         cls.admin_images_behaviors = ImageBehaviors(cls.admin_images_client,
                                                     cls.admin_servers_client,
                                                     cls.images_config)
-        cls.admin_hosts_client = HostsClient(url, access_data.token.id_,
-                                             cls.marshalling.serializer,
-                                             cls.marshalling.deserializer)
-        cls.admin_quotas_client = QuotasClient(url, access_data.token.id_,
-                                               cls.marshalling.serializer,
-                                               cls.marshalling.deserializer)
-        cls.admin_hypervisors_client = HypervisorsClient(
-            url, access_data.token.id_, cls.marshalling.serializer,
-            cls.marshalling.deserializer)
         cls.admin_servers_client.add_exception_handler(ExceptionHandler())
 
     @classmethod
