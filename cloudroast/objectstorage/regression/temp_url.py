@@ -44,6 +44,7 @@ class TempUrl(ObjectStorageFixture):
         cls.obj_name_containing_slash = \
             cls.behaviors.VALID_OBJECT_NAME_WITH_SLASH
         cls.object_data = cls.behaviors.VALID_OBJECT_DATA
+        cls.content_length = str(len(cls.behaviors.VALID_OBJECT_DATA))
 
     def setUp(self):
         """
@@ -91,8 +92,7 @@ class TempUrl(ObjectStorageFixture):
 
         self.client.auth_off()
 
-        content_length = str(len(self.object_data))
-        headers = {'Content-Length': content_length,
+        headers = {'Content-Length': self.content_length,
                    'Content-Type': CONTENT_TYPE_TEXT,
                    'X-Object-Meta-Foo': 'bar'}
         params = {'temp_url_sig': tempurl_data['signature'],
@@ -195,8 +195,7 @@ class TempUrl(ObjectStorageFixture):
         """
         container_name = self.create_temp_container('temp_url')
 
-        object_content_length = str(len(self.object_data))
-        headers = {'Content-Length': object_content_length,
+        headers = {'Content-Length': self.content_length,
                    'Content-Type': CONTENT_TYPE_TEXT}
         self.client.create_object(
             container_name,
@@ -257,7 +256,7 @@ class TempUrl(ObjectStorageFixture):
                 expected_filename,
                 recieved_filename))
 
-    def test_tempurl_content_disposition_fileobj_name_containing_slash(self):
+    def test_tempurl_content_disposition_filename_containing_slash(self):
         """
         Scenario:
             Create a 'GET' TempURL for an object where the object name
@@ -270,9 +269,7 @@ class TempUrl(ObjectStorageFixture):
         """
         container_name = self.create_temp_container('temp_url')
 
-        object_content_length = str(len(self.object_data))
-
-        headers = {'Content-Length': object_content_length,
+        headers = {'Content-Length': self.content_length,
                    'Content-Type': CONTENT_TYPE_TEXT}
         self.client.create_object(
             container_name,
@@ -360,9 +357,8 @@ class TempUrl(ObjectStorageFixture):
         container_name = self.create_temp_container(BASE_CONTAINER_NAME)
 
         object_name_override = '{0}.override'.format(self.object_name)
-        object_content_length = str(len(self.object_data))
 
-        headers = {'Content-Length': object_content_length,
+        headers = {'Content-Length': self.content_length,
                    'Content-Type': CONTENT_TYPE_TEXT}
         self.client.create_object(
             container_name,
@@ -425,9 +421,7 @@ class TempUrl(ObjectStorageFixture):
 
         object_name_override = self.obj_name_containing_trailing_slash
 
-        object_content_length = str(len(self.object_data))
-
-        headers = {'Content-Length': object_content_length,
+        headers = {'Content-Length': self.content_length,
                    'Content-Type': CONTENT_TYPE_TEXT}
         self.client.create_object(
             container_name,
@@ -489,9 +483,7 @@ class TempUrl(ObjectStorageFixture):
 
         object_name_override = self.obj_name_containing_slash
 
-        object_content_length = str(len(self.object_data))
-
-        headers = {'Content-Length': object_content_length,
+        headers = {'Content-Length': self.content_length,
                    'Content-Type': CONTENT_TYPE_TEXT}
         self.client.create_object(
             container_name,
@@ -544,9 +536,7 @@ class TempUrl(ObjectStorageFixture):
         """
         container_name = self.create_temp_container(BASE_CONTAINER_NAME)
 
-        object_content_length = str(len(self.object_data))
-
-        headers = {'Content-Length': object_content_length,
+        headers = {'Content-Length': self.content_length,
                    'Content-Type': CONTENT_TYPE_TEXT}
         self.client.create_object(
             container_name,
@@ -593,11 +583,11 @@ class TempUrl(ObjectStorageFixture):
     def test_tempurl_expiration(self):
         """
         Scenario:
-            Create a 'GET' TempURL for an existing object.  Perform a HTTP GET
-            to the TempURL.
+            Create a 'GET' TempURL for an existing object.
+            Perform a HTTP GET to the TempURL after the expiration time.
 
         Expected Results:
-            The object should be returned containing the correct data.
+            The GET should fail.
         """
         container_name = self.create_temp_container(BASE_CONTAINER_NAME)
 
