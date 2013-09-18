@@ -34,7 +34,6 @@ class FlavorsTest(ComputeFixture):
         flavors.sort(key=lambda k: k.disk)
         cls.max_disk = flavors[-1].disk
 
-
     @tags(type='smoke', net='no')
     def test_list_flavors(self):
         """ List of all flavors should contain the expected flavor """
