@@ -58,18 +58,45 @@ class BarbicanFixture(BaseTestFixture):
                          'Lists of entities did not return unique entities')
 
 
-class VersionFixture(BarbicanFixture):
+class AuthenticationFixture(BarbicanFixture):
+    @classmethod
+    def setUpClass(cls):
+        super(AuthenticationFixture, cls).setUpClass()
+        cls.auth_client = TokenAPI_Client(
+            url=cls.keystone.authentication_endpoint,
+            serialize_format=cls.marshalling.serializer,
+            deserialize_format=cls.marshalling.deserializer)
+        cls.auth_behaviors = TokenAPI_Behaviors(cls.auth_client)
+
+        # Get token and setup default_headers
+        access = cls.auth_behaviors.get_access_data(
+            username=cls.keystone.username,
+            password=cls.keystone.password,
+            tenant_name=cls.keystone.tenant_name)
+
+        cls.token = access.token.id_ if access else None
+        cls.tenant_id = access.token.tenant.id_ if access else None
+
+        cls.version_client = VersionClient(
+            url=cls.cloudkeep.base_url,
+            token=cls.token,
+            serialize_format=cls.marshalling.serializer,
+            deserialize_format=cls.marshalling.deserializer)
+
+
+class VersionFixture(AuthenticationFixture):
 
     @classmethod
     def setUpClass(cls):
         super(VersionFixture, cls).setUpClass()
         cls.client = VersionClient(
             url=cls.cloudkeep.base_url,
+            token=cls.token,
             serialize_format=cls.marshalling.serializer,
             deserialize_format=cls.marshalling.deserializer)
 
 
-class SecretsFixture(BarbicanFixture):
+class SecretsFixture(AuthenticationFixture):
 
     @classmethod
     def setUpClass(cls):
@@ -78,7 +105,8 @@ class SecretsFixture(BarbicanFixture):
         cls.client = SecretsClient(
             url=cls.cloudkeep.base_url,
             api_version=cls.cloudkeep.api_version,
-            tenant_id=cls.cloudkeep.tenant_id,
+            tenant_id=cls.tenant_id or cls.cloudkeep.tenant_id,
+            token=cls.token,
             serialize_format=cls.marshalling.serializer,
             deserialize_format=cls.marshalling.deserializer)
         cls.behaviors = SecretsBehaviors(client=cls.client, config=cls.config)
@@ -120,7 +148,7 @@ class SecretsPagingFixture(SecretsFixture):
         super(SecretsPagingFixture, cls).tearDownClass()
 
 
-class OrdersFixture(BarbicanFixture):
+class OrdersFixture(AuthenticationFixture):
     @classmethod
     def setUpClass(cls):
         super(OrdersFixture, cls).setUpClass()
@@ -128,13 +156,15 @@ class OrdersFixture(BarbicanFixture):
         cls.orders_client = OrdersClient(
             url=cls.cloudkeep.base_url,
             api_version=cls.cloudkeep.api_version,
-            tenant_id=cls.cloudkeep.tenant_id,
+            tenant_id=cls.tenant_id or cls.cloudkeep.tenant_id,
+            token=cls.token,
             serialize_format=cls.marshalling.serializer,
             deserialize_format=cls.marshalling.deserializer)
         cls.secrets_client = SecretsClient(
             url=cls.cloudkeep.base_url,
             api_version=cls.cloudkeep.api_version,
-            tenant_id=cls.cloudkeep.tenant_id,
+            tenant_id=cls.tenant_id or cls.cloudkeep.tenant_id,
+            token=cls.token,
             serialize_format=cls.marshalling.serializer,
             deserialize_format=cls.marshalling.deserializer)
         cls.behaviors = OrdersBehavior(orders_client=cls.orders_client,
@@ -176,21 +206,6 @@ class OrdersPagingFixture(OrdersFixture):
     def tearDownClass(cls):
         cls.behaviors.delete_all_created_orders_and_secrets()
         super(OrdersPagingFixture, cls).tearDownClass()
-
-
-class AuthenticationFixture(BarbicanFixture):
-    @classmethod
-    def setUpClass(cls):
-        super(AuthenticationFixture, cls).setUpClass()
-        cls.auth_client = TokenAPI_Client(
-            url=cls.keystone.authentication_endpoint,
-            serialize_format=cls.marshalling.serializer,
-            deserialize_format=cls.marshalling.deserializer)
-        cls.auth_behaviors = TokenAPI_Behaviors(cls.auth_client)
-        cls.version_client = VersionClient(
-            url=cls.cloudkeep.base_url,
-            serialize_format=cls.marshalling.serializer,
-            deserialize_format=cls.marshalling.deserializer)
 
 
 class BitLengthDataSetPositive(DatasetList):
