@@ -22,16 +22,15 @@ from cloudroast.cloudkeep.barbican.fixtures import AuthenticationFixture
 
 class AuthenticationAPI(AuthenticationFixture):
 
-    @unittest2.skip('Not testing until after M2')
     @tags(type='positive')
     def test_get_version_w_authentication(self):
         """Covers acquiring an authentication token and using it to get the
         version. Only getting the version is implemented with authentication.
         """
         access = self.auth_behaviors.get_access_data(
-            self.keystone.username,
-            self.keystone.password,
-            self.keystone.tenant_name)
+            username=self.keystone.username,
+            password=self.keystone.password,
+            tenant_name=self.keystone.tenant_name)
         token = access.token.id_
 
         headers = {'X-Auth-Token': token,
