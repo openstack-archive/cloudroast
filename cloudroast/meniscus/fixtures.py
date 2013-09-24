@@ -14,12 +14,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 from cafe.drivers.unittest.fixtures import BaseTestFixture
+from cafe.engine.clients.elasticsearch import BaseElasticSearchClient
 from cloudcafe.meniscus.common.cleanup_client import MeniscusDbClient
 from cloudcafe.meniscus.version_api.client import VersionClient
 from cloudcafe.meniscus.tenant_api.client import TenantClient, ProducerClient
-from cloudcafe.meniscus.config import \
-    MarshallingConfig, MeniscusConfig, TenantConfig, PairingConfig,\
-    CorrelationConfig
+from cloudcafe.meniscus.config import (MarshallingConfig, MeniscusConfig,
+                                       TenantConfig, PairingConfig,
+                                       CorrelationConfig, StorageConfig)
 from cloudcafe.meniscus.tenant_api.behaviors import (TenantBehaviors,
                                                      ProducerBehaviors)
 from cloudcafe.meniscus.coordinator_api.client import PairingClient
@@ -144,6 +145,14 @@ class PublishingFixture(ProducerFixture):
     def setUpClass(cls):
         super(PublishingFixture, cls).setUpClass()
         cls.correlate_config = CorrelationConfig()
+        cls.storage_config = StorageConfig()
+
+        # ElasticSearch client
+        es_servers = [cls.storage_config.address]
+        index = cls.storage_config.index
+        cls.es_client = BaseElasticSearchClient(servers=es_servers,
+                                                index=index)
+
         cls.publish_client = PublishingClient(
             url=cls.correlate_config.correlator_base_url,
             api_version=cls.meniscus_config.api_version,
@@ -151,10 +160,14 @@ class PublishingFixture(ProducerFixture):
             deserialize_format=cls.marshalling.deserializer)
         cls.publish_behaviors = PublishingBehaviors(
             publish_client=cls.publish_client,
-            correlation_config=cls.correlate_config)
+            correlation_config=cls.correlate_config,
+            storage_client=cls.es_client)
 
     def setUp(self):
         super(PublishingFixture, self).setUp()
+
+        # Connect ElasticSearch Client
+        self.es_client.connect()
 
         # We always need the tenant token from the created tenant
         resp = self.tenant_client.get_tenant(self.tenant_id)

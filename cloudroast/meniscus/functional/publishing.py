@@ -82,3 +82,20 @@ class PublishingAPI(PublishingFixture):
             tenant_id=tenant_id, tenant_token=tenant_token,
             host=host, pname=pname, time=time, native=native)
         self.assertEqual(resp.status_code, 400, resp.text)
+
+    def test_http_publish_and_verify_in_storage(self):
+        """ Test verifying that we can retrieve some of the messages that we
+        send through the http endpoint.
+        """
+        time = str(datetime.utcnow().isoformat())
+
+        # Sending 50 messages to get over the initial bulk limit issue.
+        for i in range(50):
+            resp = self.publish_behaviors.publish_overriding_config(time=time)
+            self.assertEqual(resp.status_code, 204, resp.text)
+
+        msgs = self.publish_behaviors.get_messages_by_timestamp(
+            timestamp=time, num_messages=10)
+
+        # At least ten should have gotten through the queue.
+        self.assertEqual(len(msgs), 10)
