@@ -54,21 +54,24 @@ class ObjectStorageFixture(BaseTestFixture):
 
         auth_provider = AuthProvider()
         access_data = auth_provider.get_access_data(
-            endpoint_config,
-            user_config)
+            endpoint_config, user_config)
 
-        service = access_data.get_service(
-            objectstorage_config.identity_service_name)
+        endpoint = ''
+        storage_url = ''
+        auth_token = ''
 
-        endpoint = service.get_endpoint(objectstorage_config.region)
-        storage_url = endpoint.public_url
-        auth_token = access_data.token.id_
+        if endpoint_config.strategy.lower() == 'saio_tempauth':
+            storage_url = access_data.storage_url
+            auth_token = access_data.auth_token
+        else:
+            service = access_data.get_service(
+                objectstorage_config.identity_service_name)
+            endpoint = service.get_endpoint(objectstorage_config.region)
+            storage_url = endpoint.public_url
+            auth_token = access_data.token.id_
 
         cls.base_container_name = objectstorage_api_config.base_container_name
         cls.base_object_name = objectstorage_api_config.base_object_name
 
-        cls.client = ObjectStorageAPIClient(
-            storage_url,
-            auth_token)
-
+        cls.client = ObjectStorageAPIClient(storage_url, auth_token)
         cls.behaviors = ObjectStorageAPI_Behaviors(client=cls.client)
