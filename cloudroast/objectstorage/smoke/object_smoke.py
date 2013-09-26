@@ -15,15 +15,19 @@ limitations under the License.
 """
 import calendar
 import time
+import unittest
 import zlib
 
-from cloudroast.objectstorage.fixtures import ObjectStorageFixture
 from cloudcafe.common.tools import md5hash
 from cloudcafe.common.tools import randomstring
+from cloudcafe.common.tools.check_dict import get_value
+from cloudroast.objectstorage.fixtures import ObjectStorageFixture
+
 
 CONTENT_TYPE_TEXT = 'text/plain; charset=UTF-8'
 STATUS_CODE_MSG = '{method} expected status code {expected}' \
     ' received status code {received}'
+NOT_CONFIGURED_MSG = 'This features is not configured by default.'
 
 
 class ObjectSmokeTest(ObjectStorageFixture):
@@ -1121,6 +1125,8 @@ class ObjectSmokeTest(ObjectStorageFixture):
             msg=STATUS_CODE_MSG.format(
                 method=method, expected=expected, received=str(received)))
 
+    @unittest.skipUnless(
+        get_value('versioned_containers') == 'true', NOT_CONFIGURED_MSG)
     def test_versioned_container_creation_with_valid_data(self):
         #Create a container for 'non-current' object storage
         non_current_version_container_name = self.setup_container(
