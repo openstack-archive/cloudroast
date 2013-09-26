@@ -15,6 +15,7 @@ limitations under the License.
 """
 import calendar
 import time
+import unittest
 import zlib
 
 from cloudroast.objectstorage.fixtures import ObjectStorageFixture
@@ -1121,6 +1122,7 @@ class ObjectSmokeTest(ObjectStorageFixture):
             msg=STATUS_CODE_MSG.format(
                 method=method, expected=expected, received=str(received)))
 
+    @unittest.skip("Not configured to run by defualt.")
     def test_versioned_container_creation_with_valid_data(self):
         #Create a container for 'non-current' object storage
         non_current_version_container_name = self.setup_container(
