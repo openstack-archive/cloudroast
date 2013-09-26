@@ -14,15 +14,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 import time
-from unittest import skipUnless
 
 from cloudroast.objectstorage.fixtures import ObjectStorageFixture
-from cloudcafe.common.tools.check_dict import get_value
+
 
 TEMPURL_DURATION = 60
 BASE_CONTAINER_NAME = 'tempurl'
 CONTENT_TYPE_TEXT = 'text/plain; charset=UTF-8'
-NOT_CONFIGURED_MSG = "this feature is not configured by default"
 
 
 class TempUrl(ObjectStorageFixture):
@@ -59,6 +57,7 @@ class TempUrl(ObjectStorageFixture):
             if not response.ok:
                 raise Exception('Could not set TempURL key.')
 
+    @ObjectStorageFixture.required_middleware(['tempurl'])
     def test_object_creation_via_tempurl(self):
         """
         Scenario:
@@ -120,6 +119,7 @@ class TempUrl(ObjectStorageFixture):
             'bar',
             msg="x-object-meta-foo header value is not bar")
 
+    @ObjectStorageFixture.required_middleware(['tempurl'])
     def test_object_retrieval_via_tempurl(self):
         """
         Scenario:
@@ -183,6 +183,7 @@ class TempUrl(ObjectStorageFixture):
             self.object_data,
             'object should contain correct data.')
 
+    @ObjectStorageFixture.required_middleware(['tempurl'])
     def test_tempurl_content_disposition_filename_with_trailing_slash(self):
         """
         Scenario:
@@ -256,6 +257,7 @@ class TempUrl(ObjectStorageFixture):
                 expected_filename,
                 recieved_filename))
 
+    @ObjectStorageFixture.required_middleware(['tempurl'])
     def test_tempurl_content_disposition_filename_containing_slash(self):
         """
         Scenario:
@@ -343,6 +345,7 @@ class TempUrl(ObjectStorageFixture):
                 expected_filename,
                 recieved_filename))
 
+    @ObjectStorageFixture.required_middleware(['tempurl'])
     def test_object_retrieval_with_filename_override(self):
         """
         Scenario:
@@ -404,6 +407,7 @@ class TempUrl(ObjectStorageFixture):
             response.headers['content-disposition'],
             'content-disposition header should contain correct filename.')
 
+    @ObjectStorageFixture.required_middleware(['tempurl'])
     def test_filename_override_containing_trailing_slash(self):
         """
         Scenario:
@@ -466,6 +470,7 @@ class TempUrl(ObjectStorageFixture):
             response.headers['content-disposition'],
             'content-disposition header should contain correct filename.')
 
+    @ObjectStorageFixture.required_middleware(['tempurl'])
     def test_filename_override_containing_slash(self):
         """
         Scenario:
@@ -529,7 +534,7 @@ class TempUrl(ObjectStorageFixture):
             response.headers['content-disposition'],
             'content-disposition header should contain correct filename.')
 
-    @skipUnless(get_value('configured') == 'true', NOT_CONFIGURED_MSG)
+    @ObjectStorageFixture.required_middleware(['tempurl'])
     def test_tempurl_object_delete(self):
         """
         Note: -d configured=true will enable this test
@@ -580,6 +585,7 @@ class TempUrl(ObjectStorageFixture):
 
         self.assertEqual(get_response.status_code, 404)
 
+    @ObjectStorageFixture.required_middleware(['tempurl'])
     def test_tempurl_expiration(self):
         """
         Scenario:
