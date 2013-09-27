@@ -487,11 +487,11 @@ class ContainerSmokeTest(ObjectStorageFixture):
         container_name = '{0}_{1}'.format(
             self.base_container_name,
             randstring.get_random_string())
-        metadata = {'ebooks': 'grok_volumes_1_through_10'}
+        headers = {'X-Container-Meta-Ebooks': 'grok_volumes_1_through_10'}
 
         response = self.client.create_container(
             container_name,
-            metadata=metadata)
+            headers=headers)
 
         self.addCleanup(
             self.client.force_delete_containers,
@@ -563,8 +563,10 @@ class ContainerSmokeTest(ObjectStorageFixture):
         container_name = '{0}_{1}'.format(
             self.base_container_name,
             randstring.get_random_string())
-        metadata = {'ebooks': 'grok_volumes_1_through_10'}
-        response = self.client.create_container(container_name, metadata)
+        headers = {'X-Container-Meta-Ebooks': 'grok_volumes_1_through_10'}
+        response = self.client.create_container(
+            container_name,
+            headers=headers)
 
         self.addCleanup(
             self.client.force_delete_containers,
@@ -606,11 +608,11 @@ class ContainerSmokeTest(ObjectStorageFixture):
             self.client.force_delete_containers,
             [container_name])
 
-        metadata = {'ebooks': 'grok_volumes_1_through_10'}
+        headers = {'X-Container-Meta-Ebooks': 'grok_volumes_1_through_10'}
 
         response = self.client.set_container_metadata(
             container_name,
-            metadata)
+            headers=headers)
 
         response = self.client.get_container_metadata(container_name)
 
@@ -636,11 +638,11 @@ class ContainerSmokeTest(ObjectStorageFixture):
             self.client.force_delete_containers,
             [container_name])
 
-        metadata = {'ebooks': 'grok_volumes_1_through_10'}
+        headers = {'X-Container-Meta-Ebooks': 'grok_volumes_1_through_10'}
 
         response = self.client.set_container_metadata(
             container_name,
-            metadata)
+            headers=headers)
 
         method = "set container metadata"
         expected = 204
@@ -654,11 +656,11 @@ class ContainerSmokeTest(ObjectStorageFixture):
                 expected=expected,
                 received=str(received)))
 
-        metadata = {'ebooks': 'drok_volumes_10_through_20'}
+        headers = {'X-Container-Meta-Ebooks': 'drok_volumes_10_through_20'}
 
         response = self.client.set_container_metadata(
             container_name,
-            metadata)
+            headers=headers)
 
         method = "container metadata update"
         expected = 204
