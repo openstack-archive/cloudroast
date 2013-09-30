@@ -198,3 +198,20 @@ class RebuildServerTests(ComputeFixture):
         xen_meta = remote_client.get_xen_user_metadata()
         for key, value in self.metadata.iteritems():
             self.assertEqual(xen_meta[key], value)
+
+    @tags(type='smoke', net='yes')
+    @unittest.skipUnless(
+        hypervisor == ComputeHypervisors.XEN_SERVER,
+        'Requires Xen Server.')
+    def test_xenstore_disk_config_on_rebuild(self):
+        """Verify the disk config of the server is propagated to the XenStore
+        metadata on server rebuild."""
+
+        rebuilt_server = self.rebuilt_server_response.entity
+        remote_client = self.server_behaviors.get_remote_instance_client(
+            self.server, self.servers_config, key=self.key.private_key,
+            password=self.password)
+        auto_config_enabled = remote_client.get_xenstore_disk_config_value()
+        actual_disk_config = rebuilt_server.disk_config
+        self.assertEqual(auto_config_enabled,
+                         actual_disk_config.lower() == 'auto')
