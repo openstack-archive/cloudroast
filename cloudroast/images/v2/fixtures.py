@@ -15,7 +15,6 @@ limitations under the License.
 """
 
 from cafe.drivers.unittest.fixtures import BaseTestFixture
-
 from cloudcafe.auth.provider import AuthProvider
 from cloudcafe.common.resources import ResourcePool
 from cloudcafe.common.tools.datagen import rand_name
@@ -48,6 +47,12 @@ class ImagesV2Fixture(BaseTestFixture):
         cls.admin_api_client = ImagesV2Client(cls.images_endpoint,
                                               cls.admin_access_data.token.id_,
                                               'json', 'json')
+
+        cls.image_schema_json = (
+            open(cls.config.image_schema_json).read().rstrip())
+
+        cls.images_schema_json = (
+            open(cls.config.images_schema_json).read().rstrip())
 
     @classmethod
     def tearDownClass(cls):
