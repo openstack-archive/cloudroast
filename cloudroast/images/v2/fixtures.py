@@ -15,9 +15,9 @@ limitations under the License.
 """
 
 from cafe.drivers.unittest.fixtures import BaseTestFixture
-from cloudcafe.images.config import ImagesConfig
 from cloudcafe.auth.provider import AuthProvider
 from cloudcafe.common.resources import ResourcePool
+from cloudcafe.images.config import ImagesConfig
 from cloudcafe.images.v2.client import ImageClient as ImagesV2Client
 
 
@@ -25,6 +25,7 @@ class ImagesV2Fixture(BaseTestFixture):
     """
     @summary: Base fixture for Images V2 API tests
     """
+
     @classmethod
     def setUpClass(cls):
         super(ImagesV2Fixture, cls).setUpClass()
@@ -39,6 +40,12 @@ class ImagesV2Fixture(BaseTestFixture):
         cls.api_client = ImagesV2Client(cls.images_endpoint,
                                         access_data.token.id_,
                                         'json', 'json')
+
+        cls.image_schema_json = (
+            open(cls.config.image_schema_json).read().rstrip())
+
+        cls.images_schema_json = (
+            open(cls.config.images_schema_json).read().rstrip())
 
     @classmethod
     def tearDownClass(cls):
