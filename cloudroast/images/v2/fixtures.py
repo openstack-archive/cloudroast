@@ -15,10 +15,11 @@ limitations under the License.
 """
 
 from cafe.drivers.unittest.fixtures import BaseTestFixture
-
 from cloudcafe.auth.provider import AuthProvider
 from cloudcafe.common.resources import ResourcePool
 from cloudcafe.common.tools.datagen import rand_name
+from cloudcafe.images.common.types import ImageDiskFormat, \
+    ImageContainerFormat
 from cloudcafe.images.config import ImagesConfig, AdminUserConfig
 from cloudcafe.images.v2.client import ImageClient as ImagesV2Client
 
@@ -49,6 +50,12 @@ class ImagesV2Fixture(BaseTestFixture):
                                               cls.admin_access_data.token.id_,
                                               'json', 'json')
 
+        cls.image_schema_json = (
+            open(cls.config.image_schema_json).read().rstrip())
+
+        cls.images_schema_json = (
+            open(cls.config.images_schema_json).read().rstrip())
+
     @classmethod
     def tearDownClass(cls):
         super(ImagesV2Fixture, cls).tearDownClass()
@@ -56,8 +63,9 @@ class ImagesV2Fixture(BaseTestFixture):
 
     def register_basic_image(self):
         response = self.api_client.create_image(
-            name=rand_name('basic_image_'), container_format='bare',
-            disk_format='raw')
+            name=rand_name('basic_image_'),
+            container_format=ImageContainerFormat.BARE,
+            disk_format=ImageDiskFormat.RAW)
 
         image = response.entity
 
@@ -68,7 +76,8 @@ class ImagesV2Fixture(BaseTestFixture):
     def register_private_image(self):
         response = self.api_client.create_image(
             name=rand_name('private_image_'), visibility='private',
-            container_format='bare', disk_format='raw')
+            container_format=ImageContainerFormat.BARE,
+            disk_format=ImageDiskFormat.RAW)
 
         image = response.entity
 
