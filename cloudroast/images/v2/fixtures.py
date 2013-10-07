@@ -14,7 +14,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+from cafe.engine.clients.rest import RestClient
 from cafe.drivers.unittest.fixtures import BaseTestFixture
+from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.images.config import ImagesConfig
 from cloudcafe.auth.provider import AuthProvider
 from cloudcafe.common.resources import ResourcePool
@@ -25,6 +27,7 @@ class ImagesV2Fixture(BaseTestFixture):
     """
     @summary: Base fixture for Images V2 API tests
     """
+
     @classmethod
     def setUpClass(cls):
         super(ImagesV2Fixture, cls).setUpClass()
@@ -39,8 +42,44 @@ class ImagesV2Fixture(BaseTestFixture):
         cls.api_client = ImagesV2Client(cls.images_endpoint,
                                         access_data.token.id_,
                                         'json', 'json')
+        cls.rest_client = RestClient()
+        cls.rest_client.default_headers = {
+            'X-Auth-Token': access_data.token.id_}
 
     @classmethod
     def tearDownClass(cls):
         super(ImagesV2Fixture, cls).tearDownClass()
         cls.resources.release()
+
+    @classmethod
+    def register_basic_image(cls):
+        response = cls.api_client.create_image(
+            name=rand_name('basic_image_'),
+            container_format='bare',
+            disk_format='raw')
+
+        image = response.entity
+
+        cls.resources.add(cls.api_client.delete_image, image.id_)
+
+        return image.id_
+
+    @classmethod
+    def register_private_image(cls):
+        response = cls.api_client.create_image(
+            name=rand_name('private_image_'),
+            visibility='private',
+            container_format='bare',
+            disk_format='raw')
+
+        image = response.entity
+
+        cls.resources.add(cls.api_client.delete_image, image.id_)
+
+        return image.id_
+
+    @classmethod
+    def get_member_ids(cls, image_id):
+        response = cls.api_client.list_members(image_id)
+
+        return [member.member_id for member in response.entity]
