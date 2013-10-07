@@ -54,8 +54,8 @@ class ImagesV2Fixture(BaseTestFixture):
         super(ImagesV2Fixture, cls).tearDownClass()
         cls.resources.release()
 
-    def register_basic_image(self, image_client=None):
-        response = image_client.create_image(
+    def register_basic_image(self):
+        response = self.api_client.create_image(
             name=rand_name('basic_image_'), container_format='bare',
             disk_format='raw')
 
