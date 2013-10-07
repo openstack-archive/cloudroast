@@ -15,10 +15,14 @@ limitations under the License.
 """
 
 from cafe.drivers.unittest.fixtures import BaseTestFixture
-from cloudcafe.images.config import ImagesConfig
+
 from cloudcafe.auth.provider import AuthProvider
+from cloudcafe.common.constants import Messages
 from cloudcafe.common.resources import ResourcePool
+from cloudcafe.images.config import ImagesConfig
 from cloudcafe.images.v2.client import ImageClient as ImagesV2Client
+
+MSG = Messages.ASSERT_MSG
 
 
 class ImagesV2Fixture(BaseTestFixture):
