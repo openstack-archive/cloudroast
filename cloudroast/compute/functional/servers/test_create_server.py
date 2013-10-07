@@ -241,3 +241,18 @@ class CreateServerTest(ComputeFixture):
         xen_meta = remote_client.get_xen_user_metadata()
         for key, value in self.metadata.iteritems():
             self.assertEqual(xen_meta[key], value)
+
+    @tags(type='smoke', net='yes')
+    @unittest.skipUnless(
+        hypervisor == ComputeHypervisors.XEN_SERVER,
+        'Requires Xen Server.')
+    def test_xenstore_disk_config(self):
+        """Verify the disk config of the server is propagated to the XenStore
+        metadata."""
+
+        remote_client = self.server_behaviors.get_remote_instance_client(
+            self.server, self.servers_config, key=self.key.private_key)
+        auto_config_enabled = remote_client.get_xenstore_disk_config_value()
+        actual_disk_config = self.server.disk_config
+        self.assertEqual(auto_config_enabled,
+                         actual_disk_config.lower() == 'auto')
