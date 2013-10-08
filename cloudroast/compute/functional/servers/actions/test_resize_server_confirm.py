@@ -66,29 +66,52 @@ class ResizeServerUpConfirmTests(ComputeFixture):
 
         remote_client = self.server_behaviors.get_remote_instance_client(
             self.server, config=self.servers_config, key=self.key.private_key)
-        server_actual_vcpus = remote_client.get_number_of_vcpus()
+        server_actual_vcpus = remote_client.get_number_of_cpus()
         self.assertEqual(server_actual_vcpus, self.resized_flavor.vcpus,
                          msg="Expected number of vcpus"
                              " to be {0}, was {1}.".format(
                              self.resized_flavor.vcpus, server_actual_vcpus))
 
     @tags(type='smoke', net='yes')
-    def test_created_server_disk_size(self):
+    def test_resized_server_disk_size(self):
         """Verify the size of the virtual disk matches the new flavor"""
         remote_client = self.server_behaviors.get_remote_instance_client(
             self.server, config=self.servers_config, key=self.key.private_key)
-        disk_size = remote_client.get_disk_size_in_gb(
+        disk_size = remote_client.get_disk_size(
             self.servers_config.instance_disk_path)
         self.assertEqual(disk_size, self.resized_flavor.disk,
                          msg="Expected disk to be {0} GB, was {1} GB".format(
                              self.resized_flavor.disk, disk_size))
 
     @tags(type='smoke', net='yes')
+    def test_resized_server_ephemeral_disk(self):
+        """
+        Verify the size of the ephemeral disk matches the size
+        set by the flavor
+        """
+
+        if self.resized_flavor.ephemeral_disk == 0:
+            # No ephemeral disk, no further validation necessary
+            return
+
+        remote_client = self.server_behaviors.get_remote_instance_client(
+            self.server, self.servers_config, key=self.key.private_key)
+
+        # Get all disks and remove the primary disk from the list
+        disks = remote_client.get_all_disks()
+        disks.pop(self.servers_config.instance_disk_path, None)
+
+        self._verify_ephemeral_disk_size(
+            disks=disks, flavor=self.resized_flavor,
+            split_ephemeral_disk_enabled=self.split_ephemeral_disk_enabled,
+            ephemeral_disk_max_size=self.ephemeral_disk_max_size)
+
+    @tags(type='smoke', net='yes')
     def test_can_log_into_resized_server(self):
         """Tests that we can log into the created server after resizing"""
         remote_client = self.server_behaviors.get_remote_instance_client(
             self.server, config=self.servers_config, key=self.key.private_key)
-        self.assertTrue(remote_client.can_connect_to_public_ip(),
+        self.assertTrue(remote_client.can_authenticate(),
                         msg="Cannot connect to server using public ip")
 
     @tags(type='smoke', net='yes')
@@ -98,7 +121,7 @@ class ResizeServerUpConfirmTests(ComputeFixture):
             self.server, self.servers_config, key=self.key.private_key)
         lower_limit = (int(self.resized_flavor.ram) -
                        (int(self.resized_flavor.ram) * .1))
-        server_ram_size = int(remote_instance.get_ram_size_in_mb())
+        server_ram_size = int(remote_instance.get_allocated_ram())
         self.assertIsNotNone(remote_instance)
         self.assertTrue(int(self.resized_flavor.ram) == server_ram_size
                         or lower_limit <= server_ram_size,

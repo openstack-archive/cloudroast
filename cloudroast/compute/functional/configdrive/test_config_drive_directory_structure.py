@@ -94,4 +94,4 @@ class ConfigDriveDirectoryTest(ComputeFixture):
             destination_path=self.config_drive_config.base_path_to_mount)
         with self.assertRaises(FileNotFoundException):
             remote_client.get_file_details(
-                filepath=self.user_data_filepath).content
+                file_path=self.user_data_filepath).content

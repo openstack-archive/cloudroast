@@ -66,7 +66,7 @@ class ResizeServerDownConfirmTests(ComputeFixture):
 
         remote_client = self.server_behaviors.get_remote_instance_client(
             self.server, config=self.servers_config, key=self.key.private_key)
-        server_actual_vcpus = remote_client.get_number_of_vcpus()
+        server_actual_vcpus = remote_client.get_number_of_cpus()
         self.assertEqual(
             server_actual_vcpus, self.resized_flavor.vcpus,
             msg="Expected number of vcpus to be {0}, was {1}.".format(
@@ -77,7 +77,7 @@ class ResizeServerDownConfirmTests(ComputeFixture):
         """Verify the size of the virtual disk matches that of the flavor"""
         remote_client = self.server_behaviors.get_remote_instance_client(
             self.server, config=self.servers_config, key=self.key.private_key)
-        disk_size = remote_client.get_disk_size_in_gb(
+        disk_size = remote_client.get_disk_size(
             self.servers_config.instance_disk_path)
         self.assertEqual(disk_size, self.resized_flavor.disk,
                          msg="Expected disk to be {0} GB, was {1} GB".format(
@@ -88,7 +88,7 @@ class ResizeServerDownConfirmTests(ComputeFixture):
         """Tests that we can log into the server after resizing"""
         remote_client = self.server_behaviors.get_remote_instance_client(
             self.server, config=self.servers_config, key=self.key.private_key)
-        self.assertTrue(remote_client.can_connect_to_public_ip(),
+        self.assertTrue(remote_client.can_authenticate(),
                         msg="Cannot connect to server using public ip")
 
     @tags(type='positive', net='yes')
@@ -99,7 +99,7 @@ class ResizeServerDownConfirmTests(ComputeFixture):
             self.server, self.servers_config, key=self.key.private_key)
         margin = (int(self.resized_flavor.ram) * .1)
         lower_limit = int(self.resized_flavor.ram) - margin
-        server_ram_size = int(remote_instance.get_ram_size_in_mb())
+        server_ram_size = int(remote_instance.get_allocated_ram())
         self.assertTrue((int(self.resized_flavor.ram) == server_ram_size
                          or lower_limit <= server_ram_size),
                         msg='Ram size after confirm-resize did not match.'
