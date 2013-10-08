@@ -15,7 +15,6 @@ limitations under the License.
 """
 
 from cafe.drivers.unittest.fixtures import BaseTestFixture
-
 from cloudcafe.auth.provider import AuthProvider
 from cloudcafe.common.resources import ResourcePool
 from cloudcafe.common.tools.datagen import rand_name
@@ -54,8 +53,9 @@ class ImagesV2Fixture(BaseTestFixture):
         super(ImagesV2Fixture, cls).tearDownClass()
         cls.resources.release()
 
-    def register_basic_image(self, image_client=None):
-        response = image_client.create_image(
+    def register_basic_image(self):
+        """Register a standard image and return its id."""
+        response = self.api_client.create_image(
             name=rand_name('basic_image_'), container_format='bare',
             disk_format='raw')
 
@@ -66,6 +66,7 @@ class ImagesV2Fixture(BaseTestFixture):
         return image.id_
 
     def register_private_image(self):
+        """Register a private image and return its id."""
         response = self.api_client.create_image(
             name=rand_name('private_image_'), visibility='private',
             container_format='bare', disk_format='raw')
@@ -77,6 +78,7 @@ class ImagesV2Fixture(BaseTestFixture):
         return image.id_
 
     def get_member_ids(self, image_id):
+        """Get a list of ids for all available members."""
         response = self.api_client.list_members(image_id)
 
         return [member.member_id for member in response.entity]
