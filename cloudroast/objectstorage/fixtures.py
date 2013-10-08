@@ -13,7 +13,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-import json
 import unittest
 
 from cafe.drivers.unittest.fixtures import BaseTestFixture
@@ -63,6 +62,39 @@ class ObjectStorageFixture(BaseTestFixture):
         return result
 
     @classmethod
+    def required_features(cls, features):
+        """
+        Test decorator to skip tests if features are not configured in swift.
+        Configuration of what features are enabled can be done from the
+        objectstorage config file.
+
+        Note: "lambda func: func" is from the Python unit tests example
+              "25.3.6. Skipping tests and expected failures":
+
+        def skipUnlessHasattr(obj, attr):
+            if hasattr(obj, attr):
+                return lambda func: func
+            return unittest.skip("{!r} doesn't have {!r}".format(obj, attr))
+
+        http://docs.python.org/2/library/unittest.html
+        """
+        objectstorage_api_config = ObjectStorageAPIConfig()
+        enabled_features = objectstorage_api_config.enabled_features
+
+        if enabled_features == objectstorage_api_config.ALL_FEATURES:
+            return lambda func: func
+
+        if enabled_features == objectstorage_api_config.NO_FEATURES:
+            return unittest.skip('feature not configured')
+
+        enabled_features = enabled_features.split()
+        for feature in features:
+            if feature not in enabled_features:
+                return unittest.skip('feature not configured')
+
+        return lambda func: func
+
+    @classmethod
     def required_middleware(cls, middleware):
         """
         Test decorator to skip tests if middleware is not configured in swift.
@@ -82,8 +114,11 @@ class ObjectStorageFixture(BaseTestFixture):
         objectstorage_api_config = ObjectStorageAPIConfig()
         proxy_pipeline = objectstorage_api_config.proxy_pipeline
 
-        if proxy_pipeline == objectstorage_api_config.PROXY_PIPELINE_ALL:
+        if proxy_pipeline == objectstorage_api_config.ALL_FEATURES:
             return lambda func: func
+
+        if proxy_pipeline == objectstorage_api_config.NO_FEATURES:
+            return unittest.skip('middleware not configured')
 
         proxy_pipeline = proxy_pipeline.split()
         for m in middleware:
