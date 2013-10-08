@@ -13,16 +13,14 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
+from random import shuffle
+
 from cafe.drivers.unittest.decorators import tags
-from cloudcafe.common.constants import Messages
-
+from cloudcafe.common.tools.datagen import rand_name
 from cloudroast.images.v2.fixtures import ImagesV2Fixture
-
-msg = Messages.ASSERT_MSG
 
 
 class DeleteImageTest(ImagesV2Fixture):
-
     @tags(type='smoke')
     def test_delete_image(self):
         """ Delete an image.
@@ -33,19 +31,15 @@ class DeleteImageTest(ImagesV2Fixture):
         4. Try get deleted image
         5. Verify response code is 404
         """
-        image_id = self.register_basic_image()
+        image_id = self.register_basic_image(self.api_client)
 
         response = self.api_client.delete_image(image_id)
-        self.assertEqual(response.status_code, 204,
-                         msg.format('status_code', 204,
-                                    response.status))
+        self.assertEqual(response.status_code, 204)
         self.assertIsNone(response.entity,
                           'Response does not contain expected model.')
 
         response = self.api_client.get_image(image_id)
-        self.assertEqual(response.status_code, 404,
-                         msg.format('status_code', 404,
-                                    response.status))
+        self.assertEqual(response.status_code, 404)
 
     @tags(type='negative')
     def test_delete_image_with_invalid_image_id(self):
@@ -54,7 +48,11 @@ class DeleteImageTest(ImagesV2Fixture):
         1. Try delete image
         2. Verify response code is 404
         """
-        self.assertTrue(False, 'Not Implemented')
+        image_id = self.register_basic_image(self.api_client)
+        invalid_id = shuffle([char for char in image_id])
+
+        response = self.api_client.delete_image(invalid_id)
+        self.assertEqual(response.status_code, 404)
 
     @tags(type='negative')
     def test_delete_image_with_deleted_image_id(self):
@@ -66,7 +64,13 @@ class DeleteImageTest(ImagesV2Fixture):
         4. Try delete the deleted image
         5. Verify response code is 404
         """
-        self.assertTrue(False, 'Not Implemented')
+        image_id = self.register_basic_image(self.api_client)
+
+        response = self.api_client.delete_image(image_id)
+        self.assertEqual(response.status_code, 204)
+
+        response = self.api_client.delete_image(image_id)
+        self.assertEqual(response.status_code, 404)
 
     @tags(type='negative')
     def test_delete_image_that_is_protected(self):
@@ -74,38 +78,33 @@ class DeleteImageTest(ImagesV2Fixture):
 
         1. Create standard protected image (protected=true).
         2. Try delete image
-        3. Verify response code is 403
+        3. Verify response code is 404
         """
-        self.assertTrue(False, 'Not Implemented')
+        response = self.admin_api_client.create_image(
+            name=rand_name(), protected=True, container_format='bare',
+            disk_format='raw')
+        self.assertEqual(response.status_code, 201)
+
+        image_id = response.entity.id_
+        self.resources.add(image_id, self.admin_api_client.delete_image)
+
+        response = self.api_client.delete_image(image_id)
+        self.assertEqual(response.status_code, 404)
 
     @tags(type='negative')
-    def test_delete_image_with_blank_image_id(self):
-        """ Delete an image with missing id.
-
-        1. Try delete image without image id
-        2. Verify response code is 404
-        """
-        self.assertTrue(False, 'Not Implemented')
-
-    @tags(type='negative')
-    def test_delete_public_image_as_non_admin(self):
-        """ Delete a public image as a normal tenant.
-
-        1. Try delete image
-        2. Verify response code is 403
-        """
-        self.assertTrue(False, 'Not Implemented')
-
-    @tags(type='negative')
-    def test_delete_shared_image(self):
+    def test_delete_shared_image_as_non_admin(self):
         """ Delete an image that is shared with tenant.
 
-        1. Delete image
-        2. Verify response code is 204
-        3. Try get image as tenant
-        4. Verify response code is 404
+        1. Try delete image
+        2. Verify response code is 404
         """
-        self.assertTrue(False, 'Not Implemented')
+        image_id = self.register_basic_image(self.admin_api_client)
+
+        self.admin_api_client.add_member(image_id, self.access_data.user.id_)
+
+        response = self.api_client.delete_image(image_id)
+
+        self.assertEqual(response.status_code, 404)
 
     @tags(type='negative')
     def test_delete_image_using_incorrect_url(self):
@@ -124,3 +123,60 @@ class DeleteImageTest(ImagesV2Fixture):
         2. Verify the response code is 404
         """
         self.assertTrue(False, 'Not Implemented')
+
+    @tags(type='negative')
+    def test_delete_image_with_blank_image_id(self):
+        """ Delete an image with missing id.
+
+        1. Try delete image without image id
+        2. Verify response code is 404
+        """
+        image_id = self.register_basic_image(self.api_client)
+        image_id = ''
+
+        response = self.api_client.delete_image(image_id)
+        self.assertEqual(response.status_code, 404)
+
+    @tags(type='negative')
+    def test_delete_public_image_as_non_admin(self):
+        """ Delete a public image as a normal tenant.
+
+        1. Try delete image
+        2. Verify response code is 403
+        """
+        response = self.api_client.create_image(
+            name=rand_name(), visibility='public', protected=True,
+            container_format='bare', disk_format='raw')
+        self.assertEqual(response.status_code, 201)
+
+        image_id = response.entity.id_
+        self.resources.add(image_id, self.api_client.delete_image)
+
+        response = self.admin_api_client.delete_image(image_id)
+        self.assertEqual(response.status_code, 403)
+
+    @tags(type='positive')
+    def test_delete_shared_image(self):
+        """ Delete a private, shared image.
+
+        1. Delete image.
+        2. Try get image as a member.
+        3. Verify response code 404
+        """
+        response = self.admin_api_client.create_image(
+            name=rand_name(), visibility='private', container_format='bare',
+            disk_format='raw')
+        self.assertEqual(response.status_code, 201)
+
+        image_id = response.entity.id_
+        self.resources.add(image_id, self.admin_api_client.delete_image)
+
+        response = self.admin_api_client.add_member(image_id,
+                                                    self.access_data.user.id_)
+        self.assertEqual(response.status_code, 201)
+
+        response = self.admin_api_client.delete_image(image_id)
+        self.assertEqual(response.status_code, 201)
+
+        response = self.api_client.get_image(image_id)
+        self.assertEqual(response.status_code, 404)
