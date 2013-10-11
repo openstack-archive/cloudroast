@@ -35,11 +35,11 @@ from cloudcafe.identity.v2_0.tokens_api.client import TokenAPI_Client
 class BarbicanFixture(BaseTestFixture):
 
     @classmethod
-    def setUpClass(cls):
+    def setUpClass(cls, keystone_config=None):
         super(BarbicanFixture, cls).setUpClass()
         cls.marshalling = MarshallingConfig()
         cls.cloudkeep = CloudKeepConfig()
-        cls.keystone = IdentityTokenConfig()
+        cls.keystone = keystone_config or IdentityTokenConfig()
 
     def get_id(self, request):
         """
@@ -59,9 +59,22 @@ class BarbicanFixture(BaseTestFixture):
 
 
 class AuthenticationFixture(BarbicanFixture):
+
     @classmethod
-    def setUpClass(cls):
-        super(AuthenticationFixture, cls).setUpClass()
+    def _build_editable_keystone_config(cls):
+        loaded_config = IdentityTokenConfig()
+        # This is far from ideal, but I need to be able to edit the config
+        config = type('SpoofedConfig', (object,), {
+            'version': loaded_config.version,
+            'username': loaded_config.username,
+            'password': loaded_config.password,
+            'tenant_name': loaded_config.tenant_name,
+            'authentication_endpoint': loaded_config.authentication_endpoint})
+        return config
+
+    @classmethod
+    def setUpClass(cls, keystone_config=None):
+        super(AuthenticationFixture, cls).setUpClass(keystone_config)
         cls.auth_client = TokenAPI_Client(
             url=cls.keystone.authentication_endpoint,
             serialize_format=cls.marshalling.serializer,
@@ -99,8 +112,8 @@ class VersionFixture(AuthenticationFixture):
 class SecretsFixture(AuthenticationFixture):
 
     @classmethod
-    def setUpClass(cls):
-        super(SecretsFixture, cls).setUpClass()
+    def setUpClass(cls, keystone_config=None):
+        super(SecretsFixture, cls).setUpClass(keystone_config)
         cls.config = CloudKeepSecretsConfig()
         cls.client = SecretsClient(
             url=cls.cloudkeep.base_url,
@@ -150,8 +163,8 @@ class SecretsPagingFixture(SecretsFixture):
 
 class OrdersFixture(AuthenticationFixture):
     @classmethod
-    def setUpClass(cls):
-        super(OrdersFixture, cls).setUpClass()
+    def setUpClass(cls, keystone_config=None):
+        super(OrdersFixture, cls).setUpClass(keystone_config)
         cls.config = CloudKeepOrdersConfig()
         cls.orders_client = OrdersClient(
             url=cls.cloudkeep.base_url,
