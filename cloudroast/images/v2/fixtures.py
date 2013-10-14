@@ -15,9 +15,10 @@ limitations under the License.
 """
 
 from cafe.drivers.unittest.fixtures import BaseTestFixture
-from cloudcafe.images.config import ImagesConfig
 from cloudcafe.auth.provider import AuthProvider
 from cloudcafe.common.resources import ResourcePool
+from cloudcafe.common.tools.datagen import rand_name
+from cloudcafe.images.config import ImagesConfig
 from cloudcafe.images.v2.client import ImageClient as ImagesV2Client
 
 
@@ -25,6 +26,7 @@ class ImagesV2Fixture(BaseTestFixture):
     """
     @summary: Base fixture for Images V2 API tests
     """
+
     @classmethod
     def setUpClass(cls):
         super(ImagesV2Fixture, cls).setUpClass()
@@ -44,3 +46,36 @@ class ImagesV2Fixture(BaseTestFixture):
     def tearDownClass(cls):
         super(ImagesV2Fixture, cls).tearDownClass()
         cls.resources.release()
+
+    def register_basic_image(self):
+        """Register a standard image and return its id."""
+        response = self.api_client.create_image(
+            name=rand_name('basic_image_'),
+            container_format='bare',
+            disk_format='raw')
+
+        image = response.entity
+
+        self.resources.add(self.api_client.delete_image, image.id_)
+
+        return image.id_
+
+    def register_private_image(self):
+        """Register a private image and return its id."""
+        response = self.api_client.create_image(
+            name=rand_name('private_image_'),
+            visibility='private',
+            container_format='bare',
+            disk_format='raw')
+
+        image = response.entity
+
+        self.resources.add(self.api_client.delete_image, image.id_)
+
+        return image.id_
+
+    def get_member_ids(self, image_id):
+        """Get a list of ids for all available members."""
+        response = self.api_client.list_members(image_id)
+
+        return [member.member_id for member in response.entity]
