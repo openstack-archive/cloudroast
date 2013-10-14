@@ -25,9 +25,8 @@ class GetImagesSchemaTest(ImagesV2Fixture):
 
     @tags(type='smoke')
     def test_get_image_schema(self):
-        """ Get schema that represents an image entity. """
+        """ Get schema that represents an image entity.
 
-        """
         1) Get image schema
         2) Verify the response status code is 200
         """
@@ -38,9 +37,8 @@ class GetImagesSchemaTest(ImagesV2Fixture):
 
     @tags(type='smoke')
     def test_get_images_schema(self):
-        """ Get schema that represents an images entity. """
+        """ Get schema that represents an images entity.
 
-        """
         1) Get images schema
         2) Verify the response status code is 200
         """
