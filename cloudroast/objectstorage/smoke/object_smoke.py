@@ -15,53 +15,48 @@ limitations under the License.
 """
 import calendar
 import time
-import unittest
 import zlib
 
-from cloudcafe.common.tools import md5hash
-from cloudcafe.common.tools import randomstring
-from cloudcafe.common.tools.check_dict import get_value
+from cloudcafe.common.tools import randomstring as randstring
 from cloudroast.objectstorage.fixtures import ObjectStorageFixture
-
+from cloudcafe.common.tools import md5hash
 
 CONTENT_TYPE_TEXT = 'text/plain; charset=UTF-8'
-STATUS_CODE_MSG = '{method} expected status code {expected}' \
-    ' received status code {received}'
-NOT_CONFIGURED_MSG = 'This features is not configured by default.'
+CONTAINER_NAME = 'object_smoke_test'
+STATUS_CODE_MSG = ('{method} expected status code {expected}'
+    ' received status code {received}')
 
 
 class ObjectSmokeTest(ObjectStorageFixture):
-    def setup_container(self, base_name, headers=None):
-        container_name = '{0}_{1}'.format(
-            base_name,
-            randomstring.get_random_string())
+    @classmethod
+    def setUpClass(cls):
+        super(ObjectSmokeTest, cls).setUpClass()
 
-        self.client.create_container(container_name, headers=headers)
+        cls.base_container_name = CONTAINER_NAME
+        cls.default_obj_name = cls.behaviors.VALID_OBJECT_NAME
+        cls.default_obj_data = cls.behaviors.VALID_OBJECT_DATA
+
+    def test_object_retrieval_with_valid_object_name(self):
+        container_name = '{0}_{1}'.format(
+            self.base_container_name,
+            randstring.get_random_string())
+
+        headers = {'Content-Length': str(len(self.default_obj_data)),
+                   'Content-Type': CONTENT_TYPE_TEXT}
+
+        self.behaviors.create_object(
+            container_name,
+            self.default_obj_name,
+            data=self.default_obj_data,
+            headers=headers)
 
         self.addCleanup(
             self.client.force_delete_containers,
             [container_name])
 
-        return container_name
-
-    def test_object_retrieval_with_valid_object_name(self):
-        container_name = self.setup_container(self.base_container_name)
-        object_name = self.base_object_name
-
-        object_data = 'Test file data'
-        content_length = str(len(object_data))
-        headers = {'Content-Length': content_length,
-                   'Content-Type': CONTENT_TYPE_TEXT}
-
-        self.client.create_object(
-            container_name,
-            object_name,
-            headers=headers,
-            data=object_data)
-
         response = self.client.get_object(
             container_name,
-            object_name)
+            self.default_obj_name)
 
         method = 'object creation with valid object name'
         expected = 200
@@ -71,31 +66,36 @@ class ObjectSmokeTest(ObjectStorageFixture):
             expected,
             received,
             msg=STATUS_CODE_MSG.format(
-                method=method, expected=expected, received=str(received)))
+                method=method,
+                expected=expected,
+                received=str(received)))
 
-    def test_object_retrieval_with_if_match_header(self):
-        container_name = self.setup_container(self.base_container_name)
-        object_name = self.base_object_name
+    def test_object_retrieval_with_if_match(self):
+        container_name = '{0}_{1}'.format(
+            self.base_container_name,
+            randstring.get_random_string())
 
-        object_data = 'Test file data'
-        content_length = str(len(object_data))
-        etag = md5hash.get_md5_hash(object_data)
+        etag = md5hash.get_md5_hash(self.default_obj_data)
 
-        headers = {'Content-Length': content_length,
+        headers = {'Content-Length': str(len(self.default_obj_data)),
                    'Content-Type': CONTENT_TYPE_TEXT,
                    'Etag': etag}
 
-        self.client.create_object(
+        self.behaviors.create_object(
             container_name,
-            object_name,
-            headers=headers,
-            data=object_data)
+            self.default_obj_name,
+            data=self.default_obj_data,
+            headers=headers)
+
+        self.addCleanup(
+            self.client.force_delete_containers,
+            [container_name])
 
         headers = {'If-Match': etag}
 
         response = self.client.get_object(
             container_name,
-            object_name,
+            self.default_obj_name,
             headers=headers)
 
         method = 'object retrieval with if match header'
@@ -106,31 +106,33 @@ class ObjectSmokeTest(ObjectStorageFixture):
             expected,
             received,
             msg=STATUS_CODE_MSG.format(
-                method=method, expected=expected, received=str(received)))
+                method=method,
+                expected=expected,
+                received=str(received)))
 
-    def test_object_retrieval_with_if_none_match_header(self):
-        container_name = self.setup_container(self.base_container_name)
-        object_name = self.base_object_name
+    def test_object_retrieval_with_if_none_match(self):
+        container_name = '{0}_{1}'.format(
+            self.base_container_name,
+            randstring.get_random_string())
 
-        object_data = 'Test file data'
-        content_length = str(len(object_data))
-        etag = md5hash.get_md5_hash(object_data)
+        headers = {'Content-Length': str(len(self.default_obj_data)),
+                   'Content-Type': CONTENT_TYPE_TEXT}
 
-        headers = {'Content-Length': content_length,
-                   'Content-Type': CONTENT_TYPE_TEXT,
-                   'Etag': etag}
-
-        self.client.create_object(
+        self.behaviors.create_object(
             container_name,
-            object_name,
-            headers=headers,
-            data=object_data)
+            self.default_obj_name,
+            data=self.default_obj_data,
+            headers=headers)
+
+        self.addCleanup(
+            self.client.force_delete_containers,
+            [container_name])
 
         headers = {'If-None-Match': 'grok'}
 
         response = self.client.get_object(
             container_name,
-            object_name,
+            self.default_obj_name,
             headers=headers)
 
         method = 'object retrieval with if none match header'
@@ -141,28 +143,33 @@ class ObjectSmokeTest(ObjectStorageFixture):
             expected,
             received,
             msg=STATUS_CODE_MSG.format(
-                method=method, expected=expected, received=str(received)))
+                method=method,
+                expected=expected,
+                received=str(received)))
 
-    def test_object_retrieval_with_if_modified_since_header(self):
-        container_name = self.setup_container(self.base_container_name)
-        object_name = self.base_object_name
+    def test_object_retrieval_with_if_modified_since(self):
+        container_name = '{0}_{1}'.format(
+            self.base_container_name,
+            randstring.get_random_string())
 
-        object_data = 'Test file data'
-        content_length = str(len(object_data))
-        headers = {'Content-Length': content_length,
+        headers = {'Content-Length': str(len(self.default_obj_data)),
                    'Content-Type': CONTENT_TYPE_TEXT}
 
-        self.client.create_object(
+        self.behaviors.create_object(
             container_name,
-            object_name,
-            headers=headers,
-            data=object_data)
+            self.default_obj_name,
+            data=self.default_obj_data,
+            headers=headers)
+
+        self.addCleanup(
+            self.client.force_delete_containers,
+            [container_name])
 
         headers = {'If-Modified-Since': 'Fri, 17 Aug 2001 18:44:42 GMT'}
 
         response = self.client.get_object(
             container_name,
-            object_name,
+            self.default_obj_name,
             headers=headers)
 
         method = 'object retrieval with if modified since header (past date)'
@@ -173,28 +180,33 @@ class ObjectSmokeTest(ObjectStorageFixture):
             expected,
             received,
             msg=STATUS_CODE_MSG.format(
-                method=method, expected=expected, received=str(received)))
+                method=method,
+                expected=expected,
+                received=str(received)))
 
-    def test_object_not_modified_with_if_modified_since_header(self):
-        container_name = self.setup_container(self.base_container_name)
-        object_name = self.base_object_name
+    def test_object_not_modified_with_if_modified_since(self):
+        container_name = '{0}_{1}'.format(
+            self.base_container_name,
+            randstring.get_random_string())
 
-        object_data = 'Test file data'
-        content_length = str(len(object_data))
-        headers = {'Content-Length': content_length,
+        headers = {'Content-Length': str(len(self.default_obj_data)),
                    'Content-Type': CONTENT_TYPE_TEXT}
 
-        self.client.create_object(
+        self.behaviors.create_object(
             container_name,
-            object_name,
-            headers=headers,
-            data=object_data)
+            self.default_obj_name,
+            data=self.default_obj_data,
+            headers=headers)
+
+        self.addCleanup(
+            self.client.force_delete_containers,
+            [container_name])
 
         headers = {'If-Modified-Since': 'Fri, 17 Aug 2101 18:44:42 GMT'}
 
         response = self.client.get_object(
             container_name,
-            object_name,
+            self.default_obj_name,
             headers=headers)
 
         method = 'object retrieval with if modified since header (future date)'
@@ -205,28 +217,33 @@ class ObjectSmokeTest(ObjectStorageFixture):
             expected,
             received,
             msg=STATUS_CODE_MSG.format(
-                method=method, expected=expected, received=str(received)))
+                method=method,
+                expected=expected,
+                received=str(received)))
 
-    def test_object_retrieval_with_if_unmodified_since_header(self):
-        container_name = self.setup_container(self.base_container_name)
-        object_name = self.base_object_name
+    def test_object_retrieval_with_if_unmodified_since(self):
+        container_name = '{0}_{1}'.format(
+            self.base_container_name,
+            randstring.get_random_string())
 
-        object_data = 'Test file data'
-        content_length = str(len(object_data))
-        headers = {'Content-Length': content_length,
+        headers = {'Content-Length': str(len(self.default_obj_data)),
                    'Content-Type': CONTENT_TYPE_TEXT}
 
-        self.client.create_object(
+        self.behaviors.create_object(
             container_name,
-            object_name,
-            headers=headers,
-            data=object_data)
+            self.default_obj_name,
+            data=self.default_obj_data,
+            headers=headers)
+
+        self.addCleanup(
+            self.client.force_delete_containers,
+            [container_name])
 
         headers = {'If-Unmodified-Since': 'Fri, 17 Aug 2101 18:44:42 GMT'}
 
         response = self.client.get_object(
             container_name,
-            object_name,
+            self.default_obj_name,
             headers=headers)
 
         method = 'object retrieval with if unmodified since header'
@@ -237,32 +254,37 @@ class ObjectSmokeTest(ObjectStorageFixture):
             expected,
             received,
             msg=STATUS_CODE_MSG.format(
-                method=method, expected=expected, received=str(received)))
+                method=method,
+                expected=expected,
+                received=str(received)))
 
-    def test_object_retrieval_fails_with_if_unmodified_since_header(self):
-        container_name = self.setup_container(self.base_container_name)
-        object_name = self.base_object_name
+    def test_object_retrieval_fails_with_if_unmodified_since(self):
+        container_name = '{0}_{1}'.format(
+            self.base_container_name,
+            randstring.get_random_string())
 
-        object_data = 'Test file data'
-        content_length = str(len(object_data))
-        headers = {'Content-Length': content_length,
+        headers = {'Content-Length': str(len(self.default_obj_data)),
                    'Content-Type': CONTENT_TYPE_TEXT}
 
-        self.client.create_object(
+        self.behaviors.create_object(
             container_name,
-            object_name,
-            headers=headers,
-            data=object_data)
+            self.default_obj_name,
+            data=self.default_obj_data,
+            headers=headers)
+
+        self.addCleanup(
+            self.client.force_delete_containers,
+            [container_name])
 
         headers = {'If-Unmodified-Since': 'Fri, 17 Aug 2001 18:44:42 GMT'}
 
         response = self.client.get_object(
             container_name,
-            object_name,
+            self.default_obj_name,
             headers=headers)
 
-        method = 'object retrieval precondition fail with if unmodified' \
-            ' since header'
+        method = ('object retrieval precondition fail with if unmodified'
+            ' since header')
         expected = 412
         received = response.status_code
 
@@ -270,28 +292,33 @@ class ObjectSmokeTest(ObjectStorageFixture):
             expected,
             received,
             msg=STATUS_CODE_MSG.format(
-                method=method, expected=expected, received=str(received)))
+                method=method,
+                expected=expected,
+                received=str(received)))
 
     def test_partial_object_retrieval_with_start_range(self):
-        container_name = self.setup_container(self.base_container_name)
-        object_name = self.base_object_name
+        container_name = '{0}_{1}'.format(
+            self.base_container_name,
+            randstring.get_random_string())
 
-        object_data = 'Test file data'
-        content_length = str(len(object_data))
-        headers = {'Content-Length': content_length,
+        headers = {'Content-Length': str(len(self.default_obj_data)),
                    'Content-Type': CONTENT_TYPE_TEXT}
 
-        self.client.create_object(
+        self.behaviors.create_object(
             container_name,
-            object_name,
-            headers=headers,
-            data=object_data)
+            self.default_obj_name,
+            data=self.default_obj_data,
+            headers=headers)
+
+        self.addCleanup(
+            self.client.force_delete_containers,
+            [container_name])
 
         headers = {'Range': 'bytes=5-'}
 
         response = self.client.get_object(
             container_name,
-            object_name,
+            self.default_obj_name,
             headers=headers)
 
         method = 'partial object retrieval with start range'
@@ -305,25 +332,28 @@ class ObjectSmokeTest(ObjectStorageFixture):
                 method=method, expected=expected, received=str(received)))
 
     def test_partial_object_retrieval_with_end_range(self):
-        container_name = self.setup_container(self.base_container_name)
-        object_name = self.base_object_name
+        container_name = '{0}_{1}'.format(
+            self.base_container_name,
+            randstring.get_random_string())
 
-        object_data = 'Test file data'
-        content_length = str(len(object_data))
-        headers = {'Content-Length': content_length,
+        headers = {'Content-Length': str(len(self.default_obj_data)),
                    'Content-Type': CONTENT_TYPE_TEXT}
 
-        self.client.create_object(
+        self.behaviors.create_object(
             container_name,
-            object_name,
-            headers=headers,
-            data=object_data)
+            self.default_obj_name,
+            data=self.default_obj_data,
+            headers=headers)
+
+        self.addCleanup(
+            self.client.force_delete_containers,
+            [container_name])
 
         headers = {'Range': 'bytes=-4'}
 
         response = self.client.get_object(
             container_name,
-            object_name,
+            self.default_obj_name,
             headers=headers)
 
         method = 'partial object retrieval with end range'
@@ -334,28 +364,33 @@ class ObjectSmokeTest(ObjectStorageFixture):
             expected,
             received,
             msg=STATUS_CODE_MSG.format(
-                method=method, expected=expected, received=str(received)))
+                method=method,
+                expected=expected,
+                received=str(received)))
 
     def test_partial_object_retrieval_with_range(self):
-        container_name = self.setup_container(self.base_container_name)
-        object_name = self.base_object_name
+        container_name = '{0}_{1}'.format(
+            self.base_container_name,
+            randstring.get_random_string())
 
-        object_data = 'Test file data'
-        content_length = str(len(object_data))
-        headers = {'Content-Length': content_length,
+        headers = {'Content-Length': str(len(self.default_obj_data)),
                    'Content-Type': CONTENT_TYPE_TEXT}
 
-        self.client.create_object(
+        self.behaviors.create_object(
             container_name,
-            object_name,
-            headers=headers,
-            data=object_data)
+            self.default_obj_name,
+            data=self.default_obj_data,
+            headers=headers)
+
+        self.addCleanup(
+            self.client.force_delete_containers,
+            [container_name])
 
         headers = {'Range': 'bytes=5-8'}
 
         response = self.client.get_object(
             container_name,
-            object_name,
+            self.default_obj_name,
             headers=headers)
 
         method = 'partial object retrieval with start and end range'
@@ -366,28 +401,33 @@ class ObjectSmokeTest(ObjectStorageFixture):
             expected,
             received,
             msg=STATUS_CODE_MSG.format(
-                method=method, expected=expected, received=str(received)))
+                method=method,
+                expected=expected,
+                received=str(received)))
 
     def test_partial_object_retrieval_with_complete_range(self):
-        container_name = self.setup_container(self.base_container_name)
-        object_name = self.base_object_name
+        container_name = '{0}_{1}'.format(
+            self.base_container_name,
+            randstring.get_random_string())
 
-        object_data = 'Test file data'
-        content_length = str(len(object_data))
-        headers = {'Content-Length': content_length,
+        headers = {'Content-Length': str(len(self.default_obj_data)),
                    'Content-Type': CONTENT_TYPE_TEXT}
 
-        self.client.create_object(
+        self.behaviors.create_object(
             container_name,
-            object_name,
-            headers=headers,
-            data=object_data)
+            self.default_obj_name,
+            data=self.default_obj_data,
+            headers=headers)
+
+        self.addCleanup(
+            self.client.force_delete_containers,
+            [container_name])
 
         headers = {'Range': 'bytes=99-0'}
 
         response = self.client.get_object(
             container_name,
-            object_name,
+            self.default_obj_name,
             headers=headers)
 
         method = 'partial object retrieval with complete range'
@@ -398,22 +438,29 @@ class ObjectSmokeTest(ObjectStorageFixture):
             expected,
             received,
             msg=STATUS_CODE_MSG.format(
-                method=method, expected=expected, received=str(received)))
+                method=method,
+                expected=expected,
+                received=str(received)))
 
     def test_object_creation_with_valid_object_name(self):
-        container_name = self.setup_container(self.base_container_name)
-        object_name = self.base_object_name
+        container_name = '{0}_{1}'.format(
+            self.base_container_name,
+            randstring.get_random_string())
 
-        object_data = 'Test file data'
-        content_length = str(len(object_data))
-        headers = {'Content-Length': content_length,
+        self.behaviors.create_container(container_name)
+
+        self.addCleanup(
+            self.client.force_delete_containers,
+            [container_name])
+
+        headers = {'Content-Length': str(len(self.default_obj_data)),
                    'Content-Type': CONTENT_TYPE_TEXT}
 
         response = self.client.create_object(
             container_name,
-            object_name,
+            self.default_obj_name,
             headers=headers,
-            data=object_data)
+            data=self.default_obj_data)
 
         method = 'object creation with valid object name'
         expected = 201
@@ -423,11 +470,13 @@ class ObjectSmokeTest(ObjectStorageFixture):
             expected,
             received,
             msg=STATUS_CODE_MSG.format(
-                method=method, expected=expected, received=str(received)))
+                method=method,
+                expected=expected,
+                received=str(received)))
 
         response = self.client.get_object(
             container_name,
-            object_name)
+            self.default_obj_name)
 
         method = 'object retrieval'
         expected = 200
@@ -437,35 +486,40 @@ class ObjectSmokeTest(ObjectStorageFixture):
             expected,
             received,
             msg=STATUS_CODE_MSG.format(
-                method=method, expected=expected, received=str(received)))
+                method=method,
+                expected=expected,
+                received=str(received)))
 
     def test_object_update_with_valid_object_name(self):
-        container_name = self.setup_container(self.base_container_name)
-        object_name = self.base_object_name
+        container_name = '{0}_{1}'.format(
+            self.base_container_name,
+            randstring.get_random_string())
 
-        object_data = 'Test file data'
-        content_length = str(len(object_data))
-        headers = {'Content-Length': content_length,
+        headers = {'Content-Length': str(len(self.default_obj_data)),
                    'Content-Type': CONTENT_TYPE_TEXT}
 
-        self.client.create_object(
+        self.behaviors.create_object(
             container_name,
-            object_name,
-            headers=headers,
-            data=object_data)
+            self.default_obj_name,
+            data=self.default_obj_data,
+            headers=headers)
 
-        object_data = 'Updated test file data'
+        self.addCleanup(
+            self.client.force_delete_containers,
+            [container_name])
 
-        content_length = str(len(object_data))
+        updated_object_data = 'Updated test file data'
 
-        headers = {'Content-Length': content_length,
+        updated_content_length = str(len(updated_object_data))
+
+        headers = {'Content-Length': updated_content_length,
                    'Content-Type': CONTENT_TYPE_TEXT}
 
         response = self.client.create_object(
             container_name,
-            object_name,
+            self.default_obj_name,
             headers=headers,
-            data=object_data)
+            data=updated_object_data)
 
         method = 'object update with valid object name'
         expected = 201
@@ -475,23 +529,32 @@ class ObjectSmokeTest(ObjectStorageFixture):
             expected,
             received,
             msg=STATUS_CODE_MSG.format(
-                method=method, expected=expected, received=str(received)))
+                method=method,
+                expected=expected,
+                received=str(received)))
 
-    def test_object_creation_with_etag_header(self):
-        container_name = self.setup_container(self.base_container_name)
-        object_name = self.base_object_name
+    def test_object_creation_with_etag(self):
+        container_name = '{0}_{1}'.format(
+            self.base_container_name,
+            randstring.get_random_string())
 
-        object_data = 'Test file data'
-        content_length = str(len(object_data))
-        headers = {'Content-Length': content_length,
+        self.behaviors.create_container(container_name)
+
+        self.addCleanup(
+            self.client.force_delete_containers,
+            [container_name])
+
+        etag = md5hash.get_md5_hash(self.default_obj_data)
+
+        headers = {'Content-Length': str(len(self.default_obj_data)),
                    'Content-Type': CONTENT_TYPE_TEXT,
-                   'Etag': md5hash.get_md5_hash(object_data)}
+                   'Etag': etag}
 
         response = self.client.create_object(
             container_name,
-            object_name,
+            self.default_obj_name,
             headers=headers,
-            data=object_data)
+            data=self.default_obj_data)
 
         method = 'object creation with etag header'
         expected = 201
@@ -501,78 +564,53 @@ class ObjectSmokeTest(ObjectStorageFixture):
             expected,
             received,
             msg=STATUS_CODE_MSG.format(
-                method=method, expected=expected, received=str(received)))
+                method=method,
+                expected=expected,
+                received=str(received)))
 
-        response = self.client.get_object(
+        response = self.client.get_object_metadata(
             container_name,
-            object_name)
+            self.default_obj_name)
 
-        method = 'object retrieval'
-        expected = 200
-        received = response.status_code
+        self.assertIn(
+            'Etag',
+            response.headers,
+            msg="Etag header was set")
+
+        expected = etag
+        received = response.headers.get('Etag')
 
         self.assertEqual(
             expected,
             received,
-            msg=STATUS_CODE_MSG.format(
-                method=method, expected=expected, received=str(received)))
+            msg='object created with Etag header'
+                ' value expected: {0} recieved: {1}'.format(
+                    expected,
+                    received))
 
-    def test_object_creation_with_metadata(self):
-        container_name = self.setup_container(self.base_container_name)
-        object_name = self.base_object_name
+    def test_dlo_creation(self):
+        container_name = '{0}_{1}'.format(
+            self.base_container_name,
+            randstring.get_random_string())
 
-        object_data = 'Test file data'
-        content_length = str(len(object_data))
-        headers = {'Content-Length': content_length,
-                   'Content-Type': CONTENT_TYPE_TEXT,
-                   'X-Object-Meta-Grok': 'Drok'}
+        self.behaviors.create_container(container_name)
 
-        response = self.client.create_object(
-            container_name,
-            object_name,
-            headers=headers,
-            data=object_data)
+        self.addCleanup(
+            self.client.force_delete_containers,
+            [container_name])
 
-        method = 'object creation with metadata'
-        expected = 201
-        received = response.status_code
+        segment1_name = '{0}{1}'.format(self.default_obj_name, '.1')
+        segment1_data = 'Segment 1'
+        segment1_length = str(len(segment1_data))
 
-        self.assertEqual(
-            expected,
-            received,
-            msg=STATUS_CODE_MSG.format(
-                method=method, expected=expected, received=str(received)))
-
-        response = self.client.get_object(
-            container_name,
-            object_name)
-
-        method = 'object retrieval'
-        expected = 200
-        received = response.status_code
-
-        self.assertEqual(
-            expected,
-            received,
-            msg=STATUS_CODE_MSG.format(
-                method=method, expected=expected, received=str(received)))
-
-    def test_object_creation_with_dynamic_large_object(self):
-        container_name = self.setup_container(self.base_container_name)
-        object_name = self.base_object_name
-
-        segment_name = '{0}{1}'.format(object_name, '.1')
-        segment_data = 'Segment 1'
-        content_length = str(len(segment_data))
-
-        headers = {'Content-Length': content_length,
+        headers = {'Content-Length': segment1_length,
                    'Content-Type': CONTENT_TYPE_TEXT}
 
         response = self.client.create_object(
             container_name,
-            segment_name,
+            segment1_name,
             headers=headers,
-            data=segment_data)
+            data=segment1_data)
 
         method = 'large object segment 1 creation'
         expected = 201
@@ -582,20 +620,22 @@ class ObjectSmokeTest(ObjectStorageFixture):
             expected,
             received,
             msg=STATUS_CODE_MSG.format(
-                method=method, expected=expected, received=str(received)))
+                method=method,
+                expected=expected,
+                received=str(received)))
 
-        segment_name = '{0}{1}'.format(object_name, '.2')
-        segment_data = 'Segment 2'
-        content_length = str(len(segment_data))
+        segment2_name = '{0}{1}'.format(self.default_obj_name, '.2')
+        segment2_data = 'Segment 2'
+        segment2_length = str(len(segment2_data))
 
-        headers = {'Content-Length': content_length,
+        headers = {'Content-Length': segment2_length,
                    'Content-Type': CONTENT_TYPE_TEXT}
 
         self.client.create_object(
             container_name,
-            segment_name,
+            segment2_name,
             headers=headers,
-            data=segment_data)
+            data=segment2_data)
 
         method = 'large object segment 2 creation'
         expected = 201
@@ -605,10 +645,12 @@ class ObjectSmokeTest(ObjectStorageFixture):
             expected,
             received,
             msg=STATUS_CODE_MSG.format(
-                method=method, expected=expected, received=str(received)))
+                method=method,
+                expected=expected,
+                received=str(received)))
 
         large_object_common_prefix = '{0}/{1}'.format(
-            container_name, object_name)
+            container_name, self.default_obj_name)
 
         headers = {'Content-Length': '0',
                    'Content-Type': CONTENT_TYPE_TEXT,
@@ -616,18 +658,24 @@ class ObjectSmokeTest(ObjectStorageFixture):
 
         self.client.create_object(
             container_name,
-            object_name,
+            self.default_obj_name,
             headers=headers)
+
+        method = 'manifest creation'
+        expected = 201
+        received = response.status_code
 
         self.assertEqual(
             expected,
             received,
             msg=STATUS_CODE_MSG.format(
-                method=method, expected=expected, received=str(received)))
+                method=method,
+                expected=expected,
+                received=str(received)))
 
         response = self.client.get_object(
             container_name,
-            object_name)
+            self.default_obj_name)
 
         method = 'assembled large object retrieval'
         expected = 200
@@ -637,26 +685,134 @@ class ObjectSmokeTest(ObjectStorageFixture):
             expected,
             received,
             msg=STATUS_CODE_MSG.format(
-                method=method, expected=expected, received=str(received)))
+                method=method,
+                expected=expected,
+                received=str(received)))
 
-    def test_object_creation_with_cors_allow_credentials_header(self):
-        container_name = self.setup_container(self.base_container_name)
-        object_name = self.base_object_name
+    def test_dlo_retrieval_with_range(self):
+        container_name = '{0}_{1}'.format(
+            self.base_container_name,
+            randstring.get_random_string())
 
-        object_data = 'Test file data'
-        content_length = str(len(object_data))
-        headers = {'Content-Length': content_length,
+        self.behaviors.create_container(container_name)
+
+        self.addCleanup(
+            self.client.force_delete_containers,
+            [container_name])
+
+        segment1_name = '{0}{1}'.format(self.default_obj_name, '.1')
+        segment1_data = 'Segment 1'
+        segment1_length = str(len(segment1_data))
+
+        headers = {'Content-Length': segment1_length,
+                   'Content-Type': CONTENT_TYPE_TEXT}
+
+        response = self.client.create_object(
+            container_name,
+            segment1_name,
+            headers=headers,
+            data=segment1_data)
+
+        method = 'large object segment 1 creation'
+        expected = 201
+        received = response.status_code
+
+        self.assertEqual(
+            expected,
+            received,
+            msg=STATUS_CODE_MSG.format(
+                method=method,
+                expected=expected,
+                received=str(received)))
+
+        segment2_name = '{0}{1}'.format(self.default_obj_name, '.2')
+        segment2_data = 'Segment 2'
+        segment2_length = str(len(segment2_data))
+
+        headers = {'Content-Length': segment2_length,
+                   'Content-Type': CONTENT_TYPE_TEXT}
+
+        self.client.create_object(
+            container_name,
+            segment2_name,
+            headers=headers,
+            data=segment2_data)
+
+        method = 'large object segment 2 creation'
+        expected = 201
+        received = response.status_code
+
+        self.assertEqual(
+            expected,
+            received,
+            msg=STATUS_CODE_MSG.format(
+                method=method,
+                expected=expected,
+                received=str(received)))
+
+        large_object_common_prefix = '{0}/{1}'.format(
+            container_name,
+            self.default_obj_name)
+
+        headers = {'Content-Length': '0',
+                   'Content-Type': CONTENT_TYPE_TEXT,
+                   'X-Object-Manifest': large_object_common_prefix}
+
+        self.client.create_object(
+            container_name,
+            self.default_obj_name,
+            headers=headers)
+
+        method = 'manifest creation'
+        expected = 201
+        received = response.status_code
+
+        self.assertEqual(
+            expected,
+            received,
+            msg=STATUS_CODE_MSG.format(
+                method=method,
+                expected=expected,
+                received=str(received)))
+
+        response = self.client.get_object(
+            container_name,
+            self.default_obj_name, headers={'Range': 'bytes=0-10'})
+
+        method = 'dlo retrieval with range header'
+        expected = 206
+        received = response.status_code
+
+        self.assertEqual(
+            expected,
+            received,
+            msg=STATUS_CODE_MSG.format(
+                method=method,
+                expected=expected,
+                received=str(received)))
+
+    def test_object_creation_with_access_control_allow_credentials(self):
+        container_name = '{0}_{1}'.format(
+            self.base_container_name,
+            randstring.get_random_string())
+
+        self.behaviors.create_container(container_name)
+
+        self.addCleanup(
+            self.client.force_delete_containers,
+            [container_name])
+
+        headers = {'Content-Length': str(len(self.default_obj_data)),
                    'Content-Type': CONTENT_TYPE_TEXT,
                    'Access-Control-Allow-Credentials': 'true'}
 
         response = self.client.create_object(
             container_name,
-            object_name,
+            self.default_obj_name,
             headers=headers,
-            data=object_data)
+            data=self.default_obj_data)
 
-        method = 'object creation with cors access control allow' \
-            ' credentials header'
+        method = 'object creation with Access-Control-Allow-Credentials header'
         expected = 201
         received = response.status_code
 
@@ -664,40 +820,52 @@ class ObjectSmokeTest(ObjectStorageFixture):
             expected,
             received,
             msg=STATUS_CODE_MSG.format(
-                method=method, expected=expected, received=str(received)))
+                method=method,
+                expected=expected,
+                received=str(received)))
 
-        response = self.client.get_object(
+        response = self.client.get_object_metadata(
             container_name,
-            object_name)
+            self.default_obj_name)
 
-        method = 'object retrieval'
-        expected = 200
-        received = response.status_code
+        self.assertIn(
+            'Access-Control-Allow-Credentials',
+            response.headers,
+            msg="Access-Control-Allow-Credentials header was set")
+
+        expected = 'true'
+        received = response.headers.get('Access-Control-Allow-Credentials')
 
         self.assertEqual(
             expected,
             received,
-            msg=STATUS_CODE_MSG.format(
-                method=method, expected=expected, received=str(received)))
+            msg='object created with Access-Control-Allow-Credentials header'
+                ' value expected: {0} recieved: {1}'.format(
+                    expected,
+                    received))
 
-    def test_object_creation_with_cors_access_control_allow_methods(self):
-        container_name = self.setup_container(self.base_container_name)
-        object_name = self.base_object_name
+    def test_object_creation_with_access_control_allow_methods(self):
+        container_name = '{0}_{1}'.format(
+            self.base_container_name,
+            randstring.get_random_string())
 
-        object_data = 'Test file data'
-        content_length = str(len(object_data))
-        headers = {'Content-Length': content_length,
+        self.behaviors.create_container(container_name)
+
+        self.addCleanup(
+            self.client.force_delete_containers,
+            [container_name])
+
+        headers = {'Content-Length': str(len(self.default_obj_data)),
                    'Content-Type': CONTENT_TYPE_TEXT,
                    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS'}
 
         response = self.client.create_object(
             container_name,
-            object_name,
+            self.default_obj_name,
             headers=headers,
-            data=object_data)
+            data=self.default_obj_data)
 
-        method = 'object creation with cors access control allow' \
-            ' methods header'
+        method = 'object creation with Access-Control-Allow-Methods header'
         expected = 201
         received = response.status_code
 
@@ -705,40 +873,52 @@ class ObjectSmokeTest(ObjectStorageFixture):
             expected,
             received,
             msg=STATUS_CODE_MSG.format(
-                method=method, expected=expected, received=str(received)))
+                method=method,
+                expected=expected,
+                received=str(received)))
 
-        response = self.client.get_object(
+        response = self.client.get_object_metadata(
             container_name,
-            object_name)
+            self.default_obj_name)
 
-        method = 'object retrieval'
-        expected = 200
-        received = response.status_code
+        self.assertIn(
+            'Access-Control-Allow-Methods',
+            response.headers,
+            msg="Access-Control-Allow-Methods header was set")
+
+        expected = 'GET, POST, OPTIONS'
+        received = response.headers.get('Access-Control-Allow-Methods')
 
         self.assertEqual(
             expected,
             received,
-            msg=STATUS_CODE_MSG.format(
-                method=method, expected=expected, received=str(received)))
+            msg='object created with Access-Control-Allow-Methods header'
+                ' value expected: {0} recieved: {1}'.format(
+                    expected,
+                    received))
 
-    def test_object_creation_with_cors_allow_origin_header(self):
-        container_name = self.setup_container(self.base_container_name)
-        object_name = self.base_object_name
+    def test_object_creation_with_access_control_allow_origin(self):
+        container_name = '{0}_{1}'.format(
+            self.base_container_name,
+            randstring.get_random_string())
 
-        object_data = 'Test file data'
-        content_length = str(len(object_data))
-        headers = {'Content-Length': content_length,
+        self.behaviors.create_container(container_name)
+
+        self.addCleanup(
+            self.client.force_delete_containers,
+            [container_name])
+
+        headers = {'Content-Length': str(len(self.default_obj_data)),
                    'Content-Type': CONTENT_TYPE_TEXT,
                    'Access-Control-Allow-Origin': 'http://foobar.org'}
 
         response = self.client.create_object(
             container_name,
-            object_name,
+            self.default_obj_name,
             headers=headers,
-            data=object_data)
+            data=self.default_obj_data)
 
-        method = 'object creation with cors access control allow' \
-            ' origin header'
+        method = 'object creation with Access-Control-Allow-Origin header'
         expected = 201
         received = response.status_code
 
@@ -746,39 +926,52 @@ class ObjectSmokeTest(ObjectStorageFixture):
             expected,
             received,
             msg=STATUS_CODE_MSG.format(
-                method=method, expected=expected, received=str(received)))
+                method=method,
+                expected=expected,
+                received=str(received)))
 
-        response = self.client.get_object(
+        response = self.client.get_object_metadata(
             container_name,
-            object_name)
+            self.default_obj_name)
 
-        method = 'object retrieval'
-        expected = 200
-        received = response.status_code
+        self.assertIn(
+            'Access-Control-Allow-Origin',
+            response.headers,
+            msg="Access-Control-Allow-Origin header was set")
+
+        expected = 'http://foobar.org'
+        received = response.headers.get('Access-Control-Allow-Origin')
 
         self.assertEqual(
             expected,
             received,
-            msg=STATUS_CODE_MSG.format(
-                method=method, expected=expected, received=str(received)))
+            msg='object created with Access-Control-Allow-Origin header'
+                ' value expected: {0} recieved: {1}'.format(
+                    expected,
+                    received))
 
-    def test_object_creation_with_cors_expose_headers_header(self):
-        container_name = self.setup_container(self.base_container_name)
-        object_name = self.base_object_name
+    def test_object_creation_with_access_control_expose_headers(self):
+        container_name = '{0}_{1}'.format(
+            self.base_container_name,
+            randstring.get_random_string())
 
-        object_data = 'Test file data'
-        content_length = str(len(object_data))
-        headers = {'Content-Length': content_length,
+        self.behaviors.create_container(container_name)
+
+        self.addCleanup(
+            self.client.force_delete_containers,
+            [container_name])
+
+        headers = {'Content-Length': str(len(self.default_obj_data)),
                    'Content-Type': CONTENT_TYPE_TEXT,
                    'Access-Control-Expose-Headers': 'X-Foo-Header'}
 
         response = self.client.create_object(
             container_name,
-            object_name,
+            self.default_obj_name,
             headers=headers,
-            data=object_data)
+            data=self.default_obj_data)
 
-        method = 'object creation with cors expose headers header'
+        method = 'object creation with Access-Control-Expose-Headers header'
         expected = 201
         received = response.status_code
 
@@ -786,39 +979,52 @@ class ObjectSmokeTest(ObjectStorageFixture):
             expected,
             received,
             msg=STATUS_CODE_MSG.format(
-                method=method, expected=expected, received=str(received)))
+                method=method,
+                expected=expected,
+                received=str(received)))
 
-        response = self.client.get_object(
+        response = self.client.get_object_metadata(
             container_name,
-            object_name)
+            self.default_obj_name)
 
-        method = 'object retrieval'
-        expected = 200
-        received = response.status_code
+        self.assertIn(
+            'Access-Control-Expose-Headers',
+            response.headers,
+            msg="Access-Control-Expose-Headers header was set")
+
+        expected = 'X-Foo-Header'
+        received = response.headers.get('Access-Control-Expose-Headers')
 
         self.assertEqual(
             expected,
             received,
-            msg=STATUS_CODE_MSG.format(
-                method=method, expected=expected, received=str(received)))
+            msg='object created with Access-Control-Expose-Headers header'
+                ' value expected: {0} recieved: {1}'.format(
+                    expected,
+                    received))
 
-    def test_object_creation_with_cors_max_age_header(self):
-        container_name = self.setup_container(self.base_container_name)
-        object_name = self.base_object_name
+    def test_object_creation_with_access_controle_max_age(self):
+        container_name = '{0}_{1}'.format(
+            self.base_container_name,
+            randstring.get_random_string())
 
-        object_data = 'Test file data'
-        content_length = str(len(object_data))
-        headers = {'Content-Length': content_length,
+        self.behaviors.create_container(container_name)
+
+        self.addCleanup(
+            self.client.force_delete_containers,
+            [container_name])
+
+        headers = {'Content-Length': str(len(self.default_obj_data)),
                    'Content-Type': CONTENT_TYPE_TEXT,
                    'Access-Control-Max-Age': '5'}
 
         response = self.client.create_object(
             container_name,
-            object_name,
+            self.default_obj_name,
             headers=headers,
-            data=object_data)
+            data=self.default_obj_data)
 
-        method = 'object creation with cors max age header'
+        method = 'object creation with Access-Control-Max-Age header'
         expected = 201
         received = response.status_code
 
@@ -826,39 +1032,52 @@ class ObjectSmokeTest(ObjectStorageFixture):
             expected,
             received,
             msg=STATUS_CODE_MSG.format(
-                method=method, expected=expected, received=str(received)))
+                method=method,
+                expected=expected,
+                received=str(received)))
 
-        response = self.client.get_object(
+        response = self.client.get_object_metadata(
             container_name,
-            object_name)
+            self.default_obj_name)
 
-        method = 'object retrieval'
-        expected = 200
-        received = response.status_code
+        self.assertIn(
+            'Access-Control-Max-Age',
+            response.headers,
+            msg="Access-Control-Max-Age header was set")
+
+        expected = '5'
+        received = response.headers.get('Access-Control-Max-Age')
 
         self.assertEqual(
             expected,
             received,
-            msg=STATUS_CODE_MSG.format(
-                method=method, expected=expected, received=str(received)))
+            msg='object created with Access-Control-Max-Age header'
+                ' value expected: {0} recieved: {1}'.format(
+                    expected,
+                    received))
 
-    def test_object_creation_with_cors_request_headers_header(self):
-        container_name = self.setup_container(self.base_container_name)
-        object_name = self.base_object_name
+    def test_object_creation_with_access_control_request_headers(self):
+        container_name = '{0}_{1}'.format(
+            self.base_container_name,
+            randstring.get_random_string())
 
-        object_data = 'Test file data'
-        content_length = str(len(object_data))
-        headers = {'Content-Length': content_length,
+        self.behaviors.create_container(container_name)
+
+        self.addCleanup(
+            self.client.force_delete_containers,
+            [container_name])
+
+        headers = {'Content-Length': str(len(self.default_obj_data)),
                    'Content-Type': CONTENT_TYPE_TEXT,
                    'Access-Control-Request-Headers': 'x-requested-with'}
 
         response = self.client.create_object(
             container_name,
-            object_name,
+            self.default_obj_name,
             headers=headers,
-            data=object_data)
+            data=self.default_obj_data)
 
-        method = 'object creation with cors request headers header'
+        method = 'object creation with Access-Control-Request-Headers header'
         expected = 201
         received = response.status_code
 
@@ -866,39 +1085,52 @@ class ObjectSmokeTest(ObjectStorageFixture):
             expected,
             received,
             msg=STATUS_CODE_MSG.format(
-                method=method, expected=expected, received=str(received)))
+                method=method,
+                expected=expected,
+                received=str(received)))
 
-        response = self.client.get_object(
+        response = self.client.get_object_metadata(
             container_name,
-            object_name)
+            self.default_obj_name)
 
-        method = 'object retrieval'
-        expected = 200
-        received = response.status_code
+        self.assertIn(
+            'Access-Control-Request-Headers',
+            response.headers,
+            msg="Access-Control-Request-Headers header was set")
+
+        expected = 'x-requested-with'
+        received = response.headers.get('Access-Control-Request-Headers')
 
         self.assertEqual(
             expected,
             received,
-            msg=STATUS_CODE_MSG.format(
-                method=method, expected=expected, received=str(received)))
+            msg='object created with Access-Control-Request-Headers header'
+                ' value expected: {0} recieved: {1}'.format(
+                    expected,
+                    received))
 
-    def test_object_creation_with_cors_request_method_header(self):
-        container_name = self.setup_container(self.base_container_name)
-        object_name = self.base_object_name
+    def test_object_creation_with_access_control_request_method(self):
+        container_name = '{0}_{1}'.format(
+            self.base_container_name,
+            randstring.get_random_string())
 
-        object_data = 'Test file data'
-        content_length = str(len(object_data))
-        headers = {'Content-Length': content_length,
+        self.behaviors.create_container(container_name)
+
+        self.addCleanup(
+            self.client.force_delete_containers,
+            [container_name])
+
+        headers = {'Content-Length': str(len(self.default_obj_data)),
                    'Content-Type': CONTENT_TYPE_TEXT,
                    'Access-Control-Request-Method': 'GET'}
 
         response = self.client.create_object(
             container_name,
-            object_name,
+            self.default_obj_name,
             headers=headers,
-            data=object_data)
+            data=self.default_obj_data)
 
-        method = 'object creation with cors request method header'
+        method = 'object creation with Access-Control-Request-Method header'
         expected = 201
         received = response.status_code
 
@@ -906,39 +1138,52 @@ class ObjectSmokeTest(ObjectStorageFixture):
             expected,
             received,
             msg=STATUS_CODE_MSG.format(
-                method=method, expected=expected, received=str(received)))
+                method=method,
+                expected=expected,
+                received=str(received)))
 
-        response = self.client.get_object(
+        response = self.client.get_object_metadata(
             container_name,
-            object_name)
+            self.default_obj_name)
 
-        method = 'object retrieval'
-        expected = 200
-        received = response.status_code
+        self.assertIn(
+            'Access-Control-Request-Method',
+            response.headers,
+            msg="Access-Control-Request-Method header was set")
+
+        expected = 'GET'
+        received = response.headers.get('Access-Control-Request-Method')
 
         self.assertEqual(
             expected,
             received,
-            msg=STATUS_CODE_MSG.format(
-                method=method, expected=expected, received=str(received)))
+            msg='object created with Access-Control-Request-Method header'
+                ' value expected: {0} recieved: {1}'.format(
+                    expected,
+                    received))
 
-    def test_object_creation_with_cors_origin_header(self):
-        container_name = self.setup_container(self.base_container_name)
-        object_name = self.base_object_name
+    def test_object_creation_with_origin(self):
+        container_name = '{0}_{1}'.format(
+            self.base_container_name,
+            randstring.get_random_string())
 
-        object_data = 'Test file data'
-        content_length = str(len(object_data))
-        headers = {'Content-Length': content_length,
+        self.behaviors.create_container(container_name)
+
+        self.addCleanup(
+            self.client.force_delete_containers,
+            [container_name])
+
+        headers = {'Content-Length': str(len(self.default_obj_data)),
                    'Content-Type': CONTENT_TYPE_TEXT,
                    'Origin': 'http://foobar.org'}
 
         response = self.client.create_object(
             container_name,
-            object_name,
+            self.default_obj_name,
             headers=headers,
-            data=object_data)
+            data=self.default_obj_data)
 
-        method = 'object creation with cors origin header'
+        method = 'object creation with Origin header'
         expected = 201
         received = response.status_code
 
@@ -946,40 +1191,53 @@ class ObjectSmokeTest(ObjectStorageFixture):
             expected,
             received,
             msg=STATUS_CODE_MSG.format(
-                method=method, expected=expected, received=str(received)))
+                method=method,
+                expected=expected,
+                received=str(received)))
 
-        response = self.client.get_object(
+        response = self.client.get_object_metadata(
             container_name,
-            object_name)
+            self.default_obj_name)
 
-        method = 'object retrieval'
-        expected = 200
-        received = response.status_code
+        self.assertIn(
+            'Origin',
+            response.headers,
+            msg="Origin header was set")
+
+        expected = 'http://foobar.org'
+        received = response.headers.get('Origin')
 
         self.assertEqual(
             expected,
             received,
-            msg=STATUS_CODE_MSG.format(
-                method=method, expected=expected, received=str(received)))
+            msg='object created with Origin header value'
+                ' expected: {0} recieved: {1}'.format(expected, received))
 
-    def test_object_retrieval_with_file_compression(self):
-        container_name = self.setup_container(self.base_container_name)
-        object_name = self.base_object_name
+    def test_object_creation_with_file_compression(self):
+        container_name = '{0}_{1}'.format(
+            self.base_container_name,
+            randstring.get_random_string())
 
-        object_data = 'Uncompressed test file data'
-        compressed_object_data = zlib.compress(object_data)
-        content_length = str(len(compressed_object_data))
-        headers = {'Content-Length': content_length,
+        self.behaviors.create_container(container_name)
+
+        self.addCleanup(
+            self.client.force_delete_containers,
+            [container_name])
+
+        temp_object_data = 'Uncompressed test file data'
+        compressed_object_data = zlib.compress(temp_object_data)
+        compressed_length = str(len(compressed_object_data))
+        headers = {'Content-Length': compressed_length,
                    'Content-Type': CONTENT_TYPE_TEXT,
                    'Content-Encoding': 'gzip'}
 
         response = self.client.create_object(
             container_name,
-            object_name,
+            self.default_obj_name,
             headers=headers,
             data=compressed_object_data)
 
-        method = 'object creation with cors content encoding header'
+        method = 'object creation with Content-Encoding header'
         expected = 201
         received = response.status_code
 
@@ -987,39 +1245,50 @@ class ObjectSmokeTest(ObjectStorageFixture):
             expected,
             received,
             msg=STATUS_CODE_MSG.format(
-                method=method, expected=expected, received=str(received)))
+                method=method,
+                expected=expected,
+                received=str(received)))
 
-        response = self.client.get_object(
+        response = self.client.get_object_metadata(
             container_name,
-            object_name)
+            self.default_obj_name)
 
-        method = 'object retrieval'
-        expected = 200
-        received = response.status_code
+        self.assertIn(
+            'Content-Encoding',
+            response.headers,
+            msg="Content-Encoding header was set")
+
+        expected = 'gzip'
+        received = response.headers.get('Content-Encoding')
 
         self.assertEqual(
             expected,
             received,
-            msg=STATUS_CODE_MSG.format(
-                method=method, expected=expected, received=str(received)))
+            msg='object created with Content-Encoding header value'
+                ' expected: {0} recieved: {1}'.format(expected, received))
 
-    def test_object_retrieval_with_browser_bypass(self):
-        container_name = self.setup_container(self.base_container_name)
-        object_name = self.base_object_name
+    def test_object_creation_with_content_disposition(self):
+        container_name = '{0}_{1}'.format(
+            self.base_container_name,
+            randstring.get_random_string())
 
-        object_data = 'Test file data'
-        content_length = str(len(object_data))
-        headers = {'Content-Length': content_length,
+        self.behaviors.create_container(container_name)
+
+        self.addCleanup(
+            self.client.force_delete_containers,
+            [container_name])
+
+        headers = {'Content-Length': str(len(self.default_obj_data)),
                    'Content-Type': CONTENT_TYPE_TEXT,
                    'Content-Disposition': 'attachment; filename=testdata.txt'}
 
         response = self.client.create_object(
             container_name,
-            object_name,
+            self.default_obj_name,
             headers=headers,
-            data=object_data)
+            data=self.default_obj_data)
 
-        method = 'object creation with cors content disposition header'
+        method = 'object creation with content disposition header'
         expected = 201
         received = response.status_code
 
@@ -1027,41 +1296,52 @@ class ObjectSmokeTest(ObjectStorageFixture):
             expected,
             received,
             msg=STATUS_CODE_MSG.format(
-                method=method, expected=expected, received=str(received)))
+                method=method,
+                expected=expected,
+                received=str(received)))
 
-        response = self.client.get_object(
+        response = self.client.get_object_metadata(
             container_name,
-            object_name)
+            self.default_obj_name)
 
-        method = 'object retrieval'
-        expected = 200
-        received = response.status_code
+        self.assertIn(
+            'Content-Disposition',
+            response.headers,
+            msg="Content-Disposition header was set")
+
+        expected = 'attachment; filename=testdata.txt'
+        received = response.headers.get('Content-Disposition')
 
         self.assertEqual(
             expected,
             received,
-            msg=STATUS_CODE_MSG.format(
-                method=method, expected=expected, received=str(received)))
+            msg='object created with Content-Disposition header value'
+                ' expected: {0} recieved: {1}'.format(expected, received))
 
-    def test_object_creation_with_x_delete_at_header(self):
-        container_name = self.setup_container(self.base_container_name)
-        object_name = self.base_object_name
+    def test_object_creation_with_x_delete_at(self):
+        container_name = '{0}_{1}'.format(
+            self.base_container_name,
+            randstring.get_random_string())
 
-        object_data = 'Test file data'
-        content_length = str(len(object_data))
+        self.behaviors.create_container(container_name)
+
+        self.addCleanup(
+            self.client.force_delete_containers,
+            [container_name])
+
         start_time = calendar.timegm(time.gmtime())
         future_time = str(int(start_time + 60))
-        headers = {'Content-Length': content_length,
+        headers = {'Content-Length': str(len(self.default_obj_data)),
                    'Content-Type': CONTENT_TYPE_TEXT,
                    'X-Delete-At': future_time}
 
         response = self.client.create_object(
             container_name,
-            object_name,
+            self.default_obj_name,
             headers=headers,
-            data=object_data)
+            data=self.default_obj_data)
 
-        method = 'object creation x delete at header'
+        method = 'object creation with X-Delete-At header'
         expected = 201
         received = response.status_code
 
@@ -1069,39 +1349,50 @@ class ObjectSmokeTest(ObjectStorageFixture):
             expected,
             received,
             msg=STATUS_CODE_MSG.format(
-                method=method, expected=expected, received=str(received)))
+                method=method,
+                expected=expected,
+                received=str(received)))
 
-        response = self.client.get_object(
+        response = self.client.get_object_metadata(
             container_name,
-            object_name)
+            self.default_obj_name)
 
-        method = 'object retrieval'
-        expected = 200
-        received = response.status_code
+        self.assertIn(
+            'X-Delete-At',
+            response.headers,
+            msg="X-Delete-At header was set")
+
+        expected = future_time
+        received = response.headers.get('X-Delete-At')
 
         self.assertEqual(
             expected,
             received,
-            msg=STATUS_CODE_MSG.format(
-                method=method, expected=expected, received=str(received)))
+            msg='object created with X-Delete-At header value'
+                ' expected: {0} recieved: {1}'.format(expected, received))
 
-    def test_object_creation_with_delete_after_header(self):
-        container_name = self.setup_container(self.base_container_name)
-        object_name = self.base_object_name
+    def test_object_creation_with_delete_after(self):
+        container_name = '{0}_{1}'.format(
+            self.base_container_name,
+            randstring.get_random_string())
 
-        object_data = 'Test file data'
-        content_length = str(len(object_data))
-        headers = {'Content-Length': content_length,
+        self.behaviors.create_container(container_name)
+
+        self.addCleanup(
+            self.client.force_delete_containers,
+            [container_name])
+
+        headers = {'Content-Length': str(len(self.default_obj_data)),
                    'Content-Type': CONTENT_TYPE_TEXT,
                    'X-Delete-After': '60'}
 
         response = self.client.create_object(
             container_name,
-            object_name,
+            self.default_obj_name,
             headers=headers,
-            data=object_data)
+            data=self.default_obj_data)
 
-        method = 'object creation x delete after header'
+        method = 'object creation with X-Delete-After header'
         expected = 201
         received = response.status_code
 
@@ -1109,60 +1400,48 @@ class ObjectSmokeTest(ObjectStorageFixture):
             expected,
             received,
             msg=STATUS_CODE_MSG.format(
-                method=method, expected=expected, received=str(received)))
+                method=method,
+                expected=expected,
+                received=str(received)))
 
-        response = self.client.get_object(
+        response = self.client.get_object_metadata(
             container_name,
-            object_name)
+            self.default_obj_name)
 
-        method = 'object retrieval'
-        expected = 200
-        received = response.status_code
+        self.assertIn(
+            'X-Delete-At',
+            response.headers,
+            msg="X-Delete-At header was set")
 
-        self.assertEqual(
-            expected,
-            received,
-            msg=STATUS_CODE_MSG.format(
-                method=method, expected=expected, received=str(received)))
-
-    @ObjectStorageFixture.required_features(['object_versioning'])
     def test_versioned_container_creation_with_valid_data(self):
-        #Create a container for 'non-current' object storage
-        non_current_version_container_name = self.setup_container(
-            self.base_container_name)
+        # Create a container for 'non-current' object storage
+        non_current_container_name = 'non_current_container_{0}'.format(
+            randstring.get_random_string())
 
-        #Create a container for 'current' object storage
-        current_version_container_headers = \
-            {'X-Versions-Location': non_current_version_container_name}
-        current_version_container_name = self.setup_container(
-            self.base_container_name,
-            headers=current_version_container_headers)
+        self.behaviors.create_container(non_current_container_name)
 
-        #Create an object (version 1)
-        object_name = self.base_object_name
-        object_data = 'Version 1'
-        content_length = str(len(object_data))
-        headers = {'Content-Length': content_length,
-                   'Content-Type': CONTENT_TYPE_TEXT}
+        # Create a container for 'current' object storage
+        current_container_headers = {
+            'X-Versions-Location': non_current_container_name}
 
-        response = self.client.create_object(
-            current_version_container_name,
-            object_name,
-            headers=headers,
-            data=object_data)
+        current_container_name = 'current_container_{0}'.format(
+            randstring.get_random_string())
 
-        method = 'object version one creation'
-        expected = 201
-        received = response.status_code
+        self.behaviors.create_container(
+            current_container_name,
+            headers=current_container_headers)
 
-        self.assertEqual(
-            expected,
-            received,
-            msg=STATUS_CODE_MSG.format(
-                method=method, expected=expected, received=str(received)))
+        self.addCleanup(
+            self.client.force_delete_containers,
+            [current_container_name])
 
+        self.addCleanup(
+            self.client.force_delete_containers,
+            [non_current_container_name])
+
+        # list objects in non-current container
         response = self.client.list_objects(
-            non_current_version_container_name)
+            non_current_container_name)
 
         method = 'list on empty versioned container'
         expected = 204
@@ -1172,19 +1451,45 @@ class ObjectSmokeTest(ObjectStorageFixture):
             expected,
             received,
             msg=STATUS_CODE_MSG.format(
-                method=method, expected=expected, received=str(received)))
+                method=method,
+                expected=expected,
+                received=str(received)))
 
-        #Update an object (version 2)
-        object_data = 'Version 2'
-        content_length = str(len(object_data))
-        headers = {'Content-Length': content_length,
+        #Create an object (version 1)
+        object_data_version1 = 'Version 1'
+        version1_length = str(len(object_data_version1))
+        headers = {'Content-Length': version1_length,
                    'Content-Type': CONTENT_TYPE_TEXT}
 
         response = self.client.create_object(
-            current_version_container_name,
-            object_name,
+            current_container_name,
+            self.default_obj_name,
             headers=headers,
-            data=object_data)
+            data=object_data_version1)
+
+        method = 'object version one creation'
+        expected = 201
+        received = response.status_code
+
+        self.assertEqual(
+            expected,
+            received,
+            msg=STATUS_CODE_MSG.format(
+                method=method,
+                expected=expected,
+                received=str(received)))
+
+        #Update an object (version 2)
+        object_data_version2 = 'Version 2'
+        version2_length = str(len(object_data_version2))
+        headers = {'Content-Length': version2_length,
+                   'Content-Type': CONTENT_TYPE_TEXT}
+
+        response = self.client.create_object(
+            current_container_name,
+            self.default_obj_name,
+            headers=headers,
+            data=object_data_version2)
 
         method = 'update version one object'
         expected = 201
@@ -1194,10 +1499,12 @@ class ObjectSmokeTest(ObjectStorageFixture):
             expected,
             received,
             msg=STATUS_CODE_MSG.format(
-                method=method, expected=expected, received=str(received)))
+                method=method,
+                expected=expected,
+                received=str(received)))
 
         response = self.client.list_objects(
-            non_current_version_container_name)
+            non_current_container_name)
 
         method = 'list on versioned container'
         expected = 200
@@ -1207,29 +1514,45 @@ class ObjectSmokeTest(ObjectStorageFixture):
             expected,
             received,
             msg=STATUS_CODE_MSG.format(
-                method=method, expected=expected, received=str(received)))
+                method=method,
+                expected=expected,
+                received=str(received)))
 
     def test_put_copy_object(self):
-        src_container_name = self.setup_container(self.base_container_name)
-        dest_container_name = self.setup_container(self.base_container_name)
+        src_container_name = '{0}_{1}'.format(
+            'src_container_',
+            randstring.get_random_string())
 
-        src_obj_name = '{0}_source'.format(self.base_object_name)
+        dest_container_name = '{0}_{1}'.format(
+            'dest_container_',
+            randstring.get_random_string())
 
-        object_data = 'Test file data'
-        content_length = str(len(object_data))
-        headers = {'Content-Length': content_length,
+        self.behaviors.create_container(src_container_name)
+
+        self.behaviors.create_container(dest_container_name)
+
+        self.addCleanup(
+            self.client.force_delete_containers,
+            [dest_container_name])
+
+        self.addCleanup(
+            self.client.force_delete_containers,
+            [src_container_name])
+
+        src_obj_name = '{0}_source'.format(self.default_obj_name)
+
+        dest_obj_name = '{0}_destination'.format(self.default_obj_name)
+
+        headers = {'Content-Length': str(len(self.default_obj_data)),
                    'Content-Type': CONTENT_TYPE_TEXT}
 
         self.client.create_object(
             src_container_name,
             src_obj_name,
             headers=headers,
-            data=object_data)
-
-        dest_obj_name = '{0}_destination'.format(self.base_object_name)
+            data=self.default_obj_data)
 
         source = '/{0}/{1}'.format(src_container_name, src_obj_name)
-
         hdrs = {'X-Copy-From': source, 'Content-Length': '0'}
 
         response = self.client.copy_object(
@@ -1245,7 +1568,9 @@ class ObjectSmokeTest(ObjectStorageFixture):
             expected,
             received,
             msg=STATUS_CODE_MSG.format(
-                method=method, expected=expected, received=str(received)))
+                method=method,
+                expected=expected,
+                received=str(received)))
 
         response = self.client.get_object(
             dest_container_name,
@@ -1259,35 +1584,51 @@ class ObjectSmokeTest(ObjectStorageFixture):
             expected,
             received,
             msg=STATUS_CODE_MSG.format(
-                method=method, expected=expected, received=str(received)))
+                method=method,
+                expected=expected,
+                received=str(received)))
 
     def test_copy_object(self):
-        src_container_name = self.setup_container(self.base_container_name)
-        dest_container_name = self.setup_container(self.base_container_name)
+        src_container_name = '{0}_{1}'.format(
+            'src_container_',
+            randstring.get_random_string())
 
-        src_obj_name = '{0}_source'.format(self.base_object_name)
-        object_data = 'Test file data'
-        content_length = str(len(object_data))
+        dest_container_name = '{0}_{1}'.format(
+            'dest_container_',
+            randstring.get_random_string())
 
-        dest_obj_name = '{0}_destination'.format(self.base_object_name)
-        object_data = 'Test file data'
-        content_length = str(len(object_data))
-        headers = {'Content-Length': content_length,
+        self.behaviors.create_container(src_container_name)
+
+        self.behaviors.create_container(dest_container_name)
+
+        self.addCleanup(
+            self.client.force_delete_containers,
+            [dest_container_name])
+
+        self.addCleanup(
+            self.client.force_delete_containers,
+            [src_container_name])
+
+        src_obj_name = '{0}_source'.format(self.default_obj_name)
+
+        dest_obj_name = '{0}_destination'.format(self.default_obj_name)
+
+        headers = {'Content-Length': str(len(self.default_obj_data)),
                    'Content-Type': CONTENT_TYPE_TEXT}
 
         self.client.create_object(
             src_container_name,
             src_obj_name,
             headers=headers,
-            data=object_data)
+            data=self.default_obj_data)
 
         dest = '/{0}/{1}'.format(dest_container_name, dest_obj_name)
-        hdrs = {'Destination': dest}
+        headers = {'Destination': dest}
 
         response = self.client.copy_object(
             src_container_name,
             src_obj_name,
-            headers=hdrs)
+            headers=headers)
 
         method = 'copy object'
         expected = 201
@@ -1297,7 +1638,9 @@ class ObjectSmokeTest(ObjectStorageFixture):
             expected,
             received,
             msg=STATUS_CODE_MSG.format(
-                method=method, expected=expected, received=str(received)))
+                method=method,
+                expected=expected,
+                received=str(received)))
 
         response = self.client.get_object(
             dest_container_name,
@@ -1311,28 +1654,31 @@ class ObjectSmokeTest(ObjectStorageFixture):
             expected,
             received,
             msg=STATUS_CODE_MSG.format(
-                method=method, expected=expected, received=str(received)))
+                method=method,
+                expected=expected,
+                received=str(received)))
 
     def test_object_deletion_with_valid_object(self):
-        container_name = self.setup_container(self.base_container_name)
+        container_name = '{0}_{1}'.format(
+            self.base_container_name,
+            randstring.get_random_string())
 
-        object_name = self.base_object_name
-        object_data = 'Test file data'
-        content_length = str(len(object_data))
-        headers = {'Content-Length': content_length,
+        headers = {'Content-Length': str(len(self.default_obj_data)),
                    'Content-Type': CONTENT_TYPE_TEXT}
 
-        response = self.client.create_object(
+        self.behaviors.create_object(
             container_name,
-            object_name,
-            headers=headers,
-            data=object_data)
+            self.default_obj_name,
+            data=self.default_obj_data,
+            headers=headers)
 
-        self.assertEqual(response.status_code, 201, 'should be created')
+        self.addCleanup(
+            self.client.force_delete_containers,
+            [container_name])
 
         response = self.client.delete_object(
             container_name,
-            object_name)
+            self.default_obj_name)
 
         method = 'delete object'
         expected = 204
@@ -1342,11 +1688,13 @@ class ObjectSmokeTest(ObjectStorageFixture):
             expected,
             received,
             msg=STATUS_CODE_MSG.format(
-                method=method, expected=expected, received=str(received)))
+                method=method,
+                expected=expected,
+                received=str(received)))
 
         response = self.client.get_object(
             container_name,
-            object_name)
+            self.default_obj_name)
 
         method = 'object retrieval'
         expected = 404
@@ -1356,69 +1704,55 @@ class ObjectSmokeTest(ObjectStorageFixture):
             expected,
             received,
             msg=STATUS_CODE_MSG.format(
-                method=method, expected=expected, received=str(received)))
+                method=method,
+                expected=expected,
+                received=str(received)))
 
-    def test_metadata_retrieval_with_newly_created_object(self):
-        container_name = self.setup_container(self.base_container_name)
+    def test_obj_metadata_update_with_object_possessing_metadata(self):
+        container_name = '{0}_{1}'.format(
+            self.base_container_name,
+            randstring.get_random_string())
 
-        object_name = self.base_object_name
-        object_data = 'Test file data'
-        content_length = str(len(object_data))
-        headers = {'Content-Length': content_length,
+        self.behaviors.create_container(container_name)
+
+        self.addCleanup(
+            self.client.force_delete_containers,
+            [container_name])
+
+        headers = {'Content-Length': str(len(self.default_obj_data)),
                    'Content-Type': CONTENT_TYPE_TEXT,
                    'X-Object-Meta-Grok': 'Drok'}
 
-        response = self.client.create_object(
+        self.client.create_object(
             container_name,
-            object_name,
+            self.default_obj_name,
             headers=headers,
-            data=object_data)
-
-        method = 'object creation with x object meta'
-        expected = 201
-        received = response.status_code
-
-        self.assertEqual(
-            expected,
-            received,
-            msg=STATUS_CODE_MSG.format(
-                method=method, expected=expected, received=str(received)))
+            data=self.default_obj_data)
 
         response = self.client.get_object_metadata(
             container_name,
-            object_name)
+            self.default_obj_name)
 
-        method = 'object metadata retrieval'
-        expected = 200
-        received = response.status_code
+        self.assertIn(
+            'X-Object-Meta-Grok',
+            response.headers,
+            msg="object created with X-Object-Meta-Grok header")
+
+        expected = 'Drok'
+        received = response.headers.get('X-Object-Meta-Grok')
 
         self.assertEqual(
             expected,
             received,
-            msg=STATUS_CODE_MSG.format(
-                method=method, expected=expected, received=str(received)))
+            msg='object created with X-Object-Meta-Grok header value'
+                ' expected: {0} recieved: {1}'.format(expected, received))
 
-    def test_metadata_retrieval_with_object_possessing_metadata(self):
-        container_name = self.setup_container(self.base_container_name)
-
-        object_name = self.base_object_name
-        object_data = 'Test file data'
-        content_length = str(len(object_data))
-        headers = {'Content-Length': content_length,
-                   'Content-Type': CONTENT_TYPE_TEXT}
-
-        self.client.create_object(
-            container_name,
-            object_name,
-            headers=headers,
-            data=object_data)
-
-        metadata = {'Grok': 'Drok'}
+        headers = {'X-Object-Meta-Foo': 'Bar'}
 
         response = self.client.set_object_metadata(
             container_name,
-            object_name,
-            metadata)
+            self.default_obj_name,
+            headers=headers)
 
         method = 'set object metadata'
         expected = 202
@@ -1428,46 +1762,54 @@ class ObjectSmokeTest(ObjectStorageFixture):
             expected,
             received,
             msg=STATUS_CODE_MSG.format(
-                method=method, expected=expected, received=str(received)))
+                method=method,
+                expected=expected,
+                received=str(received)))
 
         response = self.client.get_object_metadata(
             container_name,
-            object_name)
+            self.default_obj_name)
 
-        method = 'object metadata retrieval'
-        expected = 200
-        received = response.status_code
+        self.assertIn(
+            'X-Object-Meta-Foo',
+            response.headers,
+            msg="object updated with X-Object-Meta-Foo header")
+
+        expected = 'Bar'
+        received = response.headers.get('X-Object-Meta-Foo')
 
         self.assertEqual(
             expected,
             received,
-            msg=STATUS_CODE_MSG.format(
-                method=method, expected=expected, received=str(received)))
+            msg='object X-Object-Meta-Foo header value expected: {0}'
+                ' recieved: {1}'.format(expected, received))
 
-    def test_object_update_with_metadata(self):
-        container_name = self.setup_container(self.base_container_name)
+    def test_obj_metadata_update(self):
+        container_name = '{0}_{1}'.format(
+            self.base_container_name,
+            randstring.get_random_string())
 
-        object_name = self.base_object_name
-        object_data = 'Test file data'
-        content_length = str(len(object_data))
-
-        headers = {'Content-Length': content_length,
+        headers = {'Content-Length': str(len(self.default_obj_data)),
                    'Content-Type': CONTENT_TYPE_TEXT}
 
-        self.client.create_object(
+        self.behaviors.create_object(
             container_name,
-            object_name,
-            headers=headers,
-            data=object_data)
+            self.default_obj_name,
+            data=self.default_obj_data,
+            headers=headers)
 
-        metadata = {'Foo': 'Bar'}
+        self.addCleanup(
+            self.client.force_delete_containers,
+            [container_name])
+
+        headers = {'X-Object-Meta-Grok': 'Drok'}
 
         response = self.client.set_object_metadata(
             container_name,
-            object_name,
-            metadata)
+            self.default_obj_name,
+            headers=headers)
 
-        method = 'set object metadata'
+        method = 'set object metadata X-Object-Meta-Grok: Drok'
         expected = 202
         received = response.status_code
 
@@ -1475,21 +1817,111 @@ class ObjectSmokeTest(ObjectStorageFixture):
             expected,
             received,
             msg=STATUS_CODE_MSG.format(
-                method=method, expected=expected, received=str(received)))
+                method=method,
+                expected=expected,
+                received=str(received)))
 
-        metadata = {'Grok': 'Drok'}
-
-        response = self.client.set_object_metadata(
+        response = self.client.get_object_metadata(
             container_name,
-            object_name,
-            metadata)
+            self.default_obj_name)
 
-        method = 'update object metadata'
-        expected = 202
-        received = response.status_code
+        self.assertIn(
+            'X-Object-Meta-Grok',
+            response.headers,
+            msg="object updated with X-Object-Meta-Grok header")
+
+        expected = 'Drok'
+        received = response.headers.get('X-Object-Meta-Grok')
 
         self.assertEqual(
             expected,
             received,
-            msg=STATUS_CODE_MSG.format(
-                method=method, expected=expected, received=str(received)))
+            msg='object X-Object-Meta-Grok header value expected: {0}'
+                ' recieved: {1}'.format(expected, received))
+
+    def test_content_type_not_detected_without_detect_content_type_header(
+            self):
+        container_name = '{0}_{1}'.format(
+            self.base_container_name,
+            randstring.get_random_string())
+
+        obj1_name = 'object1.txt'
+
+        obj1_headers = {'Content-Type': 'application/x-www-form-urlencoded'}
+
+        self.behaviors.create_object(
+            container_name,
+            obj1_name,
+            data=self.default_obj_data,
+            headers=obj1_headers)
+
+        obj2_name = 'object2.txt'
+
+        obj2_headers = {'X-Detect-Content-Type': False,
+                        'Content-Type': 'application/x-www-form-urlencoded'}
+
+        self.behaviors.create_object(
+            container_name,
+            obj2_name,
+            data=self.default_obj_data,
+            headers=obj2_headers)
+
+        self.addCleanup(
+            self.client.force_delete_containers,
+            [container_name])
+
+        response = self.client.get_object(
+            container_name,
+            obj1_name)
+
+        expected = 'application/x-www-form-urlencoded'
+        received = response.headers.get('content-type')
+
+        self.assertEqual(
+            expected,
+            received,
+            msg='object created should have content type: {0}'
+                ' recieved: {1}'.format(expected, received))
+
+        response = self.client.get_object(
+            container_name,
+            obj2_name)
+
+        self.assertEqual(
+            expected,
+            received,
+            msg='object created should have content type: {0}'
+                ' recieved: {1}'.format(expected, received))
+
+    def test_content_type_detected_with_detect_content_type(self):
+        container_name = '{0}_{1}'.format(
+            self.base_container_name,
+            randstring.get_random_string())
+
+        object1_name = 'object1.txt'
+
+        headers = {'X-Detect-Content-Type': True,
+                   'Content-Type': 'application/x-www-form-urlencoded'}
+
+        self.behaviors.create_object(
+            container_name,
+            object1_name,
+            data=self.default_obj_data,
+            headers=headers)
+
+        self.addCleanup(
+            self.client.force_delete_containers,
+            [container_name])
+
+        response = self.client.get_object(
+            container_name,
+            object1_name)
+
+        expected = 'text/plain'
+        received = response.headers.get('content-type')
+
+        self.assertEqual(
+            expected,
+            received,
+            msg='object created should have content type: {0}'
+                ' recieved: {1}'.format(expected, received))
