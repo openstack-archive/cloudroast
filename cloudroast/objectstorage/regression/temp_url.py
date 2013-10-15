@@ -15,10 +15,11 @@ limitations under the License.
 """
 import time
 
+from unittest import skipUnless
+from cafe.engine.clients.rest import BaseRestClient
 from cloudroast.objectstorage.fixtures import ObjectStorageFixture
+from cloudcafe.common.tools.check_dict import get_value
 
-
-TEMPURL_DURATION = 60
 BASE_CONTAINER_NAME = 'tempurl'
 CONTENT_TYPE_TEXT = 'text/plain; charset=UTF-8'
 
@@ -28,13 +29,15 @@ class TempUrl(ObjectStorageFixture):
         response = None
         headers = {'X-Account-Meta-Temp-URL-Key': self.tempurl_key}
         response = self.client.set_temp_url_key(headers=headers)
-        time.sleep(
-            float(self.objectstorage_api_config.tempurl_key_cache_time))
+        time.sleep(self.objectstorage_api_config.tempurl_key_cache_time)
         return response
 
     @classmethod
     def setUpClass(cls):
         super(TempUrl, cls).setUpClass()
+        cls.key_cache_time = (
+            cls.objectstorage_api_config.tempurl_key_cache_time)
+        cls.http = BaseRestClient()
         cls.tempurl_key = cls.behaviors.VALID_TEMPURL_KEY
         cls.object_name = cls.behaviors.VALID_OBJECT_NAME
         cls.obj_name_containing_trailing_slash = \
@@ -73,7 +76,7 @@ class TempUrl(ObjectStorageFixture):
             'PUT',
             container_name,
             self.object_name,
-            TEMPURL_DURATION,
+            self.key_cache_time,
             self.tempurl_key)
 
         self.assertIn(
@@ -89,20 +92,16 @@ class TempUrl(ObjectStorageFixture):
             tempurl_data.keys(),
             msg='expires was not in the created tempurl')
 
-        self.client.auth_off()
-
         headers = {'Content-Length': self.content_length,
                    'Content-Type': CONTENT_TYPE_TEXT,
                    'X-Object-Meta-Foo': 'bar'}
         params = {'temp_url_sig': tempurl_data['signature'],
                   'temp_url_expires': tempurl_data['expires']}
-        response = self.client.put(
+        response = self.http.put(
             tempurl_data['target_url'],
             params=params,
             headers=headers,
             data=self.object_data)
-
-        self.client.auth_on()
 
         response = self.client.get_object(container_name, self.object_name)
 
@@ -140,7 +139,7 @@ class TempUrl(ObjectStorageFixture):
             'GET',
             container_name,
             self.object_name,
-            TEMPURL_DURATION,
+            self.key_cache_time,
             self.tempurl_key)
 
         self.assertIn(
@@ -156,13 +155,10 @@ class TempUrl(ObjectStorageFixture):
             tempurl_data.keys(),
             msg='expires was not in the created tempurl')
 
-        self.client.auth_off()
-
         params = {'temp_url_sig': tempurl_data['signature'],
                   'temp_url_expires': tempurl_data['expires']}
-        response = self.client.get(tempurl_data['target_url'], params=params)
 
-        self.client.auth_on()
+        response = self.http.get(tempurl_data['target_url'], params=params)
 
         expected_disposition = 'attachment; filename="{0}"'.format(
             self.object_name)
@@ -213,7 +209,7 @@ class TempUrl(ObjectStorageFixture):
             'GET',
             container_name,
             self.obj_name_containing_trailing_slash,
-            TEMPURL_DURATION,
+            self.key_cache_time,
             self.tempurl_key)
 
         self.assertIn(
@@ -229,14 +225,9 @@ class TempUrl(ObjectStorageFixture):
             data.keys(),
             msg='expires was not in the created tempurl')
 
-        self.client.auth_off()
-
         params = {'temp_url_sig': data['signature'],
                   'temp_url_expires': data['expires']}
-        tempurl_get_response = self.client.get(
-            data['target_url'], params=params)
-
-        self.client.auth_on()
+        tempurl_get_response = self.http.get(data['target_url'], params=params)
 
         expected_filename = \
             self.obj_name_containing_trailing_slash.split('/')[0]
@@ -288,7 +279,7 @@ class TempUrl(ObjectStorageFixture):
             'GET',
             container_name,
             self.obj_name_containing_slash,
-            TEMPURL_DURATION,
+            self.key_cache_time,
             self.tempurl_key)
 
         self.assertIn(
@@ -304,12 +295,9 @@ class TempUrl(ObjectStorageFixture):
             data.keys(),
             msg='expires was not in the created tempurl')
 
-        self.client.auth_off()
-
         params = {'temp_url_sig': data['signature'],
                   'temp_url_expires': data['expires']}
-        tempurl_get_response = self.client.get(
-            data['target_url'], params=params)
+        tempurl_get_response = self.http.get(data['target_url'], params=params)
 
         self.assertIn(
             'target_url',
@@ -324,10 +312,7 @@ class TempUrl(ObjectStorageFixture):
             data.keys(),
             msg='expires was not in the created tempurl')
 
-        self.client.auth_on()
-
-        expected_filename = \
-            self.obj_name_containing_slash.split('/')[1]
+        expected_filename = self.obj_name_containing_slash.split('/')[1]
 
         recieved_filename = None
 
@@ -373,7 +358,7 @@ class TempUrl(ObjectStorageFixture):
             'GET',
             container_name,
             self.object_name,
-            TEMPURL_DURATION,
+            self.key_cache_time,
             self.tempurl_key)
 
         self.assertIn(
@@ -389,14 +374,10 @@ class TempUrl(ObjectStorageFixture):
             tempurl_data.keys(),
             msg='expires was not in the created tempurl')
 
-        self.client.auth_off()
-
         params = {'temp_url_sig': tempurl_data['signature'],
                   'temp_url_expires': tempurl_data['expires'],
                   'filename': object_name_override}
-        response = self.client.get(tempurl_data['target_url'], params=params)
-
-        self.client.auth_on()
+        response = self.http.get(tempurl_data['target_url'], params=params)
 
         self.assertIn(
             'content-disposition',
@@ -437,7 +418,8 @@ class TempUrl(ObjectStorageFixture):
             'GET',
             container_name,
             self.object_name,
-            TEMPURL_DURATION, self.tempurl_key)
+            self.key_cache_time,
+            self.tempurl_key)
 
         self.assertIn(
             'target_url',
@@ -452,14 +434,10 @@ class TempUrl(ObjectStorageFixture):
             tempurl_data.keys(),
             msg='expires was not in the created tempurl')
 
-        self.client.auth_off()
-
         params = {'temp_url_sig': tempurl_data['signature'],
                   'temp_url_expires': tempurl_data['expires'],
                   'filename': object_name_override}
-        response = self.client.get(tempurl_data['target_url'], params=params)
-
-        self.client.auth_on()
+        response = self.http.get(tempurl_data['target_url'], params=params)
 
         self.assertIn(
             'content-disposition',
@@ -500,7 +478,7 @@ class TempUrl(ObjectStorageFixture):
             'GET',
             container_name,
             self.object_name,
-            TEMPURL_DURATION,
+            self.key_cache_time,
             self.tempurl_key)
 
         self.assertIn(
@@ -516,14 +494,10 @@ class TempUrl(ObjectStorageFixture):
             tempurl_data.keys(),
             msg='expires was not in the created tempurl')
 
-        self.client.auth_off()
-
         params = {'temp_url_sig': tempurl_data['signature'],
                   'temp_url_expires': tempurl_data['expires'],
                   'filename': object_name_override}
-        response = self.client.get(tempurl_data['target_url'], params=params)
-
-        self.client.auth_on()
+        response = self.http.get(tempurl_data['target_url'], params=params)
 
         self.assertIn(
             'content-disposition',
@@ -536,9 +510,6 @@ class TempUrl(ObjectStorageFixture):
 
     @ObjectStorageFixture.required_middleware(['swift#tempurl'])
     def test_tempurl_object_delete(self):
-        """
-        Note: -d configured=true will enable this test
-        """
         container_name = self.create_temp_container(BASE_CONTAINER_NAME)
 
         headers = {'Content-Length': self.content_length,
@@ -553,7 +524,7 @@ class TempUrl(ObjectStorageFixture):
             'DELETE',
             container_name,
             self.object_name,
-            TEMPURL_DURATION,
+            self.key_cache_time,
             self.tempurl_key)
 
         self.assertIn(
@@ -569,21 +540,106 @@ class TempUrl(ObjectStorageFixture):
             tempurl_data.keys(),
             msg='expires was not in the created tempurl')
 
-        self.client.auth_off()
-
         params = {'temp_url_sig': tempurl_data['signature'],
                   'temp_url_expires': tempurl_data['expires']}
-        delete_response = self.client.delete(
+        delete_response = self.http.delete(
             tempurl_data['target_url'],
             params=params)
-
-        self.client.auth_on()
 
         self.assertEqual(delete_response.status_code, 204)
 
         get_response = self.client.get_object(container_name, self.object_name)
 
         self.assertEqual(get_response.status_code, 404)
+
+    @skipUnless(get_value('slow') == 'true', 'sleep for key change')
+    @ObjectStorageFixture.required_middleware(['swift#tempurl'])
+    def test_object_retrieval_with_two_tempurl_keys(self):
+        time.sleep(
+            float(self.objectstorage_api_config.tempurl_key_cache_time))
+
+        container_name = self.create_temp_container('temp_url')
+
+        headers = {'Content-Length': self.content_length,
+                   'Content-Type': CONTENT_TYPE_TEXT}
+        self.client.create_object(
+            container_name,
+            self.object_name,
+            headers=headers,
+            data=self.object_data)
+
+        foo_key = '{0}_foo'.format(self.behaviors.VALID_TEMPURL_KEY)
+        bar_key = '{0}_bar'.format(self.behaviors.VALID_TEMPURL_KEY)
+
+        headers = {'X-Account-Meta-Temp-URL-Key': foo_key}
+        set_foo_key_response = self.client.set_temp_url_key(headers=headers)
+
+        self.assertTrue(set_foo_key_response.ok)
+
+        headers = {'X-Account-Meta-Temp-URL-Key-2': bar_key}
+        set_bar_key_response = self.client.set_temp_url_key(headers=headers)
+
+        self.assertTrue(set_bar_key_response.ok)
+
+        foo_data = self.client.create_temp_url(
+            'GET',
+            container_name,
+            self.object_name,
+            self.key_cache_time,
+            foo_key)
+
+        self.assertIn(
+            'target_url',
+            foo_data.keys(),
+            msg='target_url was not in the created tempurl')
+        self.assertIn(
+            'signature',
+            foo_data.keys(),
+            msg='signature was not in the created tempurl')
+        self.assertIn(
+            'expires',
+            foo_data.keys(),
+            msg='expires was not in the created tempurl')
+
+        bar_data = self.client.create_temp_url(
+            'GET',
+            container_name,
+            self.object_name,
+            self.key_cache_time,
+            bar_key)
+
+        self.assertIn(
+            'target_url',
+            bar_data.keys(),
+            msg='target_url was not in the created tempurl')
+        self.assertIn(
+            'signature',
+            bar_data.keys(),
+            msg='signature was not in the created tempurl')
+        self.assertIn(
+            'expires',
+            bar_data.keys(),
+            msg='expires was not in the created tempurl')
+
+        params = {'temp_url_sig': foo_data['signature'],
+                  'temp_url_expires': foo_data['expires']}
+        foo_get_response = self.http.get(
+            foo_data['target_url'], params=params)
+
+        self.assertEqual(
+            self.object_data,
+            foo_get_response.content,
+            msg='object data was changed')
+
+        params = {'temp_url_sig': bar_data['signature'],
+                  'temp_url_expires': bar_data['expires']}
+        bar_get_response = self.http.get(
+            bar_data['target_url'], params=params)
+
+        self.assertEqual(
+            self.object_data,
+            bar_get_response.content,
+            msg='object data was changed')
 
     @ObjectStorageFixture.required_middleware(['swift#tempurl'])
     def test_tempurl_expiration(self):
@@ -606,7 +662,7 @@ class TempUrl(ObjectStorageFixture):
             'GET',
             container_name,
             self.object_name,
-            TEMPURL_DURATION,
+            self.key_cache_time,
             self.tempurl_key)
 
         self.assertIn(
@@ -622,11 +678,9 @@ class TempUrl(ObjectStorageFixture):
             tempurl_data.keys(),
             msg='expires was not in the created tempurl')
 
-        self.client.auth_off()
-
         params = {'temp_url_sig': tempurl_data['signature'],
                   'temp_url_expires': tempurl_data['expires']}
-        response = self.client.get(tempurl_data['target_url'], params=params)
+        response = self.http.get(tempurl_data['target_url'], params=params)
 
         expected_disposition = 'attachment; filename="{0}"'.format(
             self.object_name)
@@ -646,13 +700,11 @@ class TempUrl(ObjectStorageFixture):
             response.content, self.object_data,
             'object should contain correct data.')
 
-        time.sleep(TEMPURL_DURATION + 10)
+        time.sleep(self.key_cache_time + 10)
 
-        response = self.client.get(tempurl_data['target_url'], params=params)
+        response = self.http.get(tempurl_data['target_url'], params=params)
 
         self.assertEqual(
             response.status_code,
             401,
             msg='tempurl did not expire')
-
-        self.client.auth_on()
