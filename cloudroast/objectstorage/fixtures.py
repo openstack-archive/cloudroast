@@ -131,13 +131,14 @@ class ObjectStorageFixture(BaseTestFixture):
     def setUpClass(cls):
         super(ObjectStorageFixture, cls).setUpClass()
 
-        auth_data = cls.get_auth_data()
-        storage_url = auth_data['storage_url']
-        auth_token = auth_data['auth_token']
+        cls.auth_data = cls.get_auth_data()
+        storage_url = cls.auth_data['storage_url']
+        auth_token = cls.auth_data['auth_token']
 
-        objectstorage_api_config = ObjectStorageAPIConfig()
-        cls.base_container_name = objectstorage_api_config.base_container_name
-        cls.base_object_name = objectstorage_api_config.base_object_name
+        cls.objectstorage_api_config = ObjectStorageAPIConfig()
+        cls.base_container_name = (
+            cls.objectstorage_api_config.base_container_name)
+        cls.base_object_name = cls.objectstorage_api_config.base_object_name
 
         cls.client = ObjectStorageAPIClient(storage_url, auth_token)
         cls.behaviors = ObjectStorageAPI_Behaviors(client=cls.client)

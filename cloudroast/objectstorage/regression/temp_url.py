@@ -700,7 +700,7 @@ class TempUrl(ObjectStorageFixture):
             response.content, self.object_data,
             'object should contain correct data.')
 
-        time.sleep(self.key_cache_time + 10)
+        time.sleep(int(self.key_cache_time) + 10)
 
         response = self.http.get(tempurl_data['target_url'], params=params)
 
