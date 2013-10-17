@@ -143,7 +143,7 @@ class ObjectStorageFixture(BaseTestFixture):
         cls.client = ObjectStorageAPIClient(storage_url, auth_token)
         cls.behaviors = ObjectStorageAPI_Behaviors(client=cls.client)
 
-    def create_temp_container(self, descriptor=''):
+    def create_temp_container(self, descriptor='', headers=None):
         """
         Creates a temporary container, which will be deleted upon cleanup.
 
@@ -152,6 +152,6 @@ class ObjectStorageFixture(BaseTestFixture):
         """
         container_name = \
             self.behaviors.generate_unique_container_name(descriptor)
-        self.client.create_container(container_name)
+        self.client.create_container(container_name, headers=headers)
         self.addCleanup(self.client.force_delete_containers, [container_name])
         return container_name
