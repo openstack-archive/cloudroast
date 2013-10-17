@@ -14,6 +14,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+from cloudcafe.blockstorage.v1.volumes_api.client import VolumesClient
+from cloudcafe.blockstorage.v1.config import BlockStorageConfig
+from cloudcafe.blockstorage.v1.volumes_api.behaviors import \
+    VolumesAPI_Behaviors
+from cloudcafe.blockstorage.v1.volumes_api.config import VolumesAPIConfig
 from cafe.drivers.unittest.datasets import DatasetList
 from cafe.drivers.unittest.fixtures import BaseTestFixture
 from cloudcafe.common.resources import ResourcePool
@@ -50,6 +55,8 @@ from cloudcafe.auth.provider import AuthProvider
 from cloudcafe.compute.flavors_api.config import FlavorsConfig
 from cloudcafe.compute.images_api.config import ImagesConfig
 from cloudcafe.compute.servers_api.config import ServersConfig
+from cloudcafe.compute.volume_attachments_api.volume_attachments_client \
+    import VolumeAttachmentsAPIClient
 
 
 class ComputeFixture(BaseTestFixture):
@@ -75,13 +82,13 @@ class ComputeFixture(BaseTestFixture):
 
         cls.endpoint_config = UserAuthConfig()
         cls.user_config = UserConfig()
-        access_data = AuthProvider.get_access_data(cls.endpoint_config,
-                                                   cls.user_config)
+        cls.access_data = AuthProvider.get_access_data(cls.endpoint_config,
+                                                       cls.user_config)
         # If authentication fails, halt
-        if access_data is None:
+        if cls.access_data is None:
             cls.assertClassSetupFailure('Authentication failed.')
 
-        compute_service = access_data.get_service(
+        compute_service = cls.access_data.get_service(
             cls.compute_endpoint.compute_endpoint_name)
         url = compute_service.get_endpoint(
             cls.compute_endpoint.region).public_url
@@ -90,7 +97,7 @@ class ComputeFixture(BaseTestFixture):
             url = '{0}/{1}'.format(cls.compute_endpoint.compute_endpoint_url,
                                    cls.user_config.tenant_id)
 
-        client_args = {'url': url, 'auth_token': access_data.token.id_,
+        client_args = {'url': url, 'auth_token': cls.access_data.token.id_,
                        'serialize_format': cls.marshalling.serializer,
                        'deserialize_format': cls.marshalling.deserializer}
 
@@ -101,6 +108,11 @@ class ComputeFixture(BaseTestFixture):
         cls.security_groups_client = SecurityGroupsClient(**client_args)
         cls.security_group_rule_client = SecurityGroupRulesClient(
             **client_args)
+        cls.volume_attachments_client = VolumeAttachmentsAPIClient(
+            url=url, auth_token=cls.access_data.token.id_,
+            tenant_id=cls.user_config.tenant_id,
+            serialize_format=cls.marshalling.serializer,
+            deserialize_format=cls.marshalling.deserializer)
         cls.rescue_client = RescueClient(**client_args)
         cls.vnc_client = VncConsoleClient(**client_args)
         cls.console_output_client = ConsoleOutputClient(**client_args)
@@ -272,6 +284,31 @@ class ComputeAdminFixture(ComputeFixture):
         super(ComputeAdminFixture, cls).tearDownClass()
         cls.flavors_client.delete_exception_handler(ExceptionHandler())
         cls.resources.release()
+
+
+class BlockstorageIntegrationFixture(ComputeFixture):
+
+    @classmethod
+    def setUpClass(cls):
+        super(BlockstorageIntegrationFixture, cls).setUpClass()
+
+        block_config = BlockStorageConfig()
+        volumes_config = VolumesAPIConfig()
+        cls.poll_frequency = volumes_config.volume_status_poll_frequency
+        cls.volume_status_timeout = volumes_config.volume_create_max_timeout
+        cls.volume_size = int(volumes_config.min_volume_size)
+        cls.volume_type = volumes_config.default_volume_type
+
+        block_service = cls.access_data.get_service(
+            block_config.identity_service_name)
+        block_url = block_service.get_endpoint(
+            block_config.region).public_url
+        cls.storage_client = VolumesClient(
+            block_url, cls.access_data.token.id_,
+            cls.marshalling.serializer, cls.marshalling.deserializer)
+        cls.storage_behavior = VolumesAPI_Behaviors(
+            volumes_api_client=cls.storage_client,
+            volumes_api_config=volumes_config)
 
 
 class FlavorIdNegativeDataList(DatasetList):
