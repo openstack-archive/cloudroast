@@ -64,7 +64,7 @@ class ConfigDriveTest(ComputeFixture):
             path=self.config_drive_config.base_path_to_mount)
         self.assertEqual(dir_creation, '',
                          msg="Directory creation was successful")
-        remote_client.mount_file_to_destination_directory(
+        remote_client.mount_disk(
             source_path=self.config_drive_config.mount_source_path,
             destination_path=self.config_drive_config.base_path_to_mount)
 
@@ -98,6 +98,6 @@ class ConfigDriveTest(ComputeFixture):
             source_path=self.config_drive_config.mount_source_path,
             destination_path=self.config_drive_config.base_path_to_mount)
         user_data = remote_client.get_file_details(
-            filepath=self.user_data_filepath).content
+            file_path=self.user_data_filepath).content
         self.assertEqual(user_data, self.user_data_contents,
                          msg="Userdata does not match expected one")
