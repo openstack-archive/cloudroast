@@ -14,13 +14,23 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import unittest2 as unittest
+
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.compute.common.types import NovaServerStatusTypes
+from cloudcafe.compute.flavors_api.config import FlavorsConfig
 from cloudroast.compute.fixtures import ComputeFixture
 
+flavors_config = FlavorsConfig()
+resize_enabled = flavors_config.resize_enabled
 
+@unittest.skipUnless(
+    resize_enabled, 'Resize not enabled for this flavor class.')
 class ResizeServerUpRevertTests(ComputeFixture):
+
+    flavors_config = FlavorsConfig()
+    resize_enabled = flavors_config.resize_enabled
 
     @classmethod
     def setUpClass(cls):
@@ -61,7 +71,7 @@ class ResizeServerUpRevertTests(ComputeFixture):
 
         remote_client = self.server_behaviors.get_remote_instance_client(
             self.server, config=self.servers_config, key=self.key.private_key)
-        server_actual_vcpus = remote_client.get_number_of_vcpus()
+        server_actual_vcpus = remote_client.get_number_of_cpus()
         self.assertEqual(
             server_actual_vcpus, self.flavor.vcpus,
             msg="Expected number of vcpus to be {0}, was {1}.".format(
@@ -72,7 +82,7 @@ class ResizeServerUpRevertTests(ComputeFixture):
         """Verify the size of the virtual disk matches the original flavor"""
         remote_client = self.server_behaviors.get_remote_instance_client(
             self.server, config=self.servers_config, key=self.key.private_key)
-        disk_size = remote_client.get_disk_size_in_gb(
+        disk_size = remote_client.get_disk_size(
             self.servers_config.instance_disk_path)
         self.assertEqual(disk_size, self.flavor.disk,
                          msg="Expected disk to be {0} GB, was {1} GB".format(
@@ -83,7 +93,7 @@ class ResizeServerUpRevertTests(ComputeFixture):
         """Tests that we can log into the server after reverting the resize"""
         remote_client = self.server_behaviors.get_remote_instance_client(
             self.server, config=self.servers_config, key=self.key.private_key)
-        self.assertTrue(remote_client.can_connect_to_public_ip(),
+        self.assertTrue(remote_client.can_authenticate(),
                         msg="Cannot connect to server using public ip")
 
     @tags(type='smoke', net='yes')
@@ -93,7 +103,7 @@ class ResizeServerUpRevertTests(ComputeFixture):
         remote_instance = self.server_behaviors.get_remote_instance_client(
             self.server, self.servers_config, key=self.key.private_key)
         lower_limit = int(self.flavor.ram) - (int(self.flavor.ram) * .1)
-        server_ram_size = int(remote_instance.get_ram_size_in_mb())
+        server_ram_size = int(remote_instance.get_allocated_ram())
         self.assertTrue((int(self.flavor.ram) == server_ram_size
                          or lower_limit <= server_ram_size),
                         msg='Ram size after revert-resize did not match.'
