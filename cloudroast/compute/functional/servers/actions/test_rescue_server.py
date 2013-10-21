@@ -33,6 +33,14 @@ class ServerRescueTests(ComputeFixture):
     @tags(type='smoke', net='yes')
     def test_rescue_and_unrescue_server_test(self):
         """Verify that a server can enter and exit rescue mode"""
+
+        # Get the number of disks the server has
+        remote_client = self.server_behaviors.get_remote_instance_client(
+            self.server, self.servers_config,
+            auth_strategy=InstanceAuthStrategies.PASSWORD)
+        disks = remote_client.get_all_disks()
+        original_num_disks = len(disks.keys())
+
         rescue_response = self.rescue_client.rescue(self.server.id)
         changed_password = rescue_response.entity.admin_pass
         self.assertEqual(rescue_response.status_code, 200)
@@ -45,12 +53,12 @@ class ServerRescueTests(ComputeFixture):
         rescue_server = rescue_server_response.entity
         rescue_server.admin_pass = changed_password
 
-        # Verify if hard drives are attached
+        # Verify if original disks plus rescue disk are attached
         remote_client = self.server_behaviors.get_remote_instance_client(
             rescue_server, self.servers_config,
             auth_strategy=InstanceAuthStrategies.PASSWORD)
-        partitions = remote_client.get_partition_details()
-        self.assertEqual(3, len(partitions))
+        disks = remote_client.get_all_disks()
+        self.assertEqual(len(disks.keys()), original_num_disks + 1)
 
         # Exit rescue mode
         unrescue_response = self.rescue_client.unrescue(self.server.id)
@@ -59,7 +67,5 @@ class ServerRescueTests(ComputeFixture):
         remote_client = self.server_behaviors.get_remote_instance_client(
             self.server, self.servers_config,
             auth_strategy=InstanceAuthStrategies.PASSWORD)
-        partitions = remote_client.get_partition_details()
-        self.assertEqual(
-            2, len(partitions),
-            msg="The number of partitions after unrescue were not two.")
+        disks = remote_client.get_all_disks()
+        self.assertEqual(len(disks.keys()), original_num_disks)
