@@ -14,6 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import sys
+
 from cloudcafe.blockstorage.v1.volumes_api.client import VolumesClient
 from cloudcafe.blockstorage.v1.config import BlockStorageConfig
 from cloudcafe.blockstorage.v1.volumes_api.behaviors import \
@@ -79,6 +81,10 @@ class ComputeFixture(BaseTestFixture):
         cls.image_ref = cls.images_config.primary_image
         cls.image_ref_alt = cls.images_config.secondary_image
         cls.disk_path = cls.servers_config.instance_disk_path
+        cls.split_ephemeral_disk_enabled = \
+            cls.servers_config.split_ephemeral_disk_enabled
+        cls.ephemeral_disk_max_size = \
+            cls.servers_config.ephemeral_disk_max_size
 
         cls.endpoint_config = UserAuthConfig()
         cls.user_config = UserConfig()
@@ -169,6 +175,37 @@ class ComputeFixture(BaseTestFixture):
                                              action.request_id,
                                              request_id))
         self.assertIsNone(action.message)
+
+    def _verify_ephemeral_disk_size(self, disks=None, flavor=None,
+                                    split_ephemeral_disk_enabled=False,
+                                    ephemeral_disk_max_size=sys.maxint):
+
+        ephemeral_disk_size = flavor.ephemeral_disk
+
+        # If ephemeral disk splitting is enabled, determine the number of
+        # ephemeral disks that should be present
+        if split_ephemeral_disk_enabled:
+            instance_ephemeral_disks = len(disks.keys())
+            self.assertEqual(
+                instance_ephemeral_disks,
+                int(flavor.extra_specs.get('number_of_data_disks')))
+
+            # If the ephemeral disk size exceeds the max size,
+            # set the ephemeral_disk_size to the maximum ephemeral disk size
+            ephemeral_disk_size = min(ephemeral_disk_max_size,
+                                      ephemeral_disk_size)
+
+        # Validate the size of each disk
+        for disk, size in disks.iteritems():
+            self.assertEqual(size, ephemeral_disk_size)
+
+    def _format_and_mount_disks(self, remote_client, disks):
+        for disk in disks.keys():
+            remote_client.format_disk(filesystem_type='ext3', disk=disk)
+            mount_point = '/mnt/{name}'.format(name=rand_name('disk'))
+            remote_client.create_directory(mount_point)
+            remote_client.mount_disk(disk, mount_point)
+
 
 
 class CreateServerFixture(ComputeFixture):

@@ -66,7 +66,7 @@ class ChangeServerPasswordTests(CreateServerFixture):
             auth_strategy=InstanceAuthStrategies.PASSWORD)
 
         self.assertTrue(
-            remote_client.can_connect_to_public_ip(),
+            remote_client.can_authenticate(),
             "Could not connect to server (%s) using new admin password %s" %
             (public_address, self.new_password))
 
