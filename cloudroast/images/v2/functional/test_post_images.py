@@ -37,8 +37,8 @@ class PostImagesTest(ImagesV2Fixture):
         image_name = rand_name('test_image_')
 
         response = self.api_client.create_image(
-            name=image_name, container_format=ImageDiskFormat.RAW,
-            disk_format=ImageContainerFormat.BARE)
+            name=image_name, container_format=ImageContainerFormat.BARE,
+            disk_format=ImageDiskFormat.RAW)
 
         self.assertEqual(response.status_code, 201)
         image = response.entity
@@ -161,3 +161,35 @@ class PostImagesTest(ImagesV2Fixture):
             container_format='unacceptable')
 
         self.assertEqual(response.status_code, 400)
+
+    @tags(type='positive')
+    def test_register_image_and_add_additional_property(self):
+        """
+        Register a VM image and add additional property to the registered
+        image.
+
+        1. Register an image.
+        2. Verify the response code is 201
+        3. Add a new property to the image
+        4. Verify the response code is 200
+        5. Verify that the response body contains the correct properties.
+        """
+
+        image_name = rand_name('image-')
+        response = self.api_client.create_image(
+            name=image_name, container_format=ImageContainerFormat.BARE,
+            disk_format=ImageDiskFormat.RAW)
+
+        self.assertEqual(response.status_code, 201)
+        image = response.entity
+
+        additional_property = rand_name("additional_property-")
+        value_of_new_property = rand_name("value_of_new_property-")
+
+        response = self.api_client.update_image(
+            image_id=image.id_,
+            add={additional_property: value_of_new_property})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(additional_property, response.content)
+        self.assertIn(value_of_new_property, response.content)
