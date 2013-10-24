@@ -20,7 +20,6 @@ from cloudroast.images.v2.fixtures import ImagesV2Fixture
 
 
 class PatchImageTest(ImagesV2Fixture):
-
     @tags(type='smoke')
     def test_update_image_name(self):
         """Update an image's name property.
@@ -104,16 +103,35 @@ class PatchImageTest(ImagesV2Fixture):
         self.assertNotIn(value_of_new_property, response.content)
 
     @tags(type='positive')
-    def test_remove_image_property(self):
+    def test_remove_additional_image_property(self):
         """
-        Remove an image property.
+        Remove an additional image property.
 
-        1. Update image to remove a given property.
-        2. Verify response code is 204
-        3. Verify response body contains an image with correct properties
-        and the removed property is missing
+        1. Add new property to image
+        2. Verify response code is 200
+        3. Verify response content contains a new property and its value
+        4. Remove added image property
+        5. Verify response code is 200
         """
-        self.assertTrue(False, msg="Not Yet Implemented")
+
+        image_id = self.register_basic_image()
+        additional_property = rand_name("additional_property-")
+        value_of_new_property = rand_name("value_of_new_property-")
+        response = self.api_client.update_image(
+            image_id=image_id,
+            add={additional_property: value_of_new_property})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(additional_property, response.content)
+        self.assertIn(value_of_new_property, response.content)
+
+        response = self.api_client.update_image(
+            image_id=image_id,
+            remove={additional_property: value_of_new_property})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn(additional_property, response.content)
+        self.assertNotIn(value_of_new_property, response.content)
 
     @tags(type='positive')
     def test_update_image_with_optional_properties(self):
@@ -143,9 +161,14 @@ class PatchImageTest(ImagesV2Fixture):
         Try to update an image by adding status property to it.
 
         1. Update image's status by adding new status property to it
-        2. Verify response code is 400
+        2. Verify response code is 403
         """
-        self.assertTrue(False, msg="Not Yet Implemented")
+
+        image_id = self.register_basic_image()
+        response = self.api_client.update_image(
+            image_id=image_id, add={"status": rand_name("status-")})
+
+        self.assertEqual(response.status_code, 403)
 
     @tags(type='negative')
     def test_update_image_remove_status(self):
@@ -153,8 +176,14 @@ class PatchImageTest(ImagesV2Fixture):
         Try to remove the status property from image.
 
         1. Update image's status, by removing it.
-        2. Verify the response code is 400
+        2. Verify the response code is 403
         """
+
+        image_id = self.register_basic_image()
+        response = self.api_client.update_image(
+            image_id=image_id, remove={"status": rand_name("remove")})
+
+        self.assertEqual(response.status_code, 403)
 
     @tags(type='negative')
     def test_update_image_replace_status(self):
@@ -162,9 +191,15 @@ class PatchImageTest(ImagesV2Fixture):
         Try to replace the status property of an image.
 
         1. Update image's status, by replacing it.
-        2. Verify the response code is 400
+        2. Verify the response code is 403
         """
-        self.assertTrue(False, msg="Not Yet Implemented")
+
+        image_id = self.register_basic_image()
+
+        response = self.api_client.update_image(
+            image_id=image_id, replace={"status": rand_name("replace")})
+
+        self.assertEqual(response.status_code, 403)
 
     @tags(type='negative')
     def test_update_image_using_http_method_put(self):
