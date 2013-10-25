@@ -35,7 +35,7 @@ class PutImageMembersTest(ImagesV2Fixture):
         5. Verify that the member status has been updated to 'accepted'
         """
 
-        image_id = self.register_private_image()
+        image_id = self.images_behavior.register_private_image()
         member_id = rand_name('member_id_')
         response = self.api_client.add_member(image_id=image_id,
                                               member_id=member_id)
