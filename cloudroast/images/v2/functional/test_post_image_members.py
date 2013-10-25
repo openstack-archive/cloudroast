@@ -33,7 +33,7 @@ class PostImageMembersTest(ImagesV2Fixture):
         added member.
         """
 
-        image_id = self.register_private_image()
+        image_id = self.images_behavior.register_private_image()
         response = self.api_client.add_member(image_id, rand_name('member_'))
 
         self.assertEqual(response.status_code, 200)
