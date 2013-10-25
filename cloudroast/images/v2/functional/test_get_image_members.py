@@ -15,8 +15,9 @@ limitations under the License.
 """
 
 from cafe.drivers.unittest.decorators import tags
-from cloudroast.images.v2.fixtures import ImagesV2Fixture
 from cloudcafe.common.tools.datagen import rand_name
+from cloudcafe.images.common.types import ImageVisibility
+from cloudroast.images.v2.fixtures import ImagesV2Fixture
 
 
 class GetImageMembersTest(ImagesV2Fixture):
@@ -35,7 +36,7 @@ class GetImageMembersTest(ImagesV2Fixture):
         8. Verify the response body contains member1 and member2
         """
 
-        image_id = self.register_private_image()
+        image_id = self.images_behavior.register_private_image()
 
         member1_name = rand_name("member_")
         response = self.api_client.add_member(image_id, member1_name)
@@ -101,7 +102,8 @@ class GetImageMembersTest(ImagesV2Fixture):
         1. Try get members list for an image
         2. Verify the response code is 404
         """
-        response = self.admin_api_client.create_image(visibility='private')
+        response = self.admin_api_client.create_image(
+            visibility=ImageVisibility.PRIVATE)
         image_id = response.entity.id_
         self.assertEquals(response.status_code, 201)
 
