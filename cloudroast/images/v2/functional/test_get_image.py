@@ -31,7 +31,7 @@ class GetImageTest(ImagesV2Fixture):
          values.
         """
 
-        image_id = self.register_basic_image()
+        image_id = self.images_behavior.register_basic_image()
         response = self.api_client.get_image(image_id)
 
         self.assertEqual(response.status_code, 200)
