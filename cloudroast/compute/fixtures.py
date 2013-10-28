@@ -49,6 +49,7 @@ from cloudcafe.compute.extensions.rescue_api.client import RescueClient
 from cloudcafe.compute.extensions.config_drive.behaviors import \
     ConfigDriveBehaviors
 from cloudcafe.compute.extensions.config_drive.config import ConfigDriveConfig
+from cloudcafe.compute.extensions.config_drive.config import CloudInitConfig
 from cloudcafe.compute.servers_api.behaviors import ServerBehaviors
 from cloudcafe.compute.images_api.behaviors import ImageBehaviors
 from cloudcafe.auth.config import UserAuthConfig, UserConfig, \
@@ -75,6 +76,7 @@ class ComputeFixture(BaseTestFixture):
         cls.compute_endpoint = ComputeEndpointConfig()
         cls.marshalling = MarshallingConfig()
         cls.config_drive_config = ConfigDriveConfig()
+        cls.cloud_init_config = CloudInitConfig()
 
         cls.flavor_ref = cls.flavors_config.primary_flavor
         cls.flavor_ref_alt = cls.flavors_config.secondary_flavor
