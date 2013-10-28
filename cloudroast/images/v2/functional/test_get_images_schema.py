@@ -21,7 +21,7 @@ from cloudroast.images.v2.fixtures import ImagesV2Fixture
 class GetImagesSchemaTest(ImagesV2Fixture):
     """ Test the retrieval of schema details for images. """
 
-    @tags(type='smoke')
+    @tags(type='test')
     def test_get_image_schema(self):
         """
         Get schema that represents an image entity.
@@ -32,6 +32,8 @@ class GetImagesSchemaTest(ImagesV2Fixture):
         """
 
         response = self.api_client.get_image_schema()
+        
+        print response
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.content, self.image_schema_json)
