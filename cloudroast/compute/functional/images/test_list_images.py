@@ -16,6 +16,7 @@ limitations under the License.
 
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.common.tools.datagen import rand_name
+from cloudcafe.compute.common.types import NovaServerStatusTypes
 from cloudcafe.compute.common.types import NovaImageStatusTypes
 from cloudroast.compute.fixtures import ComputeFixture
 
@@ -25,33 +26,49 @@ class ImageListTest(ComputeFixture):
     @classmethod
     def setUpClass(cls):
         super(ImageListTest, cls).setUpClass()
-        cls.server1 = cls.server_behaviors.create_active_server()
-        cls.server2 = cls.server_behaviors.create_active_server()
-        cls.server1_id = cls.server1.entity.id
-        cls.server2_id = cls.server2.entity.id
-        cls.resources.add(cls.server1_id, cls.servers_client.delete_server)
-        cls.resources.add(cls.server2_id, cls.servers_client.delete_server)
+
+        cls.name = rand_name("server")
+        first_response = cls.servers_client.create_server(
+            name=cls.name, image_ref=cls.image_ref,
+            flavor_ref=cls.flavor_ref).entity
+        cls.resources.add(first_response.id,
+                          cls.servers_client.delete_server)
+
+        cls.name = rand_name("server")
+        second_response = cls.servers_client.create_server(
+            name=cls.name, image_ref=cls.image_ref,
+            flavor_ref=cls.flavor_ref).entity
+        cls.resources.add(second_response.id,
+                          cls.servers_client.delete_server)
+
+        cls.server1 = cls.server_behaviors.wait_for_server_status(
+            first_response.id, NovaServerStatusTypes.ACTIVE).entity
+        cls.server2 = cls.server_behaviors.wait_for_server_status(
+            second_response.id, NovaServerStatusTypes.ACTIVE).entity
+
+        cls.server1_id = cls.server1.id
+        cls.server2_id = cls.server2.id
 
         image1_name = rand_name('testimage')
         image1_resp = cls.servers_client.create_image(cls.server1_id,
                                                       image1_name)
         assert image1_resp.status_code == 202
         cls.image1_id = cls.parse_image_id(image1_resp)
-        cls.image_behaviors.wait_for_image_status(
-            cls.image1_id, NovaImageStatusTypes.ACTIVE)
+        cls.resources.add(cls.image1_id, cls.images_client.delete_image)
 
         image2_name = rand_name('testimage')
         image2_resp = cls.servers_client.create_image(cls.server2_id,
                                                       image2_name)
         assert image2_resp.status_code == 202
         cls.image2_id = cls.parse_image_id(image2_resp)
+        cls.resources.add(cls.image2_id, cls.images_client.delete_image)
+
+        cls.image_behaviors.wait_for_image_status(
+            cls.image1_id, NovaImageStatusTypes.ACTIVE)
         cls.image_behaviors.wait_for_image_status(
             cls.image2_id, NovaImageStatusTypes.ACTIVE)
-
         cls.image_1 = cls.images_client.get_image(cls.image1_id).entity
         cls.image_2 = cls.images_client.get_image(cls.image2_id).entity
-        cls.resources.add(cls.image1_id, cls.images_client.delete_image)
-        cls.resources.add(cls.image2_id, cls.images_client.delete_image)
 
     @tags(type='smoke', net='no')
     def test_list_images_with_detail(self):

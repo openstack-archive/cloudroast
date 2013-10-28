@@ -15,6 +15,8 @@ limitations under the License.
 """
 
 from cafe.drivers.unittest.decorators import tags
+from cloudcafe.common.tools.datagen import rand_name
+from cloudcafe.compute.common.types import NovaServerStatusTypes
 from cloudroast.compute.fixtures import ComputeFixture
 
 
@@ -23,23 +25,34 @@ class ServerListTest(ComputeFixture):
     @classmethod
     def setUpClass(cls):
         super(ServerListTest, cls).setUpClass()
-        # Creation of 3 servers needed for the tests
-        active_server_response = cls.server_behaviors.create_active_server()
-        cls.server = active_server_response.entity
-        cls.resources.add(cls.server.id,
+
+        cls.name = rand_name("server")
+        first_response = cls.servers_client.create_server(
+            name=cls.name, image_ref=cls.image_ref,
+            flavor_ref=cls.flavor_ref).entity
+        cls.resources.add(first_response.id,
                           cls.servers_client.delete_server)
 
-        active_server_response = cls.server_behaviors.create_active_server()
-        cls.server_second = active_server_response.entity
-        cls.resources.add(cls.server_second.id,
+        cls.name = rand_name("server")
+        second_response = cls.servers_client.create_server(
+            name=cls.name, image_ref=cls.image_ref,
+            flavor_ref=cls.flavor_ref).entity
+        cls.resources.add(second_response.id,
                           cls.servers_client.delete_server)
 
-        active_server_response = cls.server_behaviors.create_active_server(
-            image_ref=cls.image_ref_alt,
-            flavor_ref=cls.flavor_ref_alt)
-        cls.server_third = active_server_response.entity
-        cls.resources.add(cls.server_third.id,
+        cls.name = rand_name("server")
+        third_response = cls.servers_client.create_server(
+            name=cls.name, image_ref=cls.image_ref_alt,
+            flavor_ref=cls.flavor_ref_alt).entity
+        cls.resources.add(third_response.id,
                           cls.servers_client.delete_server)
+
+        cls.server = cls.server_behaviors.wait_for_server_status(
+            first_response.id, NovaServerStatusTypes.ACTIVE).entity
+        cls.second_server = cls.server_behaviors.wait_for_server_status(
+            second_response.id, NovaServerStatusTypes.ACTIVE).entity
+        cls.third_server = cls.server_behaviors.wait_for_server_status(
+            third_response.id, NovaServerStatusTypes.ACTIVE).entity
 
     @tags(type='smoke', net='no')
     def test_get_server(self):
@@ -61,8 +74,8 @@ class ServerListTest(ComputeFixture):
         servers_list = list_servers_response.entity
         self.assertEqual(200, list_servers_response.status_code)
         self.assertIn(self.server.min_details(), servers_list)
-        self.assertIn(self.server_second.min_details(), servers_list)
-        self.assertIn(self.server_third.min_details(), servers_list)
+        self.assertIn(self.second_server.min_details(), servers_list)
+        self.assertIn(self.third_server.min_details(), servers_list)
 
     @tags(type='smoke', net='no')
     def test_list_servers_with_detail(self):
@@ -74,8 +87,8 @@ class ServerListTest(ComputeFixture):
         for i in list_servers_detail:
             servers_list.append(i.id)
         self.assertIn(self.server.id, servers_list)
-        self.assertIn(self.server_second.id, servers_list)
-        self.assertIn(self.server_third.id, servers_list)
+        self.assertIn(self.second_server.id, servers_list)
+        self.assertIn(self.third_server.id, servers_list)
 
     @tags(type='positive', net='no')
     def test_list_server_details_using_marker(self):
@@ -126,8 +139,8 @@ class ServerListTest(ComputeFixture):
         self.assertEqual(200, list_servers_response.status_code)
 
         self.assertIn(self.server.min_details(), servers_list)
-        self.assertIn(self.server_second.min_details(), servers_list)
-        self.assertNotIn(self.server_third.min_details(), servers_list)
+        self.assertIn(self.second_server.min_details(), servers_list)
+        self.assertNotIn(self.third_server.min_details(), servers_list)
 
     @tags(type='positive', net='no')
     def test_list_servers_filter_by_flavor(self):
@@ -138,8 +151,8 @@ class ServerListTest(ComputeFixture):
         self.assertEqual(200, list_servers_response.status_code)
 
         self.assertNotIn(self.server.min_details(), servers_list)
-        self.assertNotIn(self.server_second.min_details(), servers_list)
-        self.assertIn(self.server_third.min_details(), servers_list)
+        self.assertNotIn(self.second_server.min_details(), servers_list)
+        self.assertIn(self.third_server.min_details(), servers_list)
 
     @tags(type='positive', net='no')
     def test_list_servers_filter_by_server_name(self):
@@ -149,8 +162,8 @@ class ServerListTest(ComputeFixture):
         servers_list = list_servers_response.entity
         self.assertEqual(200, list_servers_response.status_code)
         self.assertIn(self.server.min_details(), servers_list)
-        self.assertNotIn(self.server_second.min_details(), servers_list)
-        self.assertNotIn(self.server_third.min_details(), servers_list)
+        self.assertNotIn(self.second_server.min_details(), servers_list)
+        self.assertNotIn(self.third_server.min_details(), servers_list)
 
     @tags(type='positive', net='no')
     def test_list_servers_filter_by_server_status(self):
@@ -160,22 +173,22 @@ class ServerListTest(ComputeFixture):
         list_servers = list_servers_response.entity
         self.assertEqual(200, list_servers_response.status_code)
         self.assertIn(self.server.min_details(), list_servers)
-        self.assertIn(self.server_second.min_details(), list_servers)
-        self.assertIn(self.server_third.min_details(), list_servers)
+        self.assertIn(self.second_server.min_details(), list_servers)
+        self.assertIn(self.third_server.min_details(), list_servers)
 
     @tags(type='positive', net='no')
     def test_list_servers_filter_by_changes_since(self):
         """Filter the list of servers by changes-since"""
-        change_time = self.server_second.created
-        params = change_time
+        params = self.server.created
+
         servers = self.servers_client.list_servers(changes_since=params)
         self.assertEqual(200, servers.status_code)
         servers_ids_list = []
         for i in servers.entity:
             servers_ids_list.append(i.id)
-        self.assertNotIn(self.server.id, servers_ids_list)
-        self.assertIn(self.server_second.id, servers_ids_list)
-        self.assertIn(self.server_third.id, servers_ids_list)
+        self.assertIn(self.server.id, servers_ids_list)
+        self.assertIn(self.second_server.id, servers_ids_list)
+        self.assertIn(self.third_server.id, servers_ids_list)
 
     @tags(type='positive', net='no')
     def test_list_servers_detailed_filter_by_image(self):
@@ -188,8 +201,8 @@ class ServerListTest(ComputeFixture):
         for i in list_response.entity:
             servers_list.append(i.id)
         self.assertIn(self.server.id, servers_list)
-        self.assertIn(self.server_second.id, servers_list)
-        self.assertNotIn(self.server_third.id, servers_list)
+        self.assertIn(self.second_server.id, servers_list)
+        self.assertNotIn(self.third_server.id, servers_list)
 
     @tags(type='positive', net='no')
     def test_list_servers_detailed_filter_by_flavor(self):
@@ -201,8 +214,8 @@ class ServerListTest(ComputeFixture):
         self.assertEqual(200, list_response.status_code)
 
         self.assertNotIn(self.server, filtered_servers)
-        self.assertNotIn(self.server_second, filtered_servers)
-        self.assertIn(self.server_third, filtered_servers)
+        self.assertNotIn(self.second_server, filtered_servers)
+        self.assertIn(self.third_server, filtered_servers)
 
     @tags(type='positive', net='no')
     def test_list_servers_detailed_filter_by_server_name(self):
@@ -214,8 +227,8 @@ class ServerListTest(ComputeFixture):
         self.assertEqual(200, list_response.status_code)
 
         self.assertIn(self.server, filtered_servers)
-        self.assertNotIn(self.server_second, filtered_servers)
-        self.assertNotIn(self.server_third, filtered_servers)
+        self.assertNotIn(self.second_server, filtered_servers)
+        self.assertNotIn(self.third_server, filtered_servers)
 
     @tags(type='positive', net='no')
     def test_list_servers_detailed_filter_by_server_status(self):
@@ -229,14 +242,13 @@ class ServerListTest(ComputeFixture):
         for i in filtered_servers:
             servers_list.append(i.id)
         self.assertIn(self.server.id, servers_list)
-        self.assertIn(self.server_second.id, servers_list)
-        self.assertIn(self.server_third.id, servers_list)
+        self.assertIn(self.second_server.id, servers_list)
+        self.assertIn(self.third_server.id, servers_list)
 
     @tags(type='positive', net='no')
     def test_list_servers_detailed_filter_by_changes_since(self):
         """Filter the detailed servers list with the changes-since filter"""
-        change_time = self.server_second.created
-        params = change_time
+        params = self.server.created
 
         # Filter the detailed list of servers by changes-since
         list_response = self.servers_client.list_servers_with_detail(
@@ -246,6 +258,6 @@ class ServerListTest(ComputeFixture):
         servers_list = []
         for i in filtered_servers:
             servers_list.append(i.id)
-        self.assertNotIn(self.server.id, servers_list)
-        self.assertIn(self.server_second.id, servers_list)
-        self.assertIn(self.server_third.id, servers_list)
+        self.assertIn(self.server.id, servers_list)
+        self.assertIn(self.second_server.id, servers_list)
+        self.assertIn(self.third_server.id, servers_list)
