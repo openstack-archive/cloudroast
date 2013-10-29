@@ -26,7 +26,7 @@ class CloudInitBoothookTest(ComputeFixture):
     @classmethod
     def setUpClass(cls):
         super(CloudInitBoothookTest, cls).setUpClass()
-        init_st = cls.config_drive_behaviors.read_cloud_init_from_config_drive(
+        init_st = cls.config_drive_behaviors.read_cloud_init_for_config_drive(
             cls.cloud_init_config.boothook_script)
         cls.user_data_contents = init_st
         user_data = base64.b64encode(cls.user_data_contents)
