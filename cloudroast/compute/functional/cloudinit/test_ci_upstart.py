@@ -26,7 +26,7 @@ class CloudInitUpstartTest(ComputeFixture):
     @classmethod
     def setUpClass(cls):
         super(CloudInitUpstartTest, cls).setUpClass()
-        init_st = cls.config_drive_behaviors.read_cloud_init_from_config_drive(
+        init_st = cls.config_drive_behaviors.read_cloud_init_for_config_drive(
             cls.cloud_init_config.upstart_script)
         cls.user_data_contents = init_st
         user_data = base64.b64encode(cls.user_data_contents)
