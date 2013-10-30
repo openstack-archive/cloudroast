@@ -56,8 +56,8 @@ class ListLimitTest(ObjectStorageFixture):
 
         try:
             content = json.loads(response.content)
-        except ValueError, e:
-            print e
+        except ValueError, error:
+            self.fixture_log.exception(error)
 
         members = []
         for member in content:

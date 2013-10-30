@@ -148,8 +148,8 @@ class ObjectVersioningTest(ObjectStorageFixture):
 
         try:
             content = json.loads(response.content)
-        except ValueError, e:
-            print e
+        except ValueError, error:
+            self.fixture_log.exception(error)
 
         object_names = []
         object_names = self.get_obj_names(content)
