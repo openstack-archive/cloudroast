@@ -35,8 +35,8 @@ class PsuedoHierarchalDirsTest(ObjectStorageFixture):
 
         try:
             content = json.loads(response_content)
-        except ValueError, e:
-            print e
+        except ValueError, error:
+            self.fixture_log.exception(error)
 
         for current in content:
             for key in keys:

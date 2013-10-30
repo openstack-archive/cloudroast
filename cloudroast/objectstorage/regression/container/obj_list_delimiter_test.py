@@ -68,7 +68,7 @@ class DelimiterTest(ObjectStorageFixture):
 
         try:
             content = json.loads(response.content)
-        except ValueError, e:
+        except ValueError, error:
             self.fixture_log.exception(e)
 
         parsed_content = []

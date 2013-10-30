@@ -56,8 +56,8 @@ class MarkerEndMarkerTest(ObjectStorageFixture):
 
         try:
             content = json.loads(response.content)
-        except ValueError, e:
-            print e
+        except ValueError, error:
+            self.fixture_log.exception(error)
 
         members = []
         for member in content:
@@ -91,8 +91,8 @@ class MarkerEndMarkerTest(ObjectStorageFixture):
 
         try:
             content = json.loads(response.content)
-        except ValueError, e:
-            print e
+        except ValueError, error:
+            self.fixture_log.exception(error)
 
         members = []
         for member in content:
@@ -125,8 +125,8 @@ class MarkerEndMarkerTest(ObjectStorageFixture):
 
         try:
             content = json.loads(response.content)
-        except ValueError, e:
-            print e
+        except ValueError, error:
+            self.fixture_log.exception(error)
 
         self.assertTrue(response.ok)
 
@@ -148,8 +148,8 @@ class MarkerEndMarkerTest(ObjectStorageFixture):
 
         try:
             content = json.loads(response.content)
-        except ValueError, e:
-            print e
+        except ValueError, error:
+            self.fixture_log.exception(error)
 
         members = []
         for member in content:
@@ -180,8 +180,8 @@ class MarkerEndMarkerTest(ObjectStorageFixture):
 
         try:
             content = json.loads(response.content)
-        except ValueError, e:
-            print e
+        except ValueError, error:
+            self.fixture_log.exception(error)
 
         members = []
         for member in content:
@@ -214,8 +214,8 @@ class MarkerEndMarkerTest(ObjectStorageFixture):
 
         try:
             content = json.loads(response.content)
-        except ValueError, e:
-            print e
+        except ValueError, error:
+            self.fixture_log.exception(error)
 
         self.assertTrue(response.ok)
 
@@ -237,8 +237,8 @@ class MarkerEndMarkerTest(ObjectStorageFixture):
 
         try:
             content = json.loads(response.content)
-        except ValueError, e:
-            print e
+        except ValueError, error:
+            self.fixture_log.exception(error)
 
         members = []
         for member in content:
@@ -270,8 +270,8 @@ class MarkerEndMarkerTest(ObjectStorageFixture):
 
         try:
             content = json.loads(response.content)
-        except ValueError, e:
-            print e
+        except ValueError, error:
+            self.fixture_log.exception(error)
 
         members = []
         for member in content:
@@ -304,8 +304,8 @@ class MarkerEndMarkerTest(ObjectStorageFixture):
 
         try:
             content = json.loads(response.content)
-        except ValueError, e:
-            print e
+        except ValueError, error:
+            self.fixture_log.exception(error)
 
         self.assertTrue(response.ok)
 
@@ -327,8 +327,8 @@ class MarkerEndMarkerTest(ObjectStorageFixture):
 
         try:
             content = json.loads(response.content)
-        except ValueError, e:
-            print e
+        except ValueError, error:
+            self.fixture_log.exception(error)
 
         members = []
         for member in content:
@@ -359,8 +359,8 @@ class MarkerEndMarkerTest(ObjectStorageFixture):
 
         try:
             content = json.loads(response.content)
-        except ValueError, e:
-            print e
+        except ValueError, error:
+            self.fixture_log.exception(error)
 
         members = []
         for member in content:
@@ -393,8 +393,8 @@ class MarkerEndMarkerTest(ObjectStorageFixture):
 
         try:
             content = json.loads(response.content)
-        except ValueError, e:
-            print e
+        except ValueError, error:
+            self.fixture_log.exception(error)
 
         self.assertTrue(response.ok)
 
@@ -416,8 +416,8 @@ class MarkerEndMarkerTest(ObjectStorageFixture):
 
         try:
             content = json.loads(response.content)
-        except ValueError, e:
-            print e
+        except ValueError, error:
+            self.fixture_log.exception(error)
 
         members = []
         for member in content:
@@ -448,8 +448,8 @@ class MarkerEndMarkerTest(ObjectStorageFixture):
 
         try:
             content = json.loads(response.content)
-        except ValueError, e:
-            print e
+        except ValueError, error:
+            self.fixture_log.exception(error)
 
         members = []
         for member in content:
@@ -482,8 +482,8 @@ class MarkerEndMarkerTest(ObjectStorageFixture):
 
         try:
             content = json.loads(response.content)
-        except ValueError, e:
-            print e
+        except ValueError, error:
+            self.fixture_log.exception(error)
 
         self.assertTrue(response.ok)
 
@@ -508,8 +508,8 @@ class MarkerEndMarkerTest(ObjectStorageFixture):
 
         try:
             content = json.loads(response.content)
-        except ValueError, e:
-            print e
+        except ValueError, error:
+            self.fixture_log.exception(error)
 
         members = []
         for member in content:
@@ -543,8 +543,8 @@ class MarkerEndMarkerTest(ObjectStorageFixture):
 
         try:
             content = json.loads(response.content)
-        except ValueError, e:
-            print e
+        except ValueError, error:
+            self.fixture_log.exception(error)
 
         members = []
         for member in content:
@@ -580,8 +580,8 @@ class MarkerEndMarkerTest(ObjectStorageFixture):
 
         try:
             content = json.loads(response.content)
-        except ValueError, e:
-            print e
+        except ValueError, error:
+            self.fixture_log.exception(error)
 
         self.assertTrue(response.ok)
 
