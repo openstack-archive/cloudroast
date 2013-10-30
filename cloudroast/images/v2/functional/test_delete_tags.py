@@ -33,7 +33,7 @@ class DeleteImageTagTest(ImagesV2Fixture):
         7. Verify that the deleted tag is not in the list of image tags.
         """
 
-        image_id = self.register_basic_image()
+        image_id = self.images_behavior.register_basic_image()
         tag_name = rand_name('tag_')
         response = self.api_client.add_tag(image_id, tag_name)
         self.assertEqual(response.status_code, 204)
