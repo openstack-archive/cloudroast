@@ -32,7 +32,7 @@ class PostImageTagsTest(ImagesV2Fixture):
         4. Verify that the added tag is in the list of image tags.
         """
 
-        image_id = self.register_basic_image()
+        image_id = self.images_behavior.register_basic_image()
         tag = rand_name('tag_')
 
         response = self.api_client.add_tag(image_id, tag)
