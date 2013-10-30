@@ -30,7 +30,7 @@ class PatchImageTest(ImagesV2Fixture):
         4. Verify response is an image with correct properties.
         """
 
-        image_id = self.register_basic_image()
+        image_id = self.images_behavior.register_basic_image()
         updated_image_name = rand_name("updated_name_")
         response = self.api_client.update_image(
             image_id=image_id, replace={"name": updated_image_name})
@@ -58,7 +58,7 @@ class PatchImageTest(ImagesV2Fixture):
         3. Verify response content contains a new property and its value
         """
 
-        image_id = self.register_basic_image()
+        image_id = self.images_behavior.register_basic_image()
         additional_property = rand_name("additional_property-")
         value_of_new_property = rand_name("value_of_new_property-")
         response = self.api_client.update_image(
@@ -80,7 +80,7 @@ class PatchImageTest(ImagesV2Fixture):
         3. Verify the response content contains image with correct properties.
         """
 
-        image_id = self.register_basic_image()
+        image_id = self.images_behavior.register_basic_image()
         additional_property = rand_name("additional_property-")
         value_of_new_property = rand_name("value_of_new_property-")
 
@@ -114,7 +114,7 @@ class PatchImageTest(ImagesV2Fixture):
         5. Verify response code is 200
         """
 
-        image_id = self.register_basic_image()
+        image_id = self.images_behavior.register_basic_image()
         additional_property = rand_name("additional_property-")
         value_of_new_property = rand_name("value_of_new_property-")
         response = self.api_client.update_image(
@@ -164,7 +164,7 @@ class PatchImageTest(ImagesV2Fixture):
         2. Verify response code is 403
         """
 
-        image_id = self.register_basic_image()
+        image_id = self.images_behavior.register_basic_image()
         response = self.api_client.update_image(
             image_id=image_id, add={"status": rand_name("status-")})
 
@@ -179,7 +179,7 @@ class PatchImageTest(ImagesV2Fixture):
         2. Verify the response code is 403
         """
 
-        image_id = self.register_basic_image()
+        image_id = self.images_behavior.register_basic_image()
         response = self.api_client.update_image(
             image_id=image_id, remove={"status": rand_name("remove")})
 
@@ -194,7 +194,7 @@ class PatchImageTest(ImagesV2Fixture):
         2. Verify the response code is 403
         """
 
-        image_id = self.register_basic_image()
+        image_id = self.images_behavior.register_basic_image()
 
         response = self.api_client.update_image(
             image_id=image_id, replace={"status": rand_name("replace")})
