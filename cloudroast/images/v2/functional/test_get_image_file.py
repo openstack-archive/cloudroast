@@ -32,7 +32,7 @@ class GetImageFileTest(ImagesV2Fixture):
         6. Verify that the downloaded image data is same as uploaded binary
         image data
         """
-        image_id = self.register_basic_image()
+        image_id = self.images_behavior.register_basic_image()
         image_data = StringIO.StringIO(('*' * 1024))
         response = self.api_client.store_raw_image_data(image_id,
                                                         image_data)
