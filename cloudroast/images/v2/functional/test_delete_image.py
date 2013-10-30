@@ -32,7 +32,7 @@ class DeleteImageTest(ImagesV2Fixture):
         4. Try get deleted image
         5. Verify response code is 404
         """
-        image_id = self.register_basic_image()
+        image_id = self.images_behavior.register_basic_image()
 
         response = self.api_client.delete_image(image_id)
         self.assertEqual(response.status_code, 204)
@@ -64,7 +64,7 @@ class DeleteImageTest(ImagesV2Fixture):
         4. Try delete the deleted image
         5. Verify response code is 404
         """
-        image_id = self.register_basic_image()
+        image_id = self.images_behavior.register_basic_image()
 
         response = self.api_client.delete_image(image_id)
         self.assertEqual(response.status_code, 204)
@@ -100,7 +100,7 @@ class DeleteImageTest(ImagesV2Fixture):
         2. Verify response code is 404
         """
 
-        image_id = self.register_basic_image()
+        image_id = self.images_behavior.register_basic_image()
         self.admin_api_client.add_member(image_id, self.access_data.user.id_)
 
         response = self.api_client.delete_image(image_id)
