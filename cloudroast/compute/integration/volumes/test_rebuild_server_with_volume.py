@@ -14,10 +14,23 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+from unittest2.suite import TestSuite
+
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.compute.common.types import NovaServerStatusTypes
 from cloudcafe.common.tools.datagen import rand_name
 from cloudroast.compute.fixtures import BlockstorageIntegrationFixture
+
+
+def load_tests(loader, standard_tests, pattern):
+    suite = TestSuite()
+    suite.addTest(RebuildServerVolumeIntegrationTest(
+        "test_rebuild_server"))
+    suite.addTest(RebuildServerVolumeIntegrationTest(
+        "test_volume_detached_after_rebuild"))
+    suite.addTest(RebuildServerVolumeIntegrationTest(
+        "test_reattach_volume_after_rebuild"))
+    return suite
 
 
 class RebuildServerVolumeIntegrationTest(BlockstorageIntegrationFixture):
@@ -46,16 +59,6 @@ class RebuildServerVolumeIntegrationTest(BlockstorageIntegrationFixture):
             timeout=cls.volume_status_timeout,
             wait_period=cls.poll_frequency)
 
-    @classmethod
-    def tearDownClass(cls):
-        cls.volume_attachments_client.delete_volume_attachment(
-            cls.volume.id_, cls.server.id)
-        cls.storage_behavior.wait_for_volume_status(
-            cls.volume.id_, 'available',
-            timeout=cls.volume_status_timeout,
-            wait_period=cls.poll_frequency)
-        super(RebuildServerVolumeIntegrationTest, cls).tearDownClass()
-
     @tags(type='smoke', net='no')
     def test_rebuild_server(self):
         self.name = rand_name('testserver')
@@ -66,3 +69,18 @@ class RebuildServerVolumeIntegrationTest(BlockstorageIntegrationFixture):
             admin_pass=self.password, key_name=self.key.name)
         self.server_behaviors.wait_for_server_status(
             self.server.id, NovaServerStatusTypes.ACTIVE)
+
+    @tags(type='smoke', net='no')
+    def test_volume_detached_after_rebuild(self):
+        volume_after_rebuild = self.storage_client.get_volume_info(
+            self.volume.id_).entity
+        self.assertEqual(volume_after_rebuild.status, 'available')
+
+    @tags(type='smoke', net='no')
+    def test_reattach_volume_after_rebuild(self):
+        self.volume_attachments_client.attach_volume(
+            self.server.id, self.volume.id_)
+        self.storage_behavior.wait_for_volume_status(
+            self.volume.id_, 'in-use',
+            timeout=self.volume_status_timeout,
+            wait_period=self.poll_frequency)
