@@ -15,6 +15,7 @@ limitations under the License.
 """
 import base64
 import unittest2
+import re
 from datetime import datetime, timedelta
 from sys import maxint
 
@@ -23,7 +24,8 @@ from cloudroast.cloudkeep.barbican.fixtures import (
     BitLengthDataSetNegative, NameDataSetPositive, PayloadDataSetNegative,
     ContentTypeEncodingDataSetNegative)
 from cafe.drivers.unittest.decorators import (tags, data_driven_test,
-                                              DataDrivenFixture)
+                                              DataDrivenFixture,
+                                              skip_open_issue)
 
 
 class SecretBitLengthDataSetPositive(BitLengthDataSetPositive):
@@ -499,6 +501,28 @@ class SecretsAPI(SecretsFixture):
                                           payload_content_type=content_type,
                                           payload_content_encoding=encoding)
         self.assertEqual(get_resp.content, b64_payload)
+
+    @skip_open_issue('launchpad', '1246871')
+    def test_message_from_create_secret_with_bad_content_type(self):
+        """ will create a secret with an "invalid" content type
+        (plain-text, rather than text/plain).  This will result in
+        an error, and we need to ensure that the error msg is
+        reasonable.
+        """
+        resp = self.behaviors.create_secret_overriding_cfg(
+            payload_content_type='plain-text; charset=utf-8')
+
+        create_resp = resp.create_resp
+
+        # first, ensure that the return code is 400
+        self.assertEqual(create_resp.status_code, 400)
+
+        pattern = ('{\s*"title": "Provided object does not match schema '
+                   '\'Secret\': \'.*? is not one of \[.*?\]"\s*}')
+        result = re.match(pattern, create_resp.content)
+
+        # now see that the regexp matched (ie result is not None)
+        self.assertIsNotNone(result, 'Error message was not as expected')
 
 
 class SecretsPagingAPI(SecretsPagingFixture):
