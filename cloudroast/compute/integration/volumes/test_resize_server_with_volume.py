@@ -14,10 +14,21 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+from unittest2.suite import TestSuite
+
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.compute.common.types import NovaServerStatusTypes
 from cloudroast.compute.fixtures import BlockstorageIntegrationFixture
+
+
+def load_tests(loader, standard_tests, pattern):
+    suite = TestSuite()
+    suite.addTest(ResizeServerVolumeIntegrationTest(
+        "test_resize_server_and_confirm"))
+    suite.addTest(ResizeServerVolumeIntegrationTest(
+        "test_volume_attached_after_resize"))
+    return suite
 
 
 class ResizeServerVolumeIntegrationTest(BlockstorageIntegrationFixture):
@@ -66,3 +77,9 @@ class ResizeServerVolumeIntegrationTest(BlockstorageIntegrationFixture):
             self.server.id)
         self.server_behaviors.wait_for_server_status(
             self.server.id, NovaServerStatusTypes.ACTIVE)
+
+    @tags(type='smoke', net='no')
+    def test_volume_attached_after_resize(self):
+        volume_after_rebuild = self.storage_client.get_volume_info(
+            self.volume.id_).entity
+        self.assertEqual(volume_after_rebuild.status, 'available')
