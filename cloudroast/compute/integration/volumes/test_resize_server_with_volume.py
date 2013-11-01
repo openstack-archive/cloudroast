@@ -14,12 +14,21 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import unittest
+
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.compute.common.types import NovaServerStatusTypes
+from cloudcafe.compute.flavors_api.config import FlavorsConfig
 from cloudroast.compute.fixtures import BlockstorageIntegrationFixture
 
 
+flavors_config = FlavorsConfig()
+resize_enabled = flavors_config.resize_enabled
+
+
+@unittest.skipUnless(
+    resize_enabled, 'Resize not enabled for this flavor class.')
 class ResizeServerVolumeIntegrationTest(BlockstorageIntegrationFixture):
 
     @classmethod
