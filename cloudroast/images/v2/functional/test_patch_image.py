@@ -16,6 +16,7 @@ limitations under the License.
 
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.common.tools.datagen import rand_name
+from cloudcafe.images.common.types import ImageVisibility
 from cloudroast.images.v2.fixtures import ImagesV2Fixture
 
 
@@ -34,12 +35,6 @@ class PatchImageTest(ImagesV2Fixture):
         updated_image_name = rand_name("updated_name_")
         response = self.api_client.update_image(
             image_id=image_id, replace={"name": updated_image_name})
-
-        updated_image = response.entity
-
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(updated_image.name, updated_image_name)
-        self.assertEqual(updated_image.id_, image_id)
 
         self.assertEqual(response.status_code, 200)
 
@@ -146,14 +141,27 @@ class PatchImageTest(ImagesV2Fixture):
         self.assertTrue(False, msg="Not Yet Implemented")
 
     @tags(type='negative')
-    def test_update_image_with_invalid_status(self):
+    def test_update_image_with_invalid_visibility(self):
         """
-        Try to update an image's status with invalid status.
+        Try to update an image's visibility with invalid visibility.
 
-        1. Update image's status with invalid status
+        1. Update image's visibility with invalid visibility
         2. Verify response code is 400
         """
-        self.assertTrue(False, msg="Not Yet Implemented")
+        image_id = self.images_behavior.register_basic_image()
+
+        response = self.admin_api_client.get_image(image_id=image_id)
+        self.assertEqual(response.status_code, 200)
+        image = response.entity
+
+        self.assertEqual(image.visibility, ImageVisibility.PRIVATE)
+
+        updated_image_visibility = rand_name("invalid_visibility")
+        response = self.admin_api_client.update_image(
+            image_id=image_id,
+            replace={"visibility": updated_image_visibility})
+
+        self.assertEqual(response.status_code, 400)
 
     @tags(type='negative')
     def test_update_image_add_status(self):
@@ -230,7 +238,10 @@ class PatchImageTest(ImagesV2Fixture):
         1. Update image without image id
         2. Verify response code is 404
         """
-        self.assertTrue(False, msg="Not Yet Implemented")
+        response = self.api_client.update_image(
+            image_id="", replace={"name": (rand_name("updated_name_"))})
+
+        self.assertEqual(response.status_code, 404)
 
     @tags(type='negative')
     def test_update_image_using_invalid_image_id(self):
@@ -240,7 +251,11 @@ class PatchImageTest(ImagesV2Fixture):
         1. Update image with invalid image id
         2. Verify response code is 404
         """
-        self.assertTrue(False, msg="Not Yet Implemented")
+        response = self.api_client.update_image(
+            image_id="invalid_image_id",
+            replace={"name": (rand_name("updated_name_"))})
+
+        self.assertEqual(response.status_code, 404)
 
     @tags(type='negative')
     def test_update_image_using_incorrect_request_body(self):
@@ -258,9 +273,15 @@ class PatchImageTest(ImagesV2Fixture):
         Try to update owner of image.
 
         1. Update image with new owner.
-        2. Verify response code is 4xx
+        2. Verify response code is 403
         """
-        self.assertTrue(False, msg="Not Yet Implemented")
+
+        image_id = self.images_behavior.register_basic_image()
+
+        response = self.api_client.update_image(
+            image_id=image_id, replace={"owner": rand_name("new_owner")})
+
+        self.assertEqual(response.status_code, 403)
 
     @tags(type='negative')
     def test_update_image_with_new_location_and_active(self):
