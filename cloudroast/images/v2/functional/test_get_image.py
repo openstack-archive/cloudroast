@@ -21,6 +21,7 @@ from cloudroast.images.v2.fixtures import ImagesV2Fixture
 
 
 class GetImageTest(ImagesV2Fixture):
+
     @tags(type='smoke')
     def test_get_image(self):
         """ Get a valid image.
@@ -129,7 +130,8 @@ class GetImageTest(ImagesV2Fixture):
          1. Try get an image with a blank id
          2. Verify the response is 404
         """
-        self.assertTrue(False, 'Not Implemented')
+        response = self.api_client.get_image(image_id="")
+        self.assertEqual(response.status_code, 404)
 
     @tags(type='negative')
     def test_get_image_with_invalid_image_id(self):
