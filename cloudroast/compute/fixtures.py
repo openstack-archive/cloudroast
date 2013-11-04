@@ -199,10 +199,12 @@ class ComputeFixture(BaseTestFixture):
         for disk, size in disks.iteritems():
             self.assertEqual(size, ephemeral_disk_size)
 
-    def _format_disk(self, remote_client, disk, disk_format):
+    @classmethod
+    def _format_disk(cls, remote_client, disk, disk_format):
         remote_client.format_disk(filesystem_type=disk_format, disk=disk)
 
-    def _mount_disk(self, remote_client, disk, mount_point):
+    @classmethod
+    def _mount_disk(cls, remote_client, disk, mount_point):
         remote_client.create_directory(mount_point)
         remote_client.mount_disk(disk, mount_point)
 
