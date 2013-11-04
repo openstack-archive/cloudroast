@@ -42,10 +42,43 @@ class DeleteImageTagTest(ImagesV2Fixture):
         self.assertEqual(response.status_code, 204)
 
         response = self.api_client.get_image(image_id)
-        self.assertEqual(response.status_code, 204)
+        self.assertEqual(response.status_code, 200)
 
         image = response.entity
         self.assertNotIn(tag_name, image.tags)
+
+    @tags(type='positive')
+    def test_delete_multiple_tags_from_image(self):
+        """ Delete more than one tag from an image
+
+        1. Create an image
+        2. Create 2 tags
+        3. Add 2 tags to image
+        4. Verify response code is 204 for each
+        5. Delete tags from image
+        6. Verify response code is 204 for each
+        """
+        image_id = self.images_behavior.register_basic_image()
+
+        number_of_tags = 2
+        tags = []
+        for t in range(number_of_tags):
+            tag = rand_name('tag_')
+            tags.append(tag)
+            response = self.api_client.add_tag(image_id=image_id, tag=tag)
+            self.assertEqual(response.status_code, 204)
+
+        response = self.api_client.get_image(image_id=image_id)
+        image = response.entity
+        self.assertEqual(set(image.tags), set(tags))
+
+        for tag in tags:
+            response = self.api_client.delete_tag(image_id=image_id, tag=tag)
+            self.assertEqual(response.status_code, 204)
+
+        response = self.api_client.get_image(image_id=image_id)
+        image = response.entity
+        self.assertEqual(image.tags, [])
 
     @tags(type='negative')
     def test_delete_nonexistent_tag_from_image(self):
@@ -54,7 +87,10 @@ class DeleteImageTagTest(ImagesV2Fixture):
         1. Try delete a nonexistent tag from existing image
         2. Verify the response code is 404
         """
-        self.assertTrue(False, "Not Implemented")
+        image_id = self.images_behavior.register_basic_image()
+        response = self.api_client.delete_tag(image_id=image_id,
+                                              tag='NON_EXISTENT_TAG')
+        self.assertEqual(response.status_code, 404)
 
     @tags(type='negative')
     def test_delete_tag_using_invalid_image_id(self):
@@ -63,7 +99,9 @@ class DeleteImageTagTest(ImagesV2Fixture):
         1. Try delete a tag using an invalid image id
         2. Verify the response code is 404
         """
-        self.assertTrue(False, "Not Implemented")
+        response = self.api_client.delete_tag(image_id='INVALID_IMAGE_ID',
+                                              tag=rand_name('tag_'))
+        self.assertEqual(response.status_code, 404)
 
     @tags(type='negative')
     def test_delete_tag_using_blank_image_id(self):
@@ -72,31 +110,28 @@ class DeleteImageTagTest(ImagesV2Fixture):
          1. Try delete a tag using a blank image id
          2. Verify the response code is 404
          """
-        self.assertTrue(False, "Not Implemented")
+        response = self.api_client.delete_tag(image_id='', tag='tag_')
+        self.assertEqual(response.status_code, 404)
 
     @tags(type='negative')
     def test_delete_empty_tag_from_valid_image(self):
         """ Delete an empty tag from a valid image
 
-         1. Try delete an empty tag from a valid image
-         2. Verify the response code is 404
-         """
-        self.assertTrue(False, "Not Implemented")
+        1. Try delete an empty tag from a valid image
+        2. Verify the response code is 404
+        """
+        image_id = self.images_behavior.register_basic_image()
+        response = self.api_client.delete_tag(image_id=image_id, tag='')
+        self.assertEqual(response.status_code, 404)
 
     @tags(type='negative')
-    def test_delete_invalid_tag_from_valid_image(self):
+    def test_delete_invalid_tag_with_special_characters_from_valid_image(self):
         """ Delete an invalid tag from a valid image
 
         1. Try delete an invalid tag from a valid image
         2. Verify the response code is 404
         """
-        self.assertTrue(False, "Not Implemented")
-
-    @tags(type='negative')
-    def test_delete_nonexistent_tag_from_valid_image(self):
-        """ Delete a nonexistent tag from a valid image
-
-        1. Try delete a nonexistent tag from a valid image
-        2. Verify the response code is 404
-        """
-        self.assertTrue(False, "Not Implemented")
+        image_id = self.images_behavior.register_basic_image()
+        response = self.api_client.delete_tag(image_id=image_id,
+                                              tag='!@#$%^&*')
+        self.assertEqual(response.status_code, 404)
