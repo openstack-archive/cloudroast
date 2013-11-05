@@ -46,6 +46,7 @@ from cloudcafe.compute.extensions.keypairs_api.client import KeypairsClient
 from cloudcafe.compute.extensions.security_groups_api.client import \
     SecurityGroupsClient, SecurityGroupRulesClient
 from cloudcafe.compute.extensions.rescue_api.client import RescueClient
+from cloudcafe.compute.limits_api.client import LimitsClient
 from cloudcafe.compute.extensions.config_drive.behaviors import \
     ConfigDriveBehaviors
 from cloudcafe.compute.extensions.config_drive.config import ConfigDriveConfig
@@ -125,6 +126,7 @@ class ComputeFixture(BaseTestFixture):
         cls.rescue_client = RescueClient(**client_args)
         cls.vnc_client = VncConsoleClient(**client_args)
         cls.console_output_client = ConsoleOutputClient(**client_args)
+        cls.limits_client = LimitsClient(**client_args)
         cls.server_behaviors = ServerBehaviors(cls.servers_client,
                                                cls.servers_config,
                                                cls.images_config,
