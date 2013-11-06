@@ -17,15 +17,15 @@ limitations under the License.
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.compute.common.exceptions import ItemNotFound
 from cloudcafe.compute.common.types import NovaImageStatusTypes
-from cloudroast.compute.fixtures import CreateServerFixture
+from cloudroast.compute.fixtures import ComputeFixture
 
 
-class ImagesTest(CreateServerFixture):
+class ImagesTest(ComputeFixture):
 
     @classmethod
     def setUpClass(cls):
         super(ImagesTest, cls).setUpClass()
-        cls.server = cls.server_response.entity
+        cls.server = cls.server_behaviors.create_active_server().entity
 
     @tags(type='negative', net='no')
     def test_create_image_invalid_server_id(self):
