@@ -17,16 +17,15 @@ limitations under the License.
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.compute.common.types import NovaImageStatusTypes
-from cloudroast.compute.fixtures import CreateServerFixture
+from cloudroast.compute.fixtures import ComputeFixture
 
 
-class CreateImageTest(CreateServerFixture):
+class CreateImageTest(ComputeFixture):
 
     @classmethod
     def setUpClass(cls):
         super(CreateImageTest, cls).setUpClass()
-        cls.name = rand_name('testserver')
-        cls.server = cls.server_response.entity
+        cls.server = cls.server_behaviors.create_active_server().entity
 
         cls.image_name = rand_name('image')
         cls.metadata = {'key1': 'value1',

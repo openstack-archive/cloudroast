@@ -22,7 +22,7 @@ from cloudcafe.compute.common.types import NovaServerStatusTypes as \
     ServerStates
 from cloudcafe.compute.common.types import InstanceAuthStrategies
 from cloudcafe.compute.config import ComputeConfig
-from cloudroast.compute.fixtures import CreateServerFixture
+from cloudroast.compute.fixtures import ComputeFixture
 
 compute_config = ComputeConfig()
 hypervisor = compute_config.hypervisor.lower()
@@ -31,12 +31,14 @@ hypervisor = compute_config.hypervisor.lower()
 @unittest.skipIf(hypervisor in [ComputeHypervisors.KVM,
                                 ComputeHypervisors.QEMU],
                  'Change password not supported in current configuration.')
-class ChangeServerPasswordTests(CreateServerFixture):
+class ChangeServerPasswordTests(ComputeFixture):
 
     @classmethod
     def setUpClass(cls):
         super(ChangeServerPasswordTests, cls).setUpClass()
-        cls.server = cls.server_response.entity
+        response = cls.server_behaviors.create_active_server()
+        cls.server = response.entity
+        cls.resources.add(cls.server.id, cls.servers_client.delete_server)
         cls.new_password = "newslice129690TuG72Bgj2"
 
         # Change password and wait for server to return to active state

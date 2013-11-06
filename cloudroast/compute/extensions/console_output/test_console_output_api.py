@@ -16,16 +16,17 @@ limitations under the License.
 
 import time
 
-from cloudroast.compute.fixtures import CreateServerFixture
+from cloudroast.compute.fixtures import ComputeFixture
 
 
-class ConsoleOutputTests(CreateServerFixture):
+class ConsoleOutputTests(ComputeFixture):
 
     def test_get_console_output(self):
+        server = self.server_behaviors.create_active_server().entity
         timeout = self.servers_config.server_boot_timeout
         expected_console_output_length = 100
         console = self.console_output_client.get_console_output(
-            self.created_server.id, expected_console_output_length).entity
+            server.id, expected_console_output_length).entity
         self.assertIsNotNone(console)
 
         #Retry getting console output, as the server might take some
@@ -33,7 +34,7 @@ class ConsoleOutputTests(CreateServerFixture):
         start = int(time.time())
         while console.output in ["0", None]:
             console = self.console_output_client.get_console_output(
-                self.created_server.id, expected_console_output_length).entity
+                server.id, expected_console_output_length).entity
             if int(time.time() - start) >= timeout:
                 break
 

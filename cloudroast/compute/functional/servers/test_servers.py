@@ -28,18 +28,14 @@ class ServersTest(ComputeFixture):
         If an admin password is provided on server creation, the server's root
         password should be set to that password.
         """
-        name = rand_name("testserver")
         admin_password = 'oldslice129690TuG72Bgj2'
-        create_response = self.servers_client.create_server(
-            name, self.image_ref, self.flavor_ref, admin_pass=admin_password)
-        created_server = create_response.entity
-        self.resources.add(created_server.id,
+        response = self.server_behaviors.create_active_server(
+            admin_pass=admin_password)
+        server = response.entity
+        self.resources.add(server.id,
                            self.servers_client.delete_server)
 
-        self.assertEqual(admin_password, created_server.admin_pass)
-        server = self.server_behaviors.wait_for_server_status(
-            created_server.id, NovaServerStatusTypes.ACTIVE).entity
-
+        self.assertEqual(admin_password, server.admin_pass)
         remote_client = self.server_behaviors.get_remote_instance_client(
             server, self.servers_config, password=admin_password)
         self.assertTrue(remote_client.can_authenticate(),

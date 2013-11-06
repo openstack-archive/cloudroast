@@ -15,19 +15,17 @@ limitations under the License.
 """
 
 from cafe.drivers.unittest.decorators import tags
-from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.compute.common.exceptions import ItemNotFound, BadRequest
 from cloudcafe.compute.common.types import NovaImageStatusTypes as ImageStates
-from cloudroast.compute.fixtures import CreateServerFixture
+from cloudroast.compute.fixtures import ComputeFixture
 
 
-class DeleteImageTest(CreateServerFixture):
+class DeleteImageTest(ComputeFixture):
 
     @classmethod
     def setUpClass(cls):
         super(DeleteImageTest, cls).setUpClass()
-        cls.name = rand_name('server')
-        cls.server = cls.server_response.entity
+        cls.server = cls.server_behaviors.create_active_server().entity
         cls.image = cls.image_behaviors.create_active_image(
             cls.server.id).entity
         cls.resp = cls.images_client.delete_image(cls.image.id)
