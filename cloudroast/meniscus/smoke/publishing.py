@@ -13,11 +13,31 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-from cloudroast.meniscus.fixtures import PublishingFixture
+from datetime import datetime
+
+from cloudroast.meniscus.fixtures import (PublishingFixture,
+                                          RSyslogPublishingFixture)
 
 
-class TestPublishToCorrelator(PublishingFixture):
+class TestPublishToCorrelatorHTTP(PublishingFixture):
 
     def test_publishing_message(self):
         resp = self.publish_behaviors.publish_from_config()
         self.assertEqual(resp.status_code, 204)
+
+
+class TestPublishToCorrelatorRSyslog(RSyslogPublishingFixture):
+
+    def test_rsyslog_message(self):
+        """Verifying that the syslog endpoint accepts a message"""
+        now = datetime.now().isoformat()
+        result = self.rsyslog_client.send(priority='46', version='1',
+                                          timestamp=now, app_name='cloudcafe',
+                                          host_name='test')
+
+        # A socket returns None if it was successful
+        self.assertIsNone(result)
+
+        # Make sure the index exists before we continue
+        if not self.es_client.wait_for_index(self.tenant_id):
+            self.fail('ES index couldn\'t be found after 30 secs')
