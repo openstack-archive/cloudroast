@@ -61,3 +61,9 @@ class ImagesV2Fixture(BaseTestFixture):
     def tearDownClass(cls):
         super(ImagesV2Fixture, cls).tearDownClass()
         cls.resources.release()
+
+    @classmethod
+    def get_new_images_v2_client(self, auth_data):
+        """Return new images v2 client for requested auth data """
+
+        return ImagesV2Client(self.images_endpoint, auth_data.token.id_)
