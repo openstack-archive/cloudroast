@@ -39,10 +39,15 @@ class MeniscusFixture(BaseTestFixture):
         super(MeniscusFixture, cls).setUpClass()
         cls.marshalling = MarshallingConfig()
         cls.meniscus_config = MeniscusConfig()
+        cls.storage_config = StorageConfig()
         cls.cleanup_client = MeniscusDbClient(cls.meniscus_config.db_host,
                                               cls.meniscus_config.db_name,
                                               cls.meniscus_config.db_username,
                                               cls.meniscus_config.db_password)
+
+        # ElasticSearch client
+        es_servers = [cls.storage_config.address]
+        cls.es_client = BaseElasticSearchClient(servers=es_servers)
 
 
 class VersionFixture(MeniscusFixture):
@@ -69,7 +74,13 @@ class TenantFixture(MeniscusFixture):
             deserialize_format=cls.marshalling.deserializer)
         cls.tenant_behaviors = TenantBehaviors(cls.tenant_client,
                                                cls.cleanup_client,
-                                               cls.tenant_config)
+                                               cls.tenant_config,
+                                               cls.es_client)
+
+        cls.tenant_id, resp = cls.tenant_behaviors.create_tenant()
+        cls.es_client.index = [cls.tenant_id]
+        # Connect ElasticSearch Client
+        cls.es_client.connect(bulk_size=1)
 
     @classmethod
     def tearDownClass(cls):
@@ -83,7 +94,6 @@ class ProducerFixture(TenantFixture):
     def setUpClass(cls):
         super(ProducerFixture, cls).setUpClass()
 
-        cls.tenant_id, resp = cls.tenant_behaviors.create_tenant()
         cls.producer_client = ProducerClient(
             url=cls.meniscus_config.base_url,
             api_version=cls.meniscus_config.api_version,
@@ -95,7 +105,8 @@ class ProducerFixture(TenantFixture):
             tenant_client=cls.tenant_client,
             producer_client=cls.producer_client,
             db_client=cls.cleanup_client,
-            tenant_config=cls.tenant_config)
+            tenant_config=cls.tenant_config,
+            es_client=cls.es_client)
 
     def tearDown(self):
         for producer_id in self.producer_behaviors.producers_created:
@@ -146,12 +157,6 @@ class PublishingFixture(ProducerFixture):
     def setUpClass(cls):
         super(PublishingFixture, cls).setUpClass()
         cls.correlate_config = CorrelationConfig()
-        cls.storage_config = StorageConfig()
-
-        # ElasticSearch client
-        es_servers = [cls.storage_config.address]
-        cls.es_client = BaseElasticSearchClient(servers=es_servers,
-                                                index=cls.tenant_id)
 
         cls.publish_client = PublishingClient(
             url=cls.correlate_config.correlator_base_url,
@@ -166,9 +171,6 @@ class PublishingFixture(ProducerFixture):
     def setUp(self):
         super(PublishingFixture, self).setUp()
 
-        # Connect ElasticSearch Client
-        self.es_client.connect(bulk_size=1)
-
         # We always need the tenant token from the created tenant
         resp = self.tenant_client.get_tenant(self.tenant_id)
         self.assertEqual(resp.status_code, 200)
@@ -177,10 +179,6 @@ class PublishingFixture(ProducerFixture):
         # Force setting id and token on the behavior
         self.publish_behaviors.tenant_id = self.tenant_id
         self.publish_behaviors.tenant_token = self.tenant_token
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.es_client.delete_index(cls.tenant_id)
 
 
 class RSyslogPublishingFixture(PublishingFixture):
