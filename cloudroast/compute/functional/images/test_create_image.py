@@ -28,8 +28,8 @@ class CreateImageTest(ComputeFixture):
         cls.server = cls.server_behaviors.create_active_server().entity
 
         cls.image_name = rand_name('image')
-        cls.metadata = {'key1': 'value1',
-                        'key2': 'value2'}
+        cls.metadata = {'user_key1': 'value1',
+                        'user_key2': 'value2'}
         server_id = cls.server.id
         cls.image_response = cls.servers_client.create_image(
             server_id, cls.image_name, metadata=cls.metadata)
