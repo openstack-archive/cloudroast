@@ -87,3 +87,9 @@ class ImagesFixture(BaseTestFixture):
         super(ImagesFixture, cls).tearDownClass()
 
         cls.resources.release()
+
+    @classmethod
+    def generate_images_client(self, auth_data):
+        """Returns new images client for requested auth data """
+
+        return ImagesV2Client(self.images_endpoint, auth_data.token.id_)
