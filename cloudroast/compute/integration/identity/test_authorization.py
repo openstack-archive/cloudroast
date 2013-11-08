@@ -40,7 +40,7 @@ class AuthorizationTests(ComputeFixture):
         cls.resources.add(cls.server.id, cls.servers_client.delete_server)
 
         image_name = rand_name('testimage')
-        cls.image_meta = {'key1': 'value1', 'key2': 'value2'}
+        cls.image_meta = {'user_key1': 'value1', 'user_key2': 'value2'}
         image_resp = cls.servers_client.create_image(cls.server.id,
                                                      image_name,
                                                      cls.image_meta)
@@ -169,29 +169,29 @@ class AuthorizationTests(ComputeFixture):
     @tags(type='negative', net='no')
     def test_set_image_metadata_unauthorized(self):
         with self.assertRaises(ItemNotFound):
-            new_meta = {'meta2': 'data2', 'meta3': 'data3'}
+            new_meta = {'user_meta2': 'data2', 'user_meta3': 'data3'}
             self.images_client.set_image_metadata(self.image_id, new_meta)
 
     @tags(type='negative', net='no')
     def test_update_image_metadata_unauthorized(self):
         with self.assertRaises(ItemNotFound):
-            new_meta = {'meta2': 'data2', 'meta3': 'data3'}
+            new_meta = {'user_meta2': 'data2', 'user_meta3': 'data3'}
             self.images_client.update_image_metadata(self.image_id, new_meta)
 
     @tags(type='negative', net='no')
     def test_get_image_metadata_item_unauthorized(self):
         with self.assertRaises(ItemNotFound):
             self.images_client.get_image_metadata_item(
-                self.image_id, 'key1')
+                self.image_id, 'user_key1')
 
     @tags(type='negative', net='no')
     def test_delete_image_metadata_item_unauthorized(self):
         with self.assertRaises(ItemNotFound):
             self.images_client.delete_image_metadata_item(
-                self.image_id, 'key1')
+                self.image_id, 'user_key1')
 
     @tags(type='negative', net='no')
     def test_set_image_metadata_item_unauthorized(self):
         with self.assertRaises(ItemNotFound):
             self.images_client.set_image_metadata_item(
-                self.image_id, 'key1', 'newvalue')
+                self.image_id, 'user_key1', 'newvalue')
