@@ -31,6 +31,16 @@ class ObjectStorageFixture(BaseTestFixture):
     """
     @summary: Base fixture for objectstorage tests
     """
+    @staticmethod
+    def get_access_data():
+        endpoint_config = UserAuthConfig()
+        user_config = UserConfig()
+
+        auth_provider = AuthProvider()
+        access_data = auth_provider.get_access_data(
+            endpoint_config, user_config)
+
+        return access_data
 
     @staticmethod
     def get_auth_data():
@@ -43,11 +53,8 @@ class ObjectStorageFixture(BaseTestFixture):
             'auth_token': None}
 
         endpoint_config = UserAuthConfig()
-        user_config = UserConfig()
+        access_data = ObjectStorageFixture.get_access_data()
         objectstorage_config = ObjectStorageConfig()
-        auth_provider = AuthProvider()
-        access_data = auth_provider.get_access_data(
-            endpoint_config, user_config)
 
         if endpoint_config.strategy.lower() == 'saio_tempauth':
             result['storage_url'] = access_data.storage_url
@@ -132,15 +139,15 @@ class ObjectStorageFixture(BaseTestFixture):
         super(ObjectStorageFixture, cls).setUpClass()
 
         cls.auth_data = cls.get_auth_data()
-        storage_url = cls.auth_data['storage_url']
-        auth_token = cls.auth_data['auth_token']
+        cls.storage_url = cls.auth_data['storage_url']
+        cls.auth_token = cls.auth_data['auth_token']
 
         cls.objectstorage_api_config = ObjectStorageAPIConfig()
         cls.base_container_name = (
             cls.objectstorage_api_config.base_container_name)
         cls.base_object_name = cls.objectstorage_api_config.base_object_name
 
-        cls.client = ObjectStorageAPIClient(storage_url, auth_token)
+        cls.client = ObjectStorageAPIClient(cls.storage_url, cls.auth_token)
         cls.behaviors = ObjectStorageAPI_Behaviors(client=cls.client)
 
     def create_temp_container(self, descriptor='', headers=None):
