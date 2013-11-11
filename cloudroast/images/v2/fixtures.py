@@ -57,17 +57,17 @@ class ImagesFixture(BaseTestFixture):
         if cls.images_config.override_url:
             url = cls.images_config.override_url
 
-        client_args = {'override_url': url,
+        client_args = {'base_url': url,
                        'auth_token': cls.access_data.token.id_,
                        'serialize_format': serialize_format,
                        'deserialize_format': deserialize_format}
-        admin_client_args = {'override_url': url,
+        admin_client_args = {'base_url': url,
                              'auth_token': cls.admin_access_data.token.id_,
                              'serialize_format': serialize_format,
                              'deserialize_format': deserialize_format}
 
-        cls.images_client = ImagesClient(**client_args)
-        cls.admin_images_client = ImagesClient(**admin_client_args)
+        cls.images_client = cls.generate_images_client(client_args)
+        cls.admin_images_client = cls.generate_images_client(admin_client_args)
 
         cls.images_behavior = ImagesV2Behaviors(
             images_client=cls.images_client, images_config=cls.images_config)
@@ -89,7 +89,7 @@ class ImagesFixture(BaseTestFixture):
         cls.resources.release()
 
     @classmethod
-    def generate_images_client(self, auth_data):
-        """Returns new images client for requested auth data """
+    def generate_images_client(self, client_args):
+        """Returns new images client for requested client data """
 
-        return ImagesV2Client(self.images_endpoint, auth_data.token.id_)
+        return ImagesClient(**client_args)
