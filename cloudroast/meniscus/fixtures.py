@@ -15,6 +15,7 @@ limitations under the License.
 """
 from cafe.drivers.unittest.fixtures import BaseTestFixture
 from cafe.engine.clients.elasticsearch import BaseElasticSearchClient
+from cafe.resources.rsyslog.client import RSyslogClient
 from cloudcafe.meniscus.common.cleanup_client import MeniscusDbClient
 from cloudcafe.meniscus.version_api.client import VersionClient
 from cloudcafe.meniscus.tenant_api.client import TenantClient, ProducerClient
@@ -149,9 +150,8 @@ class PublishingFixture(ProducerFixture):
 
         # ElasticSearch client
         es_servers = [cls.storage_config.address]
-        index = cls.storage_config.index
         cls.es_client = BaseElasticSearchClient(servers=es_servers,
-                                                index=index)
+                                                index=cls.tenant_id)
 
         cls.publish_client = PublishingClient(
             url=cls.correlate_config.correlator_base_url,
@@ -167,7 +167,7 @@ class PublishingFixture(ProducerFixture):
         super(PublishingFixture, self).setUp()
 
         # Connect ElasticSearch Client
-        self.es_client.connect()
+        self.es_client.connect(bulk_size=1)
 
         # We always need the tenant token from the created tenant
         resp = self.tenant_client.get_tenant(self.tenant_id)
@@ -177,3 +177,26 @@ class PublishingFixture(ProducerFixture):
         # Force setting id and token on the behavior
         self.publish_behaviors.tenant_id = self.tenant_id
         self.publish_behaviors.tenant_token = self.tenant_token
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.es_client.delete_index(cls.tenant_id)
+
+
+class RSyslogPublishingFixture(PublishingFixture):
+
+    def setUp(self):
+        super(RSyslogPublishingFixture, self).setUp()
+        syslog_endpoint = self.correlate_config.syslog_endpoint
+        tenant_info = {
+            'meniscus': {
+                'token': self.tenant_token, 'tenant': self.tenant_id
+            }
+        }
+
+        self.rsyslog_client = RSyslogClient(host=syslog_endpoint,
+                                            default_sd=tenant_info)
+        self.rsyslog_client.connect()
+
+    def tearDown(self):
+        self.rsyslog_client.close()
