@@ -25,6 +25,10 @@ from cafe.drivers.unittest.decorators import (tags, data_driven_test,
 
 class PositiveDatasetList(DatasetList):
     def __init__(self):
+        syslog_print_chars = ('0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJ'
+                              'KLMNOPQRSTUVWXYZ!"#$%&\'()*+,-./:;<=>?@[\\]^_'
+                              '`{|}~')
+
         current_time = datetime.now().isoformat()
         # Use default values
         self.append_new_dataset('valid_host', {'host': None})
@@ -37,8 +41,8 @@ class PositiveDatasetList(DatasetList):
                                 {'host': string.ascii_letters})
         self.append_new_dataset('host_punctuation',
                                 {'host': string.punctuation})
-        self.append_new_dataset('host_all_printable_characters',
-                                {'host': string.printable})
+        self.append_new_dataset('host_all_syslog_printable_characters',
+                                {'host': syslog_print_chars})
 
         # Pname
         self.append_new_dataset('pname_255_in_length', {'pname': 'a' * 255})
@@ -46,8 +50,8 @@ class PositiveDatasetList(DatasetList):
                                 {'pname': string.ascii_letters})
         self.append_new_dataset('pname_punctuation',
                                 {'pname': string.punctuation})
-        self.append_new_dataset('pname_all_printable_characters',
-                                {'pname': string.printable})
+        self.append_new_dataset('pname_all_syslog_printable_characters',
+                                {'pname': syslog_print_chars})
 
         # Native
         self.append_new_dataset('native_empty_dict', {'native': {}})
