@@ -291,9 +291,9 @@ class ContainerSmokeTest(ObjectStorageFixture):
                 foo/objet1.txt
                 foo/bar/
         """
-        container_name = '{0}_{1}'.format(
-            self.base_container_name,
-            randstring.get_random_string())
+        container_name = self.behaviors.generate_unique_container_name(
+            self.base_container_name)
+
         self.client.create_container(container_name)
 
         self.addCleanup(
@@ -368,9 +368,8 @@ class ContainerSmokeTest(ObjectStorageFixture):
                 received=str(received)))
 
     def test_objects_list_with_prefix_delimiter_query_parameters(self):
-        container_name = '{0}_{1}'.format(
-            self.base_container_name,
-            randstring.get_random_string())
+        container_name = self.behaviors.generate_unique_container_name(
+            self.base_container_name)
         self.client.create_container(container_name)
 
         self.addCleanup(
@@ -426,9 +425,8 @@ class ContainerSmokeTest(ObjectStorageFixture):
                 received=str(received)))
 
     def test_container_creation_with_valid_container_name(self):
-        container_name = '{0}_{1}'.format(
-            self.base_container_name,
-            randstring.get_random_string())
+        container_name = self.behaviors.generate_unique_container_name(
+            self.base_container_name)
         response = self.client.create_container(container_name)
 
         self.addCleanup(
@@ -448,9 +446,8 @@ class ContainerSmokeTest(ObjectStorageFixture):
                 received=str(received)))
 
     def test_container_creation_with_existing_container_name(self):
-        container_name = '{0}_{1}'.format(
-            self.base_container_name,
-            randstring.get_random_string())
+        container_name = self.behaviors.generate_unique_container_name(
+            self.base_container_name)
         response = self.client.create_container(container_name)
 
         self.addCleanup(
@@ -484,9 +481,8 @@ class ContainerSmokeTest(ObjectStorageFixture):
                 received=str(received)))
 
     def test_container_creation_with_metadata(self):
-        container_name = '{0}_{1}'.format(
-            self.base_container_name,
-            randstring.get_random_string())
+        container_name = self.behaviors.generate_unique_container_name(
+            self.base_container_name)
         headers = {'X-Container-Meta-Ebooks': 'grok_volumes_1_through_10'}
 
         response = self.client.create_container(
@@ -510,9 +506,8 @@ class ContainerSmokeTest(ObjectStorageFixture):
                 received=str(received)))
 
     def test_container_deletion_with_existing_empty_container(self):
-        container_name = '{0}_{1}'.format(
-            self.base_container_name,
-            randstring.get_random_string())
+        container_name = self.behaviors.generate_unique_container_name(
+            self.base_container_name)
         response = self.client.create_container(container_name)
 
         self.addCleanup(
@@ -560,9 +555,8 @@ class ContainerSmokeTest(ObjectStorageFixture):
                 received=str(received)))
 
     def test_metadata_retrieval_with_newly_created_container(self):
-        container_name = '{0}_{1}'.format(
-            self.base_container_name,
-            randstring.get_random_string())
+        container_name = self.behaviors.generate_unique_container_name(
+            self.base_container_name)
         headers = {'X-Container-Meta-Ebooks': 'grok_volumes_1_through_10'}
         response = self.client.create_container(
             container_name,
@@ -599,9 +593,8 @@ class ContainerSmokeTest(ObjectStorageFixture):
                 received=str(received)))
 
     def test_metadata_retrieval_after_setting_metadata(self):
-        container_name = '{0}_{1}'.format(
-            self.base_container_name,
-            randstring.get_random_string())
+        container_name = self.behaviors.generate_unique_container_name(
+            self.base_container_name)
         self.client.create_container(container_name)
 
         self.addCleanup(
@@ -629,9 +622,8 @@ class ContainerSmokeTest(ObjectStorageFixture):
                 received=str(received)))
 
     def test_metadata_update_with_container_possessing_metadata(self):
-        container_name = '{0}_{1}'.format(
-            self.base_container_name,
-            randstring.get_random_string())
+        container_name = self.behaviors.generate_unique_container_name(
+            self.base_container_name)
         self.client.create_container(container_name)
 
         self.addCleanup(

@@ -17,7 +17,6 @@ import calendar
 import time
 import zlib
 
-from cloudcafe.common.tools import randomstring as randstring
 from cloudroast.objectstorage.fixtures import ObjectStorageFixture
 from cloudcafe.common.tools import md5hash
 
@@ -37,9 +36,8 @@ class ObjectSmokeTest(ObjectStorageFixture):
         cls.default_obj_data = cls.behaviors.VALID_OBJECT_DATA
 
     def test_object_retrieval_with_valid_object_name(self):
-        container_name = '{0}_{1}'.format(
-            self.base_container_name,
-            randstring.get_random_string())
+        container_name = self.behaviors.generate_unique_container_name(
+            self.base_container_name)
 
         headers = {'Content-Length': str(len(self.default_obj_data)),
                    'Content-Type': CONTENT_TYPE_TEXT}
@@ -71,9 +69,8 @@ class ObjectSmokeTest(ObjectStorageFixture):
                 received=str(received)))
 
     def test_object_retrieval_with_if_match(self):
-        container_name = '{0}_{1}'.format(
-            self.base_container_name,
-            randstring.get_random_string())
+        container_name = self.behaviors.generate_unique_container_name(
+            self.base_container_name)
 
         etag = md5hash.get_md5_hash(self.default_obj_data)
 
@@ -111,9 +108,8 @@ class ObjectSmokeTest(ObjectStorageFixture):
                 received=str(received)))
 
     def test_object_retrieval_with_if_none_match(self):
-        container_name = '{0}_{1}'.format(
-            self.base_container_name,
-            randstring.get_random_string())
+        container_name = self.behaviors.generate_unique_container_name(
+            self.base_container_name)
 
         headers = {'Content-Length': str(len(self.default_obj_data)),
                    'Content-Type': CONTENT_TYPE_TEXT}
@@ -148,9 +144,8 @@ class ObjectSmokeTest(ObjectStorageFixture):
                 received=str(received)))
 
     def test_object_retrieval_with_if_modified_since(self):
-        container_name = '{0}_{1}'.format(
-            self.base_container_name,
-            randstring.get_random_string())
+        container_name = self.behaviors.generate_unique_container_name(
+            self.base_container_name)
 
         headers = {'Content-Length': str(len(self.default_obj_data)),
                    'Content-Type': CONTENT_TYPE_TEXT}
@@ -185,9 +180,8 @@ class ObjectSmokeTest(ObjectStorageFixture):
                 received=str(received)))
 
     def test_object_not_modified_with_if_modified_since(self):
-        container_name = '{0}_{1}'.format(
-            self.base_container_name,
-            randstring.get_random_string())
+        container_name = self.behaviors.generate_unique_container_name(
+            self.base_container_name)
 
         headers = {'Content-Length': str(len(self.default_obj_data)),
                    'Content-Type': CONTENT_TYPE_TEXT}
@@ -222,9 +216,8 @@ class ObjectSmokeTest(ObjectStorageFixture):
                 received=str(received)))
 
     def test_object_retrieval_with_if_unmodified_since(self):
-        container_name = '{0}_{1}'.format(
-            self.base_container_name,
-            randstring.get_random_string())
+        container_name = self.behaviors.generate_unique_container_name(
+            self.base_container_name)
 
         headers = {'Content-Length': str(len(self.default_obj_data)),
                    'Content-Type': CONTENT_TYPE_TEXT}
@@ -259,9 +252,8 @@ class ObjectSmokeTest(ObjectStorageFixture):
                 received=str(received)))
 
     def test_object_retrieval_fails_with_if_unmodified_since(self):
-        container_name = '{0}_{1}'.format(
-            self.base_container_name,
-            randstring.get_random_string())
+        container_name = self.behaviors.generate_unique_container_name(
+            self.base_container_name)
 
         headers = {'Content-Length': str(len(self.default_obj_data)),
                    'Content-Type': CONTENT_TYPE_TEXT}
@@ -297,9 +289,8 @@ class ObjectSmokeTest(ObjectStorageFixture):
                 received=str(received)))
 
     def test_partial_object_retrieval_with_start_range(self):
-        container_name = '{0}_{1}'.format(
-            self.base_container_name,
-            randstring.get_random_string())
+        container_name = self.behaviors.generate_unique_container_name(
+            self.base_container_name)
 
         headers = {'Content-Length': str(len(self.default_obj_data)),
                    'Content-Type': CONTENT_TYPE_TEXT}
@@ -332,9 +323,8 @@ class ObjectSmokeTest(ObjectStorageFixture):
                 method=method, expected=expected, received=str(received)))
 
     def test_partial_object_retrieval_with_end_range(self):
-        container_name = '{0}_{1}'.format(
-            self.base_container_name,
-            randstring.get_random_string())
+        container_name = self.behaviors.generate_unique_container_name(
+            self.base_container_name)
 
         headers = {'Content-Length': str(len(self.default_obj_data)),
                    'Content-Type': CONTENT_TYPE_TEXT}
@@ -369,9 +359,8 @@ class ObjectSmokeTest(ObjectStorageFixture):
                 received=str(received)))
 
     def test_partial_object_retrieval_with_range(self):
-        container_name = '{0}_{1}'.format(
-            self.base_container_name,
-            randstring.get_random_string())
+        container_name = self.behaviors.generate_unique_container_name(
+            self.base_container_name)
 
         headers = {'Content-Length': str(len(self.default_obj_data)),
                    'Content-Type': CONTENT_TYPE_TEXT}
@@ -406,9 +395,8 @@ class ObjectSmokeTest(ObjectStorageFixture):
                 received=str(received)))
 
     def test_partial_object_retrieval_with_complete_range(self):
-        container_name = '{0}_{1}'.format(
-            self.base_container_name,
-            randstring.get_random_string())
+        container_name = self.behaviors.generate_unique_container_name(
+            self.base_container_name)
 
         headers = {'Content-Length': str(len(self.default_obj_data)),
                    'Content-Type': CONTENT_TYPE_TEXT}
@@ -443,9 +431,8 @@ class ObjectSmokeTest(ObjectStorageFixture):
                 received=str(received)))
 
     def test_object_creation_with_valid_object_name(self):
-        container_name = '{0}_{1}'.format(
-            self.base_container_name,
-            randstring.get_random_string())
+        container_name = self.behaviors.generate_unique_container_name(
+            self.base_container_name)
 
         self.behaviors.create_container(container_name)
 
@@ -491,9 +478,8 @@ class ObjectSmokeTest(ObjectStorageFixture):
                 received=str(received)))
 
     def test_object_update_with_valid_object_name(self):
-        container_name = '{0}_{1}'.format(
-            self.base_container_name,
-            randstring.get_random_string())
+        container_name = self.behaviors.generate_unique_container_name(
+            self.base_container_name)
 
         headers = {'Content-Length': str(len(self.default_obj_data)),
                    'Content-Type': CONTENT_TYPE_TEXT}
@@ -534,9 +520,8 @@ class ObjectSmokeTest(ObjectStorageFixture):
                 received=str(received)))
 
     def test_object_creation_with_etag(self):
-        container_name = '{0}_{1}'.format(
-            self.base_container_name,
-            randstring.get_random_string())
+        container_name = self.behaviors.generate_unique_container_name(
+            self.base_container_name)
 
         self.behaviors.create_container(container_name)
 
@@ -589,9 +574,8 @@ class ObjectSmokeTest(ObjectStorageFixture):
                     received))
 
     def test_dlo_creation(self):
-        container_name = '{0}_{1}'.format(
-            self.base_container_name,
-            randstring.get_random_string())
+        container_name = self.behaviors.generate_unique_container_name(
+            self.base_container_name)
 
         self.behaviors.create_container(container_name)
 
@@ -690,9 +674,8 @@ class ObjectSmokeTest(ObjectStorageFixture):
                 received=str(received)))
 
     def test_dlo_retrieval_with_range(self):
-        container_name = '{0}_{1}'.format(
-            self.base_container_name,
-            randstring.get_random_string())
+        container_name = self.behaviors.generate_unique_container_name(
+            self.base_container_name)
 
         self.behaviors.create_container(container_name)
 
@@ -792,9 +775,8 @@ class ObjectSmokeTest(ObjectStorageFixture):
                 received=str(received)))
 
     def test_object_creation_with_access_control_allow_credentials(self):
-        container_name = '{0}_{1}'.format(
-            self.base_container_name,
-            randstring.get_random_string())
+        container_name = self.behaviors.generate_unique_container_name(
+            self.base_container_name)
 
         self.behaviors.create_container(container_name)
 
@@ -845,9 +827,8 @@ class ObjectSmokeTest(ObjectStorageFixture):
                     received))
 
     def test_object_creation_with_access_control_allow_methods(self):
-        container_name = '{0}_{1}'.format(
-            self.base_container_name,
-            randstring.get_random_string())
+        container_name = self.behaviors.generate_unique_container_name(
+            self.base_container_name)
 
         self.behaviors.create_container(container_name)
 
@@ -898,9 +879,8 @@ class ObjectSmokeTest(ObjectStorageFixture):
                     received))
 
     def test_object_creation_with_access_control_allow_origin(self):
-        container_name = '{0}_{1}'.format(
-            self.base_container_name,
-            randstring.get_random_string())
+        container_name = self.behaviors.generate_unique_container_name(
+            self.base_container_name)
 
         self.behaviors.create_container(container_name)
 
@@ -951,9 +931,8 @@ class ObjectSmokeTest(ObjectStorageFixture):
                     received))
 
     def test_object_creation_with_access_control_expose_headers(self):
-        container_name = '{0}_{1}'.format(
-            self.base_container_name,
-            randstring.get_random_string())
+        container_name = self.behaviors.generate_unique_container_name(
+            self.base_container_name)
 
         self.behaviors.create_container(container_name)
 
@@ -1004,9 +983,8 @@ class ObjectSmokeTest(ObjectStorageFixture):
                     received))
 
     def test_object_creation_with_access_controle_max_age(self):
-        container_name = '{0}_{1}'.format(
-            self.base_container_name,
-            randstring.get_random_string())
+        container_name = self.behaviors.generate_unique_container_name(
+            self.base_container_name)
 
         self.behaviors.create_container(container_name)
 
@@ -1057,9 +1035,8 @@ class ObjectSmokeTest(ObjectStorageFixture):
                     received))
 
     def test_object_creation_with_access_control_request_headers(self):
-        container_name = '{0}_{1}'.format(
-            self.base_container_name,
-            randstring.get_random_string())
+        container_name = self.behaviors.generate_unique_container_name(
+            self.base_container_name)
 
         self.behaviors.create_container(container_name)
 
@@ -1110,9 +1087,8 @@ class ObjectSmokeTest(ObjectStorageFixture):
                     received))
 
     def test_object_creation_with_access_control_request_method(self):
-        container_name = '{0}_{1}'.format(
-            self.base_container_name,
-            randstring.get_random_string())
+        container_name = self.behaviors.generate_unique_container_name(
+            self.base_container_name)
 
         self.behaviors.create_container(container_name)
 
@@ -1163,9 +1139,8 @@ class ObjectSmokeTest(ObjectStorageFixture):
                     received))
 
     def test_object_creation_with_origin(self):
-        container_name = '{0}_{1}'.format(
-            self.base_container_name,
-            randstring.get_random_string())
+        container_name = self.behaviors.generate_unique_container_name(
+            self.base_container_name)
 
         self.behaviors.create_container(container_name)
 
@@ -1214,9 +1189,8 @@ class ObjectSmokeTest(ObjectStorageFixture):
                 ' expected: {0} recieved: {1}'.format(expected, received))
 
     def test_object_creation_with_file_compression(self):
-        container_name = '{0}_{1}'.format(
-            self.base_container_name,
-            randstring.get_random_string())
+        container_name = self.behaviors.generate_unique_container_name(
+            self.base_container_name)
 
         self.behaviors.create_container(container_name)
 
@@ -1268,9 +1242,8 @@ class ObjectSmokeTest(ObjectStorageFixture):
                 ' expected: {0} recieved: {1}'.format(expected, received))
 
     def test_object_creation_with_content_disposition(self):
-        container_name = '{0}_{1}'.format(
-            self.base_container_name,
-            randstring.get_random_string())
+        container_name = self.behaviors.generate_unique_container_name(
+            self.base_container_name)
 
         self.behaviors.create_container(container_name)
 
@@ -1319,9 +1292,8 @@ class ObjectSmokeTest(ObjectStorageFixture):
                 ' expected: {0} recieved: {1}'.format(expected, received))
 
     def test_object_creation_with_x_delete_at(self):
-        container_name = '{0}_{1}'.format(
-            self.base_container_name,
-            randstring.get_random_string())
+        container_name = self.behaviors.generate_unique_container_name(
+            self.base_container_name)
 
         self.behaviors.create_container(container_name)
 
@@ -1372,9 +1344,8 @@ class ObjectSmokeTest(ObjectStorageFixture):
                 ' expected: {0} recieved: {1}'.format(expected, received))
 
     def test_object_creation_with_delete_after(self):
-        container_name = '{0}_{1}'.format(
-            self.base_container_name,
-            randstring.get_random_string())
+        container_name = self.behaviors.generate_unique_container_name(
+            self.base_container_name)
 
         self.behaviors.create_container(container_name)
 
@@ -1415,8 +1386,9 @@ class ObjectSmokeTest(ObjectStorageFixture):
 
     def test_versioned_container_creation_with_valid_data(self):
         # Create a container for 'non-current' object storage
-        non_current_container_name = 'non_current_container_{0}'.format(
-            randstring.get_random_string())
+        non_current_container_name = (
+            self.behaviors.generate_unique_container_name(
+                'non_current'))
 
         self.behaviors.create_container(non_current_container_name)
 
@@ -1424,8 +1396,9 @@ class ObjectSmokeTest(ObjectStorageFixture):
         current_container_headers = {
             'X-Versions-Location': non_current_container_name}
 
-        current_container_name = 'current_container_{0}'.format(
-            randstring.get_random_string())
+        current_container_name = (
+            self.behaviors.generate_unique_container_name(
+                'current'))
 
         self.behaviors.create_container(
             current_container_name,
@@ -1519,13 +1492,11 @@ class ObjectSmokeTest(ObjectStorageFixture):
                 received=str(received)))
 
     def test_put_copy_object(self):
-        src_container_name = '{0}_{1}'.format(
-            'src_container_',
-            randstring.get_random_string())
+        src_container_name = self.behaviors.generate_unique_container_name(
+            '{0}_{1}'.format(self.base_container_name, 'src'))
 
-        dest_container_name = '{0}_{1}'.format(
-            'dest_container_',
-            randstring.get_random_string())
+        dest_container_name = self.behaviors.generate_unique_container_name(
+            '{0}_{1}'.format(self.base_container_name, 'dst'))
 
         self.behaviors.create_container(src_container_name)
 
@@ -1589,13 +1560,11 @@ class ObjectSmokeTest(ObjectStorageFixture):
                 received=str(received)))
 
     def test_copy_object(self):
-        src_container_name = '{0}_{1}'.format(
-            'src_container_',
-            randstring.get_random_string())
+        src_container_name = self.behaviors.generate_unique_container_name(
+            '{0}_{1}'.format(self.base_container_name, 'src'))
 
-        dest_container_name = '{0}_{1}'.format(
-            'dest_container_',
-            randstring.get_random_string())
+        dest_container_name = self.behaviors.generate_unique_container_name(
+            '{0}_{1}'.format(self.base_container_name, 'dst'))
 
         self.behaviors.create_container(src_container_name)
 
@@ -1659,9 +1628,8 @@ class ObjectSmokeTest(ObjectStorageFixture):
                 received=str(received)))
 
     def test_object_deletion_with_valid_object(self):
-        container_name = '{0}_{1}'.format(
-            self.base_container_name,
-            randstring.get_random_string())
+        container_name = self.behaviors.generate_unique_container_name(
+            self.base_container_name)
 
         headers = {'Content-Length': str(len(self.default_obj_data)),
                    'Content-Type': CONTENT_TYPE_TEXT}
@@ -1709,9 +1677,8 @@ class ObjectSmokeTest(ObjectStorageFixture):
                 received=str(received)))
 
     def test_obj_metadata_update_with_object_possessing_metadata(self):
-        container_name = '{0}_{1}'.format(
-            self.base_container_name,
-            randstring.get_random_string())
+        container_name = self.behaviors.generate_unique_container_name(
+            self.base_container_name)
 
         self.behaviors.create_container(container_name)
 
@@ -1785,9 +1752,8 @@ class ObjectSmokeTest(ObjectStorageFixture):
                 ' recieved: {1}'.format(expected, received))
 
     def test_obj_metadata_update(self):
-        container_name = '{0}_{1}'.format(
-            self.base_container_name,
-            randstring.get_random_string())
+        container_name = self.behaviors.generate_unique_container_name(
+            self.base_container_name)
 
         headers = {'Content-Length': str(len(self.default_obj_data)),
                    'Content-Type': CONTENT_TYPE_TEXT}
@@ -1841,9 +1807,8 @@ class ObjectSmokeTest(ObjectStorageFixture):
 
     def test_content_type_not_detected_without_detect_content_type_header(
             self):
-        container_name = '{0}_{1}'.format(
-            self.base_container_name,
-            randstring.get_random_string())
+        container_name = self.behaviors.generate_unique_container_name(
+            self.base_container_name)
 
         obj1_name = 'object1.txt'
 
@@ -1894,9 +1859,8 @@ class ObjectSmokeTest(ObjectStorageFixture):
                 ' recieved: {1}'.format(expected, received))
 
     def test_content_type_detected_with_detect_content_type(self):
-        container_name = '{0}_{1}'.format(
-            self.base_container_name,
-            randstring.get_random_string())
+        container_name = self.behaviors.generate_unique_container_name(
+            self.base_container_name)
 
         object1_name = 'object1.txt'
 
