@@ -1384,6 +1384,7 @@ class ObjectSmokeTest(ObjectStorageFixture):
             response.headers,
             msg="X-Delete-At header was set")
 
+    @ObjectStorageFixture.required_features('object_versioning')
     def test_versioned_container_creation_with_valid_data(self):
         # Create a container for 'non-current' object storage
         non_current_container_name = (
