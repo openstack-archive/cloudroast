@@ -29,52 +29,44 @@ class ImagesFixture(BaseTestFixture):
 
     @classmethod
     def setUpClass(cls):
-        """@summary: Configuration and client setup for images fixture"""
-
         super(ImagesFixture, cls).setUpClass()
         cls.images_config = ImagesConfig()
         cls.marshalling = MarshallingConfig()
         cls.endpoint_config = UserAuthConfig()
         cls.user_config = UserConfig()
         cls.resources = ResourcePool()
-        serialize_format = cls.marshalling.serializer
-        deserialize_format = cls.marshalling.deserializer
-
+        cls.serialize_format = cls.marshalling.serializer
+        cls.deserialize_format = cls.marshalling.deserializer
         cls.access_data = AuthProvider.get_access_data(cls.endpoint_config,
                                                        cls.user_config)
-        cls.admin_access_data = AuthProvider.get_access_data(
-            None, AdminUserConfig())
-
         # If authentication fails, fail immediately
         if cls.access_data is None:
-            cls.assertClassSetupFailure('Authentication failed.')
-
+            cls.assertClassSetupFailure('Authentication failed')
+        cls.admin_access_data = AuthProvider.get_access_data(
+            None, AdminUserConfig())
+        # If authentication fails, fail immediately
+        if cls.admin_access_data is None:
+            cls.assertClassSetupFailure('Authentication failed')
         images_service = cls.access_data.get_service(
             cls.images_config.endpoint_name)
-        url = images_service.get_endpoint(cls.images_config.region).public_url
-
+        public_url_check = \
+            images_service.get_endpoint(cls.images_config.region)
+        # If endpoint validation fails, fail immediately
+        if public_url_check is None:
+            cls.assertClassSetupFailure('Endpoint validation failed')
+        cls.url = \
+            images_service.get_endpoint(cls.images_config.region).public_url
         # If a url override was provided, use it instead
         if cls.images_config.override_url:
-            url = cls.images_config.override_url
-
-        client_args = {'override_url': url,
-                       'auth_token': cls.access_data.token.id_,
-                       'serialize_format': serialize_format,
-                       'deserialize_format': deserialize_format}
-        admin_client_args = {'override_url': url,
-                             'auth_token': cls.admin_access_data.token.id_,
-                             'serialize_format': serialize_format,
-                             'deserialize_format': deserialize_format}
-
-        cls.images_client = ImagesClient(**client_args)
-        cls.admin_images_client = ImagesClient(**admin_client_args)
-
+            cls.url = cls.images_config.override_url
+        cls.images_client = cls.generate_images_client(cls.access_data)
+        cls.admin_images_client = \
+            cls.generate_images_client(cls.admin_access_data)
         cls.images_behavior = ImagesV2Behaviors(
             images_client=cls.images_client, images_config=cls.images_config)
         cls.admin_images_behavior = ImagesV2Behaviors(
             images_client=cls.admin_images_client,
             images_config=cls.images_config)
-
         cls.image_schema_json = (
             open(cls.images_config.image_schema_json).read().rstrip())
         cls.images_schema_json = (
@@ -82,14 +74,15 @@ class ImagesFixture(BaseTestFixture):
 
     @classmethod
     def tearDownClass(cls):
-        """@summary: Teardown for images fixture"""
-
         super(ImagesFixture, cls).tearDownClass()
-
         cls.resources.release()
 
     @classmethod
     def generate_images_client(self, auth_data):
-        """Returns new images client for requested auth data """
+        """@summary: Returns new images client for requested auth data"""
 
-        return ImagesV2Client(self.images_endpoint, auth_data.token.id_)
+        client_args = {'base_url': self.url,
+                       'auth_token': auth_data.token.id_,
+                       'serialize_format': self.serialize_format,
+                       'deserialize_format': self.deserialize_format}
+        return ImagesClient(**client_args)
