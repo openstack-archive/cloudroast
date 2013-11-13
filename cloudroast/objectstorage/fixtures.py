@@ -13,6 +13,8 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
+import json
+import requests
 import unittest
 
 from cafe.drivers.unittest.fixtures import BaseTestFixture
@@ -27,10 +29,15 @@ from cloudcafe.objectstorage.objectstorage_api.config \
     import ObjectStorageAPIConfig
 
 
+_swift_info = None
+_swift_features = None
+
+
 class ObjectStorageFixture(BaseTestFixture):
     """
     @summary: Base fixture for objectstorage tests
     """
+
     @staticmethod
     def get_access_data():
         endpoint_config = UserAuthConfig()
@@ -68,6 +75,31 @@ class ObjectStorageFixture(BaseTestFixture):
 
         return result
 
+    @staticmethod
+    def get_swift_info(endpoint=None):
+        """
+        Returns a dictionary of info requested from swift.
+        """
+        global _swift_info
+        if not _swift_info:
+            info_url = '{0}/info'.format(endpoint)
+            response = requests.get(info_url)
+            if not response.ok:
+                raise Exception('Could not load info from swift.')
+            _swift_info = json.loads(response.content)
+        return _swift_info
+
+    @staticmethod
+    def get_features(endpoint):
+        """
+        Returns a string represnting the enabled features seperated by commas.
+        """
+        global _swift_features
+        if not _swift_features:
+            info = ObjectStorageFixture.get_swift_info(endpoint)
+            _swift_features = ','.join([k for k in info.viewkeys()])
+        return _swift_features
+
     @classmethod
     def required_features(cls, features):
         """
@@ -88,49 +120,21 @@ class ObjectStorageFixture(BaseTestFixture):
         objectstorage_api_config = ObjectStorageAPIConfig()
         enabled_features = objectstorage_api_config.enabled_features
 
-        if enabled_features == objectstorage_api_config.ALL_FEATURES:
+        if enabled_features == objectstorage_api_config.ASK_SWIFT_FOR_FEATURES:
+            auth_data = cls.get_auth_data()
+            storage_url = auth_data['storage_url']
+            swift_endpoint = storage_url.split('/v1/')[0]
+            enabled_features = cls.get_features(swift_endpoint)
+        elif enabled_features == objectstorage_api_config.ALL_FEATURES:
             return lambda func: func
-
-        if enabled_features == objectstorage_api_config.NO_FEATURES:
-            return unittest.skip('feature not configured')
+        elif enabled_features == objectstorage_api_config.NO_FEATURES:
+            return unittest.skip('no configurable features to be tested.')
 
         enabled_features = enabled_features.split()
         for feature in features:
             if feature not in enabled_features:
-                return unittest.skip('feature not configured')
-
-        return lambda func: func
-
-    @classmethod
-    def required_middleware(cls, middleware):
-        """
-        Test decorator to skip tests if middleware is not configured in swift.
-        Configuration of what middleware is in the proxy pipeline can be done
-        from the objectstorage config file.
-
-        Note: "lambda func: func" is from the Python unit tests example
-              "25.3.6. Skipping tests and expected failures":
-
-        def skipUnlessHasattr(obj, attr):
-            if hasattr(obj, attr):
-                return lambda func: func
-            return unittest.skip("{!r} doesn't have {!r}".format(obj, attr))
-
-        http://docs.python.org/2/library/unittest.html
-        """
-        objectstorage_api_config = ObjectStorageAPIConfig()
-        proxy_pipeline = objectstorage_api_config.proxy_pipeline
-
-        if proxy_pipeline == objectstorage_api_config.ALL_FEATURES:
-            return lambda func: func
-
-        if proxy_pipeline == objectstorage_api_config.NO_FEATURES:
-            return unittest.skip('middleware not configured')
-
-        proxy_pipeline = proxy_pipeline.split()
-        for m in middleware:
-            if m not in proxy_pipeline:
-                return unittest.skip('middleware not configured')
+                return unittest.skip(
+                    '{0} not configured'.format(feature))
 
         return lambda func: func
 

@@ -97,6 +97,7 @@ class ExtractArchiveFormatParameterTest(ObjectStorageFixture):
 
         return members
 
+    @ObjectStorageFixture.required_features(['bulk'])
     def test_failure_reported_with_tar_archive_and_tar_gz_identifier(self):
         """
         Scenario: archive file is uploaded with incorrect extract-archive
@@ -174,6 +175,7 @@ class ExtractArchiveFormatParameterTest(ObjectStorageFixture):
             msg="response body 'Response Body' expected None received"
             " {0}".format(content.get('Response Body')))
 
+    @ObjectStorageFixture.required_features(['bulk'])
     def test_failure_reported_with_tar_archive_and_tar_bz2_identifier(self):
         """
         Scenario: archive file is uploaded with incorrect extract-archive
@@ -255,6 +257,7 @@ class ExtractArchiveFormatParameterTest(ObjectStorageFixture):
             msg="response body 'Response Body' expected None received"
             " {0}".format(content.get('Response Body')))
 
+    @ObjectStorageFixture.required_features(['bulk'])
     def test_failure_reported_with_tar_gz_archive_and_tar_identifier(self):
         """
         Scenario: archive file is uploaded with incorrect extract-archive
@@ -332,6 +335,7 @@ class ExtractArchiveFormatParameterTest(ObjectStorageFixture):
             msg="response body 'Response Body' expected None received"
             " {0}".format(content.get('Response Body')))
 
+    @ObjectStorageFixture.required_features(['bulk'])
     def test_failure_reported_with_tar_gz_archive_and_tar_bz2_identifier(self):
         """
         Scenario: archive file is uploaded with incorrect extract-archive
@@ -409,6 +413,7 @@ class ExtractArchiveFormatParameterTest(ObjectStorageFixture):
             msg="response body 'Response Body' expected None received"
             " {0}".format(content.get('Response Body')))
 
+    @ObjectStorageFixture.required_features(['bulk'])
     def test_failure_reported_with_tar_bz2_archive_and_tar_identifier(self):
         """
         Scenario: archive file is uploaded with incorrect extract-archive
@@ -490,6 +495,7 @@ class ExtractArchiveFormatParameterTest(ObjectStorageFixture):
             msg="response body 'Response Body' expected None received"
             " {0}".format(content.get('Response Body')))
 
+    @ObjectStorageFixture.required_features(['bulk'])
     def test_failure_reported_with_tar_bz2_archive_and_tar_gz_identifier(self):
         """
         Scenario: archive file is uploaded with incorrect extract-archive
