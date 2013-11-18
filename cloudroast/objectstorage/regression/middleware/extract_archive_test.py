@@ -13,7 +13,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-import json
 import os
 
 from cloudroast.objectstorage.fixtures import ObjectStorageFixture
@@ -27,7 +26,11 @@ HTTP_OK = 200
 
 class ExtractArchiveTest(ObjectStorageFixture):
     """
-    Tests Swfit expand archive operations:
+    Tests Swfit expand archive operations
+    Notes:
+    The initial response status code is for initial the request.
+    The object extraction status code is sent in the body of the
+    response.
     """
     @classmethod
     def setUpClass(cls):
@@ -36,7 +39,6 @@ class ExtractArchiveTest(ObjectStorageFixture):
         cls.data_dir = EngineConfig().data_directory
         cls.no_compression = None
         cls.storage_url = cls.client.storage_url
-        cls.bad_data = "X" * 1000
         cls.archive_paths = {}
         cls.obj_names = []
         cls.obj_names_with_slashes = []
@@ -81,24 +83,6 @@ class ExtractArchiveTest(ObjectStorageFixture):
 
         return archive_data
 
-    def get_members(self, keys, response_content):
-        members = []
-        content = None
-
-        try:
-            content = json.loads(response_content)
-        except ValueError, error:
-            self.fixture_log.exception(error)
-
-        for current in content:
-            for key in keys:
-                if key in current.keys():
-                    members.append(current[key])
-                else:
-                    continue
-
-        return members
-
     @ObjectStorageFixture.required_features('bulk')
     def test_extract_tar_archive_to_existing_container(self):
         """
@@ -118,17 +102,17 @@ class ExtractArchiveTest(ObjectStorageFixture):
 
         self.addCleanup(self.client.force_delete_containers, [container_name])
 
-        url = "{0}/{1}".format(
-            self.storage_url,
-            container_name)
-        data = self.read_archive_data(self.archive_paths['tar'])
-        params = {'extract-archive': 'tar'}
+        archive_format = "tar"
+
+        data = self.read_archive_data(self.archive_paths[archive_format])
+
         headers = {'Accept': 'application/json'}
-        response = self.client.put(
-            url,
-            data=data,
-            headers=headers,
-            params=params)
+
+        response = self.client.create_archive_object(
+            data,
+            archive_format,
+            upload_path=container_name,
+            headers=headers)
 
         expected = HTTP_OK
         received = response.status_code
@@ -139,15 +123,8 @@ class ExtractArchiveTest(ObjectStorageFixture):
             " received: {1}".format(expected, received))
 
         # inspect the body of the response
-        content = None
-
-        try:
-            content = json.loads(response.content)
-        except ValueError, error:
-            self.fixture_log.exception(error)
-
         expected = self.num_archive_files
-        received = int(content.get("Number Files Created"))
+        received = int(response.entity.num_files_created)
         self.assertEqual(
             expected,
             received,
@@ -155,7 +132,7 @@ class ExtractArchiveTest(ObjectStorageFixture):
             " received {1}".format(expected, received))
 
         expected = '201 Created'
-        received = content.get('Response Status')
+        received = response.entity.status
         self.assertEqual(
             expected,
             received,
@@ -163,21 +140,19 @@ class ExtractArchiveTest(ObjectStorageFixture):
             " received {1}".format(expected, received))
 
         expected = 0
-        received = len(content.get('Errors'))
+        received = len(response.entity.errors)
         self.assertEqual(
             expected,
             received,
             msg="response body 'Errors' expected None received {0}".format(
-                content.get('Errors')))
+                response.entity.errors))
 
         # check the actual number of objects and object names
         params = {'format': 'json'}
         response = self.client.list_objects(container_name, params=params)
 
-        resp_obj_names = self.get_members(["name"], response.content)
-
         expected = self.num_archive_files
-        received = len(resp_obj_names)
+        received = len(response.entity)
         self.assertEqual(
             expected,
             received,
@@ -185,16 +160,18 @@ class ExtractArchiveTest(ObjectStorageFixture):
             " received: {1} extracted objects".format(expected, received))
 
         # check that all the objects where extracted to the existing container
+        resp_obj_names = [storage_obj.name for
+                          storage_obj in response.entity]
+
         self.assertEqual(sorted(self.obj_names), sorted(resp_obj_names))
 
         # check that the content of the obj is correct
         # the content should be the md5hash of the objects name
-        for name in resp_obj_names:
-            response = self.client.get_object(
-                container_name,
-                name)
+        for obj_name in resp_obj_names:
+            # the content of the obj should be the md5 sum of the obj name
+            response = self.client.get_object(container_name, obj_name)
 
-            expected = get_md5_hash(name)
+            expected = get_md5_hash(obj_name)
             received = response.content
             self.assertEqual(
                 expected,
@@ -222,28 +199,29 @@ class ExtractArchiveTest(ObjectStorageFixture):
 
         self.addCleanup(self.client.force_delete_containers, [container_name])
 
-        url = "{0}/{1}".format(
-            self.storage_url,
-            container_name)
-        data = self.read_archive_data(self.archive_paths['tar.gz'])
-        params = {'extract-archive': 'tar.gz'}
+        archive_format = "tar.gz"
+
+        data = self.read_archive_data(self.archive_paths[archive_format])
+
         headers = {'Accept': 'application/json'}
-        response = self.client.put(
-            url,
-            data=data,
-            params=params,
+
+        response = self.client.create_archive_object(
+            data,
+            archive_format,
+            upload_path=container_name,
             headers=headers)
 
+        expected = HTTP_OK
+        received = response.status_code
+        self.assertEqual(
+            expected,
+            received,
+            "extract tar archive expected successful status code: {0}"
+            " received: {1}".format(expected, received))
+
         # inspect the body of the response
-        content = None
-
-        try:
-            content = json.loads(response.content)
-        except ValueError, error:
-            self.fixture_log.exception(error)
-
         expected = self.num_archive_files
-        received = int(content.get("Number Files Created"))
+        received = int(response.entity.num_files_created)
         self.assertEqual(
             expected,
             received,
@@ -251,7 +229,7 @@ class ExtractArchiveTest(ObjectStorageFixture):
             " received {1}".format(expected, received))
 
         expected = '201 Created'
-        received = content.get('Response Status')
+        received = response.entity.status
         self.assertEqual(
             expected,
             received,
@@ -259,21 +237,19 @@ class ExtractArchiveTest(ObjectStorageFixture):
             " received {1}".format(expected, received))
 
         expected = 0
-        received = len(content.get('Errors'))
+        received = len(response.entity.errors)
         self.assertEqual(
             expected,
             received,
             msg="response body 'Errors' expected None received {0}".format(
-                content.get('Errors')))
+                response.entity.errors))
 
         # check the actual number of objects and object names
         params = {'format': 'json'}
         response = self.client.list_objects(container_name, params=params)
 
-        resp_obj_names = self.get_members(["name"], response.content)
-
         expected = self.num_archive_files
-        received = len(resp_obj_names)
+        received = len(response.entity)
         self.assertEqual(
             expected,
             received,
@@ -281,16 +257,18 @@ class ExtractArchiveTest(ObjectStorageFixture):
             " received: {1} extracted objects".format(expected, received))
 
         # check that all the objects where extracted to the existing container
+        resp_obj_names = [storage_obj.name for
+                          storage_obj in response.entity]
+
         self.assertEqual(sorted(self.obj_names), sorted(resp_obj_names))
 
         # check that the content of the obj is correct
         # the content should be the md5hash of the objects name
-        for name in resp_obj_names:
-            response = self.client.get_object(
-                container_name,
-                name)
+        for obj_name in resp_obj_names:
+            # the content of the obj should be the md5 sum of the obj name
+            response = self.client.get_object(container_name, obj_name)
 
-            expected = get_md5_hash(name)
+            expected = get_md5_hash(obj_name)
             received = response.content
             self.assertEqual(
                 expected,
@@ -318,28 +296,29 @@ class ExtractArchiveTest(ObjectStorageFixture):
 
         self.addCleanup(self.client.force_delete_containers, [container_name])
 
-        url = "{0}/{1}".format(
-            self.storage_url,
-            container_name)
-        data = self.read_archive_data(self.archive_paths['tar.bz2'])
-        params = {'extract-archive': 'tar.bz2'}
+        archive_format = "tar.bz2"
+
+        data = self.read_archive_data(self.archive_paths[archive_format])
+
         headers = {'Accept': 'application/json'}
-        response = self.client.put(
-            url,
-            data=data,
-            params=params,
+
+        response = self.client.create_archive_object(
+            data,
+            archive_format,
+            upload_path=container_name,
             headers=headers)
 
+        expected = HTTP_OK
+        received = response.status_code
+        self.assertEqual(
+            expected,
+            received,
+            "extract tar archive expected successful status code: {0}"
+            " received: {1}".format(expected, received))
+
         # inspect the body of the response
-        content = None
-
-        try:
-            content = json.loads(response.content)
-        except ValueError, error:
-            self.fixture_log.exception(error)
-
         expected = self.num_archive_files
-        received = int(content.get("Number Files Created"))
+        received = int(response.entity.num_files_created)
         self.assertEqual(
             expected,
             received,
@@ -347,7 +326,7 @@ class ExtractArchiveTest(ObjectStorageFixture):
             " received {1}".format(expected, received))
 
         expected = '201 Created'
-        received = content.get('Response Status')
+        received = response.entity.status
         self.assertEqual(
             expected,
             received,
@@ -355,21 +334,19 @@ class ExtractArchiveTest(ObjectStorageFixture):
             " received {1}".format(expected, received))
 
         expected = 0
-        received = len(content.get('Errors'))
+        received = len(response.entity.errors)
         self.assertEqual(
             expected,
             received,
             msg="response body 'Errors' expected None received {0}".format(
-                content.get('Errors')))
+                response.entity.errors))
 
         # check the actual number of objects and object names
         params = {'format': 'json'}
         response = self.client.list_objects(container_name, params=params)
 
-        resp_obj_names = self.get_members(["name"], response.content)
-
         expected = self.num_archive_files
-        received = len(resp_obj_names)
+        received = len(response.entity)
         self.assertEqual(
             expected,
             received,
@@ -377,16 +354,18 @@ class ExtractArchiveTest(ObjectStorageFixture):
             " received: {1} extracted objects".format(expected, received))
 
         # check that all the objects where extracted to the existing container
+        resp_obj_names = [storage_obj.name for
+                          storage_obj in response.entity]
+
         self.assertEqual(sorted(self.obj_names), sorted(resp_obj_names))
 
         # check that the content of the obj is correct
         # the content should be the md5hash of the objects name
-        for name in resp_obj_names:
-            response = self.client.get_object(
-                container_name,
-                name)
+        for obj_name in resp_obj_names:
+            # the content of the obj should be the md5 sum of the obj name
+            response = self.client.get_object(container_name, obj_name)
 
-            expected = get_md5_hash(name)
+            expected = get_md5_hash(obj_name)
             received = response.content
             self.assertEqual(
                 expected,
@@ -406,14 +385,16 @@ class ExtractArchiveTest(ObjectStorageFixture):
         Expected Results: tar archive is object names with slashes are
         extracted to objects. names without slashes are ignored
         """
-        data = self.read_archive_data(self.archive_paths['tar'])
-        params = {'extract-archive': 'tar'}
+        archive_format = "tar"
+
+        data = self.read_archive_data(self.archive_paths[archive_format])
+
         headers = {'Accept': 'application/json'}
-        response = self.client.put(
-            self.storage_url,
-            data=data,
-            headers=headers,
-            params=params)
+
+        response = self.client.create_archive_object(
+            data,
+            archive_format,
+            headers=headers)
 
         expected = HTTP_OK
         received = response.status_code
@@ -424,15 +405,8 @@ class ExtractArchiveTest(ObjectStorageFixture):
             " received: {1}".format(expected, received))
 
         # inspect the body of the response
-        content = None
-
-        try:
-            content = json.loads(response.content)
-        except ValueError, error:
-            self.fixture_log.exception(error)
-
         expected = len(self.obj_names_with_slashes)
-        received = int(content.get("Number Files Created"))
+        received = int(response.entity.num_files_created)
         self.assertEqual(
             expected,
             received,
@@ -440,7 +414,7 @@ class ExtractArchiveTest(ObjectStorageFixture):
             " received {1}".format(expected, received))
 
         expected = '201 Created'
-        received = content.get('Response Status')
+        received = response.entity.status
         self.assertEqual(
             expected,
             received,
@@ -448,33 +422,35 @@ class ExtractArchiveTest(ObjectStorageFixture):
             " received {1}".format(expected, received))
 
         expected = 0
-        received = len(content.get('Errors'))
+        received = len(response.entity.errors)
         self.assertEqual(
             expected,
             received,
             msg="response body 'Errors' expected None received {0}".format(
-                content.get('Errors')))
+                response.entity.errors))
 
         # check the actual number of objects and object names
         params = {'format': 'json',
-                  'marker': BASE_NAME,
-                  'limit': str(self.num_archive_files)}
+                  'marker': BASE_NAME}
+
         response = self.client.list_containers(params=params)
 
-        resp_container_names = self.get_members(["name"], response.content)
+        resp_container_names = []
+        resp_container_names[:-1] = [container.name for
+                                     container in response.entity]
 
-        # names without slashes are ignored
+        # archive object names without slashes are ignored
         for name in self.obj_names_without_slashes:
             self.assertNotIn(name, resp_container_names)
 
-        #container names to be cleaned up
+        # container names to be cleaned up
         containers = []
 
         # names with slashes should create containers with objects in them
         for name in self.obj_names_with_slashes:
             """
-            an archive names foo/bar will create a container named foo
-            with an object named bar in it.
+            an archive named foo/bar will create a container named 'foo'
+            with an object named 'bar' in it.
             """
             container_name = name.split('/')[0]
             obj_name = name.split('/')[1]
@@ -490,7 +466,8 @@ class ExtractArchiveTest(ObjectStorageFixture):
             params = {'format': 'json'}
             response = self.client.list_objects(container_name, params=params)
 
-            resp_obj_names = self.get_members(["name"], response.content)
+            resp_obj_names = [storage_obj.name for
+                              storage_obj in response.entity]
 
             expected = 1
             received = len(resp_obj_names)
@@ -503,9 +480,7 @@ class ExtractArchiveTest(ObjectStorageFixture):
             self.assertIn(obj_name, resp_obj_names)
 
             # the content of the obj should be the md5 sum of the obj name
-            response = self.client.get_object(
-                container_name,
-                obj_name)
+            response = self.client.get_object(container_name, obj_name)
 
             expected = get_md5_hash(name)
             received = response.content
@@ -531,14 +506,16 @@ class ExtractArchiveTest(ObjectStorageFixture):
         Expected Results: tar.gz archive is object names with slashes are
         extracted to objects. names without slashes are ignored
         """
-        data = self.read_archive_data(self.archive_paths['tar.gz'])
-        params = {'extract-archive': 'tar.gz'}
+        archive_format = "tar.gz"
+
+        data = self.read_archive_data(self.archive_paths[archive_format])
+
         headers = {'Accept': 'application/json'}
-        response = self.client.put(
-            self.storage_url,
-            data=data,
-            headers=headers,
-            params=params)
+
+        response = self.client.create_archive_object(
+            data,
+            archive_format,
+            headers=headers)
 
         expected = HTTP_OK
         received = response.status_code
@@ -549,15 +526,8 @@ class ExtractArchiveTest(ObjectStorageFixture):
             " received: {1}".format(expected, received))
 
         # inspect the body of the response
-        content = None
-
-        try:
-            content = json.loads(response.content)
-        except ValueError, error:
-            self.fixture_log.exception(error)
-
         expected = len(self.obj_names_with_slashes)
-        received = int(content.get("Number Files Created"))
+        received = int(response.entity.num_files_created)
         self.assertEqual(
             expected,
             received,
@@ -565,7 +535,7 @@ class ExtractArchiveTest(ObjectStorageFixture):
             " received {1}".format(expected, received))
 
         expected = '201 Created'
-        received = content.get('Response Status')
+        received = response.entity.status
         self.assertEqual(
             expected,
             received,
@@ -573,33 +543,35 @@ class ExtractArchiveTest(ObjectStorageFixture):
             " received {1}".format(expected, received))
 
         expected = 0
-        received = len(content.get('Errors'))
+        received = len(response.entity.errors)
         self.assertEqual(
             expected,
             received,
             msg="response body 'Errors' expected None received {0}".format(
-                content.get('Errors')))
+                response.entity.errors))
 
         # check the actual number of objects and object names
         params = {'format': 'json',
-                  'marker': BASE_NAME,
-                  'limit': str(self.num_archive_files)}
+                  'marker': BASE_NAME}
+
         response = self.client.list_containers(params=params)
 
-        resp_container_names = self.get_members(["name"], response.content)
+        resp_container_names = []
+        resp_container_names[:-1] = [container.name for
+                                     container in response.entity]
 
-        # names without slashes are ignored
+        # archive object names without slashes are ignored
         for name in self.obj_names_without_slashes:
             self.assertNotIn(name, resp_container_names)
 
-        #container names to be cleaned up
+        # container names to be cleaned up
         containers = []
 
         # names with slashes should create containers with objects in them
         for name in self.obj_names_with_slashes:
             """
-            an archive names foo/bar will create a container named foo
-            with an object named bar in it.
+            an archive named foo/bar will create a container named 'foo'
+            with an object named 'bar' in it.
             """
             container_name = name.split('/')[0]
             obj_name = name.split('/')[1]
@@ -615,7 +587,8 @@ class ExtractArchiveTest(ObjectStorageFixture):
             params = {'format': 'json'}
             response = self.client.list_objects(container_name, params=params)
 
-            resp_obj_names = self.get_members(["name"], response.content)
+            resp_obj_names = [storage_obj.name for
+                              storage_obj in response.entity]
 
             expected = 1
             received = len(resp_obj_names)
@@ -628,9 +601,7 @@ class ExtractArchiveTest(ObjectStorageFixture):
             self.assertIn(obj_name, resp_obj_names)
 
             # the content of the obj should be the md5 sum of the obj name
-            response = self.client.get_object(
-                container_name,
-                obj_name)
+            response = self.client.get_object(container_name, obj_name)
 
             expected = get_md5_hash(name)
             received = response.content
@@ -656,14 +627,16 @@ class ExtractArchiveTest(ObjectStorageFixture):
         Expected Results: tar.bz2 archive is object names with slashes are
         extracted to objects. names without slashes are ignored
         """
-        data = self.read_archive_data(self.archive_paths['tar.bz2'])
-        params = {'extract-archive': 'tar.bz2'}
+        archive_format = "tar.bz2"
+
+        data = self.read_archive_data(self.archive_paths[archive_format])
+
         headers = {'Accept': 'application/json'}
-        response = self.client.put(
-            self.storage_url,
-            data=data,
-            headers=headers,
-            params=params)
+
+        response = self.client.create_archive_object(
+            data,
+            archive_format,
+            headers=headers)
 
         expected = HTTP_OK
         received = response.status_code
@@ -674,15 +647,8 @@ class ExtractArchiveTest(ObjectStorageFixture):
             " received: {1}".format(expected, received))
 
         # inspect the body of the response
-        content = None
-
-        try:
-            content = json.loads(response.content)
-        except ValueError, error:
-            self.fixture_log.exception(error)
-
         expected = len(self.obj_names_with_slashes)
-        received = int(content.get("Number Files Created"))
+        received = int(response.entity.num_files_created)
         self.assertEqual(
             expected,
             received,
@@ -690,7 +656,7 @@ class ExtractArchiveTest(ObjectStorageFixture):
             " received {1}".format(expected, received))
 
         expected = '201 Created'
-        received = content.get('Response Status')
+        received = response.entity.status
         self.assertEqual(
             expected,
             received,
@@ -698,33 +664,35 @@ class ExtractArchiveTest(ObjectStorageFixture):
             " received {1}".format(expected, received))
 
         expected = 0
-        received = len(content.get('Errors'))
+        received = len(response.entity.errors)
         self.assertEqual(
             expected,
             received,
             msg="response body 'Errors' expected None received {0}".format(
-                content.get('Errors')))
+                response.entity.errors))
 
         # check the actual number of objects and object names
         params = {'format': 'json',
-                  'marker': BASE_NAME,
-                  'limit': str(self.num_archive_files)}
+                  'marker': BASE_NAME}
+
         response = self.client.list_containers(params=params)
 
-        resp_container_names = self.get_members(["name"], response.content)
+        resp_container_names = []
+        resp_container_names[:-1] = [container.name for
+                                     container in response.entity]
 
-        # names without slashes are ignored
+        # archive object names without slashes are ignored
         for name in self.obj_names_without_slashes:
             self.assertNotIn(name, resp_container_names)
 
-        #container names to be cleaned up
+        # container names to be cleaned up
         containers = []
 
         # names with slashes should create containers with objects in them
         for name in self.obj_names_with_slashes:
             """
-            an archive names foo/bar will create a container named foo
-            with an object named bar in it.
+            an archive named foo/bar will create a container named 'foo'
+            with an object named 'bar' in it.
             """
             container_name = name.split('/')[0]
             obj_name = name.split('/')[1]
@@ -740,7 +708,8 @@ class ExtractArchiveTest(ObjectStorageFixture):
             params = {'format': 'json'}
             response = self.client.list_objects(container_name, params=params)
 
-            resp_obj_names = self.get_members(["name"], response.content)
+            resp_obj_names = [storage_obj.name for
+                              storage_obj in response.entity]
 
             expected = 1
             received = len(resp_obj_names)
@@ -753,9 +722,7 @@ class ExtractArchiveTest(ObjectStorageFixture):
             self.assertIn(obj_name, resp_obj_names)
 
             # the content of the obj should be the md5 sum of the obj name
-            response = self.client.get_object(
-                container_name,
-                obj_name)
+            response = self.client.get_object(container_name, obj_name)
 
             expected = get_md5_hash(name)
             received = response.content
@@ -779,7 +746,7 @@ class ExtractArchiveTest(ObjectStorageFixture):
         Expected Results: contents of the archive are not expanded into objects
         """
         container_name = '{0}_container_{1}'.format(
-            'bulk_tar',
+            BASE_NAME,
             randstring.get_random_string())
 
         self.behaviors.create_container(container_name)
@@ -806,17 +773,17 @@ class ExtractArchiveTest(ObjectStorageFixture):
         params = {'format': 'json'}
         response = self.client.list_objects(container_name, params=params)
 
-        resp_obj_names = self.get_members(["name"], response.content)
-
         expected = 1
-        received = len(resp_obj_names)
+        received = len(response.entity)
         self.assertEqual(
             expected,
             received,
             msg="container list expected: {0} objects."
             " received: {1} objects".format(expected, received))
 
-        self.assertIn(obj_name, resp_obj_names)
+        resp_obj = response.entity[0]
+
+        self.assertEqual(obj_name, resp_obj.name)
 
         response = self.client.get_object(
             container_name,
@@ -833,14 +800,14 @@ class ExtractArchiveTest(ObjectStorageFixture):
         Expected Results: contents of the archive are not expanded into objects
         """
         container_name = '{0}_container_{1}'.format(
-            'bulk_tar_gz',
+            BASE_NAME,
             randstring.get_random_string())
 
         self.behaviors.create_container(container_name)
 
         self.addCleanup(self.client.force_delete_containers, [container_name])
 
-        object_data = self.read_archive_data(self.archive_paths['tar.gz'])
+        object_data = self.read_archive_data(self.archive_paths['tar'])
         headers = {'Content-Length': str(len(object_data))}
         obj_name = "{0}_{1}".format(BASE_NAME, self.default_obj_name)
         response = self.client.create_object(
@@ -860,17 +827,17 @@ class ExtractArchiveTest(ObjectStorageFixture):
         params = {'format': 'json'}
         response = self.client.list_objects(container_name, params=params)
 
-        resp_obj_names = self.get_members(["name"], response.content)
-
         expected = 1
-        received = len(resp_obj_names)
+        received = len(response.entity)
         self.assertEqual(
             expected,
             received,
             msg="container list expected: {0} objects."
             " received: {1} objects".format(expected, received))
 
-        self.assertIn(obj_name, resp_obj_names)
+        resp_obj = response.entity[0]
+
+        self.assertEqual(obj_name, resp_obj.name)
 
         response = self.client.get_object(
             container_name,
@@ -887,14 +854,14 @@ class ExtractArchiveTest(ObjectStorageFixture):
         Expected Results: contents of the archive are not expanded into objects
         """
         container_name = '{0}_container_{1}'.format(
-            'bulk_tar_bz2',
+            BASE_NAME,
             randstring.get_random_string())
 
         self.behaviors.create_container(container_name)
 
         self.addCleanup(self.client.force_delete_containers, [container_name])
 
-        object_data = self.read_archive_data(self.archive_paths['tar.bz2'])
+        object_data = self.read_archive_data(self.archive_paths['tar'])
         headers = {'Content-Length': str(len(object_data))}
         obj_name = "{0}_{1}".format(BASE_NAME, self.default_obj_name)
         response = self.client.create_object(
@@ -914,17 +881,17 @@ class ExtractArchiveTest(ObjectStorageFixture):
         params = {'format': 'json'}
         response = self.client.list_objects(container_name, params=params)
 
-        resp_obj_names = self.get_members(["name"], response.content)
-
         expected = 1
-        received = len(resp_obj_names)
+        received = len(response.entity)
         self.assertEqual(
             expected,
             received,
             msg="container list expected: {0} objects."
             " received: {1} objects".format(expected, received))
 
-        self.assertIn(obj_name, resp_obj_names)
+        resp_obj = response.entity[0]
+
+        self.assertEqual(obj_name, resp_obj.name)
 
         response = self.client.get_object(
             container_name,
