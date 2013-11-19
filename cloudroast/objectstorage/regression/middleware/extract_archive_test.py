@@ -99,6 +99,7 @@ class ExtractArchiveTest(ObjectStorageFixture):
 
         return members
 
+    @ObjectStorageFixture.required_features('bulk')
     def test_extract_tar_archive_to_existing_container(self):
         """
         Scenario: upload a tar archive with the extract-archive query string
@@ -202,6 +203,7 @@ class ExtractArchiveTest(ObjectStorageFixture):
                     expected,
                     received))
 
+    @ObjectStorageFixture.required_features('bulk')
     def test_extract_tar_gz_archive_to_existing_container(self):
         """
         Scenario: upload a tar.gz archive with the extract-archive query string
@@ -297,6 +299,7 @@ class ExtractArchiveTest(ObjectStorageFixture):
                     expected,
                     received))
 
+    @ObjectStorageFixture.required_features('bulk')
     def test_extract_tar_bz2_archive_to_existing_container(self):
         """
         Scenario: upload a tar.bz2 archive with the extract-archive query
@@ -392,6 +395,7 @@ class ExtractArchiveTest(ObjectStorageFixture):
                     expected,
                     received))
 
+    @ObjectStorageFixture.required_features('bulk')
     def test_extract_tar_archive_without_existing_container(self):
         """
         Scenario: upload a tar archive with the extract-archive query string
@@ -516,6 +520,7 @@ class ExtractArchiveTest(ObjectStorageFixture):
             self.client.force_delete_containers,
             containers)
 
+    @ObjectStorageFixture.required_features('bulk')
     def test_extract_tar_gz_archive_without_existing_container(self):
         """
         Scenario: upload a tar.gz archive with the extract-archive query string
@@ -640,6 +645,7 @@ class ExtractArchiveTest(ObjectStorageFixture):
             self.client.force_delete_containers,
             containers)
 
+    @ObjectStorageFixture.required_features('bulk')
     def test_extract_tar_bz2_archive_without_existing_container(self):
         """
         Scenario: upload a tar.bz2 archive with the extract-archive query
@@ -764,6 +770,7 @@ class ExtractArchiveTest(ObjectStorageFixture):
             self.client.force_delete_containers,
             containers)
 
+    @ObjectStorageFixture.required_features('bulk')
     def test_object_creation_with_tar_archive(self):
         """
         Scenario: tar file is uploaded without the extract-archive query
@@ -817,6 +824,7 @@ class ExtractArchiveTest(ObjectStorageFixture):
 
         self.assertGreater(response.headers.get('content-length'), 0)
 
+    @ObjectStorageFixture.required_features('bulk')
     def test_object_creation_with_tar_gz_archive(self):
         """
         Scenario: tar.gz file is uploaded without the extract-archive query
@@ -870,6 +878,7 @@ class ExtractArchiveTest(ObjectStorageFixture):
 
         self.assertGreater(response.headers.get('content-length'), 0)
 
+    @ObjectStorageFixture.required_features('bulk')
     def test_object_creation_with_tar_bz2_archive(self):
         """
         Scenario: tar.bz2 file is uploaded without the extract-archive query

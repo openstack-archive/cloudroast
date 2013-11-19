@@ -60,7 +60,7 @@ class TempUrl(ObjectStorageFixture):
             if not response.ok:
                 raise Exception('Could not set TempURL key.')
 
-    @ObjectStorageFixture.required_middleware(['swift#tempurl'])
+    @ObjectStorageFixture.required_features('tempurl')
     def test_object_creation_via_tempurl(self):
         """
         Scenario:
@@ -118,7 +118,7 @@ class TempUrl(ObjectStorageFixture):
             'bar',
             msg="x-object-meta-foo header value is not bar")
 
-    @ObjectStorageFixture.required_middleware(['swift#tempurl'])
+    @ObjectStorageFixture.required_features('tempurl')
     def test_object_retrieval_via_tempurl(self):
         """
         Scenario:
@@ -179,7 +179,7 @@ class TempUrl(ObjectStorageFixture):
             self.object_data,
             'object should contain correct data.')
 
-    @ObjectStorageFixture.required_middleware(['swift#tempurl'])
+    @ObjectStorageFixture.required_features('tempurl')
     def test_tempurl_content_disposition_filename_with_trailing_slash(self):
         """
         Scenario:
@@ -248,7 +248,7 @@ class TempUrl(ObjectStorageFixture):
                 expected_filename,
                 recieved_filename))
 
-    @ObjectStorageFixture.required_middleware(['swift#tempurl'])
+    @ObjectStorageFixture.required_features('tempurl')
     def test_tempurl_content_disposition_filename_containing_slash(self):
         """
         Scenario:
@@ -330,7 +330,7 @@ class TempUrl(ObjectStorageFixture):
                 expected_filename,
                 recieved_filename))
 
-    @ObjectStorageFixture.required_middleware(['swift#tempurl'])
+    @ObjectStorageFixture.required_features('tempurl')
     def test_object_retrieval_with_filename_override(self):
         """
         Scenario:
@@ -388,7 +388,7 @@ class TempUrl(ObjectStorageFixture):
             response.headers['content-disposition'],
             'content-disposition header should contain correct filename.')
 
-    @ObjectStorageFixture.required_middleware(['swift#tempurl'])
+    @ObjectStorageFixture.required_features('tempurl')
     def test_filename_override_containing_trailing_slash(self):
         """
         Scenario:
@@ -448,7 +448,7 @@ class TempUrl(ObjectStorageFixture):
             response.headers['content-disposition'],
             'content-disposition header should contain correct filename.')
 
-    @ObjectStorageFixture.required_middleware(['swift#tempurl'])
+    @ObjectStorageFixture.required_features('tempurl')
     def test_filename_override_containing_slash(self):
         """
         Scenario:
@@ -508,7 +508,7 @@ class TempUrl(ObjectStorageFixture):
             response.headers['content-disposition'],
             'content-disposition header should contain correct filename.')
 
-    @ObjectStorageFixture.required_middleware(['swift#tempurl'])
+    @ObjectStorageFixture.required_features('tempurl')
     def test_tempurl_object_delete(self):
         container_name = self.create_temp_container(BASE_CONTAINER_NAME)
 
@@ -553,7 +553,7 @@ class TempUrl(ObjectStorageFixture):
         self.assertEqual(get_response.status_code, 404)
 
     @skipUnless(get_value('slow') == 'true', 'sleep for key change')
-    @ObjectStorageFixture.required_middleware(['swift#tempurl'])
+    @ObjectStorageFixture.required_features('tempurl')
     def test_object_retrieval_with_two_tempurl_keys(self):
         time.sleep(
             float(self.objectstorage_api_config.tempurl_key_cache_time))
@@ -641,7 +641,7 @@ class TempUrl(ObjectStorageFixture):
             bar_get_response.content,
             msg='object data was changed')
 
-    @ObjectStorageFixture.required_middleware(['swift#tempurl'])
+    @ObjectStorageFixture.required_features('tempurl')
     def test_tempurl_expiration(self):
         """
         Scenario:

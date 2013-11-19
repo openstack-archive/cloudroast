@@ -97,6 +97,7 @@ class ExtractCorruptArchiveTest(ObjectStorageFixture):
 
         return members
 
+    @ObjectStorageFixture.required_features('bulk')
     def test_failure_reported_with_corrupt_tar_gz_archive(self):
         """
         Scenario: Verify behavior when a corrupt archive file is uploaded
@@ -177,6 +178,7 @@ class ExtractCorruptArchiveTest(ObjectStorageFixture):
             msg="response body 'Response Body' expected None received"
             " {0}".format(content.get('Response Body')))
 
+    @ObjectStorageFixture.required_features('bulk')
     def test_failure_reported_with_corrupt_tar_bz2_archive(self):
         """
         Scenario: Verify behavior when a corrupt archive file is uploaded

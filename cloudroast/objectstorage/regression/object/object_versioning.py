@@ -106,6 +106,7 @@ class ObjectVersioningTest(ObjectStorageFixture):
 
         return object_names
 
+    @ObjectStorageFixture.required_features('object_versioning')
     def test_versioned_obj_creation_with_valid_data(self):
         """
         check the current version object content
@@ -255,6 +256,7 @@ class ObjectVersioningTest(ObjectStorageFixture):
                     expected,
                     received))
 
+    @ObjectStorageFixture.required_features('object_versioning')
     def test_versioned_obj_deletion_with_valid_data(self):
         num_deletes = 0
         for i in reversed(range(0, self.num_versioned_objects)):
@@ -365,6 +367,7 @@ class ObjectVersioningTest(ObjectStorageFixture):
                 " expected: {0} objects. response contained:"
                 " {1} objects".format(expected, received))
 
+    @ObjectStorageFixture.required_features('object_versioning')
     def test_disable_object_versioning(self):
         object_data_version4 = "{0}4".format(BASE_DATA)
 
