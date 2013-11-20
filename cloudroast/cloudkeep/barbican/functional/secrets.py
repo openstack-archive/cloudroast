@@ -22,7 +22,8 @@ from sys import maxint
 from cloudroast.cloudkeep.barbican.fixtures import (
     SecretsFixture, SecretsPagingFixture, BitLengthDataSetPositive,
     BitLengthDataSetNegative, NameDataSetPositive, PayloadDataSetNegative,
-    ContentTypeEncodingDataSetNegative)
+    ContentTypeEncodingDataSetNegative, ContentTypeEncodingDataSetTextPositive,
+    ContentTypeEncodingDataSetBase64Positive)
 from cafe.drivers.unittest.decorators import (tags, data_driven_test,
                                               DataDrivenFixture,
                                               skip_open_issue)
@@ -41,6 +42,18 @@ class SecretContentTypeDataSetNegative(ContentTypeEncodingDataSetNegative):
             'app_oct_only',
             {'payload_content_type': 'application/octet-stream',
              'payload_content_encoding': None})
+
+
+class SecretContentTypeDataSetTextPositive\
+        (ContentTypeEncodingDataSetTextPositive):
+    def __init__(self):
+        super(SecretContentTypeDataSetTextPositive, self).__init__()
+
+
+class SecretContentTypeDataSetBase64Positive\
+        (ContentTypeEncodingDataSetBase64Positive):
+    def __init__(self):
+        super(SecretContentTypeDataSetBase64Positive, self).__init__()
 
 
 @DataDrivenFixture
@@ -94,7 +107,7 @@ class DataDriveSecretsAPI(SecretsFixture):
     @tags(type='negative')
     def ddtest_creating_secret(self, payload_content_type=None,
                                payload_content_encoding=None):
-        """Covers creating secret with various combinations of
+        """Covers creating secret with various invalid/error combinations of
         content types and encodings."""
         resp = self.behaviors.create_secret(
             payload_content_type=payload_content_type,
@@ -102,6 +115,50 @@ class DataDriveSecretsAPI(SecretsFixture):
             payload=self.config.payload)
         self.assertEqual(resp.status_code, 400,
                          'Creation should have failed with 400')
+
+    @data_driven_test(dataset_source=SecretContentTypeDataSetTextPositive())
+    @tags(type='positive')
+    def ddtest_creating_secret_normalize_content_type_text(
+            self,
+            payload_content_type=None,
+            payload_content_encoding=None):
+        """Covers creating secret with various valid combinations of
+        content types and encodings."""
+        create_resp = self.behaviors.create_secret(
+            payload_content_type=payload_content_type,
+            payload_content_encoding=payload_content_encoding,
+            payload=self.config.payload)
+        self.assertEqual(create_resp.status_code, 201,
+                         'Secret creation was not successful')
+
+        get_resp = self.client.get_secret(
+            create_resp.id,
+            payload_content_type=payload_content_type,
+            payload_content_encoding=payload_content_encoding)
+        self.assertEqual(get_resp.content, self.config.payload,
+                         'Secret creation succeeded but validation failed')
+
+    @data_driven_test(dataset_source=SecretContentTypeDataSetBase64Positive())
+    @tags(type='positive')
+    def ddtest_creating_secret_normalize_content_type_b64(
+            self,
+            payload_content_type=None,
+            payload_content_encoding=None):
+        """Covers creating secret with various valid combinations of
+        content types and encodings."""
+        create_resp = self.behaviors.create_secret(
+            payload_content_type=payload_content_type,
+            payload_content_encoding=payload_content_encoding,
+            payload=base64.b64encode(self.config.payload))
+        self.assertEqual(create_resp.status_code, 201,
+                         'Secret creation was not successful')
+
+        get_resp = self.client.get_secret(
+            create_resp.id,
+            payload_content_type=payload_content_type,
+            payload_content_encoding=payload_content_encoding)
+        self.assertEqual(get_resp.content, self.config.payload,
+                         'Secret creation succeeded but validation failed')
 
 
 class SecretsAPI(SecretsFixture):
