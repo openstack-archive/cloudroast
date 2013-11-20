@@ -257,6 +257,44 @@ class PayloadDataSetNegative(DatasetList):
         self.append_new_dataset('int', {'payload': 123})
 
 
+class ContentTypeEncodingDataSetTextPositive(DatasetList):
+    def __init__(self):
+
+        self.append_new_dataset(
+            'text_plain',
+            {'payload_content_type': 'text/plain',
+             'payload_content_encoding': None})
+        self.append_new_dataset(
+            'text_caps_plain',
+            {'payload_content_type': 'TEXT/plain',
+             'payload_content_encoding': None})
+        self.append_new_dataset(
+            'text_plain_trailing_space',
+            {'payload_content_type': 'text/plain ',
+             'payload_content_encoding': None})
+        self.append_new_dataset(
+            'text_plain_charset_utf8',
+            {'payload_content_type': 'text/plain; charset=utf-8',
+             'payload_content_encoding': None})
+        self.append_new_dataset(
+            'text_plain_no_space_charset_utf8',
+            {'payload_content_type': 'text/plain;charset=utf-8',
+             'payload_content_encoding': None})
+        self.append_new_dataset(
+            'text_plain_space_charset_utf8_trailing_space',
+            {'payload_content_type': 'text/plain; charset=utf-8 ',
+             'payload_content_encoding': None})
+
+
+class ContentTypeEncodingDataSetBase64Positive(DatasetList):
+    def __init__(self):
+
+        self.append_new_dataset(
+            'application_octet_stream',
+            {'payload_content_type': 'application/octet-stream',
+             'payload_content_encoding': 'base64'})
+
+
 class ContentTypeEncodingDataSetNegative(DatasetList):
     def __init__(self):
         large_string = str(bytearray().zfill(10001))
@@ -282,9 +320,33 @@ class ContentTypeEncodingDataSetNegative(DatasetList):
             {'payload_content_type': None,
              'payload_content_encoding': 'base64'})
         self.append_new_dataset(
+            'text_plain_and_empty_content_type',
+            {'payload_content_type': 'text/plain',
+             'payload_content_encoding': ''})
+        self.append_new_dataset(
+            'text_with_no_subtype',
+            {'payload_content_type': 'text',
+             'payload_content_encoding': None})
+        self.append_new_dataset(
+            'text_slash_with_no_subtype',
+            {'payload_content_type': 'text/',
+             'payload_content_encoding': None})
+        self.append_new_dataset(
+            'text_plain_and_space_content_type',
+            {'payload_content_type': 'text/plain',
+             'payload_content_encoding': ' '})
+        self.append_new_dataset(
+            'text_plain_and_spaces_content_type',
+            {'payload_content_type': 'text/plain',
+             'payload_content_encoding': '   '})
+        self.append_new_dataset(
             'text_plain_and_base64',
             {'payload_content_type': 'text/plain',
              'payload_content_encoding': 'base64'})
+        self.append_new_dataset(
+            'text_plain_space_charset_utf88',
+            {'payload_content_type': 'text/plain; charset=utf-88',
+             'payload_content_encoding': None})
         self.append_new_dataset(
             'invalid_and_base64',
             {'payload_content_type': 'invalid',
