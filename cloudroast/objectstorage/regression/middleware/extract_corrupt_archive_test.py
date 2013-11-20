@@ -14,19 +14,32 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 import os
-import json
 
 from cloudroast.objectstorage.fixtures import ObjectStorageFixture
 from cloudcafe.common.tools import randomstring as randstring
 from cafe.engine.config import EngineConfig
 
-BASE_NAME = "extract_archive"
+BASE_NAME = "extract_corrupt_archive"
 HTTP_OK = 200
+TAR_MODE_HEADER_OFFSET = 100
+TAR_MODE_HEADER_END = 108
+TAR_CHKSUM_HEADER_OFFSET = 148
+TAR_CHKSUM_HEADER_END = 156
+TAR_TYPE_FLAG_HEADER_OFFSET = 156
+TAR_TYPE_FLAG_HEADER_END = 157
+TAR_GZ_ID1_HEADER = 0
+TAR_GZ_ID2_HEADER = 1
+TAR_GZ_CM_HEADER = 2
+TAR_GZ_FLAG_HEADER = 3
+BZ2_MAGIC_HEADER_OFFSET = 0
+BZ2_MAGIC_HEADER_END = 2
+BZ2_VERSION_HEADER = 2
+BZ2_BLOCKSIZE_HEADER = 3
 
 
 class ExtractCorruptArchiveTest(ObjectStorageFixture):
     """
-    Tests Swfit expand archive operations:
+    Tests Swfit expand archive operations
     """
     @classmethod
     def setUpClass(cls):
@@ -79,28 +92,11 @@ class ExtractCorruptArchiveTest(ObjectStorageFixture):
 
         return archive_data
 
-    def get_members(self, keys, response_content):
-        members = []
-        content = None
-
-        try:
-            content = json.loads(response_content)
-        except ValueError, error:
-            self.fixture_log.exception(error)
-
-        for current in content:
-            for key in keys:
-                if key in current.keys():
-                    members.append(current[key])
-                else:
-                    continue
-
-        return members
-
     @ObjectStorageFixture.required_features('bulk')
-    def test_failure_reported_with_corrupt_tar_gz_archive(self):
+    def test_failure_reported_with_corrupt_tar_archive_bad_checksum(self):
         """
-        Scenario: Verify behavior when a corrupt archive file is uploaded
+        Scenario: Verify behavior when a corrupt archive file is uploaded.
+                  Checksum is overwritten with Null Bytes.
 
         Expected Results: Errors are reported. Objects are not created
         """
@@ -112,20 +108,275 @@ class ExtractCorruptArchiveTest(ObjectStorageFixture):
 
         self.addCleanup(self.client.force_delete_containers, [container_name])
 
-        data = self.read_archive_data(self.archive_paths['tar.gz'])
+        archive_format = "tar"
 
-        data = ''.join("\x00" if i % 2 == 0 else char for i,
-                       char in enumerate(data, 1))
+        temp_data = self.read_archive_data(self.archive_paths[archive_format])
 
-        url = "{0}/{1}".format(
-            self.storage_url,
-            container_name)
-        params = {'extract-archive': 'tar.gz'}
+        enumerated_data = enumerate(temp_data)
+
+        temp = []
+
+        for i, char in enumerated_data:
+            if (i >= TAR_CHKSUM_HEADER_OFFSET and i < TAR_CHKSUM_HEADER_END):
+                temp.append("\x00")
+            else:
+                temp.append(char)
+
+        data = ''.join(temp)
+
         headers = {'Accept': 'application/json'}
-        response = self.client.put(
-            url,
-            data=data,
-            params=params,
+
+        response = self.client.create_archive_object(
+            data,
+            archive_format,
+            upload_path=container_name,
+            headers=headers)
+
+        expected = HTTP_OK
+        received = response.status_code
+        self.assertEqual(
+            expected,
+            received,
+            "upload corrupted tar expected"
+            " successful status code: {0} received: {1}".format(
+                expected,
+                received))
+
+        expected = 0
+        received = int(response.entity.num_files_created)
+        self.assertEqual(
+            expected,
+            received,
+            msg="response body 'Number Files Created' expected: {0}"
+            " received {1}".format(expected, received))
+
+        expected = '400 Bad Request'
+        received = response.entity.status
+        self.assertEqual(
+            expected,
+            received,
+            msg="response body 'Response Status' expected: {0}"
+            " received {1}".format(expected, received))
+
+        expected = 0
+        received = len(response.entity.errors)
+        self.assertEqual(
+            expected,
+            received,
+            msg="response body 'Errors' expected None received {0}".format(
+                response.entity.errors))
+
+        expected = 'Invalid Tar File: bad checksum'
+        received = response.entity.body
+        self.assertIn(
+            expected,
+            received,
+            msg=("response body 'Response Body' expected '{0}'"
+                 " received {1}").format(expected, response.entity.body))
+
+    @ObjectStorageFixture.required_features('bulk')
+    def test_failure_reported_with_corrupt_tar_archive_bad_type_flag(self):
+        """
+        Scenario: Verify behavior when a corrupt archive file is uploaded.
+                  type flag is overwritten with Null Bytes.
+
+        Expected Results: Errors are reported. Objects are not created
+        """
+        container_name = '{0}_container_{1}'.format(
+            BASE_NAME,
+            randstring.get_random_string())
+
+        self.behaviors.create_container(container_name)
+
+        self.addCleanup(self.client.force_delete_containers, [container_name])
+
+        archive_format = "tar"
+
+        temp_data = self.read_archive_data(self.archive_paths[archive_format])
+
+        enumerated_data = enumerate(temp_data)
+
+        temp = []
+
+        for i, char in enumerated_data:
+            if (i >= TAR_TYPE_FLAG_HEADER_OFFSET and
+                    i < TAR_TYPE_FLAG_HEADER_END):
+                temp.append("\x00")
+            else:
+                temp.append(char)
+
+        data = ''.join(temp)
+
+        headers = {'Accept': 'application/json'}
+
+        response = self.client.create_archive_object(
+            data,
+            archive_format,
+            upload_path=container_name,
+            headers=headers)
+
+        expected = HTTP_OK
+        received = response.status_code
+        self.assertEqual(
+            expected,
+            received,
+            "upload corrupted tar expected"
+            " successful status code: {0} received: {1}".format(
+                expected,
+                received))
+
+        expected = 0
+        received = int(response.entity.num_files_created)
+        self.assertEqual(
+            expected,
+            received,
+            msg="response body 'Number Files Created' expected: {0}"
+            " received {1}".format(expected, received))
+
+        expected = '400 Bad Request'
+        received = response.entity.status
+        self.assertEqual(
+            expected,
+            received,
+            msg="response body 'Response Status' expected: {0}"
+            " received {1}".format(expected, received))
+
+        expected = 0
+        received = len(response.entity.errors)
+        self.assertEqual(
+            expected,
+            received,
+            msg="response body 'Errors' expected None received {0}".format(
+                response.entity.errors))
+
+        expected = 'Invalid Tar File: bad checksum'
+        received = response.entity.body
+        self.assertIn(
+            expected,
+            received,
+            msg=("response body 'Response Body' expected '{0}'"
+                 " received {1}").format(expected, response.entity.body))
+
+    @ObjectStorageFixture.required_features('bulk')
+    def test_failure_reported_with_corrupt_tar_archive_bad_mode(self):
+        """
+        Scenario: Verify behavior when a corrupt archive file is uploaded.
+                  mode is overwritten with Null Bytes.
+
+        Expected Results: Errors are reported. Objects are not created
+        """
+        container_name = '{0}_container_{1}'.format(
+            BASE_NAME,
+            randstring.get_random_string())
+
+        self.behaviors.create_container(container_name)
+
+        self.addCleanup(self.client.force_delete_containers, [container_name])
+
+        archive_format = "tar"
+
+        temp_data = self.read_archive_data(self.archive_paths[archive_format])
+
+        enumerated_data = enumerate(temp_data)
+
+        temp = []
+
+        for i, char in enumerated_data:
+            if (i >= TAR_MODE_HEADER_OFFSET and i < TAR_MODE_HEADER_END):
+                temp.append("\x00")
+            else:
+                temp.append(char)
+
+        data = ''.join(temp)
+
+        headers = {'Accept': 'application/json'}
+
+        response = self.client.create_archive_object(
+            data,
+            archive_format,
+            upload_path=container_name,
+            headers=headers)
+
+        expected = HTTP_OK
+        received = response.status_code
+        self.assertEqual(
+            expected,
+            received,
+            "upload corrupted tar expected"
+            " successful status code: {0} received: {1}".format(
+                expected,
+                received))
+
+        expected = 0
+        received = int(response.entity.num_files_created)
+        self.assertEqual(
+            expected,
+            received,
+            msg="response body 'Number Files Created' expected: {0}"
+            " received {1}".format(expected, received))
+
+        expected = '400 Bad Request'
+        received = response.entity.status
+        self.assertEqual(
+            expected,
+            received,
+            msg="response body 'Response Status' expected: {0}"
+            " received {1}".format(expected, received))
+
+        expected = 0
+        received = len(response.entity.errors)
+        self.assertEqual(
+            expected,
+            received,
+            msg="response body 'Errors' expected None received {0}".format(
+                response.entity.errors))
+
+        expected = 'Invalid Tar File: bad checksum'
+        received = response.entity.body
+        self.assertIn(
+            expected,
+            received,
+            msg=("response body 'Response Body' expected '{0}'"
+                 " received {1}").format(expected, response.entity.body))
+
+    @ObjectStorageFixture.required_features('bulk')
+    def test_failure_reported_with_corrupt_tar_gz_archive_bad_ID1(self):
+        """
+        Scenario: Verify behavior when a corrupt archive file is uploaded
+                  flag is overwritten with Null Bytes.
+
+        Expected Results: Errors are reported. Objects are not created
+        """
+        container_name = '{0}_container_{1}'.format(
+            BASE_NAME,
+            randstring.get_random_string())
+
+        self.behaviors.create_container(container_name)
+
+        self.addCleanup(self.client.force_delete_containers, [container_name])
+
+        archive_format = "tar.gz"
+
+        temp_data = self.read_archive_data(self.archive_paths[archive_format])
+
+        enumerated_data = enumerate(temp_data)
+
+        temp = []
+
+        for i, char in enumerated_data:
+            if i == TAR_GZ_ID1_HEADER:
+                temp.append("\x00")
+            else:
+                temp.append(char)
+
+        data = ''.join(temp)
+
+        headers = {'Accept': 'application/json'}
+
+        response = self.client.create_archive_object(
+            data,
+            archive_format,
+            upload_path=container_name,
             headers=headers)
 
         expected = HTTP_OK
@@ -138,24 +389,16 @@ class ExtractCorruptArchiveTest(ObjectStorageFixture):
                 expected,
                 received))
 
-        # inspect the body of the response
-        content = None
-
-        try:
-            content = json.loads(response.content)
-        except ValueError, error:
-            self.fixture_log.exception(error)
-
         expected = 0
-        received = int(content.get('Number Files Created'))
+        received = int(response.entity.num_files_created)
         self.assertEqual(
             expected,
             received,
-            msg="response body 'Number Files Created' expected: {0} received"
-            " {1}".format(expected, received))
+            msg="response body 'Number Files Created' expected: {0}"
+            " received {1}".format(expected, received))
 
         expected = '400 Bad Request'
-        received = content.get('Response Status')
+        received = response.entity.status
         self.assertEqual(
             expected,
             received,
@@ -163,25 +406,26 @@ class ExtractCorruptArchiveTest(ObjectStorageFixture):
             " received {1}".format(expected, received))
 
         expected = 0
-        received = len(content.get('Errors'))
+        received = len(response.entity.errors)
         self.assertEqual(
             expected,
             received,
             msg="response body 'Errors' expected None received {0}".format(
-                content.get('Errors')))
+                response.entity.errors))
 
         expected = 'Invalid Tar File: not a gzip file'
-        received = content.get('Response Body')
+        received = response.entity.body
         self.assertIn(
             expected,
             received,
-            msg="response body 'Response Body' expected None received"
-            " {0}".format(content.get('Response Body')))
+            msg=("response body 'Response Body' expected '{0}'"
+                 " received {1}").format(expected, response.entity.body))
 
     @ObjectStorageFixture.required_features('bulk')
-    def test_failure_reported_with_corrupt_tar_bz2_archive(self):
+    def test_failure_reported_with_corrupt_tar_gz_archive_bad_ID2(self):
         """
         Scenario: Verify behavior when a corrupt archive file is uploaded
+                  flag is overwritten with Null Bytes.
 
         Expected Results: Errors are reported. Objects are not created
         """
@@ -193,20 +437,275 @@ class ExtractCorruptArchiveTest(ObjectStorageFixture):
 
         self.addCleanup(self.client.force_delete_containers, [container_name])
 
-        data = self.read_archive_data(self.archive_paths['tar.bz2'])
+        archive_format = "tar.gz"
 
-        data = ''.join("\x00" if i % 2 == 0 else char for i,
-                       char in enumerate(data, 1))
+        temp_data = self.read_archive_data(self.archive_paths[archive_format])
 
-        url = "{0}/{1}".format(
-            self.storage_url,
-            container_name)
-        params = {'extract-archive': 'tar.bz2'}
+        enumerated_data = enumerate(temp_data)
+
+        temp = []
+
+        for i, char in enumerated_data:
+            if i == TAR_GZ_ID2_HEADER:
+                temp.append("\x00")
+            else:
+                temp.append(char)
+
+        data = ''.join(temp)
+
         headers = {'Accept': 'application/json'}
-        response = self.client.put(
-            url,
-            data=data,
-            params=params,
+
+        response = self.client.create_archive_object(
+            data,
+            archive_format,
+            upload_path=container_name,
+            headers=headers)
+
+        expected = HTTP_OK
+        received = response.status_code
+        self.assertEqual(
+            expected,
+            received,
+            "upload corrupted tar.gz expected"
+            " successful status code: {0} received: {1}".format(
+                expected,
+                received))
+
+        expected = 0
+        received = int(response.entity.num_files_created)
+        self.assertEqual(
+            expected,
+            received,
+            msg="response body 'Number Files Created' expected: {0}"
+            " received {1}".format(expected, received))
+
+        expected = '400 Bad Request'
+        received = response.entity.status
+        self.assertEqual(
+            expected,
+            received,
+            msg="response body 'Response Status' expected: {0}"
+            " received {1}".format(expected, received))
+
+        expected = 0
+        received = len(response.entity.errors)
+        self.assertEqual(
+            expected,
+            received,
+            msg="response body 'Errors' expected None received {0}".format(
+                response.entity.errors))
+
+        expected = 'Invalid Tar File: not a gzip file'
+        received = response.entity.body
+        self.assertIn(
+            expected,
+            received,
+            msg=("response body 'Response Body' expected '{0}'"
+                 " received {1}").format(expected, response.entity.body))
+
+    @ObjectStorageFixture.required_features('bulk')
+    def test_failure_reported_with_corrupt_tar_gz_archive_bad_CM(self):
+        """
+        Scenario: Verify behavior when a corrupt archive file is uploaded
+                  compression mode (CM) is overwritten with Null Bytes.
+
+        Expected Results: Errors are reported. Objects are not created
+        """
+        container_name = '{0}_container_{1}'.format(
+            BASE_NAME,
+            randstring.get_random_string())
+
+        self.behaviors.create_container(container_name)
+
+        self.addCleanup(self.client.force_delete_containers, [container_name])
+
+        archive_format = "tar.gz"
+
+        temp_data = self.read_archive_data(self.archive_paths[archive_format])
+
+        enumerated_data = enumerate(temp_data)
+
+        temp = []
+
+        for i, char in enumerated_data:
+            if i == TAR_GZ_CM_HEADER:
+                temp.append("\x00")
+            else:
+                temp.append(char)
+
+        data = ''.join(temp)
+
+        headers = {'Accept': 'application/json'}
+
+        response = self.client.create_archive_object(
+            data,
+            archive_format,
+            upload_path=container_name,
+            headers=headers)
+
+        expected = HTTP_OK
+        received = response.status_code
+        self.assertEqual(
+            expected,
+            received,
+            "upload corrupted tar.gz expected"
+            " successful status code: {0} received: {1}".format(
+                expected,
+                received))
+
+        expected = 0
+        received = int(response.entity.num_files_created)
+        self.assertEqual(
+            expected,
+            received,
+            msg="response body 'Number Files Created' expected: {0}"
+            " received {1}".format(expected, received))
+
+        expected = '400 Bad Request'
+        received = response.entity.status
+        self.assertEqual(
+            expected,
+            received,
+            msg="response body 'Response Status' expected: {0}"
+            " received {1}".format(expected, received))
+
+        expected = 0
+        received = len(response.entity.errors)
+        self.assertEqual(
+            expected,
+            received,
+            msg="response body 'Errors' expected None received {0}".format(
+                response.entity.errors))
+
+        expected = 'Invalid Tar File: unsupported compression method'
+        received = response.entity.body
+        self.assertIn(
+            expected,
+            received,
+            msg=("response body 'Response Body' expected '{0}'"
+                 " received {1}").format(expected, response.entity.body))
+
+    @ObjectStorageFixture.required_features('bulk')
+    def test_failure_reported_with_corrupt_tar_gz_archive_bad_FLAG(self):
+        """
+        Scenario: Verify behavior when a corrupt archive file is uploaded
+                  flag is overwritten with Null Bytes.
+
+        Expected Results: Errors are reported. Objects are not created
+        """
+        container_name = '{0}_container_{1}'.format(
+            BASE_NAME,
+            randstring.get_random_string())
+
+        self.behaviors.create_container(container_name)
+
+        self.addCleanup(self.client.force_delete_containers, [container_name])
+
+        archive_format = "tar.gz"
+
+        temp_data = self.read_archive_data(self.archive_paths[archive_format])
+
+        enumerated_data = enumerate(temp_data)
+
+        temp = []
+
+        for i, char in enumerated_data:
+            if i == TAR_GZ_FLAG_HEADER:
+                temp.append("\x00")
+            else:
+                temp.append(char)
+
+        data = ''.join(temp)
+
+        headers = {'Accept': 'application/json'}
+
+        response = self.client.create_archive_object(
+            data,
+            archive_format,
+            upload_path=container_name,
+            headers=headers)
+
+        expected = HTTP_OK
+        received = response.status_code
+        self.assertEqual(
+            expected,
+            received,
+            "upload corrupted tar.gz expected"
+            " successful status code: {0} received: {1}".format(
+                expected,
+                received))
+
+        expected = 0
+        received = int(response.entity.num_files_created)
+        self.assertEqual(
+            expected,
+            received,
+            msg="response body 'Number Files Created' expected: {0}"
+            " received {1}".format(expected, received))
+
+        expected = '400 Bad Request'
+        received = response.entity.status
+        self.assertEqual(
+            expected,
+            received,
+            msg="response body 'Response Status' expected: {0}"
+            " received {1}".format(expected, received))
+
+        expected = 0
+        received = len(response.entity.errors)
+        self.assertEqual(
+            expected,
+            received,
+            msg="response body 'Errors' expected None received {0}".format(
+                response.entity.errors))
+
+        expected = ('Error -3 while decompressing:'
+                    ' invalid distance too far back')
+        received = response.entity.body
+        self.assertIn(
+            expected,
+            received,
+            msg=("response body 'Response Body' expected '{0}'"
+                 " received {1}").format(expected, response.entity.body))
+
+    @ObjectStorageFixture.required_features('bulk')
+    def test_failure_reported_with_corrupt_tar_bz2_archive_bad_signature(self):
+        """
+        Scenario: Verify behavior when a corrupt archive file is uploaded
+                  signature/magic number is overwritten with null bytes
+
+        Expected Results: Errors are reported. Objects are not created
+        """
+        container_name = '{0}_container_{1}'.format(
+            BASE_NAME,
+            randstring.get_random_string())
+
+        self.behaviors.create_container(container_name)
+
+        self.addCleanup(self.client.force_delete_containers, [container_name])
+
+        archive_format = "tar.bz2"
+
+        temp_data = self.read_archive_data(self.archive_paths[archive_format])
+
+        enumerated_data = enumerate(temp_data)
+
+        temp = []
+
+        for i, char in enumerated_data:
+            if (i >= BZ2_MAGIC_HEADER_OFFSET and i < BZ2_MAGIC_HEADER_END):
+                temp.append("\x00")
+            else:
+                temp.append(char)
+
+        data = ''.join(temp)
+
+        headers = {'Accept': 'application/json'}
+
+        response = self.client.create_archive_object(
+            data,
+            archive_format,
+            upload_path=container_name,
             headers=headers)
 
         expected = HTTP_OK
@@ -219,24 +718,16 @@ class ExtractCorruptArchiveTest(ObjectStorageFixture):
                 expected,
                 received))
 
-        # inspect the body of the response
-        content = None
-
-        try:
-            content = json.loads(response.content)
-        except ValueError, error:
-            self.fixture_log.exception(error)
-
         expected = 0
-        received = int(content.get('Number Files Created'))
+        received = int(response.entity.num_files_created)
         self.assertEqual(
             expected,
             received,
-            msg="response body 'Number Files Created' expected: {0} received"
-            " {1}".format(expected, received))
+            msg="response body 'Number Files Created' expected: {0}"
+            " received {1}".format(expected, received))
 
         expected = '400 Bad Request'
-        received = content.get('Response Status')
+        received = response.entity.status
         self.assertEqual(
             expected,
             received,
@@ -244,17 +735,181 @@ class ExtractCorruptArchiveTest(ObjectStorageFixture):
             " received {1}".format(expected, received))
 
         expected = 0
-        received = len(content.get('Errors'))
+        received = len(response.entity.errors)
         self.assertEqual(
             expected,
             received,
             msg="response body 'Errors' expected None received {0}".format(
-                content.get('Errors')))
+                response.entity.errors))
 
         expected = 'Invalid Tar File: invalid compressed data'
-        received = content.get('Response Body')
+        received = response.entity.body
         self.assertIn(
             expected,
             received,
-            msg="response body 'Response Body' expected None received"
-            " {0}".format(content.get('Response Body')))
+            msg=("response body 'Response Body' expected '{0}'"
+                 " received {1}").format(expected, response.entity.body))
+
+    @ObjectStorageFixture.required_features('bulk')
+    def test_failure_reported_with_corrupt_tar_bz2_archive_bad_version(self):
+        """
+        Scenario: Verify behavior when a corrupt archive file is uploaded
+                  version is overwritten with null bytes
+
+        Expected Results: Errors are reported. Objects are not created
+        """
+        container_name = '{0}_container_{1}'.format(
+            BASE_NAME,
+            randstring.get_random_string())
+
+        self.behaviors.create_container(container_name)
+
+        self.addCleanup(self.client.force_delete_containers, [container_name])
+
+        archive_format = "tar.bz2"
+
+        temp_data = self.read_archive_data(self.archive_paths[archive_format])
+
+        enumerated_data = enumerate(temp_data)
+
+        temp = []
+
+        for i, char in enumerated_data:
+            if i == BZ2_VERSION_HEADER:
+                temp.append("\x00")
+            else:
+                temp.append(char)
+
+        data = ''.join(temp)
+
+        headers = {'Accept': 'application/json'}
+
+        response = self.client.create_archive_object(
+            data,
+            archive_format,
+            upload_path=container_name,
+            headers=headers)
+
+        expected = HTTP_OK
+        received = response.status_code
+        self.assertEqual(
+            expected,
+            received,
+            "upload corrupted tar.bz2 expected"
+            " successful status code: {0} received: {1}".format(
+                expected,
+                received))
+
+        expected = 0
+        received = int(response.entity.num_files_created)
+        self.assertEqual(
+            expected,
+            received,
+            msg="response body 'Number Files Created' expected: {0}"
+            " received {1}".format(expected, received))
+
+        expected = '400 Bad Request'
+        received = response.entity.status
+        self.assertEqual(
+            expected,
+            received,
+            msg="response body 'Response Status' expected: {0}"
+            " received {1}".format(expected, received))
+
+        expected = 0
+        received = len(response.entity.errors)
+        self.assertEqual(
+            expected,
+            received,
+            msg="response body 'Errors' expected None received {0}".format(
+                response.entity.errors))
+
+        expected = 'Invalid Tar File: invalid compressed data'
+        received = response.entity.body
+        self.assertIn(
+            expected,
+            received,
+            msg=("response body 'Response Body' expected '{0}'"
+                 " received {1}").format(expected, response.entity.body))
+
+    @ObjectStorageFixture.required_features('bulk')
+    def test_failure_reported_with_corrupt_tar_bz2_archive_bad_blocksize(self):
+        """
+        Scenario: Verify behavior when a corrupt archive file is uploaded
+                  blocksize is overwritten with null bytes
+
+        Expected Results: Errors are reported. Objects are not created
+        """
+        container_name = '{0}_container_{1}'.format(
+            BASE_NAME,
+            randstring.get_random_string())
+
+        self.behaviors.create_container(container_name)
+
+        self.addCleanup(self.client.force_delete_containers, [container_name])
+
+        archive_format = "tar.bz2"
+
+        temp_data = self.read_archive_data(self.archive_paths[archive_format])
+
+        enumerated_data = enumerate(temp_data)
+
+        temp = []
+
+        for i, char in enumerated_data:
+            if i == BZ2_BLOCKSIZE_HEADER:
+                temp.append("\x00")
+            else:
+                temp.append(char)
+
+        data = ''.join(temp)
+
+        headers = {'Accept': 'application/json'}
+
+        response = self.client.create_archive_object(
+            data,
+            archive_format,
+            upload_path=container_name,
+            headers=headers)
+
+        expected = HTTP_OK
+        received = response.status_code
+        self.assertEqual(
+            expected,
+            received,
+            "upload corrupted tar.bz2 expected"
+            " successful status code: {0} received: {1}".format(
+                expected,
+                received))
+
+        expected = 0
+        received = int(response.entity.num_files_created)
+        self.assertEqual(
+            expected,
+            received,
+            msg="response body 'Number Files Created' expected: {0}"
+            " received {1}".format(expected, received))
+
+        expected = '400 Bad Request'
+        received = response.entity.status
+        self.assertEqual(
+            expected,
+            received,
+            msg="response body 'Response Status' expected: {0}"
+            " received {1}".format(expected, received))
+
+        expected = 0
+        received = len(response.entity.errors)
+        self.assertEqual(
+            expected,
+            received,
+            msg="response body 'Errors' expected None received {0}".format(
+                response.entity.errors))
+
+        expected = 'Invalid Tar File: invalid compressed data'
+        received = response.entity.body
+        self.assertIn(
+            expected,
+            received,
+            msg=("response body 'Response Body' expected '{0}'"
+                 " received {1}").format(expected, response.entity.body))
