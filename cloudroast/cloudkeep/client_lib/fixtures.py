@@ -13,16 +13,13 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-from os import path
-
-from cafe.drivers.unittest.fixtures import BaseTestFixture
+from cloudroast.cloudkeep.barbican.fixtures import AuthenticationFixture
 from cloudcafe.cloudkeep.barbican.version.client import VersionClient
 from cloudcafe.cloudkeep.barbican.secrets.client import SecretsClient
 from cloudcafe.cloudkeep.barbican.orders.client import OrdersClient
 from cloudcafe.cloudkeep.barbican.secrets.behaviors import SecretsBehaviors
 from cloudcafe.cloudkeep.barbican.orders.behaviors import OrdersBehavior
-from cloudcafe.cloudkeep.config import MarshallingConfig, CloudKeepConfig, \
-    CloudKeepSecretsConfig, CloudKeepClientLibConfig, CloudKeepOrdersConfig
+from cloudcafe.identity.config import IdentityTokenConfig
 from cloudcafe.cloudkeep.client_lib.secrets.clients import \
     ClientLibSecretsClient
 from cloudcafe.cloudkeep.client_lib.secrets.behaviors import \
@@ -31,37 +28,11 @@ from cloudcafe.cloudkeep.client_lib.orders.clients import \
     ClientLibOrdersClient
 from cloudcafe.cloudkeep.client_lib.orders.behaviors import \
     ClientLibOrdersBehaviors
+from cloudcafe.cloudkeep.config import (CloudKeepSecretsConfig,
+                                        CloudKeepOrdersConfig)
 
 
-class ClientLibFixture(BaseTestFixture):
-
-    @classmethod
-    def setUpClass(cls):
-        super(ClientLibFixture, cls).setUpClass()
-        cls.marshalling = MarshallingConfig()
-        cls.cloudkeep = CloudKeepConfig()
-
-    def get_id(self, request):
-        """
-        Helper function to extract the producer id from location header
-        """
-        self.assertEqual(request.status_code, 201, 'Invalid response code')
-        location = request.headers.get('location')
-        extracted_id = int(path.split(location)[1])
-        return extracted_id
-
-    def _check_for_duplicates(self, group1, group2, limit=10):
-        """Checks for duplicated entities between two lists
-        of secrets/orders."""
-        self.assertEqual(len(group1), limit)
-        self.assertEqual(len(group2), limit)
-
-        duplicates = [entity for entity in group1 if entity in group2]
-        self.assertEqual(len(duplicates), 0,
-                         'Lists of entities did not return unique entities')
-
-
-class VersionFixture(ClientLibFixture):
+class VersionFixture(AuthenticationFixture):
 
     @classmethod
     def setUpClass(cls):
@@ -72,29 +43,33 @@ class VersionFixture(ClientLibFixture):
             deserialize_format=cls.marshalling.deserializer)
 
 
-class SecretsFixture(ClientLibFixture):
+class SecretsFixture(AuthenticationFixture):
 
     @classmethod
     def setUpClass(cls):
         super(SecretsFixture, cls).setUpClass()
         cls.config = CloudKeepSecretsConfig()
-        cls.client_lib_config = CloudKeepClientLibConfig()
-        cls.barb_client = SecretsClient(
-            url=cls.cloudkeep.base_url,
-            api_version=cls.cloudkeep.api_version,
-            tenant_id=cls.cloudkeep.tenant_id,
-            serialize_format=cls.marshalling.serializer,
-            deserialize_format=cls.marshalling.deserializer)
-        cls.barb_behaviors = SecretsBehaviors(client=cls.barb_client,
-                                              config=cls.config)
+        cls.identity_config = IdentityTokenConfig()
+        auth_endpoint = cls.identity_config.authentication_endpoint + '/v2.0'
+
         cls.cl_client = ClientLibSecretsClient(
             url=cls.cloudkeep.base_url,
             api_version=cls.cloudkeep.api_version,
-            tenant_id=cls.cloudkeep.tenant_id,
-            auth_endpoint=cls.client_lib_config.authentication_endpoint,
-            user=cls.client_lib_config.username,
-            key=cls.client_lib_config.key,
-            token=cls.client_lib_config.token)
+            auth_endpoint=auth_endpoint,
+            user=cls.identity_config.username,
+            password=cls.identity_config.password,
+            tenant_name=cls.identity_config.tenant_name)
+
+        cls.barb_client = SecretsClient(
+            url=cls.cloudkeep.base_url,
+            api_version=cls.cloudkeep.api_version,
+            tenant_id=cls.tenant_id,
+            token=cls.token,
+            serialize_format=cls.marshalling.serializer,
+            deserialize_format=cls.marshalling.deserializer)
+
+        cls.barb_behaviors = SecretsBehaviors(
+            client=cls.barb_client, config=cls.config)
         cls.cl_behaviors = ClientLibSecretsBehaviors(
             barb_client=cls.barb_client, cl_client=cls.cl_client,
             config=cls.config)
@@ -126,35 +101,41 @@ class SecretsPagingFixture(SecretsFixture):
         super(SecretsPagingFixture, cls).tearDownClass()
 
 
-class OrdersFixture(ClientLibFixture):
+class OrdersFixture(AuthenticationFixture):
     @classmethod
     def setUpClass(cls):
         super(OrdersFixture, cls).setUpClass()
         cls.config = CloudKeepOrdersConfig()
-        cls.client_lib_config = CloudKeepClientLibConfig()
-        cls.barb_client = OrdersClient(
+        cls.identity_config = IdentityTokenConfig()
+        auth_endpoint = cls.identity_config.authentication_endpoint + '/v2.0'
+
+        cls.cl_client = ClientLibOrdersClient(
             url=cls.cloudkeep.base_url,
             api_version=cls.cloudkeep.api_version,
             tenant_id=cls.cloudkeep.tenant_id,
+            auth_endpoint=auth_endpoint,
+            user=cls.identity_config.username,
+            password=cls.identity_config.password,
+            tenant_name=cls.identity_config.tenant_name)
+
+        cls.barb_client = OrdersClient(
+            url=cls.cloudkeep.base_url,
+            api_version=cls.cloudkeep.api_version,
+            tenant_id=cls.tenant_id,
+            token=cls.token,
             serialize_format=cls.marshalling.serializer,
             deserialize_format=cls.marshalling.deserializer)
         cls.secrets_client = SecretsClient(
             url=cls.cloudkeep.base_url,
             api_version=cls.cloudkeep.api_version,
-            tenant_id=cls.cloudkeep.tenant_id,
+            tenant_id=cls.tenant_id,
+            token=cls.token,
             serialize_format=cls.marshalling.serializer,
             deserialize_format=cls.marshalling.deserializer)
-        cls.barb_behaviors = OrdersBehavior(orders_client=cls.barb_client,
-                                            secrets_client=cls.secrets_client,
-                                            config=cls.config)
-        cls.cl_client = ClientLibOrdersClient(
-            url=cls.cloudkeep.base_url,
-            api_version=cls.cloudkeep.api_version,
-            tenant_id=cls.cloudkeep.tenant_id,
-            auth_endpoint=cls.client_lib_config.authentication_endpoint,
-            user=cls.client_lib_config.username,
-            key=cls.client_lib_config.key,
-            token=cls.client_lib_config.token)
+
+        cls.barb_behaviors = OrdersBehavior(
+            orders_client=cls.barb_client, secrets_client=cls.secrets_client,
+            config=cls.config)
         cls.cl_behaviors = ClientLibOrdersBehaviors(
             barb_client=cls.barb_client, secrets_client=cls.secrets_client,
             cl_client=cls.cl_client, config=cls.config)
