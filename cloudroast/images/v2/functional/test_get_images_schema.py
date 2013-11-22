@@ -15,38 +15,22 @@ limitations under the License.
 """
 
 from cafe.drivers.unittest.decorators import tags
-from cloudroast.images.v2.fixtures import ImagesV2Fixture
+from cloudroast.images.fixtures import ImagesFixture
 
 
-class GetImagesSchemaTest(ImagesV2Fixture):
-    """ Test the retrieval of schema details for images. """
-
-    @tags(type='smoke')
-    def test_get_image_schema(self):
-        """
-        Get schema that represents an image entity.
-
-        1. Get image schema
-        2. Verify the response status code is 200
-        3. Verify the response body contain the expected image schema
-        """
-
-        response = self.api_client.get_image_schema()
-
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.content, self.image_schema_json)
+class TestGetImagesSchema(ImagesFixture):
 
     @tags(type='smoke')
-    def test_get_images_schema(self):
+    def test_happy_path_get_images_schema(self):
         """
-        Get schema that represents an images entity.
+        @summary: Happy Path - Get schema that represents an images entity
 
-        1. Get images schema
-        2. Verify the response status code is 200
-        3. Verify the response body contain the expected images schema
+        1) Get images schema
+        2) Verify that the response status code is 200
+        3) Verify that the response body contain the expected images schema as
+        compared to the images_schema.json file
         """
 
-        response = self.api_client.get_images_schema()
-
+        response = self.images_client.get_images_schema()
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.content, self.images_schema_json)
