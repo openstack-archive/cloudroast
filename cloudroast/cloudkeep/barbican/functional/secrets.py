@@ -581,6 +581,11 @@ class SecretsAPI(SecretsFixture):
         # now see that the regexp matched (ie result is not None)
         self.assertIsNotNone(result, 'Error message was not as expected')
 
+    @skip_open_issue('launchpad', '1254169')
+    def test_create_secret_with_only_content_type(self):
+        resp = self.behaviors.create_secret(payload_content_type='text/plain')
+        self.assertEqual(resp.create_resp.status_code, 400)
+
 
 class SecretsPagingAPI(SecretsPagingFixture):
 
