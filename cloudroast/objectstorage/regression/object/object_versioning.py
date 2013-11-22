@@ -13,8 +13,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-import json
-
 from cloudroast.objectstorage.fixtures import ObjectStorageFixture
 from cloudcafe.common.tools import randomstring as randstring
 
@@ -97,15 +95,6 @@ class ObjectVersioningTest(ObjectStorageFixture):
 
         return prefix
 
-    def get_obj_names(self, content):
-        object_names = []
-        for member in content:
-            if "name" in member.keys():
-                object_names.append(member["name"])
-        object_names.sort()
-
-        return object_names
-
     @ObjectStorageFixture.required_features('object_versioning')
     def test_versioned_obj_creation_with_valid_data(self):
         """
@@ -145,15 +134,7 @@ class ObjectVersioningTest(ObjectStorageFixture):
                     expected,
                     received))
 
-        content = None
-
-        try:
-            content = json.loads(response.content)
-        except ValueError, error:
-            self.fixture_log.exception(error)
-
-        object_names = []
-        object_names = self.get_obj_names(content)
+        object_names = [obj.name for obj in response.entity]
 
         expected_prefix = self.get_prefix(self.object_name)
 
@@ -237,7 +218,6 @@ class ObjectVersioningTest(ObjectStorageFixture):
         """
         check the number of versioned objects
         """
-        params = {"format": "json"}
         response = self.client.list_objects(
             self.non_current_version_container_name,
             params=params)
@@ -301,10 +281,8 @@ class ObjectVersioningTest(ObjectStorageFixture):
             """
             check the number of objects in the current container
             """
-            params = {"format": "json"}
             response = self.client.list_objects(
-                self.current_version_container_name,
-                params=params)
+                self.current_version_container_name)
 
             resp_obj_count = response.headers.get("x-container-object-count")
 
@@ -325,10 +303,8 @@ class ObjectVersioningTest(ObjectStorageFixture):
         """
         check the number of versioned objects in the non-current container
         """
-        params = {"format": "json"}
         response = self.client.list_objects(
-            self.non_current_version_container_name,
-            params=params)
+            self.non_current_version_container_name)
 
         resp_obj_count = response.headers.get("x-container-object-count")
 
@@ -350,10 +326,8 @@ class ObjectVersioningTest(ObjectStorageFixture):
             self.current_version_container_name,
             self.object_name)
 
-        params = {"format": "json"}
         response = self.client.list_objects(
-            self.non_current_version_container_name,
-            params=params)
+            self.non_current_version_container_name)
 
         resp_obj_count = response.headers.get("x-container-object-count")
 
@@ -374,10 +348,8 @@ class ObjectVersioningTest(ObjectStorageFixture):
         """
         check the number of versioned objects
         """
-        params = {"format": "json"}
         response = self.client.list_objects(
-            self.non_current_version_container_name,
-            params=params)
+            self.non_current_version_container_name)
 
         resp_obj_count = response.headers.get("x-container-object-count")
 
@@ -423,10 +395,8 @@ class ObjectVersioningTest(ObjectStorageFixture):
         """
         check the number of versioned objects
         """
-        params = {"format": "json"}
         response = self.client.list_objects(
-            self.non_current_version_container_name,
-            params=params)
+            self.non_current_version_container_name)
 
         resp_obj_count = response.headers.get("x-container-object-count")
 
