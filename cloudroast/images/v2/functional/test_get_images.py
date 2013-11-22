@@ -16,480 +16,86 @@ limitations under the License.
 
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.common.tools.datagen import rand_name
-from cloudroast.images.v2.fixtures import ImagesV2Fixture
+from cloudcafe.images.common.types import \
+    ImageContainerFormat, ImageDiskFormat, ImageVisibility
+from cloudroast.images.fixtures import ImagesFixture
 
 
-class GetImagesTest(ImagesV2Fixture):
-    """ Tests for the GET /v2/images endpoint."""
+class TestGetImages(ImagesFixture):
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestGetImages, cls).setUpClass()
+        cls.image_name = rand_name('get_image')
+        cls.images = cls.images_behavior.create_new_images(
+            count=2, name=cls.image_name)
 
     @tags(type='smoke')
-    def test_get_all_images(self):
-        """Get images and verify they exist.
-
-        1. Get a list of images
-        2. Verify that the list is not empty
+    def test_get_images(self):
         """
-        response = self.api_client.list_images()
+        @summary: Get images
+
+        1) Create two images
+        2) Get images
+        3) Verify that the list is not empty
+        4) Verify that the created images are in the list of images
+        """
+
+        image = self.images_behavior.create_new_image(
+            container_format=ImageContainerFormat.OVF,
+            disk_format=ImageDiskFormat.VMDK,
+            visibility=ImageVisibility.PUBLIC)
+        alt_image = self.images_behavior.create_new_image(
+            container_format=ImageContainerFormat.ARI,
+            disk_format=ImageDiskFormat.QCOW2,
+            visibility=ImageVisibility.PRIVATE)
+        images = self.images_behavior.list_images_pagination()
+        self.assertNotEqual(len(images), 0)
+        self.assertIn(image, images)
+        self.assertIn(alt_image, images)
+
+    @tags(type='positive', regression='true')
+    def test_get_images_using_marker_pagination(self):
+        """
+        @summary: Get images sorted by the name property in descending order
+
+        1) Using previously created images, get images passing in 1 as limit,
+        image_name as name, and primary user as owner
+        2) Verify that the response code is 200
+        3) Verify that the list only contains 1 image
+        4) Get images again passing in the listed image id as the marker as
+        well as 1 as limit, image_name as name, and primary user as owner
+        5) Verify that the response code is 200
+        6) Verify that the list only contains 1 image
+        7) Verify that the previously returned image is not in the current list
+        """
+
+        owner = self.user_config.tenant_id
+        response = self.images_client.list_images(
+            limit=1, name=self.image_name, owner=owner)
         self.assertEqual(response.status_code, 200)
-
-        images = response.entity
-        self.assertIsNotNone(images, 'Images deserialization failed.')
-        self.assertNotEqual(len(images), 0, 'No default images returned.')
-
-    @tags(type='positive')
-    def test_get_images_by_name(self):
-        """Get images, filtered by name property.
-
-        1. Get a list of images with a specific name
-        2. Verify the list is not empty
-        3. Verify the images returned have the specified name.
-        """
-        response = self.api_client.list_images(name=self.config.test_image)
+        image_list = response.entity
+        self.assertEqual(len(image_list), 1)
+        marker = image_list[0].id_
+        response = self.images_client.list_images(
+            limit=1, marker=marker, name=self.image_name, owner=owner)
         self.assertEqual(response.status_code, 200)
+        next_image_list = response.entity
+        self.assertEqual(len(next_image_list), 1)
+        self.assertNotIn(image_list[0], next_image_list)
 
-        images = response.entity
-        self.assertIsNotNone(images, 'Images deserialization failed.')
-        self.assertNotEqual(len(images), 0, 'No images returned.')
-        for image in images:
-            self.assertEqual(image.name, self.config.test_image,
-                             'Incorrect images returned.')
-
-    @tags(type='positive')
-    def test_get_images_by_container_format(self):
-        """Get images, filtered by container_format property.
-
-        1. Get a list of images with specific container format
-        2. Verify the list is not empty
-        3. Verify the images returned have specified container format
+    @tags(type='positive', regression='true')
+    def test_get_images_using_limit(self):
         """
-        response = self.api_client.list_images(
-            container_format=self.config.test_container_format)
+        @summary: Get images using the limit property
+
+        1) Get images passing in 50 as limit
+        2) Verify that the response code is 200
+        3) Verify that the list is not empty
+        4) Verify that the number of images returned in 50 or less
+        """
+
+        response = self.images_client.list_images(limit=50)
         self.assertEqual(response.status_code, 200)
-
         images = response.entity
-        self.assertIsNotNone(images, 'Images deserialization failed.')
-        self.assertNotEqual(len(images), 0, 'No images returned.')
-        for image in images:
-            self.assertEqual(image.container_format,
-                             self.config.test_container_format,
-                             'Incorrect images returned.')
-
-    @tags(type='positive')
-    def test_get_images_by_disk_format(self):
-        """Get images, filtered by disk_format property.
-
-        1. Get a list of images with specific disk format
-        2. Verify the list is not empty
-        3. Verify the images returned have specified disk format
-        """
-        response = self.api_client.list_images(
-            disk_format=self.config.test_disk_format)
-        self.assertEqual(response.status_code, 200)
-
-        images = response.entity
-        self.assertIsNotNone(images, 'Images deserialization failed.')
-        self.assertNotEqual(len(images), 0, 'No images returned.')
-        for image in images:
-            self.assertEqual(image.disk_format, self.config.test_disk_format,
-                             'Incorrect images returned.')
-
-    @tags(type='positive')
-    def test_get_images_by_status(self):
-        """Get images, filtered by status property.
-
-        1. Get a list of images with specific status
-        2. Verify the list is not empty
-        3. Verify the images returned have specified status
-        """
-        response = self.api_client.list_images(
-            status=self.config.test_status)
-        self.assertEqual(response.status_code, 200)
-
-        images = response.entity
-        self.assertIsNotNone(images, 'Images deserialization failed.')
-        self.assertNotEqual(len(images), 0, 'No images returned.')
-        for image in images:
-            self.assertEqual(image.status, self.config.test_status,
-                             'Incorrect images returned.')
-
-    @tags(type='positive')
-    def test_get_images_by_visibility(self):
-        """Get images, filtered by visibility property.
-
-        1. Get a list of images with specific visibility
-        2. Verify the list is not empty
-        3. Verify the images returned have specified visibility"""
-        response = self.api_client.list_images(
-            visibility=self.config.test_visibility)
-        self.assertEqual(response.status_code, 200)
-
-        images = response.entity
-        self.assertIsNotNone(images, 'Images deserialization failed.')
-        self.assertNotEqual(len(images), 0, 'No images returned.')
-        for image in images:
-            self.assertEqual(image.visibility, self.config.test_visibility,
-                             'Incorrect images returned.')
-
-    @tags(type='positive')
-    def test_get_images_by_size_min(self):
-        """Get images, filtered by size_min property.
-
-        1. Get a list of images with specific size_min
-        2. Verify the list is not empty
-        3. Verify the images returned have specified size_min
-        """
-        response = self.api_client.list_images(
-            size_min=self.config.size_min)
-        self.assertEqual(response.status_code, 200)
-
-        images = response.entity
-        self.assertIsNotNone(images, 'Images deserialization failed.')
-        self.assertNotEqual(len(images), 0, 'No images returned.')
-        for image in images:
-            self.assertGreaterEqual(int(image.size),
-                                    self.config.size_min,
-                                    'Incorrect images returned.')
-
-    @tags(type='positive')
-    def test_get_images_by_size_max(self):
-        """Get images, filtered by size_max property
-
-        1. Get a list of images with specific size_max
-        2. Verify the list is not empty
-        3. Verify the images returned have specified size_max
-        """
-        response = self.api_client.list_images(
-            size_max=self.config.size_max)
-        self.assertEqual(response.status_code, 200)
-
-        images = response.entity
-        self.assertIsNotNone(images, 'Images deserialization failed.')
-        self.assertNotEqual(len(images), 0, 'No images returned.')
-        for image in images:
-            self.assertLessEqual(int(image.size), self.config.size_max,
-                                 'Incorrect images returned.')
-
-    @tags(type='positive')
-    def test_get_images_by_min_ram(self):
-        """Get images, filtered by min_ram property.
-
-        1. Get a list of images with specific min_ram
-        2. Verify the list is not empty
-        3. Verify the images returned have specified min_ram
-        """
-        response = self.api_client.create_image(name=rand_name('image-test-'),
-                                                min_ram=self.config.min_ram,
-                                                container_format='bare',
-                                                disk_format='raw')
-        self.assertEqual(response.status_code, 201)
-
-        image = response.entity
-        self.assertIsNotNone(image)
-        self.resources.add(image.id_, self.api_client.delete_image)
-
-        response = self.api_client.list_images(min_ram=self.config.min_ram)
-        images = response.entity
-        self.assertIsNotNone(images, 'Images deserialization failed.')
-        self.assertNotEqual(len(images), 0, 'No images returned.')
-        for image in images:
-            self.assertGreaterEqual(int(image.min_ram), self.config.min_ram,
-                                    'Incorrect images returned.')
-
-    @tags(type='positive')
-    def test_get_images_by_min_disk(self):
-        """Get images, filtered by min_disk property.
-
-        1. Get a list of images with specific min_disk
-        2. Verify the list is not empty
-        3. Verify the images returned have specified min_disk
-        """
-        response = self.api_client.create_image(name=rand_name('image-test-'),
-                                                min_disk=self.config.min_disk,
-                                                container_format='bare',
-                                                disk_format='raw')
-        self.assertEqual(response.status_code, 201)
-
-        image = response.entity
-        self.assertIsNotNone(image)
-        self.resources.add(image.id_, self.api_client.delete_image)
-
-        response = self.api_client.list_images(
-            min_disk=self.config.min_disk)
-        images = response.entity
-        self.assertIsNotNone(images, 'Images deserialization failed.')
-        self.assertNotEqual(len(images), 0, 'No images returned.')
-        for image in images:
-            self.assertGreaterEqual(int(image.min_disk),
-                                    self.config.min_disk,
-                                    'Incorrect images returned.')
-
-    @tags(type='positive')
-    def test_get_images_by_status_and_disk_format(self):
-        """Get images, filtered by status and disk_format properties.
-
-        1. Get a list of images by specific status and disk_format
-        2. Verify the list is not empty
-        3. Verify the images returned have specified status and disk_format
-        """
-        response = self.api_client.list_images(
-            status=self.config.test_status,
-            disk_format=self.config.test_disk_format)
-        self.assertEqual(response.status_code, 200)
-
-        images = response.entity
-        self.assertIsNotNone(images, 'Images deserialization failed.')
-        self.assertNotEqual(len(images), 0, 'No images returned.')
-        for image in images:
-            self.assertEqual(image.status, self.config.test_status,
-                             'Incorrect images returned.')
-            self.assertEqual(image.disk_format, self.config.test_disk_format,
-                             'Incorrect images returned.')
-
-    @tags(type='negative')
-    def test_get_images_sorted_by_invalid_key_schema(self):
-        """Get images, sorted by an invalid sort key.
-
-        1. Get a list of images, sorted by invalid sort key
-        2. Verify the response code is 400
-        """
-
-        response = self.api_client.list_images(sort_key='schema')
-        self.assertEquals(response.status_code, 400)
-
-    @tags(type='positive')
-    def test_get_images_by_name_sort_key(self):
-        """Get images, sorted by name.
-
-        1. Get a list of images sorted by name
-        2. Verify the list is not empty
-        3. Verify the list is sorted by name
-        """
-        response = self.api_client.list_images(sort_key='name')
-        self.assertEqual(response.status_code, 200)
-
-        images = response.entity
-        self.assertIsNotNone(images, 'Images deserialization failed.')
-        self.assertNotEqual(len(images), 0, 'No images returned.')
-
-        for current, next in zip(images[0::2], images[1::2]):
-            self.assertGreaterEqual(current.name, next.name)
-
-    @tags(type='positive')
-    def test_get_images_by_status_sort_key(self):
-        """Get images, sorted by status.
-
-        1. Get a list of images sorted by status
-        2. Verify the list is not empty
-        3. Verify the list is sorted by status.
-        """
-        response = self.api_client.list_images(sort_key='status')
-        self.assertEqual(response.status_code, 200)
-
-        images = response.entity
-        self.assertIsNotNone(images, 'Images deserialization failed.')
-        self.assertNotEqual(len(images), 0, 'No images returned.')
-
-        for current, next in zip(images[0::2], images[1::2]):
-            self.assertGreaterEqual(current.status, next.status)
-
-    @tags(type='positive')
-    def test_get_images_by_container_format_sort_key(self):
-        """Get images, sorted by container_format.
-
-        1. Get a list of images sorted by container format
-        2. Verify the list is not empty
-        3. Verify the list is sorted by container format.
-        """
-        response = self.api_client.list_images(sort_key='container_format')
-        self.assertEqual(response.status_code, 200)
-
-        images = response.entity
-        self.assertIsNotNone(images, 'Images deserialization failed.')
-        self.assertNotEqual(len(images), 0, 'No images returned.')
-
-        for current, next in zip(images[0::2], images[1::2]):
-            self.assertGreaterEqual(current.container_format,
-                                    next.container_format)
-
-    @tags(type='positive')
-    def test_get_images_by_disk_format_sort_key(self):
-        """Get images, sorted by disk format.
-
-        1. Get a list of images sorted by disk format
-        2. Verify the list is not empty
-        3. Verify the list is sorted by disk format.
-        """
-        response = self.api_client.list_images(sort_key='disk_format')
-        self.assertEqual(response.status_code, 200)
-
-        images = response.entity
-        self.assertIsNotNone(images, 'Images deserialization failed.')
-        self.assertNotEqual(len(images), 0, 'No images returned.')
-
-        for current, next in zip(images[0::2], images[1::2]):
-            self.assertGreaterEqual(current.disk_format, next.disk_format)
-
-    @tags(type='positive')
-    def test_get_images_by_size_sort_key(self):
-        """Get images, sorted by size.
-
-        1. Get a list of images sorted by size
-        2. Verify the list is not empty
-        3. Verify the list is sorted by size.
-        """
-        response = self.api_client.list_images(sort_key='size')
-        self.assertEqual(response.status_code, 200)
-
-        images = response.entity
-        self.assertIsNotNone(images, 'Images deserialization failed.')
-        self.assertNotEqual(len(images), 0, 'No images returned.')
-
-        for current, next in zip(images[0::2], images[1::2]):
-            self.assertGreaterEqual(current.size, next.size)
-
-    @tags(type='positive')
-    def test_get_images_by_id_sort_key(self):
-        """Get images, sorted by id.
-
-        1. Get a list of images sorted by id
-        2. Verify the list is not empty
-        3. Verify the list is sorted by id
-        """
-        response = self.api_client.list_images(sort_key='id')
-        self.assertEqual(response.status_code, 200)
-
-        images = response.entity
-        self.assertIsNotNone(images, 'Images deserialization failed.')
-        self.assertNotEqual(len(images), 0, 'No images returned.')
-
-        for current, next in zip(images[0::2], images[1::2]):
-            self.assertGreaterEqual(current.id_, next.id_)
-
-    @tags(type='positive')
-    def test_get_images_by_created_at_sort_key(self):
-        """Get images, sorted by created_at.
-
-        1. Get a list of images sorted by created_at
-        2. Verify the list is not empty
-        3. Verify the list is sorted by created_at
-        """
-        response = self.api_client.list_images(sort_key='created_at')
-        self.assertEqual(response.status_code, 200)
-
-        images = response.entity
-        self.assertIsNotNone(images, 'Images deserialization failed.')
-        self.assertNotEqual(len(images), 0, 'No images returned.')
-
-        for current, next in zip(images[0::2], images[1::2]):
-            self.assertGreaterEqual(current.created_at, next.created_at)
-
-    @tags(type='positive')
-    def test_get_images_by_updated_at_sort_key(self):
-        """Get images, sorted by updated_at.
-
-        1. Get a list of images sorted by updated_at
-        2. Verify the list is not empty
-        3. Verify the list is sorted by updated_at
-        """
-        response = self.api_client.list_images(sort_key='updated_at')
-        self.assertEqual(response.status_code, 200)
-
-        images = response.entity
-        self.assertIsNotNone(images, 'Images deserialization failed.')
-        self.assertNotEqual(len(images), 0, 'No images returned.')
-
-        for current, next in zip(images[0::2], images[1::2]):
-            self.assertGreaterEqual(current.updated_at, next.updated_at)
-
-    @tags(type='positive')
-    def test_get_images_by_id_sort_key_and_sort_dir_asc(self):
-        """Get images, sorted by id and sort direction ascending.
-
-        1. Get a list of images sorted by id in ascending order
-        2. Verify the list is not empty
-        3. Verify the list is sorted by id in ascending order
-        """
-        response = self.api_client.list_images(sort_key='id',
-                                               sort_dir='asc')
-        self.assertEqual(response.status_code, 200)
-
-        images = response.entity
-        self.assertIsNotNone(images, 'Images deserialization failed.')
-        self.assertNotEqual(len(images), 0, 'No images returned.')
-
-        for current, next in zip(images[0::2], images[1::2]):
-            self.assertLessEqual(current.id_, next.id_)
-
-    @tags(type='positive')
-    def test_get_images_by_id_sort_key_and_sort_dir_desc(self):
-        """Get images, sorted by id and sort direction descending.
-
-        1. Get a list of images sorted by id in descending order
-        2. Verify the list is not empty
-        3. Verify the list is sorted by id in descending order
-        """
-        response = self.api_client.list_images(sort_key='id',
-                                               sort_dir='desc')
-        self.assertEqual(response.status_code, 200)
-
-        images = response.entity
-        self.assertIsNotNone(images, 'Images deserialization failed.')
-        self.assertNotEqual(len(images), 0, 'No images returned.')
-
-        for current, next in zip(images[0::2], images[1::2]):
-            self.assertGreaterEqual(current.id_, next.id_)
-
-    @tags(type='positive')
-    def test_get_images_by_pagination_marker(self):
-        """Get images, paginated by marker.
-
-        1. Get images, paginated by marker
-        2. Verify the list is not empty
-        3. Verify the list is paginated by marker.
-        """
-        response = self.api_client.list_images()
-        self.assertEquals(response.status_code, 200)
-
-        self.assertIsNotNone(response.entity, 'Images deserialization failed.')
-        images_list = response.entity
-        marker = images_list[0].id_
-
-        response = self.api_client.list_images(marker=marker)
-        images = response.entity
-        self.assertIsNotNone(images, 'Images deserialization failed.')
-        self.assertNotEqual(len(images), 0, 'No images returned.')
-
-        self.assertListEqual(images_list[1:len(images)], images[:-1])
-        self.assertTrue(marker not in [image.id_ for image in images])
-
-    @tags(type='positive')
-    def test_get_images_by_pagination_limit(self):
-        """Get images, paginated by limit flag.
-
-        1. Get list of images by limit
-        2. Verify the list is not empty
-        3. Get a list of images with different limits
-        4. Verify each list contains no more than specified limits
-        """
-        response = self.api_client.list_images()
-        self.assertTrue(response.status_code, 200)
-        self.assertIsNotNone(response.entity, 'Images deserialization failed.')
-        all_images = response.entity
-
-        for limit in enumerate(all_images):
-            response = self.api_client.list_images(limit=limit)
-            self.assertTrue(response.status_code, 200)
-            self.assertIsNotNone(response.entity,
-                                 'Images deserialization failed.')
-            images = response.entity
-
-            self.assertLessEqual(len(images), limit)
-
-    @tags(type='negative')
-    def test_get_images_using_http_method_put(self):
-        """Try get images using incorrect HTTP method PUT.
-
-        1. PUT request to /images endpoint
-        2. Verify the response code is 404
-        """
-        self.assertTrue(False, "Not Implemented")
+        self.assertLessEqual(len(images), 50)
