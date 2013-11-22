@@ -1,0 +1,9 @@
+Verified+2: Jenkins
+Approved+1: jose-idar <jose.idar@rackspace.com>
+Code-Review+2: jose-idar <jose.idar@rackspace.com>
+Code-Review+1: John Vrbanac <john.vrbanac@rackspace.com>
+Submitted-by: Jenkins
+Submitted-at: Fri, 22 Nov 2013 19:22:07 +0000
+Reviewed-on: https://review.openstack.org/56328
+Project: stackforge/cloudroast
+Branch: refs/heads/master
