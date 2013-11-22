@@ -14,48 +14,52 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+from cafe.drivers.unittest.decorators import tags
 from cloudcafe.common.tools.datagen import rand_name
-from cloudroast.images.v2.fixtures import ImagesV2Fixture
+from cloudroast.images.fixtures import ImagesFixture
 
 
-class ImageTagLifeCycleTest(ImagesV2Fixture):
+class TestImageTagLifeCycle(ImagesFixture):
 
-    def test_image_tag_life_cycle(self):
+    @tags(type='positive', regression='true')
+    def test_image_tag_life_cycle_crud(self):
         """
-        Image Tag Life Cycle - CRUD operation
+        @summary: Image tag life cycle crud
 
-        1. Register an image
-        2. Get the image and its tags list should be empty
-        3. Add a tag to an image
-        4. Image tags should now have the added tag only
-        5. Delete image tag
-        6. Verify the response code is 204
-        7. Get the image and verify that image tags list should be empty again
+        1) Create image
+        2) Get image
+        3) Verify that the response code is 200
+        4) Verify that image tags are empty
+        5) Add image tag
+        6) Verify that the response code is 204
+        8) Get image again
+        9) Verify that the response code is 200
+        10) Verify that image tags contain the added tag
+        11) Delete image tag
+        12) Verify that the response code is 204
+        13) Get image again
+        14) Verify that the response code is 200
+        15) Verify that image tags are empty
         """
 
-        tag = rand_name('tag_')
-        image_id = self.images_behavior.register_basic_image()
-
-        response = self.api_client.get_image(image_id=image_id)
+        tag = rand_name('tag')
+        image = self.images_behavior.create_new_image()
+        response = self.images_client.get_image(image.id_)
         self.assertEqual(response.status_code, 200)
-        image = response.entity
-        self.assertEqual(image.tags, [])
-
-        response = self.api_client.add_tag(image_id=image_id, tag=tag)
+        get_image_resp = response.entity
+        self.assertIsNotNone(get_image_resp)
+        self.assertListEqual(get_image_resp.tags, [])
+        response = self.images_client.add_tag(image.id_, tag)
         self.assertEqual(response.status_code, 204)
-
-        response = self.api_client.get_image(image_id=image_id)
+        response = self.images_client.get_image(image.id_)
         self.assertEqual(response.status_code, 200)
-        image = response.entity
-
-        image_tags = image.tags
-        self.assertEqual(len(image_tags), 1)
-        self.assertIn(tag, image_tags)
-
-        response = self.api_client.delete_tag(image_id=image_id, tag=tag)
+        get_image_resp = response.entity
+        self.assertIsNotNone(get_image_resp)
+        self.assertListEqual(get_image_resp.tags, [tag])
+        response = self.images_client.delete_tag(image.id_, tag)
         self.assertEqual(response.status_code, 204)
-
-        response = self.api_client.get_image(image_id=image_id)
+        response = self.images_client.get_image(image.id_)
         self.assertEqual(response.status_code, 200)
-        image = response.entity
-        self.assertEqual(image.tags, [])
+        get_image_resp = response.entity
+        self.assertIsNotNone(get_image_resp)
+        self.assertListEqual(get_image_resp.tags, [])
