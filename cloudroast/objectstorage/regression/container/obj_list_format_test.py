@@ -74,7 +74,7 @@ class ListFormatTest(ObjectStorageFixture):
         for storage_obj in response.entity:
             self.assertIn(storage_obj.name, self.obj_names)
 
-    def test_list_format_json(self):
+    def test_list_format_json_query_string_param(self):
         params = {"format": "json"}
         response = self.client.list_objects(self.container_name, params=params)
 
@@ -99,9 +99,65 @@ class ListFormatTest(ObjectStorageFixture):
         for storage_obj in response.entity:
             self.assertIn(storage_obj.name, self.obj_names)
 
-    def test_list_format_xml(self):
+    def test_list_format_accept_application_json_header(self):
+        headers = {"accept": "application/json"}
+        response = self.client.list_objects(
+            self.container_name,
+            headers=headers)
+
+        expected = CONTENT_TYPE_JSON
+        received = response.headers.get('content-type')
+        self.assertEqual(
+            expected,
+            received,
+            msg="expected content-type {0} received {1}".format(
+                expected,
+                received))
+
+        expected = len(response.entity)
+        received = len(self.obj_names)
+        self.assertEqual(
+            expected,
+            received,
+            msg="expected {0} objects received {1} objects".format(
+                str(expected),
+                str(received)))
+
+        for storage_obj in response.entity:
+            self.assertIn(storage_obj.name, self.obj_names)
+
+    def test_list_format_xml_query_string_param(self):
         params = {"format": "xml"}
         response = self.client.list_objects(self.container_name, params=params)
+
+        self.assertTrue(response.ok)
+
+        expected = CONTENT_TYPE_XML
+        received = response.headers.get('content-type')
+        self.assertEqual(
+            expected,
+            received,
+            msg="expected content-type {0} received {1}".format(
+                expected,
+                received))
+
+        expected = len(response.entity)
+        received = len(self.obj_names)
+        self.assertEqual(
+            expected,
+            received,
+            msg="expected {0} objects received {1} objects".format(
+                str(expected),
+                str(received)))
+
+        for storage_obj in response.entity:
+            self.assertIn(storage_obj.name, self.obj_names)
+
+    def test_list_format_accept_application_xml_header(self):
+        headers = {"accept": "application/xml"}
+        response = self.client.list_objects(
+            self.container_name,
+            headers=headers)
 
         self.assertTrue(response.ok)
 
