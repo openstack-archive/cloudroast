@@ -156,6 +156,7 @@ class CreateServerFixture(ComputeFixture, StackTachDBFixture):
 
         cls.created_server = create_response.entity
 
+        cls.created_server = create_response.entity
         try:
             wait_response = (cls.server_behaviors
                              .wait_for_server_status(cls.created_server.id,
