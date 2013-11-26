@@ -1,0 +1,9 @@
+Verified+2: Jenkins
+Code-Review+1: Ivo Vasev <ivo.vasev@rackspace.com>
+Approved+1: Christopher Hunt <chris.hunt@rackspace.com>
+Code-Review+2: Christopher Hunt <chris.hunt@rackspace.com>
+Submitted-by: Jenkins
+Submitted-at: Tue, 26 Nov 2013 23:19:54 +0000
+Reviewed-on: https://review.openstack.org/58632
+Project: stackforge/cloudroast
+Branch: refs/heads/master
