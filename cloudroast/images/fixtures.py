@@ -19,7 +19,7 @@ from cloudcafe.auth.config import UserAuthConfig, UserConfig
 from cloudcafe.auth.provider import AuthProvider
 from cloudcafe.common.resources import ResourcePool
 from cloudcafe.images.config import \
-    AltUserConfig, ImagesConfig, MarshallingConfig
+    AltUserConfig, ImagesConfig, MarshallingConfig, AdminUserConfig
 from cloudcafe.images.v2.behaviors import ImagesBehaviors
 from cloudcafe.images.v2.client import ImagesClient
 
@@ -38,6 +38,7 @@ class ImagesFixture(BaseTestFixture):
         cls.resources = ResourcePool()
         cls.serialize_format = cls.marshalling.serializer
         cls.deserialize_format = cls.marshalling.deserializer
+
         # TODO: Remove once import/export functionality is implemented
         internal_url = cls.images_config.internal_url
         cls.access_data = AuthProvider.get_access_data(cls.endpoint_config,
@@ -45,32 +46,51 @@ class ImagesFixture(BaseTestFixture):
         # If authentication fails, fail immediately
         if cls.access_data is None:
             cls.assertClassSetupFailure('Authentication failed')
+
         cls.alt_access_data = AuthProvider.get_access_data(cls.endpoint_config,
                                                            cls.alt_user_config)
         # If authentication fails, fail immediately
         if cls.alt_access_data is None:
             cls.assertClassSetupFailure('Authentication failed')
+
+        cls.admin_access_data = AuthProvider.get_access_data(
+            None,
+            AdminUserConfig())
+        # If authentication fails, fail immediately
+        if cls.admin_access_data is None:
+            cls.assertClassSetupFailure('Authentication failed')
+
         images_service = cls.access_data.get_service(
             cls.images_config.endpoint_name)
-        public_url_check = \
-            images_service.get_endpoint(cls.images_config.region)
+        public_url_check = (
+            images_service.get_endpoint(cls.images_config.region))
+
         # If endpoint validation fails, fail immediately
         if public_url_check is None:
             cls.assertClassSetupFailure('Endpoint validation failed')
-        cls.url = \
-            images_service.get_endpoint(cls.images_config.region).public_url
+        cls.url = (
+            images_service.get_endpoint(cls.images_config.region).public_url)
+
         # If a url override was provided, use it instead
         if cls.images_config.override_url:
             cls.url = cls.images_config.override_url
+
         cls.images_client = cls.generate_images_client(
             cls.access_data, internal_url)
         cls.alt_images_client = cls.generate_images_client(
             cls.alt_access_data, internal_url)
+        cls.admin_images_client = cls.generate_images_client(
+            cls.admin_access_data, internal_url)
+
         cls.images_behavior = ImagesBehaviors(
             images_client=cls.images_client, images_config=cls.images_config)
         cls.alt_images_behavior = ImagesBehaviors(
             images_client=cls.alt_images_client,
             images_config=cls.images_config)
+        cls.admin_images_behavior = ImagesBehaviors(
+            images_client=cls.admin_images_client,
+            images_config=cls.images_config)
+
         cls.image_schema_json = (
             open(cls.images_config.image_schema_json).read().rstrip())
         cls.images_schema_json = (
@@ -82,12 +102,12 @@ class ImagesFixture(BaseTestFixture):
         cls.resources.release()
 
     @classmethod
-    def generate_images_client(self, auth_data, internal_url=None):
+    def generate_images_client(cls, auth_data, internal_url=None):
         """@summary: Returns new images client for requested auth data"""
 
-        url = internal_url if internal_url is not None else self.url
+        url = internal_url if internal_url is not None else cls.url
         client_args = {'base_url': url,
                        'auth_token': auth_data.token.id_,
-                       'serialize_format': self.serialize_format,
-                       'deserialize_format': self.deserialize_format}
+                       'serialize_format': cls.serialize_format,
+                       'deserialize_format': cls.deserialize_format}
         return ImagesClient(**client_args)
