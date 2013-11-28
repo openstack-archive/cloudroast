@@ -30,8 +30,8 @@ from cloudcafe.compute.servers_api.behaviors import ServerBehaviors
 from cloudcafe.compute.servers_api.client import ServersClient
 from cloudcafe.compute.servers_api.config import ServersConfig
 from cloudcafe.images.common.constants import ImageProperties, Messages
-from cloudcafe.images.config import \
-    AdminUserConfig, AltUserConfig, ImagesConfig, MarshallingConfig
+from cloudcafe.images.config import AdminUserConfig, AltUserConfig, \
+    ImagesConfig, MarshallingConfig
 from cloudcafe.images.v2.behaviors import ImagesBehaviors
 from cloudcafe.images.v2.client import ImagesClient
 
@@ -68,6 +68,7 @@ class ImagesFixture(BaseTestFixture):
 
         cls.admin_access_data = AuthProvider.get_access_data(None,
                                                              AdminUserConfig())
+
         # If authentication fails, fail immediately
         if cls.admin_access_data is None:
             cls.assertClassSetupFailure('Authentication failed')
@@ -75,7 +76,8 @@ class ImagesFixture(BaseTestFixture):
         images_service = cls.access_data.get_service(
             cls.images_config.endpoint_name)
 
-        images_url_check = images_service.get_endpoint(cls.images_config.region)
+        images_url_check = images_service.get_endpoint(
+            cls.images_config.region)
 
         # If endpoint validation fails, fail immediately
         if images_url_check is None:
@@ -108,6 +110,7 @@ class ImagesFixture(BaseTestFixture):
         cls.created_at_offset = cls.images_config.created_at_offset
         cls.error_msg = Messages.ERROR_MSG
         cls.id_regex = re.compile(ImageProperties.ID_REGEX)
+
         cls.image_schema_json = (
             open(cls.images_config.image_schema_json).read().rstrip())
         cls.images_schema_json = (
