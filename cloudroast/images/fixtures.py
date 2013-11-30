@@ -75,6 +75,8 @@ class ImagesFixture(BaseTestFixture):
             open(cls.images_config.image_schema_json).read().rstrip())
         cls.images_schema_json = (
             open(cls.images_config.images_schema_json).read().rstrip())
+        cls.created_at_offset = cls.images_config.created_at_offset
+        cls.updated_at_offset = cls.images_config.updated_at_offset
 
     @classmethod
     def tearDownClass(cls):
