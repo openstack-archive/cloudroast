@@ -14,10 +14,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import re
+
 from cafe.drivers.unittest.fixtures import BaseTestFixture
 from cloudcafe.auth.config import UserAuthConfig, UserConfig
 from cloudcafe.auth.provider import AuthProvider
 from cloudcafe.common.resources import ResourcePool
+from cloudcafe.images.common.constants import ImageProperties, Messages
 from cloudcafe.images.config import \
     AltUserConfig, ImagesConfig, MarshallingConfig
 from cloudcafe.images.v2.behaviors import ImagesBehaviors
@@ -71,10 +74,14 @@ class ImagesFixture(BaseTestFixture):
         cls.alt_images_behavior = ImagesBehaviors(
             images_client=cls.alt_images_client,
             images_config=cls.images_config)
+        cls.created_at_offset = cls.images_config.created_at_offset
+        cls.error_msg = Messages.ERROR_MSG
+        cls.id_regex = re.compile(ImageProperties.ID_REGEX)
         cls.image_schema_json = (
             open(cls.images_config.image_schema_json).read().rstrip())
         cls.images_schema_json = (
             open(cls.images_config.images_schema_json).read().rstrip())
+        cls.updated_at_offset = cls.images_config.updated_at_offset
 
     @classmethod
     def tearDownClass(cls):
