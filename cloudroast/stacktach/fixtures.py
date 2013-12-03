@@ -32,6 +32,8 @@ class StackTachFixture(BaseTestFixture):
         cls.stacktach_config = StacktachConfig()
         cls.event_id = cls.stacktach_config.event_id
         cls.days_passed = cls.stacktach_config.days_passed
+        cls.msg = "Unexpected {0} value received. Expected: {1}," \
+                  "Received: {2}, Reason: {3}, Contents: {4}"
 
         cls.url = cls.stacktach_config.url
         cls.serializer = cls.marshalling.serializer
@@ -52,6 +54,8 @@ class StackTachDBFixture(BaseTestFixture):
         cls.stacktach_config = StacktachConfig()
         cls.event_id = cls.stacktach_config.event_id
         cls.days_passed = cls.stacktach_config.days_passed
+        cls.msg = "Unexpected {0} value received. Expected: {1}," \
+                  "Received: {2}, Reason: {3}, Contents: {4}"
 
         cls.url = cls.stacktach_config.db_url
         cls.serializer = cls.marshalling.serializer
