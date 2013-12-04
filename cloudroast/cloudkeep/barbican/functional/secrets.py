@@ -49,6 +49,12 @@ class SecretContentTypeDataSetTextPositive\
     def __init__(self):
         super(SecretContentTypeDataSetTextPositive, self).__init__()
 
+        # Removing for Bug #1252873
+        excluded = ['text_plain_trailing_space',
+                    'text_plain_space_charset_utf8_trailing_space',
+                    'text_caps_plain']
+        [self.remove(ds) for ds in list(self) if ds.name in excluded]
+
 
 class SecretContentTypeDataSetBase64Positive\
         (ContentTypeEncodingDataSetBase64Positive):
