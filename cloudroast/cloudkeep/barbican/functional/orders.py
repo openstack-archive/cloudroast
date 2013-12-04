@@ -17,12 +17,12 @@ from datetime import datetime, timedelta
 from sys import maxint
 import unittest2
 
+from cafe.drivers.unittest.datasets import DatasetList
 from cafe.drivers.unittest.decorators import (tags, data_driven_test,
-                                              DataDrivenFixture,
-                                              skip_open_issue)
+                                              DataDrivenFixture)
 from cloudroast.cloudkeep.barbican.fixtures import (
-    OrdersFixture, OrdersPagingFixture, ContentTypeEncodingDataSetNegative,
-    BitLengthDataSetNegative, NameDataSetPositive, PayloadDataSetNegative,
+    OrdersFixture, OrdersPagingFixture, BitLengthDataSetNegative,
+    NameDataSetPositive, PayloadDataSetNegative,
     BitLengthDataSetPositive)
 
 
@@ -34,12 +34,37 @@ class OrderBitLengthDataSet(BitLengthDataSetNegative):
         self.append_new_dataset('large_int', {'bit_length': maxint})
 
 
-class OrderContentTypeEncodingDataSet(ContentTypeEncodingDataSetNegative):
+class OrderContentTypeEncodingDataSet(DatasetList):
     def __init__(self):
-        super(OrderContentTypeEncodingDataSet, self).__init__()
-        self.append_new_dataset('text_plain',
-                                {'payload_content_type': 'text/plain',
-                                 'payload_content_encoding': None})
+        large_string = str(bytearray().zfill(10001))
+
+        self.append_new_dataset(
+            'empty_type',
+            {'payload_content_type': ''})
+        self.append_new_dataset(
+            'null_type',
+            {'payload_content_type': None})
+        self.append_new_dataset(
+            'large_string_type',
+            {'payload_content_type': large_string})
+        self.append_new_dataset(
+            'int_type',
+            {'payload_content_type': 123})
+        self.append_new_dataset(
+            'text_plain',
+            {'payload_content_type': 'text/plain'})
+        self.append_new_dataset(
+            'text',
+            {'payload_content_type': 'text'})
+        self.append_new_dataset(
+            'text_slash_with_no_subtype',
+            {'payload_content_type': 'text/'})
+        self.append_new_dataset(
+            'text_plain_space_charset_utf88',
+            {'payload_content_type': 'text/plain; charset=utf-88'})
+        self.append_new_dataset(
+            'invalid_content_type',
+            {'payload_content_type': 'invalid'})
 
 
 class OrderPayloadDataSet(PayloadDataSetNegative):
@@ -184,12 +209,10 @@ class OrdersAPI(OrdersFixture):
         self.assertEqual(resp.status_code, 202,
                          'Returned unexpected response code')
 
-    @skip_open_issue('launchpad', '1220957')
     @tags(type='negative')
-    def test_getting_secret_data_as_plain_text(self):
-        """ When we attempt to get the plain/text secret payload from a
-        freshly created order we should get a 406.
-        - Reported in lp:1220957
+    def test_create_order_with_text_plain(self):
+        """ An order shouldn't be able to be created with a content-type
+        of text/plain.
         """
         resps = self.behaviors.create_and_check_order(
             payload_content_type="text/plain",
@@ -198,10 +221,7 @@ class OrdersAPI(OrdersFixture):
             bit_length=self.config.bit_length,
             mode=self.config.mode)
 
-        secret_ref = resps.get_resp.entity.secret_href
-        secret_resp = self.secrets_client.get_secret(
-            ref=secret_ref, payload_content_type='text/plain')
-        self.assertEqual(secret_resp.status_code, 406)
+        self.assertEqual(resps.create_resp.status_code, 400)
 
     @tags(type='negative')
     def test_get_order_that_doesnt_exist(self):
@@ -397,7 +417,6 @@ class OrdersAPI(OrdersFixture):
         put_resp = self.orders_client.update_order(
             order_id=resp.id,
             payload_content_type=self.config.payload_content_type,
-            payload_content_encoding=self.config.payload_content_encoding,
             data='test-update-order')
         self.assertEqual(put_resp.status_code, 405,
                          'Should have failed with 405')
