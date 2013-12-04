@@ -19,12 +19,9 @@ class StackTachTest(StackTachFixture):
                                          "Not a 2xx Success response",
                                          response.status_code, response.reason,
                                          response.content))
-        resp_entity_obj = response.entity
-        self.assertGreaterEqual(len(resp_entity_obj), 1,
-                                msg="The response content is blank")
-        for element in resp_entity_obj:
-            self.assertIsNotNone(getattr(element, "Error"))
-            self.assertIsNotNone(getattr(element, "Message"))
+        self.assertTrue('NOT FOUND' in response.reason,
+                        msg="Expected the request to fail for reason: "
+                            "404 - Not Found, but it didn't")
 
     def test_watch_events_with_invalid_deployment(self):
         """
@@ -75,7 +72,7 @@ class StackTachTest(StackTachFixture):
                                         response.content))
         resp_entity_obj = response.entity
         self.assertEqual(len(resp_entity_obj), 0,
-                         msg="The response entity is not Empty")
+                         msg="The response entity is not NONE")
 
     def test_get_timings_for_invalid_uuid(self):
         """
@@ -89,11 +86,8 @@ class StackTachTest(StackTachFixture):
                                          response.status_code, response.reason,
                                          response.content))
         resp_entity_obj = response.entity
-        self.assertGreaterEqual(len(resp_entity_obj), 1,
-                                msg="The response content is blank")
-        for element in resp_entity_obj:
-            self.assertIsNotNone(getattr(element, "Error"))
-            self.assertIsNotNone(getattr(element, "Message"))
+        self.assertIsNone(resp_entity_obj,
+                          msg="The response entity is not NONE")
 
     def test_get_events_for_invalid_uuid(self):
         """
@@ -108,12 +102,9 @@ class StackTachTest(StackTachFixture):
                                          "Not a 2xx Success response",
                                          response.status_code, response.reason,
                                          response.content))
-        resp_entity_obj = response.entity
-        self.assertGreaterEqual(len(resp_entity_obj), 1,
-                                msg="The response content is blank")
-        for element in resp_entity_obj:
-            self.assertIsNotNone(getattr(element, "Error"))
-            self.assertIsNotNone(getattr(element, "Message"))
+        self.assertTrue('BAD REQUEST' in response.reason,
+                        msg="Expected the request to fail for reason: "
+                            "Bad Request, but it didn't")
 
     def test_get_events_for_invalid_request_id(self):
         """
@@ -127,9 +118,6 @@ class StackTachTest(StackTachFixture):
                                          "Not a 2xx Success response",
                                          response.status_code, response.reason,
                                          response.content))
-        resp_entity_obj = response.entity
-        self.assertGreaterEqual(len(resp_entity_obj), 1,
-                                msg="The response content is blank")
-        for element in resp_entity_obj:
-            self.assertIsNotNone(getattr(element, "Error"))
-            self.assertIsNotNone(getattr(element, "Message"))
+        self.assertTrue('BAD REQUEST' in response.reason,
+                        msg="Expected the request to fail for reason: "
+                            "Bad Request, but it didn't")
