@@ -144,19 +144,21 @@ class CreateImageConfigDriveTest(CreateServerFixture):
         openstack_meta = self.openstack_meta_after_image
 
         self.assertEqual(
-            self.server.admin_pass,
+            self.openstack_meta_before_image.admin_pass,
             openstack_meta.admin_pass,
-            msg=message.format(
-                'Password mismatch',
-                self.server.admin_pass,
-                openstack_meta.admin_pass))
+            msg=message.format('Password mismatch',
+                               self.openstack_meta_before_image.admin_pass,
+                               openstack_meta.admin_pass))
 
         self.assertIsNotNone(openstack_meta.availability_zone)
         self.assertIsNotNone(openstack_meta.hostname)
         self.assertIsNotNone(openstack_meta.launch_index)
-        self.assertEqual(self.server.name, openstack_meta.name)
+        self.assertEqual(self.openstack_meta_before_image.name,
+                         openstack_meta.name)
         self.assertEqual(openstack_meta.meta.get('meta_key_1'), 'meta_value_1')
         self.assertEqual(openstack_meta.meta.get('meta_key_2'), 'meta_value_2')
-        self.assertEqual(self.key.public_key,
+        self.assertEqual(getattr(self.openstack_meta_before_image.public_keys,
+                         self.key.name),
                          getattr(openstack_meta.public_keys, self.key.name))
-        self.assertEqual(self.server.id, openstack_meta.uuid)
+        self.assertEqual(self.openstack_meta_before_image.uuid,
+                         openstack_meta.uuid)

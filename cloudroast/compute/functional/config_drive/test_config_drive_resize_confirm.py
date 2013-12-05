@@ -43,16 +43,12 @@ class ResizeServerUpConfirmTests(ComputeFixture):
             cls.keypairs_client.delete_keypair)
         # build server
         server_response = cls.server_behaviors.create_active_server(
-            config_drive=True,
-            personality=files,
-            user_data=user_data,
-            flavor_ref=cls.flavor_ref,
-            metadata=cls.metadata,
+            config_drive=True, personality=files, user_data=user_data,
+            flavor_ref=cls.flavor_ref, metadata=cls.metadata,
             key_name=cls.key.name)
         server_to_resize = server_response.entity
-        cls.resources.add(
-            server_to_resize.id,
-            cls.servers_client.delete_server)
+        cls.resources.add(server_to_resize.id,
+                          cls.servers_client.delete_server)
         cls.server_behaviors.wait_for_server_status(
             server_to_resize.id, NovaServerStatusTypes.ACTIVE)
 
@@ -69,9 +65,9 @@ class ResizeServerUpConfirmTests(ComputeFixture):
             key=cls.key.private_key,
             source_path=cls.config_drive_config.mount_source_path,
             destination_path=cls.config_drive_config.base_path_to_mount)
-        cls.user_data_before_resize = remote_client.get_file_details(
+        cls.user_data_pre = remote_client.get_file_details(
             file_path=cls.user_data_filepath).content
-        cls.kb_size_before_resize = remote_client.get_directory_details(
+        cls.kb_size_pre = remote_client.get_directory_details(
             cls.config_drive_config.base_path_to_mount)
         cls.openstack_meta_before_resize = (
             cls.config_drive_behaviors.get_openstack_metadata(
@@ -106,73 +102,76 @@ class ResizeServerUpConfirmTests(ComputeFixture):
             source_path=cls.config_drive_config.mount_source_path,
             destination_path=cls.config_drive_config.base_path_to_mount)
 
-        cls.user_data_after_resize = remote_client.get_file_details(
+        cls.user_data_after = remote_client.get_file_details(
             file_path=cls.user_data_filepath).content
-        cls.kb_size_after_resize = remote_client.get_directory_details(
+        cls.kb_size_after = remote_client.get_directory_details(
             cls.config_drive_config.base_path_to_mount)
 
+        #set variables
         cls.dir_openstack_content_present = remote_client.is_directory_present(
             directory_path='{0}/openstack/content'.format(
                 cls.config_drive_config.base_path_to_mount))
-        cls.openstack_meta_after_resize = (
-            cls.config_drive_behaviors.get_openstack_metadata(
-                cls.server, cls.servers_config, key=cls.key.private_key,
-                filepath=cls.config_drive_config.openstack_meta_filepath))
 
-    @tags(type='positive', net='yes')
     def test_verify_user_data(self):
         self.assertEqual(
-            self.user_data_after_resize, self.user_data_before_resize,
+            self.user_data_after, self.user_data_pre,
             msg="User data different")
 
-    @tags(type='positive', net='yes')
     def test_verify_tolerance(self):
         self.assertGreaterEqual(
-            self.kb_size_after_resize.size, self.config_drive_config.min_size,
+            self.kb_size_after.size, self.config_drive_config.min_size,
             msg='New image is not less than tolerance')
         self.assertLessEqual(
-            self.kb_size_after_resize.size, self.config_drive_config.max_size,
+            self.kb_size_after.size, self.config_drive_config.max_size,
             msg='New image is not more than tolerance')
 
-    @tags(type='positive', net='yes')
-    def test_directory_present_after_resize(self):
+    def test_directorty_present_after_resize(self):
         self.assertFalse(
             self.dir_openstack_content_present,
             msg="Directory Openstack is not present")
 
-    @tags(type='positive', net='yes')
     def test_openstack_metadata(self):
         message = "Expected {0} to be {1}, was {2}."
         self.openstack_meta_after_resize = (
             self.config_drive_behaviors.get_openstack_metadata(
-                self.server,
-                self.servers_config,
-                key=self.key.private_key,
+                self.server, self.servers_config, key=self.key.private_key,
                 filepath=self.config_drive_config.openstack_meta_filepath))
-
         self.assertIsNotNone(
-            self.openstack_meta_after_resize.availability_zone)
-        self.assertIsNotNone(self.openstack_meta_after_resize.hostname)
-        self.assertIsNotNone(self.openstack_meta_after_resize.launch_index)
-
+            self.openstack_meta_after_resize.availability_zone,
+            msg="availability_zone was not set in the response")
+        self.assertIsNotNone(
+            self.openstack_meta_after_resize.hostname,
+            msg="hostname was not set in the response")
+        self.assertIsNotNone(
+            self.openstack_meta_after_resize.launch_index,
+            msg="launch_index was not set in the response")
         self.assertEqual(
             self.openstack_meta_before_resize.name,
-            self.openstack_meta_after_resize.name)
+            self.openstack_meta_after_resize.name,
+            msg=message.format(
+                'server name',
+                self.openstack_meta_before_resize.name,
+                self.openstack_meta_after_resize.name))
         self.assertEqual(self.openstack_meta_after_resize.meta.get(
             'meta_key_1'), 'meta_value_1')
         self.assertEqual(self.openstack_meta_after_resize.meta.get(
             'meta_key_2'), 'meta_value_2')
-
         self.assertEqual(
             getattr(self.openstack_meta_before_resize.public_keys,
                     self.key.name),
             getattr(self.openstack_meta_after_resize.public_keys,
-                    self.key.name))
-
-        self.assertEqual(
-            self.openstack_meta_before_resize.uuid,
-            self.openstack_meta_after_resize.uuid,
+                    self.key.name),
             msg=message.format(
-                'server ids do not match',
-                self.server.id,
-                self.openstack_meta_after_resize.uuid))
+                'key do not match',
+                self.openstack_meta_before_resize.public_keys,
+                self.openstack_meta_after_resize.public_keys))
+        self.assertEqual(self.openstack_meta_before_resize.uuid,
+                         self.openstack_meta_after_resize.uuid,
+                         msg=message.format(
+                             'server id does not match',
+                             self.openstack_meta_before_resize.uuid,
+                             self.openstack_meta_after_resize.uuid))
+
+    @tags(type='smoke', net='no')
+    def test_server_properties_after_resize(self):
+        self.assertNotEqual(self.flavor_ref, self.server.flavor.id)
