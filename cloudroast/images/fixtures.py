@@ -20,7 +20,14 @@ from cafe.drivers.unittest.fixtures import BaseTestFixture
 from cloudcafe.auth.config import UserAuthConfig, UserConfig
 from cloudcafe.auth.provider import AuthProvider
 from cloudcafe.common.resources import ResourcePool
+from cloudcafe.common.tools.datagen import rand_name
+from cloudcafe.compute.config import ComputeEndpointConfig
+from cloudcafe.compute.flavors_api.config import FlavorsConfig
+from cloudcafe.compute.servers_api.behaviors import ServerBehaviors
+from cloudcafe.compute.servers_api.client import ServersClient
+from cloudcafe.compute.servers_api.config import ServersConfig
 from cloudcafe.images.common.constants import ImageProperties, Messages
+from cloudcafe.images.common.types import ImageStatus
 from cloudcafe.images.config import \
     AltUserConfig, ImagesConfig, MarshallingConfig
 from cloudcafe.images.v2.behaviors import ImagesBehaviors
@@ -34,10 +41,13 @@ class ImagesFixture(BaseTestFixture):
     def setUpClass(cls):
         super(ImagesFixture, cls).setUpClass()
         cls.images_config = ImagesConfig()
+        cls.flavors_config = FlavorsConfig()
+        cls.servers_config = ServersConfig()
         cls.marshalling = MarshallingConfig()
         cls.endpoint_config = UserAuthConfig()
         cls.user_config = UserConfig()
         cls.alt_user_config = AltUserConfig()
+        cls.compute_endpoint = ComputeEndpointConfig()
         cls.resources = ResourcePool()
         cls.serialize_format = cls.marshalling.serializer
         cls.deserialize_format = cls.marshalling.deserializer
@@ -74,6 +84,32 @@ class ImagesFixture(BaseTestFixture):
         cls.alt_images_behavior = ImagesBehaviors(
             images_client=cls.alt_images_client,
             images_config=cls.images_config)
+
+        # Instantiate servers client
+        # Get compute url for servers client
+        compute_service = cls.access_data.get_service(
+            cls.compute_endpoint.compute_endpoint_name)
+        compute_url_check = compute_service.get_endpoint(
+            cls.compute_endpoint.region)
+        # If compute endpoint validation fails, fail immediately
+        if compute_url_check is None:
+            cls.assertClassSetupFailure('Compute Endpoint validation failed')
+        cls.compute_url = compute_service.get_endpoint(
+            cls.compute_endpoint.region).public_url
+
+        client_args = {'url': cls.compute_url,
+                       'auth_token': cls.access_data.token.id_,
+                       'serialize_format': cls.serialize_format,
+                       'deserialize_format': cls.deserialize_format}
+
+        cls.servers_client = ServersClient(**client_args)
+
+        # Instantiate servers behavior
+        cls.server_behaviors = ServerBehaviors(
+            servers_client=cls.servers_client,
+            servers_config=cls.servers_config, images_config=cls.images_config,
+            flavors_config=cls.flavors_config)
+
         cls.created_at_offset = cls.images_config.created_at_offset
         cls.error_msg = Messages.ERROR_MSG
         cls.id_regex = re.compile(ImageProperties.ID_REGEX)
@@ -98,3 +134,21 @@ class ImagesFixture(BaseTestFixture):
                        'serialize_format': self.serialize_format,
                        'deserialize_format': self.deserialize_format}
         return ImagesClient(**client_args)
+
+    @classmethod
+    def create_active_image_from_server(self, server_id):
+        """
+        @summary: Creates an image from a server and waits for
+                  the image to become active
+        """
+
+        name = rand_name('image')
+        resp = self.servers_client.create_image(server_id, name)
+        assert resp.status_code == 202
+
+        # Retrieve the image id from the response header
+        image_id = resp.headers['location'].rsplit('/')[-1]
+        self.resources.add(image_id, self.images_client.delete_image)
+        resp = self.images_behavior.wait_for_image_status(image_id,
+                                                          ImageStatus.ACTIVE)
+        return resp
