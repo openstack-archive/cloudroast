@@ -20,6 +20,15 @@ from cafe.drivers.unittest.fixtures import BaseTestFixture
 from cloudcafe.auth.config import UserAuthConfig, UserConfig
 from cloudcafe.auth.provider import AuthProvider
 from cloudcafe.common.resources import ResourcePool
+from cloudcafe.compute.config import ComputeEndpointConfig
+from cloudcafe.compute.flavors_api.config import FlavorsConfig
+from cloudcafe.compute.images_api.behaviors import \
+    ImageBehaviors as ComputeImageBehaviors
+from cloudcafe.compute.images_api.client import \
+    ImagesClient as ComputeImagesClient
+from cloudcafe.compute.servers_api.behaviors import ServerBehaviors
+from cloudcafe.compute.servers_api.client import ServersClient
+from cloudcafe.compute.servers_api.config import ServersConfig
 from cloudcafe.images.common.constants import ImageProperties, Messages
 from cloudcafe.images.config import \
     AltUserConfig, ImagesConfig, MarshallingConfig
@@ -34,10 +43,13 @@ class ImagesFixture(BaseTestFixture):
     def setUpClass(cls):
         super(ImagesFixture, cls).setUpClass()
         cls.images_config = ImagesConfig()
+        cls.flavors_config = FlavorsConfig()
+        cls.servers_config = ServersConfig()
         cls.marshalling = MarshallingConfig()
         cls.endpoint_config = UserAuthConfig()
         cls.user_config = UserConfig()
         cls.alt_user_config = AltUserConfig()
+        cls.compute_endpoint = ComputeEndpointConfig()
         cls.resources = ResourcePool()
         cls.serialize_format = cls.marshalling.serializer
         cls.deserialize_format = cls.marshalling.deserializer
@@ -55,10 +67,10 @@ class ImagesFixture(BaseTestFixture):
             cls.assertClassSetupFailure('Authentication failed')
         images_service = cls.access_data.get_service(
             cls.images_config.endpoint_name)
-        public_url_check = \
+        images_url_check = \
             images_service.get_endpoint(cls.images_config.region)
         # If endpoint validation fails, fail immediately
-        if public_url_check is None:
+        if images_url_check is None:
             cls.assertClassSetupFailure('Endpoint validation failed')
         cls.url = \
             images_service.get_endpoint(cls.images_config.region).public_url
@@ -74,6 +86,32 @@ class ImagesFixture(BaseTestFixture):
         cls.alt_images_behavior = ImagesBehaviors(
             images_client=cls.alt_images_client,
             images_config=cls.images_config)
+        # Instantiate servers client
+        # Get compute url for servers client
+        compute_service = cls.access_data.get_service(
+            cls.compute_endpoint.compute_endpoint_name)
+        compute_url_check = compute_service.get_endpoint(
+            cls.compute_endpoint.region)
+        # If compute endpoint validation fails, fail immediately
+        if compute_url_check is None:
+            cls.assertClassSetupFailure('Compute endpoint validation failed')
+        cls.compute_url = compute_service.get_endpoint(
+            cls.compute_endpoint.region).public_url
+        client_args = {'url': cls.compute_url,
+                       'auth_token': cls.access_data.token.id_,
+                       'serialize_format': cls.serialize_format,
+                       'deserialize_format': cls.deserialize_format}
+        cls.servers_client = ServersClient(**client_args)
+        # Instantiate servers behavior
+        cls.server_behaviors = ServerBehaviors(
+            servers_client=cls.servers_client,
+            servers_config=cls.servers_config, images_config=cls.images_config,
+            flavors_config=cls.flavors_config)
+        #Instantiate compute images client and behavior
+        cls.compute_images_client = ComputeImagesClient(**client_args)
+        cls.compute_image_behaviors = ComputeImageBehaviors(
+            images_client=cls.compute_images_client,
+            servers_client=cls.servers_client, config=cls.images_config)
         cls.created_at_offset = cls.images_config.created_at_offset
         cls.error_msg = Messages.ERROR_MSG
         cls.id_regex = re.compile(ImageProperties.ID_REGEX)
