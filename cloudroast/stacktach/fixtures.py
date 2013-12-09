@@ -292,7 +292,7 @@ class StackTachConfirmResizeServerFixture(ConfirmResizeServerFixture):
             cls.stacktach_db_behavior.list_launches_for_uuid(
                 instance=cls.confirmed_resized_server.id))
         cls.st_launches = sorted(cls.st_launch_response.entity,
-                                 key=lambda launch: launch.id)
+                                 key=lambda launch: launch.id_)
         cls.st_launch_create_server = cls.st_launches[0]
         cls.st_launch_resize_server = cls.st_launches[1]
         cls.st_delete_response = (
@@ -377,7 +377,7 @@ class StackTachRevertResizeServerFixture(RevertResizeServerFixture):
             cls.stacktach_db_behavior.list_launches_for_uuid(
                 instance=cls.reverted_resized_server.id))
         cls.st_launches = sorted(cls.st_launch_response.entity,
-                                 key=lambda launch: launch.id)
+                                 key=lambda launch: launch.id_)
         cls.st_launch_create_server = cls.st_launches[0]
         cls.st_launch_resize_server = cls.st_launches[1]
         cls.st_launch_revert_resize = cls.st_launches[2]
@@ -681,7 +681,7 @@ class StackTachChangePasswordServerFixture(ChangePasswordServerFixture):
         cls.st_launch_response = (
             cls.stacktach_db_behavior.list_launches_for_uuid(
                 instance=cls.changed_password_server.id))
-        cls.st_launch = cls.st_launch_response.entity[0]
+        cls.st_launch_create_server = cls.st_launch_response.entity[0]
         cls.st_delete_response = (
             cls.stacktach_db_behavior.list_deletes_for_uuid(
                 instance=cls.changed_password_server.id))
@@ -763,3 +763,168 @@ class StackTachDeleteServerFixture(DeleteServerFixture):
             cls.stacktach_db_behavior.list_exists_for_uuid(
                 instance=cls.deleted_server.id))
         cls.st_exist = cls.st_exist_response.entity
+
+
+class StackTachTestAssertionsFixture():
+
+    def validate_attributes_in_launch_response(self):
+        """
+        @summary: Validates that all the attributes of
+            launch response is either Not Null or None as
+            expected
+        """
+        self.assertEqual(len(self.st_launch_response.entity), 1,
+                         self.msg.format("List of Launch objects", '1',
+                                         len(self.st_launch_response.entity),
+                                         self.st_launch_response.reason,
+                                         self.st_launch_response.content))
+        self.assertTrue(self.st_launch_response.ok,
+                        self.msg.format("status_code", 200,
+                                        self.st_launch_response.status_code,
+                                        self.st_launch_response.reason,
+                                        self.st_launch_response.content))
+        self.assertTrue(self.st_launch_create_server.id_,
+                        self.msg.format("id",
+                                        "Not None or Empty",
+                                        self.st_launch_create_server.id_,
+                                        self.st_launch_response.reason,
+                                        self.st_launch_response.content))
+        self.assertTrue(self.st_launch_create_server.request_id,
+                        self.msg.format(
+                            "request_id",
+                            "Not None or Empty",
+                            self.st_launch_create_server.request_id,
+                            self.st_launch_response.reason,
+                            self.st_launch_response.content))
+        self.assertTrue(self.st_launch_create_server.instance,
+                        self.msg.format("instance",
+                                        "Not None or Empty",
+                                        self.st_launch_create_server.instance,
+                                        self.st_launch_response.reason,
+                                        self.st_launch_response.content))
+        self.assertTrue(self.st_launch_create_server.launched_at,
+                        self.msg.format(
+                            "launched_at",
+                            "Not None or Empty",
+                            self.st_launch_create_server.launched_at,
+                            self.st_launch_response.reason,
+                            self.st_launch_response.content))
+        self.assertTrue(self.st_launch_create_server.instance_type_id,
+                        self.msg.format(
+                            "instance_type_id",
+                            "Not None or Empty",
+                            self.st_launch_create_server.instance_type_id,
+                            self.st_launch_response.reason,
+                            self.st_launch_response.content))
+        self.assertTrue(self.st_launch_create_server.instance_flavor_id,
+                        self.msg.format(
+                            "instance_flavor_id",
+                            "Not None or Empty",
+                            self.st_launch_create_server.instance_flavor_id,
+                            self.st_launch_response.reason,
+                            self.st_launch_response.content))
+        self.assertTrue(self.st_launch_create_server.tenant,
+                        self.msg.format(
+                            "tenant",
+                            "Not None or Empty",
+                            self.st_launch_create_server.tenant,
+                            self.st_launch_response.reason,
+                            self.st_launch_response.content))
+        self.assertTrue(self.st_launch_create_server.os_distro,
+                        self.msg.format(
+                            "os_distro",
+                            "Not None or Empty",
+                            self.st_launch_create_server.os_distro,
+                            self.st_launch_response.reason,
+                            self.st_launch_response.content))
+        self.assertTrue(self.st_launch_create_server.os_version,
+                        self.msg.format(
+                            "os_version",
+                            "Not None or Empty",
+                            self.st_launch_create_server.os_version,
+                            self.st_launch_response.reason,
+                            self.st_launch_response.content))
+        self.assertTrue(self.st_launch_create_server.os_architecture,
+                        self.msg.format(
+                            "os_architecture",
+                            "Not None or Empty",
+                            self.st_launch_create_server.os_architecture,
+                            self.st_launch_response.reason,
+                            self.st_launch_response.content))
+        self.assertTrue(self.st_launch_create_server.rax_options,
+                        self.msg.format(
+                            "rax_options",
+                            "Not None or Empty",
+                            self.st_launch_create_server.rax_options,
+                            self.st_launch_response.reason,
+                            self.st_launch_response.content))
+
+    def validate_launch_entry_field_values(self, server):
+        """
+        @summary: Validate that the Launch entry will have all expected values
+        """
+        self.assertEqual(server.id,
+                         self.st_launch_create_server.instance,
+                         self.msg.format(
+                             "instance",
+                             server.id,
+                             self.st_launch_create_server.instance,
+                             self.st_launch_response.reason,
+                             self.st_launch_response.content))
+        self.assertEqual(server.flavor.id,
+                         self.st_launch_create_server.instance_type_id,
+                         self.msg.format(
+                             "instance_type_id",
+                             server.flavor.id,
+                             self.st_launch_create_server.instance_type_id,
+                             self.st_launch_response.reason,
+                             self.st_launch_response.content))
+        self.assertEqual(self.flavor_ref,
+                         self.st_launch_create_server.instance_type_id,
+                         self.msg.format(
+                             "instance_type_id",
+                             self.flavor_ref,
+                             self.st_launch_create_server.instance_type_id,
+                             self.st_launch_response.reason,
+                             self.st_launch_response.content))
+        self.assertEqual(self.flavor_ref,
+                         self.st_launch_create_server.instance_flavor_id,
+                         self.msg.format(
+                             "instance_flavor_id",
+                             self.flavor_ref,
+                             self.st_launch_create_server.instance_flavor_id,
+                             self.st_launch_response.reason,
+                             self.st_launch_response.content))
+
+    def validate_no_exists_entry_returned(self):
+        """
+        @summary: Validate that there is no exist entry found
+        """
+        self.assertTrue(self.st_exist_response.ok,
+                        self.msg.format("status_code",
+                                        200,
+                                        self.st_exist_response.status_code,
+                                        self.st_exist_response.reason,
+                                        self.st_exist_response.content))
+        self.assertFalse(self.st_exist,
+                         self.msg.format("Non-empty List of Exist objects",
+                                         "Empty List", self.st_exist,
+                                         self.st_exist_response.reason,
+                                         self.st_exist_response.content))
+
+    def validate_no_deletes_entry_returned(self):
+        """
+        @summary: Validate that there is no delete entry found
+            as the server hasn't been deleted yet
+        """
+        self.assertTrue(self.st_delete_response.ok,
+                        self.msg.format("status_code",
+                                        200,
+                                        self.st_delete_response.status_code,
+                                        self.st_delete_response.reason,
+                                        self.st_delete_response.content))
+        self.assertFalse(self.st_delete,
+                         self.msg.format("Non-empty List of Delete objects",
+                                         "Empty List", self.st_delete,
+                                         self.st_delete_response.reason,
+                                         self.st_delete_response.content))
