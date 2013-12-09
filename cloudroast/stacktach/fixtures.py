@@ -80,6 +80,8 @@ class StackTachDBFixture(BaseTestFixture):
         """
         @summary: Connects to StackTach DB to obtain
         relevant validation data for a server.
+        @param server: Server details.
+        @type server: Server
         """
         cls.launch_response = (
             cls.stacktach_db_behavior.list_launches_for_uuid(
@@ -498,7 +500,7 @@ class StackTachComputeIntegration(ComputeFixture, StackTachDBFixture):
         cls.changed_password_server = (
             cls.server_behaviors.change_password_and_await(
                 server_id=cls.created_server.id,
-                password=cls.new_password))
+                new_password=cls.new_password))
 
     @classmethod
     def create_and_delete_server(cls, name=None, image_ref=None,
@@ -541,3 +543,242 @@ class StackTachComputeIntegration(ComputeFixture, StackTachDBFixture):
             datetime.utcnow().strftime(Constants.DATETIME_FORMAT))
 
         cls.deleted_server = wait_response.entity
+
+
+class StackTachTestAssertionsFixture(StackTachDBFixture):
+
+    def validate_attributes_in_launch_response(self, num_of_launch_entry=1):
+        """
+        @summary: Validates that all the attributes of
+            launch response is either Not Null or None as
+            expected
+        @param num_of_launch_entry: No. of expected launch entries
+        @type num_of_launch_entry: Int
+        """
+        self.assertEqual(len(self.launch_response.entity),
+                         num_of_launch_entry,
+                         self.msg.format("List of Launch objects",
+                                         num_of_launch_entry,
+                                         len(self.launch_response.entity),
+                                         self.launch_response.reason,
+                                         self.launch_response.content))
+        self.assertTrue(self.launch_response.ok,
+                        self.msg.format("status_code", 200,
+                                        self.launch_response.status_code,
+                                        self.launch_response.reason,
+                                        self.launch_response.content))
+        validation_entities = ["id_", "request_id", "instance", "launched_at",
+                               "instance_type_id", "instance_flavor_id",
+                               "tenant", "os_distro", "os_version",
+                               "os_architecture", "rax_options"]
+        for launch in self.event_launches:
+            for entity in validation_entities:
+                self.assertTrue(getattr(launch, entity),
+                                self.msg.format(entity,
+                                                "Not None or Empty",
+                                                getattr(launch, entity),
+                                                self.launch_response.reason,
+                                                self.launch_response.content))
+
+    def validate_launch_entry_field_values(self, server,
+                                           event_launch_server=None,
+                                           expected_flavor_ref=None):
+        """
+        @summary: Validate that the Launch entry will have all expected values
+        @param server: Details of the server created in test
+        @type server: Server
+        @param event_launch_server: Details of the event Launch from DB
+        @type event_launch_server: ServerLaunch
+        @param expected_flavor_ref: The expected flavor to verify against
+        @type expected_flavor_ref: String
+        """
+        self.event_launch_server = self.event_launch
+        if event_launch_server:
+            self.event_launch_server = event_launch_server
+
+        self.expected_flavor_ref = self.flavor_ref
+        if expected_flavor_ref:
+            self.expected_flavor_ref = expected_flavor_ref
+
+        self.assertEqual(server.id,
+                         self.event_launch_server.instance,
+                         self.msg.format(
+                             "instance",
+                             server.id,
+                             self.event_launch_server.instance,
+                             self.launch_response.reason,
+                             self.launch_response.content))
+        self.assertEqual(server.flavor.id,
+                         self.event_launch_server.instance_type_id,
+                         self.msg.format(
+                             "instance_type_id",
+                             server.flavor.id,
+                             self.event_launch_server.instance_type_id,
+                             self.launch_response.reason,
+                             self.launch_response.content))
+        self.assertEqual(self.expected_flavor_ref,
+                         self.event_launch_server.instance_type_id,
+                         self.msg.format(
+                             "instance_type_id",
+                             self.expected_flavor_ref,
+                             self.event_launch_server.instance_type_id,
+                             self.launch_response.reason,
+                             self.launch_response.content))
+        self.assertEqual(self.expected_flavor_ref,
+                         self.event_launch_server.instance_flavor_id,
+                         self.msg.format(
+                             "instance_flavor_id",
+                             self.expected_flavor_ref,
+                             self.event_launch_server.instance_flavor_id,
+                             self.launch_response.reason,
+                             self.launch_response.content))
+
+    def validate_attributes_in_exist_response(self, num_of_exist_entry=1):
+        """
+        @summary: Validates that all the attributes of
+            exist response is either Not Null or None as
+            expected
+        @param num_of_exist_entry: No. of expected exist entries
+        @type num_of_exist_entry: Int
+        """
+        self.assertEqual(len(self.exist_response.entity),
+                         num_of_exist_entry,
+                         self.msg.format("List of Exists objects",
+                                         num_of_exist_entry,
+                                         len(self.exist_response.entity),
+                                         self.exist_response.reason,
+                                         self.exist_response.content))
+        self.assertTrue(self.exist_response.ok,
+                        self.msg.format("status_code", 200,
+                                        self.exist_response.status_code,
+                                        self.exist_response.reason,
+                                        self.exist_response.content))
+        validation_entities = ["id_", "instance", "audit_period_beginning",
+                               "audit_period_ending", "launched_at",
+                               "message_id", "raw", "instance_type_id",
+                               "instance_flavor_id","status", "usage",
+                               "tenant", "os_distro", "os_version",
+                               "os_architecture", "rax_options"]
+        # We do not delete the server so deleted_at and delete
+        # should be null.
+        validate_none_entities = ["deleted_at", "delete", "fail_reason"]
+        validate_not_none_entities = ["send_status", "bandwidth_public_out"]
+        for exist in self.event_exists:
+            for entity in validation_entities:
+                self.assertTrue(getattr(exist, entity),
+                                self.msg.format(entity,
+                                                "Not None or Empty",
+                                                getattr(exist, entity),
+                                                self.exist_response.reason,
+                                                self.exist_response.content))
+            for entity in validate_none_entities:
+                self.assertIsNone(getattr(exist, entity),
+                                  self.msg.format(entity,
+                                                  "None or Empty",
+                                                  getattr(exist, entity),
+                                                  self.exist_response.reason,
+                                                  self.exist_response.content))
+            for entity in validate_not_none_entities:
+                self.assertIsNotNone(getattr(exist, entity),
+                                     self.msg.format(entity,
+                                                     "Not None or Empty",
+                                                     getattr(exist, entity),
+                                                     self.exist_response.reason,
+                                                     self.exist_response.content))
+
+    def validate_exist_entry_field_values(self, server,
+                                          event_exist_server=None,
+                                          expected_flavor_ref=None):
+        """
+        @summary: Validate that the Exist entry will have all expected values
+        @param server: Details of the server created in test
+        @type server: Server
+        @param event_exist_server: Details of the event Exist from DB
+        @type event_exist_server: ServerExists
+        @param expected_flavor_ref: The expected flavor to verify against
+        @type expected_flavor_ref: String
+        """
+
+        self.event_exist_server = self.event_exist
+        if event_exist_server:
+            self.event_exist_server = event_exist_server
+
+        self.expected_flavor_ref = self.flavor_ref
+        if expected_flavor_ref:
+            self.expected_flavor_ref = expected_flavor_ref
+
+        self.assertEqual(server.id, self.event_exist_server.instance,
+                         self.msg.format("instance",
+                                         self.created_server.id,
+                                         self.event_exist_server.instance,
+                                         self.exist_response.reason,
+                                         self.exist_response.content))
+        self.assertEqual(server.flavor.id,
+                         self.event_exist_server.instance_type_id,
+                         self.msg.format(
+                             "instance_type_id",
+                             self.created_server.flavor.id,
+                             self.event_exist_server.instance_type_id,
+                             self.exist_response.reason,
+                             self.exist_response.content))
+        self.assertEqual(self.expected_flavor_ref,
+                         self.event_exist_server.instance_type_id,
+                         self.msg.format(
+                             "instance_type_id",
+                             self.expected_flavor_ref,
+                             self.event_exist_server.instance_type_id,
+                             self.exist_response.reason,
+                             self.exist_response.content))
+        self.assertEqual(self.expected_flavor_ref,
+                         self.event_exist_server.instance_flavor_id,
+                         self.msg.format(
+                             "instance_flavor_id",
+                             self.expected_flavor_ref,
+                             self.event_exist_server.instance_flavor_id,
+                             self.exist_response.reason,
+                             self.exist_response.content))
+        self.assertIn(self.event_exist_server.status, ['pending', 'verified'],
+                      self.msg.format("status",
+                                      "Not None, Empty or unexpected value",
+                                      self.event_exist_server.status,
+                                      self.exist_response.reason,
+                                      self.exist_response.content))
+        self.assertIn(self.event_exist_server.send_status, [0, 201],
+                      self.msg.format("send_status",
+                                      "Not None, Empty or unexpected value",
+                                      self.event_exist_server.status,
+                                      self.exist_response.reason,
+                                      self.exist_response.content))
+
+    def validate_no_exists_entry_returned(self):
+        """
+        @summary: Validate that there is no exist entry found
+        """
+        self.assertTrue(self.exist_response.ok,
+                        self.msg.format("status_code",
+                                        200,
+                                        self.exist_response.status_code,
+                                        self.exist_response.reason,
+                                        self.exist_response.content))
+        self.assertFalse(self.event_exist,
+                         self.msg.format("Non-empty List of Exist objects",
+                                         "Empty List", self.event_exist,
+                                         self.exist_response.reason,
+                                         self.exist_response.content))
+
+    def validate_no_deletes_entry_returned(self):
+        """
+        @summary: Validate that there is no delete entry found
+            as the server hasn't been deleted yet
+        """
+        self.assertTrue(self.delete_response.ok,
+                        self.msg.format("status_code",
+                                        200,
+                                        self.delete_response.status_code,
+                                        self.delete_response.reason,
+                                        self.delete_response.content))
+        self.assertFalse(self.event_delete,
+                         self.msg.format("Non-empty List of Delete objects",
+                                         "Empty List", self.event_delete,
+                                         self.delete_response.reason,
+                                         self.delete_response.content))
