@@ -231,6 +231,8 @@ class VerificationsFixture(AuthenticationFixture):
         self.assertEqual(resp.status_code, 200,
                          'Returned unexpected response code')
         verifications_group = resp.entity
+        self.assertIsNotNone(verifications_group,
+                             "Verifications group is None")
         self.assertEqual(len(verifications_group.verifications), limit,
                          'Returned wrong number of verifications')
         return verifications_group

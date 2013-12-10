@@ -72,11 +72,11 @@ class VerificationsAPI(VerificationsFixture):
         """Covers getting a list of verifications."""
         # Create 10 verifications
         for i in range(0, 10):
-            testURL = \
+            test_url = \
                 "http://www.smoke_testing_get_verifications.com/{0}".format(i)
             self.behaviors.create_verification_overriding_cfg(
                 resource_type="image",
-                resource_ref=testURL,
+                resource_ref=test_url,
                 resource_action="vm_attach",
                 impersonation_allowed=False)
 
