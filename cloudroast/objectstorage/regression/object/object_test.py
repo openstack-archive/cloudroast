@@ -84,9 +84,7 @@ class ObjectRegressionTest(ObjectStorageFixture):
             404, resp.status_code,
             'Object should be deleted after X-Delete-At.')
 
-        # Wait twice the expirer run interval just to ensure that the
-        # the object is removed from container listings.
-        sleep(EXPIRER_RUN_INTERVAL * 2)
+        sleep(EXPIRER_RUN_INTERVAL)
 
         resp = self.client.list_objects(container_name)
 
