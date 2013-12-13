@@ -20,16 +20,13 @@ from cloudcafe.meniscus.common.cleanup_client import MeniscusDbClient
 from cloudcafe.meniscus.version_api.client import VersionClient
 from cloudcafe.meniscus.tenant_api.client import TenantClient, ProducerClient
 from cloudcafe.meniscus.config import (MarshallingConfig, MeniscusConfig,
-                                       TenantConfig, PairingConfig,
+                                       TenantConfig,
                                        CorrelationConfig, StorageConfig)
 from cloudcafe.meniscus.tenant_api.behaviors import (TenantBehaviors,
                                                      ProducerBehaviors)
-from cloudcafe.meniscus.coordinator_api.client import PairingClient
-from cloudcafe.meniscus.coordinator_api.behaviors import PairingBehaviors
 from cloudcafe.meniscus.correlator_api.client import PublishingClient
 from cloudcafe.meniscus.correlator_api.behaviors import PublishingBehaviors
 from cloudcafe.meniscus.status_api.client import WorkerStatusClient
-from cloudcafe.meniscus.status_api.behaviors import StatusAPIBehaviors
 
 
 class MeniscusFixture(BaseTestFixture):
@@ -115,40 +112,16 @@ class ProducerFixture(TenantFixture):
         super(ProducerFixture, self).tearDown()
 
 
-class PairingFixture(TenantFixture):
-
-    @classmethod
-    def setUpClass(cls):
-        super(PairingFixture, cls).setUpClass()
-        cls.pairing_config = PairingConfig()
-        cls.pairing_client = PairingClient(
-            url=cls.pairing_config.coordinator_base_url,
-            api_version=cls.meniscus_config.api_version,
-            auth_token=cls.pairing_config.api_secret,
-            serialize_format=cls.marshalling.serializer,
-            deserialize_format=cls.marshalling.deserializer)
-        cls.pairing_behaviors = PairingBehaviors(cls.pairing_client,
-                                                 cls.cleanup_client,
-                                                 cls.pairing_config)
-
-    def tearDown(self):
-        self.pairing_behaviors.remove_created_workers()
-        super(PairingFixture, self).tearDown()
-
-
-class StatusFixture(PairingFixture):
+class StatusFixture(VersionFixture):
 
     @classmethod
     def setUpClass(cls):
         super(StatusFixture, cls).setUpClass()
         cls.status_client = WorkerStatusClient(
-            url=cls.pairing_config.coordinator_base_url,
+            url=cls.meniscus_config.base_url,
             api_version=cls.meniscus_config.api_version,
             serialize_format=cls.marshalling.serializer,
             deserialize_format=cls.marshalling.deserializer)
-        cls.status_behaviors = StatusAPIBehaviors(
-            status_client=cls.status_client,
-            pairing_config=cls.pairing_config)
 
 
 class PublishingFixture(ProducerFixture):
