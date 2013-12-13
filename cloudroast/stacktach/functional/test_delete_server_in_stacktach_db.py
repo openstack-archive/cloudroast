@@ -13,16 +13,15 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-from cloudroast.stacktach.fixtures import StackTachDeleteServerFixture
+from cloudroast.stacktach.fixtures import StackTachDeleteServerFixture,\
+    StackTachTestAssertionsFixture
 
 
-class StackTachDBDeleteServerTests(StackTachDeleteServerFixture):
+class StackTachDBDeleteServerTests(StackTachDeleteServerFixture,
+                                   StackTachTestAssertionsFixture):
     """
     @summary: With Server Delete, tests the entries created in StackTach DB.
     """
-    @classmethod
-    def setUpClass(cls):
-        super(StackTachDBDeleteServerTests, cls).setUpClass()
 
     def test_launch_entry_on_create_server_response(self):
         """
@@ -30,124 +29,14 @@ class StackTachDBDeleteServerTests(StackTachDeleteServerFixture):
         of Server Creation
         """
 
-        self.assertTrue(self.st_launch_response.ok,
-                        self.msg.format("status_code", 200,
-                                        self.st_launch_response.status_code,
-                                        self.st_launch_response.reason,
-                                        self.st_launch_response.content))
-        self.assertTrue(self.st_launch_create_server.id_,
-                        self.msg.format("id",
-                                        "Not None or Empty",
-                                        self.st_launch_create_server.id_,
-                                        self.st_launch_response.reason,
-                                        self.st_launch_response.content))
-        self.assertTrue(self.st_launch_create_server.request_id,
-                        self.msg.format(
-                            "request_id",
-                            "Not None or Empty",
-                            self.st_launch_create_server.request_id,
-                            self.st_launch_response.reason,
-                            self.st_launch_response.content))
-        self.assertTrue(self.st_launch_create_server.instance,
-                        self.msg.format("instance",
-                                        "Not None or Empty",
-                                        self.st_launch_create_server.instance,
-                                        self.st_launch_response.reason,
-                                        self.st_launch_response.content))
-        self.assertTrue(self.st_launch_create_server.launched_at,
-                        self.msg.format(
-                            "launched_at",
-                            "Not None or Empty",
-                            self.st_launch_create_server.launched_at,
-                            self.st_launch_response.reason,
-                            self.st_launch_response.content))
-        self.assertTrue(self.st_launch_create_server.instance_type_id,
-                        self.msg.format(
-                            "instance_type_id",
-                            "Not None or Empty",
-                            self.st_launch_create_server.instance_type_id,
-                            self.st_launch_response.reason,
-                            self.st_launch_response.content))
-        self.assertTrue(self.st_launch_create_server.instance_flavor_id,
-                        self.msg.format(
-                            "instance_flavor_id",
-                            "Not None or Empty",
-                            self.st_launch_create_server.instance_flavor_id,
-                            self.st_launch_response.reason,
-                            self.st_launch_response.content))
-        self.assertTrue(self.st_launch_create_server.tenant,
-                        self.msg.format(
-                            "tenant",
-                            "Not None or Empty",
-                            self.st_launch_create_server.tenant,
-                            self.st_launch_response.reason,
-                            self.st_launch_response.content))
-        self.assertTrue(self.st_launch_create_server.os_distro,
-                        self.msg.format(
-                            "os_distro",
-                            "Not None or Empty",
-                            self.st_launch_create_server.os_distro,
-                            self.st_launch_response.reason,
-                            self.st_launch_response.content))
-        self.assertTrue(self.st_launch_create_server.os_version,
-                        self.msg.format(
-                            "os_version",
-                            "Not None or Empty",
-                            self.st_launch_create_server.os_version,
-                            self.st_launch_response.reason,
-                            self.st_launch_response.content))
-        self.assertTrue(self.st_launch_create_server.os_architecture,
-                        self.msg.format(
-                            "os_architecture",
-                            "Not None or Empty",
-                            self.st_launch_create_server.os_architecture,
-                            self.st_launch_response.reason,
-                            self.st_launch_response.content))
-        self.assertTrue(self.st_launch_create_server.rax_options,
-                        self.msg.format(
-                            "rax_options",
-                            "Not None or Empty",
-                            self.st_launch_create_server.rax_options,
-                            self.st_launch_response.reason,
-                            self.st_launch_response.content))
+        self.validate_attributes_in_launch_response()
 
     def test_launch_entry_fields_on_create_server_response(self):
         """
         Verify that the Launch entry will have all expected fields
         after Server Creation
         """
-
-        self.assertEqual(self.deleted_server.id,
-                         self.st_launch_create_server.instance,
-                         self.msg.format("instance",
-                                         self.deleted_server.id,
-                                         self.st_launch_create_server.instance,
-                                         self.st_launch_response.reason,
-                                         self.st_launch_response.content))
-        self.assertEqual(self.deleted_server.flavor.id,
-                         self.st_launch_create_server.instance_type_id,
-                         self.msg.format(
-                             "instance_type_id",
-                             self.deleted_server.flavor.id,
-                             self.st_launch_create_server.instance_type_id,
-                             self.st_launch_response.reason,
-                             self.st_launch_response.content))
-        self.assertEqual(self.flavor_ref,
-                         self.st_launch_create_server.instance_type_id,
-                         self.msg.format(
-                             "instance_type_id",
-                             self.flavor_ref,
-                             self.st_launch_create_server.instance_type_id,
-                             self.st_launch_response.reason,
-                             self.st_launch_response.content))
-        self.assertEqual(self.flavor_ref,
-                         self.st_launch_create_server.instance_flavor_id,
-                         self.msg.format(
-                             "instance_flavor_id",
-                             self.flavor_ref,
-                             self.st_launch_create_server.instance_flavor_id,
-                             self.st_launch_response.reason,
-                             self.st_launch_response.content))
+        self.validate_launch_entry_field_values(server=self.deleted_server)
 
     def test_delete_entry_on_delete_server_response(self):
         """
@@ -244,15 +133,4 @@ class StackTachDBDeleteServerTests(StackTachDeleteServerFixture):
         Verify that there is no exist entry on a newly deleted server
         where the deletion occurs before the end of audit period
         """
-
-        self.assertTrue(self.st_exist_response.ok,
-                        self.msg.format("status_code",
-                                        200,
-                                        self.st_exist_response.status_code,
-                                        self.st_exist_response.reason,
-                                        self.st_exist_response.content))
-        self.assertFalse(self.st_exist,
-                         self.msg.format("Non-empty List of Exist objects",
-                                         "Empty List", self.st_exist,
-                                         self.st_exist_response.reason,
-                                         self.st_exist_response.content))
+        self.validate_no_exists_entry_returned()
