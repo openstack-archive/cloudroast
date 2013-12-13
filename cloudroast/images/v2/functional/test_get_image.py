@@ -15,35 +15,42 @@ limitations under the License.
 """
 
 from cafe.drivers.unittest.decorators import tags
-from cloudcafe.images.common.types import ImageVisibility
-from cloudroast.images.fixtures import ImagesFixture
+from cloudroast.images.fixtures import ComputeIntegrationFixture
 
 
-class TestGetImage(ImagesFixture):
+class TestGetImage(ComputeIntegrationFixture):
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestGetImage, cls).setUpClass()
+        server = cls.server_behaviors.create_active_server().entity
+        image = cls.compute_image_behaviors.create_active_image(server.id)
+        alt_image = cls.compute_image_behaviors.create_active_image(server.id)
+        cls.image = cls.images_client.get_image(image.entity.id).entity
+        cls.alt_image = cls.images_client.get_image(alt_image.entity.id).entity
 
     @tags(type='smoke')
     def test_get_image(self):
         """
         @summary: Get image
 
-        1) Create image
+        1) Given a previously created image
         2) Get image
         3) Verify that the response code is 200
         4) Verify that the created image is returned
         """
 
-        image = self.images_behavior.create_new_image()
-        response = self.images_client.get_image(image.id_)
+        response = self.images_client.get_image(self.image.id_)
         self.assertEqual(response.status_code, 200)
         get_image = response.entity
-        self._validate_get_image(image, get_image)
+        self._validate_get_image(self.image, get_image)
 
     @tags(type='positive', regression='true')
     def test_get_image_as_member_of_shared_image(self):
         """
         @summary: Get image as member of shared image
 
-         1) Create image
+         1) Given a previously created image
          2) Add member to image using an alternate tenant id
          3) Verify that the response code is 200
          4) Get image using the tenant who was added as a member
@@ -53,14 +60,12 @@ class TestGetImage(ImagesFixture):
         """
 
         member_id = self.alt_user_config.tenant_id
-        image = self.images_behavior.create_new_image(
-            visibility=ImageVisibility.PRIVATE)
-        response = self.images_client.add_member(image.id_, member_id)
+        response = self.images_client.add_member(self.alt_image.id_, member_id)
         self.assertEqual(response.status_code, 200)
-        response = self.alt_images_client.get_image(image.id_)
+        response = self.alt_images_client.get_image(self.alt_image.id_)
         self.assertEqual(response.status_code, 200)
         get_image = response.entity
-        self._validate_get_image(image, get_image)
+        self._validate_get_image(self.alt_image, get_image)
 
     def _validate_get_image(self, image, get_image):
         """@summary: Validate that the image and get_image responses match"""
