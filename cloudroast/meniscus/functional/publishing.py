@@ -15,6 +15,7 @@ limitations under the License.
 """
 import string
 from datetime import datetime
+from dateutil.parser import parse as parse_iso8601
 
 from cloudroast.meniscus.fixtures import (PublishingFixture,
                                           RSyslogPublishingFixture)
@@ -24,10 +25,15 @@ from cafe.drivers.unittest.decorators import (tags, data_driven_test,
 
 
 class PositiveDatasetList(DatasetList):
+    def _get_syslog_accepted_punctuation(self):
+        chars_to_remove = [':', '[']
+        syslog_punctuation = [char for char in string.punctuation
+                              if char not in chars_to_remove]
+        return ''.join(syslog_punctuation)
+
     def __init__(self):
-        syslog_print_chars = ('0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJ'
-                              'KLMNOPQRSTUVWXYZ!"#$%&\'()*+,-./:;<=>?@[\\]^_'
-                              '`{|}~')
+
+        syslog_punctuation = self._get_syslog_accepted_punctuation()
 
         current_time = datetime.now().isoformat()
         # Use default values
@@ -37,21 +43,21 @@ class PositiveDatasetList(DatasetList):
 
         # Host
         self.append_new_dataset('host_255_in_length', {'host': 'a' * 255})
-        self.append_new_dataset('host_ascii_letters',
-                                {'host': string.ascii_letters})
+        self.append_new_dataset('host_ascii_uppercase',
+                                {'host': string.ascii_uppercase})
+        self.append_new_dataset('host_ascii_lowercase',
+                                {'host': string.ascii_lowercase})
         self.append_new_dataset('host_punctuation',
-                                {'host': string.punctuation})
-        self.append_new_dataset('host_all_syslog_printable_characters',
-                                {'host': syslog_print_chars})
+                                {'host': syslog_punctuation})
 
         # Pname
-        self.append_new_dataset('pname_255_in_length', {'pname': 'a' * 255})
-        self.append_new_dataset('pname_ascii_letters',
-                                {'pname': string.ascii_letters})
+        self.append_new_dataset('pname_48_in_length', {'pname': 'a' * 48})
+        self.append_new_dataset('pname_ascii_lowercase',
+                                {'pname': string.ascii_lowercase})
+        self.append_new_dataset('pname_ascii_uppercase',
+                                {'pname': string.ascii_uppercase})
         self.append_new_dataset('pname_punctuation',
-                                {'pname': string.punctuation})
-        self.append_new_dataset('pname_all_syslog_printable_characters',
-                                {'pname': syslog_print_chars})
+                                {'pname': syslog_punctuation})
 
         # Native
         self.append_new_dataset('native_empty_dict', {'native': {}})
@@ -73,6 +79,9 @@ class PublishingHttpAPI(PublishingFixture):
     def ddtest_valid_http_publishing(self, tenant_id, tenant_token=None,
                                      host=None, pname=None, time=None,
                                      native=None):
+        if not time:
+            time = str(datetime.utcnow().isoformat())
+
         resp = self.publish_behaviors.publish_overriding_config(
             tenant_id=tenant_id, tenant_token=tenant_token,
             host=host, pname=pname, time=time, native=native)
@@ -92,18 +101,13 @@ class PublishingHttpAPI(PublishingFixture):
         """ Test verifying that we can retrieve some of the messages that we
         send through the http endpoint.
         """
-        time = str(datetime.utcnow().isoformat())
+        new_time = str(datetime.utcnow().isoformat())
 
-        resp = self.publish_behaviors.publish_overriding_config(time=time)
+        resp = self.publish_behaviors.publish_overriding_config(time=new_time)
         self.assertEqual(resp.status_code, 204, resp.text)
 
-        # Flush the buffer
-        for i in range(50):
-            resp = self.publish_behaviors.publish_overriding_config()
-            self.assertEqual(resp.status_code, 204, resp.text)
-
         msgs = self.publish_behaviors.get_messages_by_timestamp(
-            timestamp=time, num_messages=10)
+            timestamp=new_time, num_messages=1)
 
         # Verify that the one message that we sent made it through
         self.assertEqual(len(msgs), 1)
@@ -116,7 +120,15 @@ class PublishingSyslogAPI(RSyslogPublishingFixture):
     @data_driven_test(PositiveDatasetList())
     def ddtest_valid_syslog_publishing(self, host=None, pname=None, time=None,
                                        native=None):
+
+        # Dealing with syslog-ng oddity documented in #161
+        if not host:
+            host = 'nohost'
+
         time = datetime.now().isoformat()
+        # Syslog-ng only uses 3 decimal places
+        time = time[:-3]
+
         result = self.rsyslog_client.send(
             priority=6, timestamp=time, app_name=pname, host_name=host,
             msg=native)
@@ -125,19 +137,18 @@ class PublishingSyslogAPI(RSyslogPublishingFixture):
         self.assertIsNone(result)
 
         # Make sure the index exists before we continue
-        if not self.es_client.wait_for_index(self.tenant_id):
-            self.fail('ES index couldn\'t be found after 30 secs')
-
-        self.es_client.refresh_index(self.tenant_id)
+        self.assertTrue(self.es_client.has_index(self.tenant_id))
 
         msgs = self.publish_behaviors.get_messages_by_timestamp(
-            timestamp=time, num_messages=10)
+            timestamp=time, num_messages=1)
 
         self.assertEqual(len(msgs), 1)
 
         # This will work for now, but we need to write a model for this soon.
         msg = msgs[0]
-        self.assertEqual(msg.get('pri'), '6')
-        self.assertEqual(msg.get('time'), time)
+        msg_time = parse_iso8601(msg.get('time'))
+        expected_time = parse_iso8601('{0}+0'.format(time))
+        self.assertEqual(msg.get('pri'), 'info')
+        self.assertEqual(msg_time, expected_time)
         self.assertEqual(msg.get('pname'), pname or '-')
-        self.assertEqual(msg.get('host'), host or '-')
+        self.assertEqual(msg.get('host'), host)
