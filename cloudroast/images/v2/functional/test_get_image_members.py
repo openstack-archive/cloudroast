@@ -15,18 +15,24 @@ limitations under the License.
 """
 
 from cafe.drivers.unittest.decorators import tags
-from cloudcafe.images.common.types import ImageVisibility
-from cloudroast.images.fixtures import ImagesFixture
+from cloudroast.images.fixtures import ComputeIntegrationFixture
 
 
-class TestGetImageMembers(ImagesFixture):
+class TestGetImageMembers(ComputeIntegrationFixture):
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestGetImageMembers, cls).setUpClass()
+        server = cls.server_behaviors.create_active_server().entity
+        image = cls.compute_image_behaviors.create_active_image(server.id)
+        cls.image = cls.images_client.get_image(image.entity.id).entity
 
     @tags(type='smoke')
     def test_get_image_members(self):
         """
         @summary: Get image members
 
-        1) Create image
+        1) Given a previously created image
         2) Add image member
         3) Verify that the response code is 200
         4) Get image members
@@ -36,12 +42,10 @@ class TestGetImageMembers(ImagesFixture):
         """
 
         member_id = self.alt_user_config.tenant_id
-        image = self.images_behavior.create_new_image(
-            visibility=ImageVisibility.PRIVATE)
-        response = self.images_client.add_member(image.id_, member_id)
+        response = self.images_client.add_member(self.image.id_, member_id)
         self.assertEqual(response.status_code, 200)
         member = response.entity
-        response = self.images_client.list_members(image.id_)
+        response = self.images_client.list_members(self.image.id_)
         self.assertEqual(response.status_code, 200)
         members = response.entity
         self.assertEqual(len(members), 1)
