@@ -62,7 +62,6 @@ class DataDriveSecretsAPI(OrdersFixture):
         resp = self.behaviors.create_order(
             name=self.config.name,
             payload_content_type=self.config.payload_content_type,
-            payload_content_encoding=self.config.payload_content_encoding,
             algorithm=self.config.algorithm,
             mode=self.config.mode,
             bit_length=bit_length)
@@ -92,7 +91,6 @@ class DataDriveSecretsAPI(OrdersFixture):
         resp = self.behaviors.create_order(
             name=self.config.name,
             payload_content_type=payload_content_type,
-            payload_content_encoding=payload_content_encoding,
             algorithm=self.config.algorithm,
             mode=self.config.mode,
             bit_length=self.config.bit_length)
@@ -106,7 +104,6 @@ class DataDriveSecretsAPI(OrdersFixture):
         resps = self.behaviors.create_and_check_order(
             name=name,
             payload_content_type=self.config.payload_content_type,
-            payload_content_encoding=self.config.payload_content_encoding,
             algorithm=self.config.algorithm,
             mode=self.config.mode,
             bit_length=self.config.bit_length)
@@ -167,7 +164,6 @@ class OrdersAPI(OrdersFixture):
         """
         resp = self.behaviors.create_order(
             payload_content_type=self.config.payload_content_type,
-            payload_content_encoding=self.config.payload_content_encoding,
             algorithm=self.config.algorithm,
             bit_length=self.config.bit_length,
             mode=self.config.mode)
@@ -182,7 +178,6 @@ class OrdersAPI(OrdersFixture):
         resp = self.behaviors.create_order(
             name='',
             payload_content_type=self.config.payload_content_type,
-            payload_content_encoding=self.config.payload_content_encoding,
             algorithm=self.config.algorithm,
             bit_length=self.config.bit_length,
             mode=self.config.mode)
@@ -256,8 +251,7 @@ class OrdersAPI(OrdersFixture):
         """
         resp = self.behaviors.create_order(
             name='', expiration='', algorithm='', mode='',
-            bit_length='', payload_content_type='',
-            payload_content_encoding='')
+            bit_length='', payload_content_type='')
         self.assertEqual(resp.status_code, 400,
                          'Creation should have failed with 400')
 
@@ -271,7 +265,6 @@ class OrdersAPI(OrdersFixture):
         resp = self.behaviors.create_order(
             name='',
             payload_content_type=self.config.payload_content_type,
-            payload_content_encoding=self.config.payload_content_encoding,
             algorithm=self.config.algorithm,
             bit_length=self.config.bit_length,
             mode=self.config.mode)
@@ -294,7 +287,6 @@ class OrdersAPI(OrdersFixture):
         resp = self.behaviors.create_order(
             name=None,
             payload_content_type=self.config.payload_content_type,
-            payload_content_encoding=self.config.payload_content_encoding,
             algorithm=self.config.algorithm,
             bit_length=self.config.bit_length,
             mode=self.config.mode)
@@ -418,7 +410,6 @@ class OrdersAPI(OrdersFixture):
         resp = self.behaviors.create_order(
             name=self.config.name,
             payload_content_type=self.config.payload_content_type,
-            payload_content_encoding=self.config.payload_content_encoding,
             algorithm=None,
             mode=self.config.mode,
             bit_length=self.config.bit_length)
@@ -432,7 +423,6 @@ class OrdersAPI(OrdersFixture):
         resp = self.behaviors.create_order(
             name=self.config.name,
             payload_content_type=self.config.payload_content_type,
-            payload_content_encoding=self.config.payload_content_encoding,
             algorithm=self.config.algorithm,
             mode=None,
             bit_length=self.config.bit_length)
@@ -446,7 +436,6 @@ class OrdersAPI(OrdersFixture):
         resp = self.behaviors.create_order(
             name=large_string,
             payload_content_type=self.config.payload_content_type,
-            payload_content_encoding=self.config.payload_content_encoding,
             algorithm=large_string,
             mode=large_string)
         self.assertEqual(resp.status_code, 400, 'Should have failed with 400')
