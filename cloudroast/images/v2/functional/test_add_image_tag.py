@@ -16,28 +16,41 @@ limitations under the License.
 
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.common.tools.datagen import rand_name
-from cloudroast.images.fixtures import ImagesFixture
+from cloudroast.images.fixtures import ComputeIntegrationFixture
 
 
-class TestAddImageTag(ImagesFixture):
+class TestAddImageTag(ComputeIntegrationFixture):
 
     @classmethod
     def setUpClass(cls):
         super(TestAddImageTag, cls).setUpClass()
-        cls.images = cls.images_behavior.create_new_images(count=3)
+        cls.images = []
+        server = cls.server_behaviors.create_active_server().entity
+        image = cls.compute_image_behaviors.create_active_image(server.id)
+        alt_image = cls.compute_image_behaviors.create_active_image(server.id)
+        cls.images.append(cls.images_client.get_image(image.entity.id).entity)
+        cls.images.append(cls.images_client.get_image(
+            alt_image.entity.id).entity)
 
     @tags(type='smoke')
     def test_add_image_tag(self):
         """
-        @summary: Add image tag
+        @summary: Add image tag and tags
 
-        1) Give a previously created image, add image tag
+        1) Given a previously created image, add image tag
         2) Verify that the response code is 204
         3) Get image
         4) Verify that the response code is 200
         5) Verify that the added tag is in the list of image tags
+        6) For the same image, add image tags
+        7) Verify that the response code is 204
+        8) Get image
+        9) Verify that the response code is 200
+        10) Verify that the added tags are in the list of image tags
         """
 
+        number_of_tags = 3
+        tags = []
         tag = rand_name('tag')
         image = self.images.pop()
         response = self.images_client.add_tag(image.id_, tag)
@@ -46,22 +59,7 @@ class TestAddImageTag(ImagesFixture):
         self.assertEqual(response.status_code, 200)
         image = response.entity
         self.assertListEqual(image.tags, [tag])
-
-    @tags(type='positive', regression='true')
-    def test_add_image_tags(self):
-        """
-        @summary: Add image tags
-
-        1) Given a previously created image, add image tags
-        2) Verify that the response code is 204
-        3) Get image
-        4) Verify that the response code is 200
-        5) Verify that the added tags are in the list of image tags
-        """
-
-        number_of_tags = 5
-        tags = []
-        image = self.images.pop()
+        tags.append(tag)
         for t in range(number_of_tags):
             tag = rand_name('tag')
             tags.append(tag)
