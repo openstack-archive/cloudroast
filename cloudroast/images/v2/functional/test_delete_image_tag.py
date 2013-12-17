@@ -16,15 +16,21 @@ limitations under the License.
 
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.common.tools.datagen import rand_name
-from cloudroast.images.fixtures import ImagesFixture
+from cloudroast.images.fixtures import ComputeIntegrationFixture
 
 
-class TestDeleteImageTag(ImagesFixture):
+class TestDeleteImageTag(ComputeIntegrationFixture):
 
     @classmethod
     def setUpClass(cls):
         super(TestDeleteImageTag, cls).setUpClass()
-        cls.images = cls.images_behavior.create_new_images(count=2)
+        cls.images = []
+        server = cls.server_behaviors.create_active_server().entity
+        image = cls.compute_image_behaviors.create_active_image(server.id)
+        alt_image = cls.compute_image_behaviors.create_active_image(server.id)
+        cls.images.append(cls.images_client.get_image(image.entity.id).entity)
+        cls.images.append(cls.images_client.get_image(
+            alt_image.entity.id).entity)
 
     @tags(type='smoke')
     def test_delete_image_tag(self):
