@@ -26,7 +26,7 @@ from cloudroast.images.fixtures import ImagesFixture
 
 class TestCreateImage(ImagesFixture):
 
-    @tags(type='smoke')
+    @tags(type='positive')
     def test_create_image(self):
         """
         @summary: Create image
