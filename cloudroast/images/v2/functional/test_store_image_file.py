@@ -23,7 +23,7 @@ from cloudroast.images.fixtures import ImagesFixture
 
 class TestStoreImageFile(ImagesFixture):
 
-    @tags(type='smoke')
+    @tags(type='positive')
     def test_store_image_file(self):
         """
         @summary: Store image file

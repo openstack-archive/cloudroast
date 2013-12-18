@@ -22,7 +22,7 @@ from cloudroast.images.fixtures import ImagesFixture
 
 class TestGetImageFile(ImagesFixture):
 
-    @tags(type='smoke')
+    @tags(type='positive')
     def test_get_image_file(self):
         """
         @summary: Get image file
