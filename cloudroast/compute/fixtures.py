@@ -54,7 +54,7 @@ from cloudcafe.auth.provider import AuthProvider
 from cloudcafe.compute.flavors_api.config import FlavorsConfig
 from cloudcafe.compute.images_api.config import ImagesConfig
 from cloudcafe.compute.servers_api.config import ServersConfig
-from cloudcafe.compute.volume_attachments_api.volume_attachments_client \
+from cloudcafe.compute.volume_attachments_api.client \
     import VolumeAttachmentsAPIClient
 
 
