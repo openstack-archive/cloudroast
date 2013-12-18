@@ -15,87 +15,34 @@ limitations under the License.
 """
 
 from cafe.drivers.unittest.decorators import tags
-from cloudcafe.common.tools.datagen import rand_name
-from cloudcafe.images.common.types import \
-    ImageContainerFormat, ImageDiskFormat, ImageVisibility
-from cloudroast.images.fixtures import ImagesFixture
+from cloudroast.images.fixtures import ComputeIntegrationFixture
 
 
-class TestGetImages(ImagesFixture):
+class TestGetImages(ComputeIntegrationFixture):
 
     @classmethod
     def setUpClass(cls):
         super(TestGetImages, cls).setUpClass()
-        cls.image_name = rand_name('get_image')
-        cls.images = cls.images_behavior.create_new_images(
-            count=2, name=cls.image_name)
+        cls.images = []
+        server = cls.server_behaviors.create_active_server().entity
+        image = cls.compute_image_behaviors.create_active_image(server.id)
+        alt_image = cls.compute_image_behaviors.create_active_image(server.id)
+        cls.images.append(cls.images_client.get_image(image.entity.id).entity)
+        cls.images.append(cls.images_client.get_image(
+            alt_image.entity.id).entity)
 
     @tags(type='smoke')
     def test_get_images(self):
         """
         @summary: Get images
 
-        1) Create two images
+        1) Given two images
         2) Get images
         3) Verify that the list is not empty
         4) Verify that the created images are in the list of images
         """
 
-        image = self.images_behavior.create_new_image(
-            container_format=ImageContainerFormat.OVF,
-            disk_format=ImageDiskFormat.VMDK,
-            visibility=ImageVisibility.PUBLIC)
-        alt_image = self.images_behavior.create_new_image(
-            container_format=ImageContainerFormat.ARI,
-            disk_format=ImageDiskFormat.QCOW2,
-            visibility=ImageVisibility.PRIVATE)
         images = self.images_behavior.list_images_pagination()
         self.assertNotEqual(len(images), 0)
-        self.assertIn(image, images)
-        self.assertIn(alt_image, images)
-
-    @tags(type='positive', regression='true')
-    def test_get_images_using_marker_pagination(self):
-        """
-        @summary: Get images sorted by the name property in descending order
-
-        1) Using previously created images, get images passing in 1 as limit,
-        image_name as name, and primary user as owner
-        2) Verify that the response code is 200
-        3) Verify that the list only contains 1 image
-        4) Get images again passing in the listed image id as the marker as
-        well as 1 as limit, image_name as name, and primary user as owner
-        5) Verify that the response code is 200
-        6) Verify that the list only contains 1 image
-        7) Verify that the previously returned image is not in the current list
-        """
-
-        owner = self.user_config.tenant_id
-        response = self.images_client.list_images(
-            limit=1, name=self.image_name, owner=owner)
-        self.assertEqual(response.status_code, 200)
-        image_list = response.entity
-        self.assertEqual(len(image_list), 1)
-        marker = image_list[0].id_
-        response = self.images_client.list_images(
-            limit=1, marker=marker, name=self.image_name, owner=owner)
-        self.assertEqual(response.status_code, 200)
-        next_image_list = response.entity
-        self.assertEqual(len(next_image_list), 1)
-        self.assertNotIn(image_list[0], next_image_list)
-
-    @tags(type='positive', regression='true')
-    def test_get_images_using_limit(self):
-        """
-        @summary: Get images using the limit property
-
-        1) Get images passing in 50 as limit
-        2) Verify that the response code is 200
-        3) Verify that the list is not empty
-        4) Verify that the number of images returned in 50 or less
-        """
-
-        response = self.images_client.list_images(limit=50)
-        self.assertEqual(response.status_code, 200)
-        images = response.entity
-        self.assertLessEqual(len(images), 50)
+        self.assertIn(self.images.pop(), images)
+        self.assertIn(self.images.pop(), images)
