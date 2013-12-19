@@ -112,6 +112,10 @@ class ImagesFixture(BaseTestFixture):
             open(cls.images_config.image_schema_json).read().rstrip())
         cls.images_schema_json = (
             open(cls.images_config.images_schema_json).read().rstrip())
+        cls.image_member_schema_json = (
+            open(cls.images_config.image_member_schema_json).read().rstrip())
+        cls.image_members_schema_json = (
+            open(cls.images_config.image_members_schema_json).read().rstrip())
         cls.updated_at_offset = cls.images_config.updated_at_offset
 
     @classmethod
