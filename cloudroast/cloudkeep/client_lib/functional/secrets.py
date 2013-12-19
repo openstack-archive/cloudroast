@@ -107,7 +107,7 @@ class SecretsAPI(SecretsFixture):
 
     @tags(type='negative')
     def test_get_nonexistent_secret(self):
-        self.assertRaises(MissingSchema,
+        self.assertRaises(ValueError,
                           self.cl_client.get_secret,
                           href='invalid-ref')
 
