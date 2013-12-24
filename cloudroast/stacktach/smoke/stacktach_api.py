@@ -110,6 +110,7 @@ class StackTachTest(StackTachFixture):
             self.assertIsNotNone(element.state)
             self.assertIsNotNone(element.deployment)
             self.assertIsNotNone(element.event_name)
+            self.assertIsNotNone(element.request_id)
             self.assertIsNotNone(element.actual_event)
 
     def test_get_timings_for_event_name(self):
@@ -128,6 +129,74 @@ class StackTachTest(StackTachFixture):
         for element in response.entity:
             self.assertIsNotNone(element.event_name)
             self.assertIsNotNone(element.timing)
+
+    def test_get_timings_for_uuid(self):
+        """
+        @summary: Verify that Get Timings For UUID returns 200 Success response
+        """
+
+        uuid = (self.stacktach_behavior
+                .get_uuid_from_event_id_details(service=self.service,
+                                                event_id=self.event_id))
+        response = self.stacktach_client.get_timings_for_uuid(uuid=uuid)
+
+        self.assertEqual(response.status_code, 200,
+                         self.msg.format("status code", "200",
+                                         response.status_code, response.reason,
+                                         response.content))
+        self.assertGreaterEqual(len(response.entity), 1,
+                                msg="The response content is blank")
+        for element in response.entity:
+            self.assertIsNotNone(element.state)
+            self.assertIsNotNone(element.event_name)
+            self.assertIsNotNone(element.timing)
+
+    def test_get_events_for_uuid(self):
+        """
+        @summary: Verify that Get Events For UUID returns 200 Success response
+        """
+        uuid = (self.stacktach_behavior
+                .get_uuid_from_event_id_details(service=self.service,
+                                                event_id=self.event_id))
+        response = (self.stacktach_client
+                    .get_events_for_uuid(uuid=uuid, service=self.service))
+        self.assertEqual(response.status_code, 200,
+                         self.msg.format("status code", "200",
+                                         response.status_code, response.reason,
+                                         response.content))
+        self.assertGreaterEqual(len(response.entity), 1,
+                                msg="The response content is blank")
+        for element in response.entity:
+            self.assertIsNotNone(element.event_id)
+            self.assertIsNotNone(element.when)
+            self.assertIsNotNone(element.deployment)
+            self.assertIsNotNone(element.event_name)
+            self.assertIsNotNone(element.host_name)
+            self.assertIsNotNone(element.state)
+
+    def test_get_events_for_request_id(self):
+        """
+        @summary: Verify that Get Events For Request ID
+            returns 200 Success response
+        """
+        request_id = (self.stacktach_behavior
+                      .get_request_id_from_event_id_details(
+                          service=self.service, event_id=self.event_id))
+        response = (self.stacktach_client
+                    .get_events_for_request_id(request_id=request_id))
+        self.assertEqual(response.status_code, 200,
+                         self.msg.format("status code", "200",
+                                         response.status_code, response.reason,
+                                         response.content))
+        self.assertGreaterEqual(len(response.entity), 1,
+                                msg="The response content is blank")
+        for element in response.entity:
+            self.assertIsNotNone(element.event_id)
+            self.assertIsNotNone(element.when)
+            self.assertIsNotNone(element.deployment)
+            self.assertIsNotNone(element.event_name)
+            self.assertIsNotNone(element.host_name)
+            self.assertIsNotNone(element.state)
 
     def test_get_reports(self):
         """
@@ -148,3 +217,19 @@ class StackTachTest(StackTachFixture):
             self.assertIsNotNone(element.created)
             self.assertIsNotNone(element.name)
             self.assertIsNotNone(element.version)
+
+    def test_get_nova_usage_report_no_escaped_json(self):
+        """
+        @summary: Verify that the "nova usage audit" does not contain
+            double encoded json
+        """
+        report_id = (self.stacktach_behavior
+                     .get_report_id_by_report_name('nova usage audit'))
+        response = (self.stacktach_client
+                    .get_report_details(report_id))
+        self.assertNotIn('\\', response.json(),
+                         self.msg.format("Double encoded json",
+                                         "No backslashes",
+                                         "Backslashes",
+                                         "Escaped characters",
+                                         response.json()))
