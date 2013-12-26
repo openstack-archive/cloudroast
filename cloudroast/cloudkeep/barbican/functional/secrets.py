@@ -14,16 +14,18 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 import base64
-import unittest2
 import re
+import unittest2
 from datetime import datetime, timedelta
 from sys import maxint
+from time import sleep, strftime
 
 from cloudroast.cloudkeep.barbican.fixtures import (
     SecretsFixture, SecretsPagingFixture, BitLengthDataSetPositive,
     BitLengthDataSetNegative, NameDataSetPositive, PayloadDataSetNegative,
     ContentTypeEncodingDataSetNegative, ContentTypeEncodingDataSetTextPositive,
-    ContentTypeEncodingDataSetBase64Positive)
+    ContentTypeEncodingDataSetBase64Positive, ModeDataSetPositive,
+    ModeDataSetNegative)
 from cafe.drivers.unittest.decorators import (tags, data_driven_test,
                                               DataDrivenFixture,
                                               skip_open_issue)
@@ -33,6 +35,24 @@ class SecretBitLengthDataSetPositive(BitLengthDataSetPositive):
     def __init__(self):
         self.append_new_dataset('512', {'bit_length': 512})
         self.append_new_dataset('large_int', {'bit_length': maxint})
+
+
+class SecretBitLengthDataSetNegative(BitLengthDataSetNegative):
+    def __init__(self):
+        pass
+
+
+class SecretModeDataSetPositive(ModeDataSetPositive):
+    def __init__(self):
+        super(SecretModeDataSetPositive, self).__init__()
+        large_string = str(bytearray().zfill(10001))
+        self.append_new_dataset('large_string', {'mode': large_string})
+        self.append_new_dataset('unknown-positive', {'mode': 'unknown'})
+
+
+class SecretModeDataSetNegative(ModeDataSetNegative):
+    def __init__(self):
+        super(SecretModeDataSetNegative, self).__init__()
 
 
 class SecretContentTypeDataSetNegative(ContentTypeEncodingDataSetNegative):
@@ -85,6 +105,29 @@ class DataDriveSecretsAPI(SecretsFixture):
         """Covers cases of creating a secret with invalid bit lengths.
         Should return 400."""
         resp = self.behaviors.create_secret(bit_length=bit_length)
+        self.assertEqual(resp.status_code, 400,
+                         'Creation should have failed with 400')
+
+    @data_driven_test(dataset_source=SecretModeDataSetPositive())
+    @tags(type='positive')
+    def ddtest_creating_secret_w_mode(self, mode=None):
+        """Covers cases of creating a secret with various modes."""
+        resps = self.behaviors.create_and_check_secret(mode=mode)
+        self.assertEqual(resps.create_resp.status_code, 201,
+                         'Creation failed with unexpected response code')
+
+        secret = resps.get_resp.entity
+        self.assertEqual(resps.get_resp.status_code, 200,
+                         'Retrieval failed with unexpected response code')
+        self.assertEqual(secret.mode, mode)
+
+    @data_driven_test(dataset_source=SecretModeDataSetNegative())
+    @tags(type='negative')
+    def ddtest_negative_creating_secret_w_mode(self, mode=None):
+        """Covers cases of creating a secret with invalid modes.
+        Should return 400.
+        """
+        resp = self.behaviors.create_secret(mode=mode)
         self.assertEqual(resp.status_code, 400,
                          'Creation should have failed with 400')
 
@@ -532,9 +575,18 @@ class SecretsAPI(SecretsFixture):
         self.assertEqual(resp.status_code, 400, 'Should have failed with 400')
 
     @tags(type='negative')
+    def test_creating_secret_w_invalid_algorithm(self):
+        """Covers case of creating a secret with an invalid algorithm."""
+        resp = self.behaviors.create_secret_overriding_cfg(
+            algorithm='invalid_algorithm')
+        self.assertEqual(resp.status_code, 201,
+                         'Returned unexpected response code')
+
+    @tags(type='negative')
     def test_creating_secret_w_int_as_mode(self):
         """Covers case of creating a secret with an integer as the cypher type.
-        Should return 400."""
+        Should return 400.
+        """
         resp = self.behaviors.create_secret_overriding_cfg(mode=400)
         self.assertEqual(resp.status_code, 400, 'Should have failed with 400')
 
@@ -591,6 +643,40 @@ class SecretsAPI(SecretsFixture):
     def test_create_secret_with_only_content_type(self):
         resp = self.behaviors.create_secret(payload_content_type='text/plain')
         self.assertEqual(resp.create_resp.status_code, 400)
+
+    @tags(type='negative')
+    def test_create_secret_with_no_json(self):
+        """Covers case of a POST request with no JSON data."""
+        resp = self.behaviors.create_secret_with_no_json()
+        self.assertEqual(resp.create_resp.status_code, 400)
+
+    @tags(type='positive')
+    def test_create_secret_then_expire_then_check(self):
+        """Covers case where you create a secret that will soon
+         expire.  After it expires, check it and verify that it
+         is no longer a valid secret.
+         """
+
+        # create a secret that expires in 2 minutes
+        two_minutes_ahead = (datetime.today() + timedelta(minutes=2))
+        my_timezone = strftime("%z")
+        timestamp = '{time}{timezone}'.format(
+            time=two_minutes_ahead,
+            timezone=my_timezone)
+        create_resp = self.behaviors.create_secret_overriding_cfg(
+            expiration=timestamp)
+        self.assertEqual(create_resp.status_code, 201)
+
+        # now get the secret - will be still valid
+        resp = self.client.get_secret(create_resp.id)
+        self.assertEqual(resp.status_code, 200)
+
+        # now wait 3 minutes
+        sleep(3 * 60)
+
+        # now get the secret - should be invalid (expired)
+        resp = self.client.get_secret(create_resp.id)
+        self.assertEqual(resp.status_code, 404)
 
 
 class SecretsPagingAPI(SecretsPagingFixture):
