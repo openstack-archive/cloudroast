@@ -75,7 +75,8 @@ class ImagesFixture(BaseTestFixture):
         images_service = cls.access_data.get_service(
             cls.images_config.endpoint_name)
 
-        images_url_check = images_service.get_endpoint(cls.images_config.region)
+        images_url_check = images_service.get_endpoint(
+            cls.images_config.region)
 
         # If endpoint validation fails, fail immediately
         if images_url_check is None:
@@ -107,7 +108,12 @@ class ImagesFixture(BaseTestFixture):
 
         cls.created_at_offset = cls.images_config.created_at_offset
         cls.error_msg = Messages.ERROR_MSG
+        cls.expires_at_offset = cls.images_config.expires_at_offset
         cls.id_regex = re.compile(ImageProperties.ID_REGEX)
+        cls.import_from = cls.images_config.import_from
+        cls.import_from_format = cls.images_config.import_from_format
+        cls.updated_at_offset = cls.images_config.updated_at_offset
+
         cls.image_schema_json = (
             open(cls.images_config.image_schema_json).read().rstrip())
         cls.images_schema_json = (
@@ -116,7 +122,10 @@ class ImagesFixture(BaseTestFixture):
             open(cls.images_config.image_member_schema_json).read().rstrip())
         cls.image_members_schema_json = (
             open(cls.images_config.image_members_schema_json).read().rstrip())
-        cls.updated_at_offset = cls.images_config.updated_at_offset
+        cls.task_schema_json = (
+            open(cls.images_config.task_schema_json).read().rstrip())
+        cls.tasks_schema_json = (
+            open(cls.images_config.tasks_schema_json).read().rstrip())
 
     @classmethod
     def tearDownClass(cls):
