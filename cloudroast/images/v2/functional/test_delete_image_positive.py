@@ -14,8 +14,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import StringIO
+
 from cafe.drivers.unittest.decorators import tags
-from cloudcafe.images.common.types import ImageVisibility
+from cloudcafe.images.common.types import ImageVisibility, ImageStatus
 from cloudroast.images.fixtures import ImagesFixture
 
 
@@ -67,3 +69,40 @@ class TestDeleteImagePositive(ImagesFixture):
         error_list = self.images_behavior.validate_image(image)
         self.assertListEqual(error_list, [])
         self.assertEqual(get_image.status, image.status)
+
+    @tags(type='positive', regression='true')
+    def test_delete_active_image(self):
+        """
+        @summary: Delete active image (image containing data)
+
+        1. Create image
+        2. Upload image file
+        3. Verify that the response is 204
+        4. Get active image
+        5. Verify that the response contains an image entity
+        with correct properties
+        6. Delete active image
+        7. Verify that the response code is 204
+        8. Get deleted image
+        9. Verify that the response code is 404
+        """
+
+        file_data = StringIO.StringIO(('*' * 1024))
+        image = self.images_behavior.create_new_image()
+        response = self.images_client.store_image_file(
+            image_id=image.id_, file_data=file_data)
+        self.assertEqual(response.status_code, 204)
+
+        response = self.images_client.get_image(image_id=image.id_)
+        self.assertEqual(response.status_code, 200)
+        active_image = response.entity
+        self.assertIsNotNone(active_image.checksum)
+        self.assertEqual(active_image.id_, image.id_)
+        self.assertEqual(active_image.size, 1024)
+        self.assertEqual(active_image.status, ImageStatus.ACTIVE)
+
+        response = self.images_client.delete_image(image_id=active_image.id_)
+        self.assertEqual(response.status_code, 204)
+
+        response = self.images_client.get_image(image_id=active_image.id_)
+        self.assertEqual(response.status_code, 404)
