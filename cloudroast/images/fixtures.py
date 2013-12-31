@@ -13,6 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
+import StringIO
 
 import re
 
@@ -50,6 +51,8 @@ class ImagesFixture(BaseTestFixture):
         cls.resources = ResourcePool()
         cls.serialize_format = cls.marshalling.serializer
         cls.deserialize_format = cls.marshalling.deserializer
+        cls.image_data = '*' * 1024
+        cls.file_data = StringIO.StringIO(cls.image_data)
 
         # TODO: Remove once import/export functionality is implemented
         internal_url = cls.images_config.internal_url
@@ -75,7 +78,8 @@ class ImagesFixture(BaseTestFixture):
         images_service = cls.access_data.get_service(
             cls.images_config.endpoint_name)
 
-        images_url_check = images_service.get_endpoint(cls.images_config.region)
+        images_url_check = images_service.get_endpoint(
+            cls.images_config.region)
 
         # If endpoint validation fails, fail immediately
         if images_url_check is None:
@@ -118,6 +122,10 @@ class ImagesFixture(BaseTestFixture):
             open(cls.images_config.image_members_schema_json).read().rstrip())
         cls.updated_at_offset = cls.images_config.updated_at_offset
 
+        cls.image = cls.images_behavior.create_new_image()
+        if cls.image:
+            cls.resources.add(cls.image.id_, cls.images_client.delete_image)
+
     @classmethod
     def tearDownClass(cls):
         super(ImagesFixture, cls).tearDownClass()
@@ -136,7 +144,6 @@ class ImagesFixture(BaseTestFixture):
 
 
 class ComputeIntegrationFixture(ImagesFixture):
-
     @classmethod
     def setUpClass(cls):
         super(ComputeIntegrationFixture, cls).setUpClass()
