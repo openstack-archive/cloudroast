@@ -1,0 +1,10 @@
+Verified+2: Jenkins
+Approved+1: Daryl Walleck <daryl.walleck@rackspace.com>
+Code-Review+2: Daryl Walleck <daryl.walleck@rackspace.com>
+Verified-1: Hyper-V CI
+Code-Review+1: Stephen Lowrie <stephen.lowrie@rackspace.com>
+Submitted-by: Jenkins
+Submitted-at: Sat, 04 Jan 2014 17:53:42 +0000
+Reviewed-on: https://review.openstack.org/63535
+Project: stackforge/cloudroast
+Branch: refs/heads/master
