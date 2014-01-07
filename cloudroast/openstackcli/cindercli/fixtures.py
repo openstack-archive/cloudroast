@@ -8,7 +8,7 @@ from cloudcafe.openstackcli.common.config import OpenstackCLI_CommonConfig
 from cloudcafe.openstackcli.cindercli.config import CinderCLI_Config
 from cloudcafe.openstackcli.cindercli.behaviors import CinderCLI_Behaviors
 
-from cloudroast.blockstorage.v1.volumes_api.fixtures import VolumesComposite
+from cloudroast.blockstorage.volumes_api.v1.fixtures import VolumesComposite
 
 
 class CinderCLI_Composite(object):

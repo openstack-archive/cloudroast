@@ -15,7 +15,7 @@ from cloudcafe.compute.volume_attachments_api.behaviors \
 from cloudcafe.compute.volume_attachments_api.config \
     import VolumeAttachmentsAPIConfig
 
-from cloudroast.blockstorage.v1.volumes_api.fixtures import VolumesTestFixture
+from cloudroast.blockstorage.volumes_api.v1.fixtures import VolumesTestFixture
 from cloudroast.blockstorage.fixtures import AuthComposite
 
 
@@ -75,11 +75,11 @@ class VolumeAttachmentsComposite(object):
         self.behaviors = None
 
 
-class ComputeBlockstorageIntegrationTestFixture(VolumesTestFixture):
+class ComputeIntegrationTestFixture(VolumesTestFixture):
 
     @classmethod
     def setUpClass(cls):
-        super(ComputeBlockstorageIntegrationTestFixture, cls).setUpClass()
+        super(ComputeIntegrationTestFixture, cls).setUpClass()
         cls.compute = ComputeAuthComposite()
         cls.servers = ServersComposite()
         cls.images = ImagesComposite()

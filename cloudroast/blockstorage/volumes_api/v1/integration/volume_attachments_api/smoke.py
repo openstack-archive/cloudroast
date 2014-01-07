@@ -14,11 +14,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 #from cafe.drivers.unittest.decorators import tags
-from cloudroast.blockstorage.v1.integration.fixtures import \
-    ComputeBlockstorageIntegrationTestFixture
+from cloudroast.blockstorage.volumes_api.v1.integration.fixtures import \
+    ComputeIntegrationTestFixture
 
 
-class VolumeAttachmentsAPISmoke(ComputeBlockstorageIntegrationTestFixture):
+class VolumeAttachmentsAPISmoke(ComputeIntegrationTestFixture):
 
     @classmethod
     def setUpClass(cls):

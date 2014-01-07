@@ -18,8 +18,8 @@ from cafe.drivers.unittest.decorators import \
     data_driven_test, DataDrivenFixture
 from cafe.drivers.unittest.decorators import tags
 
-from cloudcafe.blockstorage.v1.volumes_api.models import statuses
-from cloudroast.blockstorage.v1.volumes_api.fixtures import \
+from cloudcafe.blockstorage.volumes_api.v1.models import statuses
+from cloudroast.blockstorage.volumes_api.v1.fixtures import \
     VolumesTestFixture, VolumesDatasets
 
 

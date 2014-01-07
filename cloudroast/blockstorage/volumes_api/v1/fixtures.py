@@ -2,9 +2,9 @@ from cafe.drivers.unittest.datasets import DatasetList
 from cafe.drivers.unittest.decorators import memoized
 
 from cloudcafe.common.tools.datagen import random_string
-from cloudcafe.blockstorage.v1.volumes_api.config import VolumesAPIConfig
-from cloudcafe.blockstorage.v1.volumes_api.client import VolumesClient
-from cloudcafe.blockstorage.v1.volumes_api.behaviors import \
+from cloudcafe.blockstorage.volumes_api.v1.config import VolumesAPIConfig
+from cloudcafe.blockstorage.volumes_api.v1.client import VolumesClient
+from cloudcafe.blockstorage.volumes_api.v1.behaviors import \
     VolumesAPI_Behaviors
 
 from cloudroast.blockstorage.fixtures import \

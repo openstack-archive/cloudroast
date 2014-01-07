@@ -4,7 +4,7 @@ from cafe.drivers.unittest.decorators import \
 from cloudroast.openstackcli.cindercli.fixtures import \
     CinderCLI_Datasets, CinderTestFixture
 
-from cloudcafe.blockstorage.v1.volumes_api.models.statuses import \
+from cloudcafe.blockstorage.volumes_api.v1.models.statuses import \
     Snapshot as SnapshotStatuses
 
 
