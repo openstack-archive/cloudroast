@@ -30,8 +30,8 @@ from cloudcafe.compute.servers_api.behaviors import ServerBehaviors
 from cloudcafe.compute.servers_api.client import ServersClient
 from cloudcafe.compute.servers_api.config import ServersConfig
 from cloudcafe.images.common.constants import ImageProperties, Messages
-from cloudcafe.images.config import \
-    AdminUserConfig, AltUserConfig, ImagesConfig, MarshallingConfig
+from cloudcafe.images.config import AdminUserConfig, AltUserConfig, \
+    ImagesConfig, MarshallingConfig, ThirdUserConfig
 from cloudcafe.images.v2.behaviors import ImagesBehaviors
 from cloudcafe.images.v2.client import ImagesClient
 
@@ -47,6 +47,7 @@ class ImagesFixture(BaseTestFixture):
         cls.endpoint_config = UserAuthConfig()
         cls.user_config = UserConfig()
         cls.alt_user_config = AltUserConfig()
+        cls.third_user_config = ThirdUserConfig()
         cls.resources = ResourcePool()
         cls.serialize_format = cls.marshalling.serializer
         cls.deserialize_format = cls.marshalling.deserializer
@@ -72,6 +73,13 @@ class ImagesFixture(BaseTestFixture):
         if cls.admin_access_data is None:
             cls.assertClassSetupFailure('Authentication failed')
 
+        cls.third_access_data = AuthProvider.get_access_data(
+            cls.endpoint_config, cls.third_user_config)
+
+        # If authentication fails, fail immediately
+        if cls.third_access_data is None:
+            cls.assertClassSetupFailure('Authentication failed')
+
         images_service = cls.access_data.get_service(
             cls.images_config.endpoint_name)
 
@@ -95,15 +103,19 @@ class ImagesFixture(BaseTestFixture):
             cls.alt_access_data, internal_url)
         cls.admin_images_client = cls.generate_images_client(
             cls.admin_access_data, internal_url)
+        cls.third_images_client = cls.generate_images_client(
+            cls.third_access_data, internal_url)
 
         cls.images_behavior = ImagesBehaviors(
             images_client=cls.images_client, images_config=cls.images_config)
         cls.alt_images_behavior = ImagesBehaviors(
             images_client=cls.alt_images_client,
             images_config=cls.images_config)
-
         cls.admin_images_behavior = ImagesBehaviors(
             images_client=cls.admin_images_client,
+            images_config=cls.images_config)
+        cls.third_images_behavior = ImagesBehaviors(
+            images_client=cls.third_images_client,
             images_config=cls.images_config)
 
         cls.created_at_offset = cls.images_config.created_at_offset
@@ -134,6 +146,7 @@ class ImagesFixture(BaseTestFixture):
         cls.images_behavior.resources.release()
         cls.alt_images_behavior.resources.release()
         cls.admin_images_behavior.resources.release()
+        cls.third_images_behavior.resources.release()
 
     @classmethod
     def generate_images_client(cls, auth_data, internal_url=None):
