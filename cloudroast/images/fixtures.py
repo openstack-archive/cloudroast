@@ -131,6 +131,9 @@ class ImagesFixture(BaseTestFixture):
     def tearDownClass(cls):
         super(ImagesFixture, cls).tearDownClass()
         cls.resources.release()
+        cls.images_behavior.resources.release()
+        cls.alt_images_behavior.resources.release()
+        cls.admin_images_behavior.resources.release()
 
     @classmethod
     def generate_images_client(cls, auth_data, internal_url=None):
