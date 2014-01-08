@@ -21,7 +21,7 @@ from cafe.drivers.unittest.decorators import tags
 from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.compute.common.types import NovaServerStatusTypes
 from cloudcafe.compute.flavors_api.config import FlavorsConfig
-from cloudcafe.blockstorage.v1.volumes_api.models import statuses
+from cloudcafe.blockstorage.volumes_api.v1.models import statuses
 from cloudroast.compute.fixtures import BlockstorageIntegrationFixture
 
 

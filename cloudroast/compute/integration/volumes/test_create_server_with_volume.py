@@ -17,7 +17,7 @@ limitations under the License.
 from unittest2.suite import TestSuite
 
 from cafe.drivers.unittest.decorators import tags
-from cloudcafe.blockstorage.v1.volumes_api.models import statuses
+from cloudcafe.blockstorage.volumes_api.v1.models import statuses
 from cloudroast.compute.fixtures import BlockstorageIntegrationFixture
 
 

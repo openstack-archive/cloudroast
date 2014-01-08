@@ -16,11 +16,11 @@ limitations under the License.
 
 import sys
 
-from cloudcafe.blockstorage.v1.volumes_api.client import VolumesClient
-from cloudcafe.blockstorage.v1.config import BlockStorageConfig
-from cloudcafe.blockstorage.v1.volumes_api.behaviors import \
+from cloudcafe.blockstorage.volumes_api.v1.client import VolumesClient
+from cloudcafe.blockstorage.config import BlockStorageConfig
+from cloudcafe.blockstorage.volumes_api.v1.behaviors import \
     VolumesAPI_Behaviors
-from cloudcafe.blockstorage.v1.volumes_api.config import VolumesAPIConfig
+from cloudcafe.blockstorage.volumes_api.v1.config import VolumesAPIConfig
 from cafe.drivers.unittest.datasets import DatasetList
 from cafe.drivers.unittest.fixtures import BaseTestFixture
 from cloudcafe.common.resources import ResourcePool

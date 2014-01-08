@@ -15,9 +15,10 @@ limitations under the License.
 """
 
 from cafe.drivers.unittest.fixtures import BaseTestFixture
-from cloudcafe.auth.provider import AuthProvider
-from cloudcafe.blockstorage.v1.config import BlockStorageConfig
 from cafe.drivers.unittest.decorators import memoized
+
+from cloudcafe.auth.provider import AuthProvider
+from cloudcafe.blockstorage.config import BlockStorageConfig
 
 
 class AuthComposite(object):
