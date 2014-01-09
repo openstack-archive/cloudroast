@@ -23,7 +23,7 @@ from cloudcafe.common.tools import md5hash
 CONTENT_TYPE_TEXT = 'text/plain; charset=UTF-8'
 CONTAINER_NAME = 'object_smoke_test'
 STATUS_CODE_MSG = ('{method} expected status code {expected}'
-    ' received status code {received}')
+                   ' received status code {received}')
 
 
 class ObjectSmokeTest(ObjectStorageFixture):
@@ -276,7 +276,7 @@ class ObjectSmokeTest(ObjectStorageFixture):
             headers=headers)
 
         method = ('object retrieval precondition fail with if unmodified'
-            ' since header')
+                  ' since header')
         expected = 412
         received = response.status_code
 
