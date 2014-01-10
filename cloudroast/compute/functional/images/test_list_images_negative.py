@@ -73,7 +73,14 @@ class ImagesListTestNegative(ComputeFixture):
     @tags(type='negative', net='no')
     def test_list_images_filter_by_invalid_changes_since(self):
         """Images should not get listed with invalid changes since"""
-        changes_since = '2012-02-22T'
+        changes_since = '22-02-2013'
+        with self.assertRaises(BadRequest):
+            self.images_client.list_images(changes_since=changes_since)
+
+    @tags(type='negative', net='no')
+    def test_list_images_filter_by_time_only_changes_since(self):
+        """Images should not get listed with time only changes since"""
+        changes_since = 'T12:13Z'
         with self.assertRaises(BadRequest):
             self.images_client.list_images(changes_since=changes_since)
 
