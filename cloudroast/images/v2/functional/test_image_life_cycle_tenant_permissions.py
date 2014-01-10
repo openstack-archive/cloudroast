@@ -14,108 +14,142 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+from cafe.drivers.unittest.decorators import tags
 from cloudcafe.common.tools.datagen import rand_name
-from cloudcafe.images.common.types import ImageDiskFormat, \
-    ImageContainerFormat, ImageVisibility, ImageMemberStatus
-from cloudroast.images.v2.fixtures import ImagesFixture
+from cloudcafe.images.common.types import ImageDiskFormat, ImageMemberStatus
+from cloudroast.images.fixtures import ImagesFixture
 
 
-class ImageLifeCycleTenantPermissions(ImagesFixture):
+class ImageLifeCycleTenantPermissionsTest(ImagesFixture):
 
+    @tags(type='positive', regression='true')
     def test_tenant_permissions_on_image_life_cycle(self):
         """
-        Test tenant permissions on image life cycle
+        @summary: Test tenant permissions on image life cycle
 
-        1. Register an image that belongs to Tenant 1
-        2. Verify that Tenant 1 can see the image in their list
-        3. Verify Tenant 1 can access the image directly
-        4. Verify Tenant 2 (a non member of the image)  cannot see the
-        image in their list
-        5. Verify Tenant 2 cannot get the image directly
-        6. Verify Tenant 2 is not able to update the image
-        7. Verify Tenant 2 is not be able to delete the image
-        8. Add Tenant 2 as a member of the image
-        9. Verify Tenant 2 can get the image directly
-        10. Verify Tenant 2 is not able to update the image
-        11. Verify Tenant 2 is not able to delete the image
-        12. Verify that Tenant 2 cannot see the image in their list
-        13. Update Tenant 2 membership status to 'Accepted' (for the image)
-        14. Verify that Tenant 2 can now see the image in their list
+        1. Register an image as tenant
+        2. Register an image (alt_image) as alternative tenant
+        3. Verify that tenant can get the image
+        4. Verify that tenant can see the image in their images list
+        5. Verify that image members list is empty
+        6. Verify that alternative tenant cannot get the image
+        7. Verify that alternative tenant cannot see the image in their
+            images list
+        8. Verify that alternative tenant cannot update the image
+        9. Verify that alternative tenant cannot delete the image
+        10. Add alternative tenant as a member of the image (share image)
+        11. Verify that image members list contains alternative tenant
+        12. Verify that alternative tenant still cannot get the image
+        13. Verify that alternative tenant still cannot update the image
+        14. Verify that alternative tenant still cannot delete the image
+        15. Verify that alternative tenant still cannot see the image in
+            their list
+        16. Update alternative tenant membership status to 'Accepted' (
+        alternative tenant accepts image's membership)
+        17. Verify that alternative tenant can now see the image in their list
+        18. Verify that alternative tenant still cannot update the image
+        19. Verify that alternative tenant still cannot delete the image
+        20. Update alternative tenant membership status to 'Rejected' (
+        alternative tenant now rejects image's membership)
+        21. Verify that image members list still contains alternative
+        tenant
+        22. Verify that alternative tenant cannot see the image in their list
         """
 
-        Tenant2_id = self.access_data.token.tenant.id_
+        alt_tenant_id = self.alt_user_config.tenant_id
+        alt_image = self.alt_images_behavior.create_new_image()
+        image = self.images_behavior.create_new_image()
 
-        response = self.admin_images_client.create_image(
-            name=rand_name('image_'), disk_format=ImageDiskFormat.RAW,
-            container_format=ImageContainerFormat.BARE,
-            visibility=ImageVisibility.PRIVATE)
-
-        self.assertEqual(response.status_code, 201)
-        image = response.entity
-
-        response = self.admin_images_client.list_images()
-        self.assertEqual(response.status_code, 200)
-        images = response.entity
-        self.assertIn(image, images)
-
-        response = self.admin_images_client.get_image(image_id=image.id)
+        response = self.images_client.get_image(image_id=image.id_)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.entity, image)
 
         response = self.images_client.list_images()
         self.assertEqual(response.status_code, 200)
-        images = response.entity
+        self.assertIn(image, response.entity)
 
+        members_ids = self.images_behavior.get_member_ids(image_id=image.id_)
+        self.assertEqual(members_ids, [])
+
+        response = self.alt_images_client.get_image(image_id=image.id_)
+        self.assertEqual(response.status_code, 404)
+
+        response = self.alt_images_client.list_images()
+        self.assertEqual(response.status_code, 200)
+        images = response.entity
+        self.assertIn(alt_image, images)
         self.assertIsNot(image, images)
 
-        response = self.images_client.get_image(image_id=image.id)
-        self.assertEqual(response.status_code, 404)
-
-        response = self.images_client.update_image(
-            image_id=image.id,
+        response = self.alt_images_client.update_image(
+            image_id=image.id_,
             replace={"name": rand_name('updated_name_'),
                      "disk_format": ImageDiskFormat.AMI})
-
         self.assertEqual(response.status_code, 404)
 
-        response = self.images_client.delete_image(image_id=image.id)
+        response = self.alt_images_client.delete_image(image_id=image.id_)
         self.assertEqual(response.status_code, 404)
 
-        response = self.admin_images_client.add_member(
-            image_id=image.id, member_id=Tenant2_id)
-        self.assertEqual(response.status_code, 200)
-
-        response = self.images_client.get_image(image_id=image.id)
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.entity, image)
-
-        response = self.images_client.update_image(
-            image_id=image.id,
-            replace={"name": rand_name('updated_name_'),
-                     "disk_format": ImageDiskFormat.AMI})
-        self.assertEqual(response.status_code, 403)
-
-        response = self.images_client.delete_image(image_id=image.id)
-        self.assertEqual(response.status_code, 403)
-
-        response = self.images_client.list_images()
-        self.assertEqual(response.status_code, 200)
-        images = response.entity
-
-        self.assertNotIn(image, images)
-
-        response = self.images_client.update_member(
-            image_id=image.id, member_id=Tenant2_id,
-            status=ImageMemberStatus.ACCEPTED)
-
+        response = self.images_client.add_member(
+            image_id=image.id_, member_id=alt_tenant_id)
         self.assertEqual(response.status_code, 200)
         member = response.entity
+        self.assertEqual(member.member_id, alt_tenant_id)
+        self.assertEqual(member.status, ImageMemberStatus.PENDING)
 
-        self.assertEqual(member.member_id, Tenant2_id)
-        self.assertEqual(member.status, ImageMemberStatus.ACCEPTED)
+        members_ids = self.images_behavior.get_member_ids(image_id=image.id_)
+        self.assertIn(alt_tenant_id, members_ids)
 
-        response = self.images_client.list_images()
+        response = self.alt_images_client.get_image(image_id=image.id_)
+        self.assertEqual(response.status_code, 403)
+
+        response = self.alt_images_client.update_image(
+            image_id=image.id_,
+            replace={"name": rand_name('updated_name_'),
+                     "disk_format": ImageDiskFormat.AMI})
+        self.assertEqual(response.status_code, 403)
+
+        response = self.alt_images_client.delete_image(image_id=image.id_)
+        self.assertEqual(response.status_code, 403)
+
+        response = self.alt_images_client.list_images()
         self.assertEqual(response.status_code, 200)
         images = response.entity
+        self.assertNotIn(image, images)
 
-        self.assertIn(image, images)
+        response = self.alt_images_client.update_member(
+            image_id=image.id_, member_id=alt_tenant_id,
+            status=ImageMemberStatus.ACCEPTED)
+        self.assertEqual(response.status_code, 200)
+        member = response.entity
+        self.assertEqual(member.member_id, alt_tenant_id)
+        self.assertEqual(member.status, ImageMemberStatus.ACCEPTED)
+
+        response = self.alt_images_client.list_images()
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(image, response.entity)
+
+        response = self.alt_images_client.update_image(
+            image_id=image.id_,
+            replace={"name": rand_name('updated_name_'),
+                     "disk_format": ImageDiskFormat.AMI})
+        self.assertEqual(response.status_code, 403)
+
+        response = self.alt_images_client.delete_image(image_id=image.id_)
+        self.assertEqual(response.status_code, 403)
+
+        response = self.alt_images_client.update_member(
+            image_id=image.id_, member_id=alt_tenant_id,
+            status=ImageMemberStatus.REJECTED)
+        self.assertEqual(response.status_code, 200)
+        member = response.entity
+        self.assertEqual(member.member_id, alt_tenant_id)
+        self.assertEqual(member.status, ImageMemberStatus.REJECTED)
+
+        members_ids = self.images_behavior.get_member_ids(image_id=image.id_)
+        self.assertIn(alt_tenant_id, members_ids)
+
+        response = self.alt_images_client.list_images()
+        self.assertEqual(response.status_code, 200)
+        images = response.entity
+        self.assertIn(alt_image, images)
+        self.assertIsNot(image, images)
