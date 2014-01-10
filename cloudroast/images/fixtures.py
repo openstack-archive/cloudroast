@@ -118,13 +118,13 @@ class ImagesFixture(BaseTestFixture):
             images_client=cls.third_images_client,
             images_config=cls.images_config)
 
-        cls.created_at_offset = cls.images_config.created_at_offset
+        cls.max_created_at_delta = cls.images_config.max_created_at_delta
         cls.error_msg = Messages.ERROR_MSG
-        cls.expires_at_offset = cls.images_config.expires_at_offset
+        cls.max_expires_at_delta = cls.images_config.max_expires_at_delta
         cls.id_regex = re.compile(ImageProperties.ID_REGEX)
         cls.import_from = cls.images_config.import_from
         cls.import_from_format = cls.images_config.import_from_format
-        cls.updated_at_offset = cls.images_config.updated_at_offset
+        cls.max_updated_at_delta = cls.images_config.max_updated_at_delta
 
         cls.image_schema_json = (
             open(cls.images_config.image_schema_json).read().rstrip())
