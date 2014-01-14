@@ -26,7 +26,7 @@ from cloudroast.blockstorage.volumes_api.v1.fixtures import \
 class VolumeActions(VolumesTestFixture):
 
     @data_driven_test(VolumesDatasets.volume_types())
-    @tags('smoke')
+    @tags('volumes', 'smoke')
     def ddtest_create_minimum_size_default_volume(
             self, volume_type_name, volume_type_id):
 
