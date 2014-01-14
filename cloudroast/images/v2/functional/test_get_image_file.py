@@ -14,31 +14,24 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import cStringIO as StringIO
-
 from cafe.drivers.unittest.decorators import tags
 from cloudroast.images.fixtures import ImagesFixture
 
 
 class TestGetImageFile(ImagesFixture):
 
-    @tags(type='positive')
+    @tags(type='positive', regression='true')
     def test_get_image_file(self):
         """
         @summary: Get image file
 
-        1) Create image
-        2) Store image file
-        3) Verify that the response code is 204
-        4) Get image file
-        5) Verify that the response code is 200
-        6) Verify that the image file contains the correct data
+        1) Create import task to import new image containing data file
+        2) Get image file
+        3) Verify that the response code is 200
+        4) Verify that the image file contains the correct data
         """
 
-        file_data = StringIO.StringIO(('*' * 1024))
-        image = self.images_behavior.create_new_image()
-        response = self.images_client.store_image_file(image.id_, file_data)
-        self.assertEqual(response.status_code, 204)
-        response = self.images_client.get_image_file(image.id_)
+        task = self.images_behavior.create_new_task()
+        response = self.images_client.get_image_file(task.result.image_id)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.content, '*' * 1024)
+        self.assertEqual(response.content, self.test_file)
