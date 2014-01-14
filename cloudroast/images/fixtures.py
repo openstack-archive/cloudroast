@@ -125,6 +125,7 @@ class ImagesFixture(BaseTestFixture):
         cls.import_from = cls.images_config.import_from
         cls.import_from_format = cls.images_config.import_from_format
         cls.max_updated_at_delta = cls.images_config.max_updated_at_delta
+        cls.test_file = open(cls.images_config.test_file).read().rstrip()
 
         cls.image_schema_json = (
             open(cls.images_config.image_schema_json).read().rstrip())
