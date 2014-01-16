@@ -42,7 +42,8 @@ class TestGetImages(ComputeIntegrationFixture):
         4) Verify that the created images are in the list of images
         """
 
-        images = self.images_behavior.list_images_pagination()
+        owner = self.tenant_id
+        images = self.images_behavior.list_images_pagination(owner=owner)
         self.assertNotEqual(len(images), 0)
         self.assertIn(self.images.pop(), images)
         self.assertIn(self.images.pop(), images)
