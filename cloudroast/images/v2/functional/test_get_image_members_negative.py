@@ -15,7 +15,6 @@ limitations under the License.
 """
 
 from cafe.drivers.unittest.decorators import tags
-from cloudcafe.images.common.types import ImageVisibility
 from cloudroast.images.fixtures import ImagesFixture
 
 
@@ -30,8 +29,8 @@ class TestGetImageMembersNegative(ImagesFixture):
          2) Verify that the response code is 404
         """
 
-        id = 'invalid'
-        response = self.images_client.list_members(id)
+        image_id = 'invalid'
+        response = self.images_client.list_members(image_id)
         self.assertEqual(response.status_code, 404)
 
     @tags(type='negative', regression='true')
@@ -43,11 +42,11 @@ class TestGetImageMembersNegative(ImagesFixture):
          2) Verify that the response code is 404
         """
 
-        id = ''
-        response = self.images_client.list_members(id)
+        image_id = ''
+        response = self.images_client.list_members(image_id)
         self.assertEqual(response.status_code, 404)
 
-    @tags(type='negative', regression='true')
+    @tags(type='negative', regression='true', test='testtest')
     def test_get_image_members_using_deleted_image(self):
         """
         @summary: Get image members using deleted image
@@ -61,9 +60,8 @@ class TestGetImageMembersNegative(ImagesFixture):
         7) Verify that the response code is 404
         """
 
-        member_id = self.alt_user_config.tenant_id
-        image = self.images_behavior.create_new_image(
-            visibility=ImageVisibility.PRIVATE)
+        member_id = self.alt_tenant_id
+        image = self.images_behavior.create_new_image()
         response = self.images_client.add_member(image.id_, member_id)
         self.assertEqual(response.status_code, 200)
         response = self.images_client.delete_image(image.id_)
@@ -81,7 +79,6 @@ class TestGetImageMembersNegative(ImagesFixture):
         3) Verify that the response code is 403
         """
 
-        image = self.images_behavior.create_new_image(
-            visibility=ImageVisibility.PRIVATE)
+        image = self.images_behavior.create_new_image()
         response = self.alt_images_client.list_members(image.id_)
         self.assertEqual(response.status_code, 404)
