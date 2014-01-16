@@ -14,6 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import unittest2 as unittest
+
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.images.common.types import ImageMemberStatus, ImageVisibility
 from cloudroast.images.fixtures import ImagesFixture
@@ -21,30 +23,33 @@ from cloudroast.images.fixtures import ImagesFixture
 
 class ImageVisibilityLifeCycleTest(ImagesFixture):
 
+    @unittest.skip('Bug, Redmine #4337')
     @tags(type='positive', regression='true')
     def test_image_visibility_life_cycle(self):
         """
         @summary: Image Visibility Life Cycle
 
-        1. Register an image as tenant
-        2. Verify that image's visibility is private (set by default)
-        3. Verify that tenant can get the image
-        4. Verify that alternative tenant (a non-member) cannot get the image
-        5. Add alternative tenant as a member of the image
-        6. Verify that alternative tenant cannot get the image
-        7. Verify that tenant cannot remove image visibility
-        8. Verify that alternative tenant cannot update image's visibility
-        9. Verify that tenant cannot update image's visibility
-            to an invalid state
-        10. Update image visibility to 'public' as tenant
-        11. Verify that a member (third_tenant) cannot be added to the image
-        12. Update image visibility back to 'private'
+        1) Create an image as tenant
+        2) Verify that image's visibility is private (set by default)
+        3) Verify that tenant can get the image
+        4) Verify that alternate tenant (a non-member) cannot get the image
+        5) List images as alternate tenant
+        6) Verify that the returned list of images does not contain image
+        7) Add alternate tenant as a member of the image
+        8) Verify that alternate tenant now get the image
+        9) List images as alternate tenant
+        10) Verify that the returned list of images does not contain image
+        11) Verify that tenant cannot remove image visibility
+        12) Verify that alternate tenant cannot update image's visibility
+        13) Update membership of alternate tenant to 'Accepted' for image
+        14) Verify that alternate tenant (now a member) can still get the image
+        15) List images as alternate tenant
+        16) Verify that the returned list of images now contains image
         """
 
-        image = self.images_behavior.create_new_image()
-        alt_tenant_id = self.alt_user_config.tenant_id
-        third_tenant_id = self.third_user_config.tenant_id
+        alt_tenant_id = self.alt_tenant_id
 
+        image = self.images_behavior.create_new_image()
         self.assertEqual(image.visibility, ImageVisibility.PRIVATE)
 
         response = self.images_client.get_image(image_id=image.id_)
@@ -55,6 +60,9 @@ class ImageVisibilityLifeCycleTest(ImagesFixture):
         response = self.alt_images_client.get_image(image_id=image.id_)
         self.assertEqual(response.status_code, 404)
 
+        images = self.alt_images_behavior.list_images_pagination()
+        self.assertNotIn(image, images)
+
         response = self.images_client.add_member(
             image_id=image.id_, member_id=alt_tenant_id)
         self.assertEqual(response.status_code, 200)
@@ -63,7 +71,10 @@ class ImageVisibilityLifeCycleTest(ImagesFixture):
         self.assertEqual(member.status, ImageMemberStatus.PENDING)
 
         response = self.alt_images_client.get_image(image_id=image.id_)
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 200)
+
+        images = self.alt_images_behavior.list_images_pagination()
+        self.assertNotIn(image, images)
 
         response = self.images_client.update_image(
             image_id=image.id_, remove={"visibility": ImageVisibility.PUBLIC})
@@ -77,21 +88,18 @@ class ImageVisibilityLifeCycleTest(ImagesFixture):
             image_id=image.id_, replace={"visibility": "INVALID_VISIBILITY"})
         self.assertEqual(response.status_code, 400)
 
-        response = self.images_client.update_image(
-            image_id=image.id_, replace={"visibility": ImageVisibility.PUBLIC})
+        response = self.alt_images_client.update_member(
+            image_id=image.id_, member_id=alt_tenant_id,
+            status=ImageMemberStatus.ACCEPTED)
         self.assertEqual(response.status_code, 200)
-        public_image = response.entity
-        self.assertEqual(public_image.id_, image.id_)
-        self.assertEqual(public_image.visibility, ImageVisibility.PUBLIC)
+        member = response.entity
+        self.assertEqual(member.member_id, alt_tenant_id)
+        self.assertEqual(member.status, ImageMemberStatus.ACCEPTED)
 
-        response = self.images_client.add_member(
-            image_id=image.id_, member_id=third_tenant_id)
-        self.assertEqual(response.status_code, 403)
-
-        response = self.images_client.update_image(
-            image_id=image.id_,
-            replace={"visibility": ImageVisibility.PRIVATE})
+        response = self.alt_images_client.get_image(image_id=image.id_)
         self.assertEqual(response.status_code, 200)
-        private_image = response.entity
-        self.assertEqual(private_image.id_, image.id_)
-        self.assertEqual(private_image.visibility, ImageVisibility.PRIVATE)
+        get_image = response.entity
+        self.assertEqual(get_image, image)
+
+        images = self.alt_images_behavior.list_images_pagination()
+        self.assertIn(image, images)
