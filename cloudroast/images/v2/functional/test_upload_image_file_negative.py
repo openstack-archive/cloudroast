@@ -14,28 +14,36 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import StringIO
+import cStringIO as StringIO
+import unittest2 as unittest
 
 from cafe.drivers.unittest.decorators import tags
-from cloudcafe.images.common.types import ImageStatus
+from cloudcafe.images.common.types import (
+    ImageContainerFormat, ImageDiskFormat, ImageStatus)
+from cloudcafe.images.config import ImagesConfig
 from cloudroast.images.fixtures import ImagesFixture
 
+images_config = ImagesConfig()
+internal_url = images_config.internal_url
 
+
+@unittest.skipIf(internal_url is None,
+                ('The internal_url property is None, test can only be '
+                 'executed against internal Glance nodes'))
 class UploadImageFileNegativeTest(ImagesFixture):
 
     @classmethod
     def setUpClass(cls):
         super(UploadImageFileNegativeTest, cls).setUpClass()
-        cls.image = cls.images_behavior.create_new_image()
+        response = cls.images_client.create_image(
+            container_format=ImageContainerFormat.BARE,
+            disk_format=ImageDiskFormat.RAW)
+        cls.image = response.entity
+        cls.resources.add(cls.image.id_, cls.images_client.delete_image)
         cls.data_size = 1024
         cls.file_data = StringIO.StringIO("*" * cls.data_size)
 
-    @classmethod
-    def tearDownClass(cls):
-        super(UploadImageFileNegativeTest, cls).tearDownClass()
-        cls.images_behavior.resources.release()
-
-    @tags(type='negative', regression='true')
+    @tags(type='negative', regression='true', internal='true')
     def test_upload_image_file_with_invalid_content_type(self):
         """
         @summary: Upload image file with invalid content type
@@ -57,7 +65,7 @@ class UploadImageFileNegativeTest(ImagesFixture):
             content_type="invalid_content_type")
         self.assertEqual(response.status_code, 415)
 
-    @tags(type='negative', regression='true')
+    @tags(type='negative', regression='true', internal='true')
     def test_upload_image_file_with_blank_image_id(self):
         """
         @summary: Upload image file with blank image id
@@ -71,7 +79,7 @@ class UploadImageFileNegativeTest(ImagesFixture):
             image_id="", file_data=self.file_data)
         self.assertEqual(response.status_code, 404)
 
-    @tags(type='negative', regression='true')
+    @tags(type='negative', regression='true', internal='true')
     def test_upload_image_file_with_invalid_image_id(self):
         """
         @summary: Upload image file with invalid image id
@@ -85,7 +93,8 @@ class UploadImageFileNegativeTest(ImagesFixture):
             image_id="invalid_id", file_data=self.file_data)
         self.assertEqual(response.status_code, 404)
 
-    @tags(type='negative', regression='true')
+    @unittest.skip('Bug, Redmine #3556')
+    @tags(type='negative', regression='true', internal='true')
     def test_upload_image_file_with_duplicate_data(self):
         """
         @summary: Upload image file with duplicate data
@@ -121,8 +130,7 @@ class UploadImageFileNegativeTest(ImagesFixture):
         self.assertEqual(uploaded_image.size, self.data_size)
         self.assertIsNotNone(uploaded_image.checksum)
 
-        duplicate_file = StringIO.StringIO("*" * self.data_size)
         response = self.images_client.store_image_file(
             image_id=self.image.id_,
-            file_data=duplicate_file)
+            file_data=file_data)
         self.assertEqual(response.status_code, 409)
