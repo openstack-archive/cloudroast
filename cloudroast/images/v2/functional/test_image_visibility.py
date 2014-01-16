@@ -46,7 +46,7 @@ class TestImageVisibility(ImagesFixture):
         16) Verify that image X is still present
         """
 
-        member_id = self.alt_user_config.tenant_id
+        member_id = self.alt_tenant_id
 
         image = self.images_behavior.create_new_image()
 

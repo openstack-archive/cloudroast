@@ -15,35 +15,73 @@ limitations under the License.
 """
 
 from cafe.drivers.unittest.decorators import tags
-from cloudcafe.images.common.types import TaskStatus
+from cloudcafe.common.tools.datagen import rand_name
+from cloudcafe.images.common.types import TaskStatus, TaskTypes
 from cloudroast.images.fixtures import ImagesFixture
 
 
 class TestGetTask(ImagesFixture):
-
-    @classmethod
-    def setUpClass(cls):
-        super(TestGetTask, cls).setUpClass()
-        cls.tasks = cls.images_behavior.create_new_tasks(count=2)
 
     @tags(type='smoke')
     def test_get_task(self):
         """
         @summary: Get task
 
-        1) Given a created task, get task
-        2) Verify that the response code is 200
-        3) Verify that the task contains the expected data
+        1) Create task
+        2) Get task
+        3) Verify that the response code is 200
+        4) Verify that the task contains the expected data
         """
 
-        task = self.tasks.pop()
+        task = self.images_behavior.create_new_task()
 
         response = self.images_client.get_task(task.id_)
         self.assertEqual(response.status_code, 200)
-
         get_task = response.entity
 
         self._validate_get_task_response(task, get_task)
+
+    @tags(type='positive', regression='true')
+    def test_get_import_task_with_metadata(self):
+        """
+        @summary: Get task for import task with metadata
+
+        1) Create import task with name in image properties
+        2) Verify that the response code is 201
+        3) Verify that the task's image properties contain the name
+        4) Verify that the generic task properties are returned correctly
+        5) Wait for the task to successfully complete
+        6) Get task
+        7) Verify that the response code is 200
+        8) Verify that the task's image properties contain the name again
+        """
+
+        name = rand_name('image_name')
+        metadata = rand_name('image_metadata')
+        input_ = {'image_properties': {'name': name, 'metadata': metadata},
+                  'import_from': self.import_from,
+                  'import_from_format': self.import_from_format}
+
+        response = self.images_client.create_task(
+            input_=input_, type_=TaskTypes.IMPORT)
+        self.assertEqual(response.status_code, 201)
+
+        created_task = response.entity
+        self.assertEqual(created_task.input_.image_properties,
+                         {'name': name, 'metadata': metadata})
+
+        errors = self.images_behavior.validate_task(created_task)
+        self.assertListEqual(errors, [])
+
+        self.images_behavior.wait_for_task_status(
+            created_task.id_, TaskStatus.SUCCESS)
+
+        response = self.images_client.get_task(created_task.id_)
+        self.assertEqual(response.status_code, 200)
+
+        get_task = response.entity
+        self.assertEqual(get_task.input_.image_properties,
+                         {'name': name, 'metadata': metadata})
 
     def _validate_get_task_response(self, task, get_task):
         """@summary: Validate that the task and get_task responses match"""
