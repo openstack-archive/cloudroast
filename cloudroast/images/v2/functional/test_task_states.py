@@ -14,7 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import unittest2 as unittest
+import calendar
+import time
 
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.images.common.types import TaskStatus, TaskTypes
@@ -24,7 +25,6 @@ from cloudroast.images.fixtures import ImagesFixture
 class TestTaskStates(ImagesFixture):
 
     @tags(type='positive', regression='true')
-    @unittest.skip('Bug, Redmine #4226')
     def test_import_task_states(self):
         """
         @summary: Import task states - pending, processing, success
@@ -47,6 +47,7 @@ class TestTaskStates(ImagesFixture):
 
         response = self.images_client.create_task(
             input_=input_, type_=TaskTypes.IMPORT)
+        task_creation_time_in_sec = calendar.timegm(time.gmtime())
         self.assertEqual(response.status_code, 201)
 
         task = response.entity
@@ -57,10 +58,17 @@ class TestTaskStates(ImagesFixture):
         task = self.images_behavior.wait_for_task_status(
             task.id_, TaskStatus.SUCCESS)
 
+        get_expires_at_delta = self.images_behavior.get_creation_delta(
+            task_creation_time_in_sec, task.expires_at)
+
         errors = self.images_behavior.validate_task(task)
+        if get_expires_at_delta > self.max_expires_at_delta:
+            errors.append(self.error_msg.format(
+                'expires_at delta', self.max_expires_at_delta,
+                get_expires_at_delta))
         if self.id_regex.match(task.result.image_id) is None:
             errors.append(self.error_msg.format(
-                'image_id', not None,
+                'image_id', 'not None',
                 self.id_regex.match(task.result.image_id)))
         if task.message is not None:
             errors.append(self.error_msg.format(

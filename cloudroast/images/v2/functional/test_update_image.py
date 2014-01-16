@@ -16,8 +16,7 @@ limitations under the License.
 
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.common.tools.datagen import rand_name
-from cloudcafe.images.common.types import \
-    ImageContainerFormat, ImageDiskFormat, ImageVisibility
+from cloudcafe.images.common.types import ImageContainerFormat, ImageDiskFormat
 from cloudroast.images.fixtures import ComputeIntegrationFixture
 
 
@@ -47,7 +46,6 @@ class TestUpdateImage(ComputeIntegrationFixture):
         updated_disk_format = ImageDiskFormat.ISO
         updated_name = rand_name('updated_image')
         updated_tags = rand_name('updated_tag')
-        updated_visibility = ImageVisibility.PRIVATE
         errors = []
         image = self.image
         response = self.images_client.update_image(
@@ -55,8 +53,7 @@ class TestUpdateImage(ComputeIntegrationFixture):
                                 'disk_format': updated_disk_format,
                                 'name': updated_name,
                                 'protected': True,
-                                'tags': [updated_tags],
-                                'visibility': updated_visibility})
+                                'tags': [updated_tags]})
         self.assertEqual(response.status_code, 200)
         updated_image = response.entity
         attributes = ['checksum', 'created_at', 'file_', 'id_', 'min_disk',
