@@ -16,7 +16,6 @@ limitations under the License.
 
 import calendar
 import time
-import unittest2 as unittest
 
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.images.common.types import TaskStatus, TaskTypes
@@ -26,7 +25,6 @@ from cloudroast.images.fixtures import ImagesFixture
 class TestCreateImportTask(ImagesFixture):
 
     @tags(type='smoke')
-    @unittest.skip('Bug, Redmine #4241')
     def test_create_import_task(self):
         """
         @summary: Create import task

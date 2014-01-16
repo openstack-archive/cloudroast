@@ -13,12 +13,18 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-import StringIO
+
+import cStringIO as StringIO
+import unittest2 as unittest
 
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.images.common.types import ImageStatus
+from cloudcafe.images.config import ImagesConfig
 from cloudroast.images.fixtures import ImagesFixture
+
+images_config = ImagesConfig()
+internal_url = images_config.internal_url
 
 
 class TestUpdateImageNegative(ImagesFixture):
@@ -121,14 +127,10 @@ class TestUpdateImageNegative(ImagesFixture):
 
         self._validate_update_image_with_negative_value('invalid')
 
-    def _validate_update_image_with_negative_value(self, image_id):
-        """@summary: Update negative image"""
-
-        response = self.images_client.update_image(
-            image_id, add={'new_prop': rand_name('new_prop_value')})
-        self.assertEqual(response.status_code, 404)
-
-    @tags(type='negative', regression='true')
+    @unittest.skipIf(internal_url is None,
+                    ('The internal_url property is None, test can only be '
+                     'executed against internal Glance nodes'))
+    @tags(type='negative', regression='true', internal='true')
     def test_ensure_location_of_active_image_cannot_be_updated(self):
         """
         @summary: Ensure location of active image cannot be updated
@@ -165,3 +167,10 @@ class TestUpdateImageNegative(ImagesFixture):
         self.assertEqual(response.status_code, 200)
         updated_image = response.entity
         self.assertEqual(updated_image.file_, image.file_)
+
+    def _validate_update_image_with_negative_value(self, image_id):
+        """@summary: Update negative image"""
+
+        response = self.images_client.update_image(
+            image_id, add={'new_prop': rand_name('new_prop_value')})
+        self.assertEqual(response.status_code, 404)
