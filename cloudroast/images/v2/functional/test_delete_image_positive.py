@@ -14,11 +14,16 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import StringIO
+import cStringIO as StringIO
+import unittest2 as unittest
 
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.images.common.types import ImageVisibility, ImageStatus
+from cloudcafe.images.config import ImagesConfig
 from cloudroast.images.fixtures import ImagesFixture
+
+images_config = ImagesConfig()
+internal_url = images_config.internal_url
 
 
 class TestDeleteImagePositive(ImagesFixture):
@@ -36,21 +41,22 @@ class TestDeleteImagePositive(ImagesFixture):
         6) Verify that the response code is 404
         """
 
-        member_id = self.alt_user_config.tenant_id
-        image = self.images_behavior.create_new_image(
-            visibility=ImageVisibility.PRIVATE)
+        member_id = self.alt_tenant_id
+        image = self.images_behavior.create_new_image()
         self.images_client.add_member(image.id_, member_id)
         response = self.images_client.delete_image(image.id_)
         self.assertEqual(response.status_code, 204)
         response = self.alt_images_client.get_image(image.id_)
         self.assertEqual(response.status_code, 404)
 
-    @tags(type='positive', regression='true')
+    @unittest.skip(
+        'Required user to verify this functionality not currently available')
+    @tags(type='positive', regression='true', internal='true')
     def test_delete_image_that_is_public(self):
         """
         @summary: Delete image that is public
 
-        1) Create image that is public
+        1) Create image that is public as glance superuser
         2) Delete image as alternate tenant that is not a member of the image
         3) Verify that the response code is 403
         4) Get image
@@ -70,21 +76,24 @@ class TestDeleteImagePositive(ImagesFixture):
         self.assertListEqual(error_list, [])
         self.assertEqual(get_image.status, image.status)
 
+    @unittest.skipIf(internal_url is None,
+                    ('The internal_url property is None, test can only be '
+                     'executed against internal Glance nodes'))
     @tags(type='positive', regression='true')
     def test_delete_image_with_binary_data(self):
         """
         @summary: Delete image with binary data
 
-        1. Create image
-        2. Upload image file
-        3. Verify that the response is 204
-        4. Get active image
-        5. Verify that the response contains an image entity
+        1) Create image
+        2) Upload image file
+        3) Verify that the response is 204
+        4) Get active image
+        5) Verify that the response contains an image entity
         with correct properties
-        6. Delete active image
-        7. Verify that the response code is 204
-        8. Get deleted image
-        9. Verify that the response code is 404
+        6) Delete active image
+        7) Verify that the response code is 204
+        8) Get deleted image
+        9) Verify that the response code is 404
         """
 
         file_data = StringIO.StringIO(('*' * 1024))
