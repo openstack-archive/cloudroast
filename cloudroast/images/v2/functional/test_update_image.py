@@ -16,19 +16,11 @@ limitations under the License.
 
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.common.tools.datagen import rand_name
-from cloudcafe.images.common.types import \
-    ImageContainerFormat, ImageDiskFormat, ImageVisibility
-from cloudroast.images.fixtures import ComputeIntegrationFixture
+from cloudcafe.images.common.types import ImageContainerFormat, ImageDiskFormat
+from cloudroast.images.fixtures import ImagesFixture
 
 
-class TestUpdateImage(ComputeIntegrationFixture):
-
-    @classmethod
-    def setUpClass(cls):
-        super(TestUpdateImage, cls).setUpClass()
-        server = cls.server_behaviors.create_active_server().entity
-        image = cls.compute_image_behaviors.create_active_image(server.id)
-        cls.image = cls.images_client.get_image(image.entity.id).entity
+class TestUpdateImage(ImagesFixture):
 
     @tags(type='smoke')
     def test_update_image_replace_core_properties(self):
@@ -47,16 +39,14 @@ class TestUpdateImage(ComputeIntegrationFixture):
         updated_disk_format = ImageDiskFormat.ISO
         updated_name = rand_name('updated_image')
         updated_tags = rand_name('updated_tag')
-        updated_visibility = ImageVisibility.PRIVATE
         errors = []
-        image = self.image
+        image = self.images_behavior.create_new_image()
         response = self.images_client.update_image(
             image.id_, replace={'container_format': updated_container_format,
                                 'disk_format': updated_disk_format,
                                 'name': updated_name,
                                 'protected': True,
-                                'tags': [updated_tags],
-                                'visibility': updated_visibility})
+                                'tags': [updated_tags]})
         self.assertEqual(response.status_code, 200)
         updated_image = response.entity
         attributes = ['checksum', 'created_at', 'file_', 'id_', 'min_disk',

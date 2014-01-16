@@ -14,6 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import unittest2 as unittest
+
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.images.common.types import TaskTypes
 from cloudroast.images.fixtures import ImagesFixture
@@ -47,12 +49,13 @@ class TestGetTasks(ImagesFixture):
         self.assertNotEqual(len(get_tasks), 0)
 
         for task in get_tasks:
-            self.assertEqual(task.owner, self.user_config.tenant_id)
+            self.assertEqual(task.owner, self.tenant_id)
             if (task.id_ == first_task.id_ or task.id_ == second_task.id_):
                 created_tasks.append(task)
 
         self.assertEqual(len(created_tasks), count)
 
+    @unittest.skip('Bug, Redmine #4727')
     @tags(type='positive', regression='true')
     def test_get_tasks_filter_type(self):
         """
@@ -71,5 +74,5 @@ class TestGetTasks(ImagesFixture):
         self.assertNotEqual(len(get_tasks), 0)
 
         for task in get_tasks:
-            self.assertEqual(task.owner, self.user_config.tenant_id)
+            self.assertEqual(task.owner, self.tenant_id)
             self.assertEqual(task.type_, TaskTypes.IMPORT)

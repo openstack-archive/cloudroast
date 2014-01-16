@@ -15,17 +15,10 @@ limitations under the License.
 """
 
 from cafe.drivers.unittest.decorators import tags
-from cloudroast.images.fixtures import ComputeIntegrationFixture
+from cloudroast.images.fixtures import ImagesFixture
 
 
-class TestDeleteImageMember(ComputeIntegrationFixture):
-
-    @classmethod
-    def setUpClass(cls):
-        super(TestDeleteImageMember, cls).setUpClass()
-        server = cls.server_behaviors.create_active_server().entity
-        image = cls.compute_image_behaviors.create_active_image(server.id)
-        cls.image = cls.images_client.get_image(image.entity.id).entity
+class TestDeleteImageMember(ImagesFixture):
 
     @tags(type='smoke')
     def test_delete_image_member(self):
@@ -45,8 +38,8 @@ class TestDeleteImageMember(ComputeIntegrationFixture):
         11) Verify that the image member is not in the list of image members
         """
 
-        member_id = self.alt_user_config.tenant_id
-        image = self.image
+        member_id = self.alt_tenant_id
+        image = self.images_behavior.create_new_image()
         response = self.images_client.add_member(image.id_, member_id)
         self.assertEqual(response.status_code, 200)
         response = self.images_client.list_members(image.id_)
