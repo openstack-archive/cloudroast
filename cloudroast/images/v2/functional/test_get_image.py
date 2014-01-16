@@ -15,6 +15,7 @@ limitations under the License.
 """
 
 from cafe.drivers.unittest.decorators import tags
+from cloudcafe.images.common.types import ImageType
 from cloudroast.images.fixtures import ComputeIntegrationFixture
 
 
@@ -49,6 +50,30 @@ class TestGetImage(ComputeIntegrationFixture):
         self._validate_get_image(image, get_image)
 
     @tags(type='positive', regression='true')
+    def test_get_image_after_successful_import(self):
+        """
+        @summary: Get image after successful import
+
+        1) Create import task
+        2) From the successful import task, get image
+        3) Verify that the response code is 200
+        4) Verify that the response contains the correct properties
+        """
+
+        task = self.images_behavior.create_new_task()
+        image_id = task.result.image_id
+
+        response = self.images_client.get_image(image_id)
+        self.assertEqual(response.status_code, 200)
+        get_image = response.entity
+
+        errors = self.images_behavior.validate_image(get_image)
+        if get_image.image_type != ImageType.IMPORT:
+            errors.append(self.error_msg.format(
+                'image_type', ImageType.IMPORT, get_image.image_type))
+        self.assertEqual(errors, [])
+
+    @tags(type='positive', regression='true')
     def test_get_image_as_member_of_shared_image(self):
         """
         @summary: Get image as member of shared image
@@ -62,7 +87,7 @@ class TestGetImage(ComputeIntegrationFixture):
          the original tenant
         """
 
-        member_id = self.alt_user_config.tenant_id
+        member_id = self.alt_tenant_id
         image = self.images.pop()
         response = self.images_client.add_member(image.id_, member_id)
         self.assertEqual(response.status_code, 200)
@@ -94,6 +119,9 @@ class TestGetImage(ComputeIntegrationFixture):
         if image.id_ != get_image.id_:
             errors.append(self.error_msg.format(
                 'id_', image.id_, get_image.id_))
+        if image.image_type != get_image.image_type:
+            errors.append(self.error_msg.format(
+                'image_type', image.image_type, get_image.image_type))
         if image.min_disk != get_image.min_disk:
             errors.append(self.error_msg.format(
                 'min_disk', image.min_disk, get_image.min_disk))
