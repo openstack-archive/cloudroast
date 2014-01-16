@@ -14,16 +14,25 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import StringIO
+import cStringIO as StringIO
+import unittest2 as unittest
 
 from cafe.drivers.unittest.decorators import tags
+from cloudcafe.images.config import ImagesConfig
 from cloudroast.images.fixtures import ImagesFixture
 
+images_config = ImagesConfig()
+internal_url = images_config.internal_url
 
+
+@unittest.skipIf(internal_url is None,
+                ('The internal_url property is None, test can only be '
+                 'executed against internal Glance nodes'))
 class GetImageFileNegativeTest(ImagesFixture):
 
     @classmethod
     def setUpClass(cls):
+        super(GetImageFileNegativeTest, cls).setUpClass()
         cls.image = cls.images_behavior.create_new_image()
 
     @tags(type='negative', regression='true')
@@ -32,7 +41,7 @@ class GetImageFileNegativeTest(ImagesFixture):
         @summary: Get image file using blank image id
 
         1. Create an image
-        2. Upload image file
+        2. Store image file
         3. Verify that the response code is 204
         4. Get image file using a blank image id
         5. Verify that the response code is 404
@@ -49,7 +58,7 @@ class GetImageFileNegativeTest(ImagesFixture):
         @summary: Get image file using invalid image id
 
         1. Create an image
-        2. Upload image file
+        2. Store image file
         3. Verify that the response code is 204
         4. Get image file using an invalid image id
         5. Verify that the response code is 404
@@ -80,7 +89,7 @@ class GetImageFileNegativeTest(ImagesFixture):
         @summary: Get image file as a non member of the image
 
         1. Create an image as tenant
-        2. Upload image file as tenant
+        2. Store image file as tenant
         3. Verify that the response code is 204
         4. Get image file using as an alternative tenant
         5. Verify that the response code is 404
