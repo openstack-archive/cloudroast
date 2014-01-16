@@ -32,15 +32,22 @@ class TestGetImageMembers(ComputeIntegrationFixture):
         """
         @summary: Get image members
 
-        1) Given a previously created image, add image member
+        1) Given a previously created image, list image members
         2) Verify that the response code is 200
-        3) Get image members
-        4) Verify that the response code is 200
-        5) Verify that the response contains the correct properties for the
+        3) Verify that list of member is empty
+        4) Add image member
+        5) Verify that the response code is 200
+        6) Get image members
+        7) Verify that the response code is 200
+        8) Verify that the response contains the correct properties for the
         member
         """
 
-        member_id = self.alt_user_config.tenant_id
+        member_id = self.alt_tenant_id
+        response = self.images_client.list_members(self.image.id_)
+        self.assertEqual(response.status_code, 200)
+        members = response.entity
+        self.assertEqual(len(members), 0)
         response = self.images_client.add_member(self.image.id_, member_id)
         self.assertEqual(response.status_code, 200)
         member = response.entity
