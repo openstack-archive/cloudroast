@@ -23,8 +23,8 @@ from cloudroast.images.fixtures import ImagesFixture
 
 class TestTaskStates(ImagesFixture):
 
+    @unittest.skip('Bug, Redmine #4372')
     @tags(type='positive', regression='true')
-    @unittest.skip('Bug, Redmine #4226')
     def test_import_task_states(self):
         """
         @summary: Import task states - pending, processing, success
