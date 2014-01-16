@@ -13,8 +13,8 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-import StringIO
 
+import cStringIO as StringIO
 import re
 
 from cafe.drivers.unittest.fixtures import BaseTestFixture
@@ -23,18 +23,23 @@ from cloudcafe.auth.provider import AuthProvider
 from cloudcafe.common.resources import ResourcePool
 from cloudcafe.compute.config import ComputeEndpointConfig
 from cloudcafe.compute.flavors_api.config import FlavorsConfig
-from cloudcafe.compute.images_api.behaviors import \
-    ImageBehaviors as ComputeImageBehaviors
-from cloudcafe.compute.images_api.client import \
-    ImagesClient as ComputeImagesClient
+from cloudcafe.compute.images_api.behaviors import (
+    ImageBehaviors as ComputeImageBehaviors)
+from cloudcafe.compute.images_api.client import (
+    ImagesClient as ComputeImagesClient)
 from cloudcafe.compute.servers_api.behaviors import ServerBehaviors
 from cloudcafe.compute.servers_api.client import ServersClient
 from cloudcafe.compute.servers_api.config import ServersConfig
 from cloudcafe.images.common.constants import ImageProperties, Messages
-from cloudcafe.images.config import AdminUserConfig, AltUserConfig, \
-    ImagesConfig, MarshallingConfig, ThirdUserConfig
+from cloudcafe.images.config import (
+    AltUserConfig, ImagesConfig, MarshallingConfig, ThirdUserConfig)
 from cloudcafe.images.v2.behaviors import ImagesBehaviors
 from cloudcafe.images.v2.client import ImagesClient
+from cloudcafe.objectstorage.config import ObjectStorageConfig
+from cloudcafe.objectstorage.objectstorage_api.client import (
+    ObjectStorageAPIClient)
+from cloudcafe.objectstorage.objectstorage_api.config import (
+    ObjectStorageAPIConfig)
 
 
 class ImagesFixture(BaseTestFixture):
@@ -55,9 +60,6 @@ class ImagesFixture(BaseTestFixture):
         cls.image_data = '*' * 1024
         cls.file_data = StringIO.StringIO(cls.image_data)
 
-        # TODO: Remove once import/export functionality is implemented
-        internal_url = cls.images_config.internal_url
-
         cls.access_data = AuthProvider.get_access_data(cls.endpoint_config,
                                                        cls.user_config)
         # If authentication fails, fail immediately
@@ -68,12 +70,6 @@ class ImagesFixture(BaseTestFixture):
                                                            cls.alt_user_config)
         # If authentication fails, fail immediately
         if cls.alt_access_data is None:
-            cls.assertClassSetupFailure('Authentication failed')
-
-        cls.admin_access_data = AuthProvider.get_access_data(None,
-                                                             AdminUserConfig())
-        # If authentication fails, fail immediately
-        if cls.admin_access_data is None:
             cls.assertClassSetupFailure('Authentication failed')
 
         cls.third_access_data = AuthProvider.get_access_data(
@@ -101,33 +97,32 @@ class ImagesFixture(BaseTestFixture):
             cls.url = cls.images_config.override_url
 
         cls.images_client = cls.generate_images_client(
-            cls.access_data, internal_url)
+            cls.access_data, cls.images_config.internal_url)
         cls.alt_images_client = cls.generate_images_client(
-            cls.alt_access_data, internal_url)
-        cls.admin_images_client = cls.generate_images_client(
-            cls.admin_access_data, internal_url)
+            cls.alt_access_data, cls.images_config.internal_url)
         cls.third_images_client = cls.generate_images_client(
-            cls.third_access_data, internal_url)
+            cls.third_access_data, cls.images_config.internal_url)
 
         cls.images_behavior = ImagesBehaviors(
             images_client=cls.images_client, images_config=cls.images_config)
         cls.alt_images_behavior = ImagesBehaviors(
             images_client=cls.alt_images_client,
             images_config=cls.images_config)
-        cls.admin_images_behavior = ImagesBehaviors(
-            images_client=cls.admin_images_client,
-            images_config=cls.images_config)
         cls.third_images_behavior = ImagesBehaviors(
             images_client=cls.third_images_client,
             images_config=cls.images_config)
 
-        cls.max_created_at_delta = cls.images_config.max_created_at_delta
         cls.error_msg = Messages.ERROR_MSG
-        cls.max_expires_at_delta = cls.images_config.max_expires_at_delta
+        cls.export_to = cls.images_config.export_to
         cls.id_regex = re.compile(ImageProperties.ID_REGEX)
         cls.import_from = cls.images_config.import_from
         cls.import_from_format = cls.images_config.import_from_format
+        cls.max_created_at_delta = cls.images_config.max_created_at_delta
+        cls.max_expires_at_delta = cls.images_config.max_expires_at_delta
         cls.max_updated_at_delta = cls.images_config.max_updated_at_delta
+        cls.tenant_id = cls.access_data.token.tenant.id_
+        cls.alt_tenant_id = cls.alt_access_data.token.tenant.id_
+        cls.third_tenant_id = cls.third_access_data.token.tenant.id_
         cls.test_file = open(cls.images_config.test_file).read().rstrip()
 
         cls.image_schema_json = (
@@ -143,13 +138,32 @@ class ImagesFixture(BaseTestFixture):
         cls.tasks_schema_json = (
             open(cls.images_config.tasks_schema_json).read().rstrip())
 
+        #may need to move some of this code to other sections of the setup or
+        #separate fixture even
+        cls.object_data = (
+            open(cls.images_config.object_data).read().rstrip())
+        cls.object_storage_config = ObjectStorageConfig()
+        cls.object_storage_api_config = ObjectStorageAPIConfig()
+        objectstorage_service = cls.access_data.get_service(
+            cls.object_storage_config.identity_service_name)
+        objectstorage_url_check = objectstorage_service.get_endpoint(
+            cls.object_storage_config.region)
+        # If endpoint validation fails, fail immediately
+        if objectstorage_url_check is None:
+            cls.assertClassSetupFailure('Endpoint validation failed')
+        cls.url = (images_service.get_endpoint(
+            cls.images_config.region).public_url)
+        cls.storage_url = objectstorage_service.get_endpoint(
+            cls.object_storage_config.region).public_url
+        cls.object_storage_client = ObjectStorageAPIClient(
+            cls.storage_url, cls.access_data.token.id_)
+
     @classmethod
     def tearDownClass(cls):
         super(ImagesFixture, cls).tearDownClass()
         cls.resources.release()
         cls.images_behavior.resources.release()
         cls.alt_images_behavior.resources.release()
-        cls.admin_images_behavior.resources.release()
         cls.third_images_behavior.resources.release()
 
     @classmethod

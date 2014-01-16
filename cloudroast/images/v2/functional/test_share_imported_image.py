@@ -40,7 +40,7 @@ class TestShareImportedImage(ComputeIntegrationFixture):
         11) Verify that the image is returned
         """
 
-        member_id = self.alt_user_config.tenant_id
+        member_id = self.alt_tenant_id
 
         task = self.images_behavior.create_new_task()
         image_id = task.result.image_id

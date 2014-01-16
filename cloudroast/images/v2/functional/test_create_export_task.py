@@ -19,28 +19,33 @@ import time
 
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.images.common.types import TaskStatus, TaskTypes
-from cloudroast.images.fixtures import ImagesFixture
+from cloudroast.images.fixtures import ComputeIntegrationFixture
 
 
-class TestCreateImportTask(ImagesFixture):
+class TestCreateExportTask(ComputeIntegrationFixture):
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestCreateExportTask, cls).setUpClass()
+        cls.images = cls.images_behavior.create_new_images(count=2)
 
     @tags(type='smoke')
-    def test_create_import_task(self):
+    def test_create_export_task(self):
         """
-        @summary: Create import task
+        @summary: Create export task
 
-        1) Create import task
+        1) Given a previously created image, create export task
         2) Verify that the response code is 201
         3) Wait for the task to complete successfully
         4) Verify that the task properties are returned correctly
         """
 
-        input_ = {'image_properties': {},
-                  'import_from': self.import_from,
-                  'import_from_format': self.import_from_format}
+        image = self.images.pop()
+        input_ = {'image_uuid': image.id_,
+                  'receiving_swift_container': self.export_to}
 
         response = self.images_client.create_task(
-            input_=input_, type_=TaskTypes.IMPORT)
+            input_=input_, type_=TaskTypes.EXPORT)
         task_creation_time_in_sec = calendar.timegm(time.gmtime())
         self.assertEqual(response.status_code, 201)
         task_id = response.entity.id_
@@ -51,42 +56,55 @@ class TestCreateImportTask(ImagesFixture):
         errors = self.images_behavior.validate_task(task)
 
         self._validate_specific_task_properties(
-            task, task_creation_time_in_sec)
+            image.id_, task, task_creation_time_in_sec)
 
         self.assertListEqual(errors, [])
 
     @tags(type='positive', regression='true')
-    def test_attempt_duplicate_import_task(self):
+    def test_attempt_duplicate_export_task(self):
         """
-        @summary: Attempt to create a duplicate of the same import task
+        @summary: Attempt to create a duplicate of the same export task
 
-        1) Create import task
+        1) Given a previous created image, create export task
         2) Verify that the response code is 201
         3) Wait for the task to complete successfully
-        4) Create another import task with the same input properties
+        4) Create another export task with the same input properties
         5) Verify that the response code is 201
-        6) Wait for the task to complete successfully
-        7) Verify that the first import task is not the same as the second
-        import task
+        6) Wait for the task to fail
+        7) Verify that the failed task contains the correct message
+        8) List files in the user's container
+        9) Verify that the response code is 200
+        9) Verify that only one image with the image name exists
         """
 
-        tasks = []
-        input_ = {'image_properties': {},
-                  'import_from': self.import_from,
-                  'import_from_format': self.import_from_format}
+        image = self.images.pop()
+        statuses = [TaskStatus.SUCCESS, TaskStatus.FAILURE]
+        input_ = {'image_uuid': image.id_,
+                  'receiving_swift_container': self.export_to}
+        exported_images = []
 
-        for i in range(2):
+        for status in statuses:
             response = self.images_client.create_task(
-                input_=input_, type_=TaskTypes.IMPORT)
+                input_=input_, type_=TaskTypes.EXPORT)
             self.assertEqual(response.status_code, 201)
             task_id = response.entity.id_
-            task = self.images_behavior.wait_for_task_status(
-                task_id, TaskStatus.SUCCESS)
-            tasks.append(task)
+            task = self.images_behavior.wait_for_task_status(task_id, status)
+            if status == TaskStatus.FAILURE:
+                self.assertEqual(
+                    task.message, 'Swift already has an object with id '
+                    '\'{0}\' in container \'{1}\''.
+                    format(image.id_, self.export_to))
 
-        self.assertNotEqual(tasks[0], tasks[1])
+        response = self.object_storage_client.list_objects(self.export_to)
+        self.assertEqual(response.status_code, 200)
+        objects = response.entity
 
-    def _validate_specific_task_properties(self, task,
+        for obj in objects:
+            if obj.name == image.id_:
+                exported_images.append(obj)
+        self.assertEqual(len(exported_images), 1)
+
+    def _validate_specific_task_properties(self, image_id, task,
                                            task_creation_time_in_sec):
         """
         @summary: Validate that the created task contains the expected
@@ -101,6 +119,7 @@ class TestCreateImportTask(ImagesFixture):
             task_creation_time_in_sec, task.updated_at)
         get_expires_at_delta = self.images_behavior.get_creation_delta(
             task_creation_time_in_sec, task.expires_at)
+        expected_location = '{0}/{1}'.format(self.export_to, image_id)
 
         if task.status != TaskStatus.SUCCESS:
             errors.append(self.error_msg.format(
@@ -113,29 +132,26 @@ class TestCreateImportTask(ImagesFixture):
             errors.append(self.error_msg.format(
                 'expires_at delta', self.max_expires_at_delta,
                 get_expires_at_delta))
-        if task.input_.image_properties != {}:
+        if task.input_.image_uuid != image_id:
             errors.append(self.error_msg.format(
-                'image_properties', 'not {}', task.input_.image_properties))
-        if task.input_.import_from != self.import_from:
+                'image_uuid', image_id, task.input_.image_uuid))
+        if task.input_.receiving_swift_container != self.export_to:
             errors.append(self.error_msg.format(
-                'import_from', self.import_from, task.input_.import_from))
-        if task.input_.import_from_format != self.import_from_format:
-            errors.append(self.error_msg.format(
-                'import_from_format', self.import_from_format,
-                task.input_.import_from_format))
+                'receiving_swift_container', self.export_to,
+                task.input_.receiving_swift_container))
         if get_updated_at_delta > self.max_updated_at_delta:
             errors.append(self.error_msg.format(
                 'updated_at delta', self.max_updated_at_delta,
                 get_updated_at_delta))
-        if task.type_ != TaskTypes.IMPORT:
+        if task.type_ != TaskTypes.EXPORT:
             errors.append(self.error_msg.format(
-                'type_', TaskTypes.IMPORT, task.type_))
+                'type_', TaskTypes.EXPORT, task.type_))
         if task.result is None:
             errors.append(self.error_msg.format('result', None, task.result))
-        if self.id_regex.match(task.result.image_id) is None:
+        if task.result.export_location != expected_location:
             errors.append(self.error_msg.format(
-                'image_id', not None,
-                self.id_regex.match(task.result.image_id)))
+                'export_location', expected_location,
+                task.result.export_location))
         if task.owner != self.tenant_id:
             errors.append(self.error_msg.format(
                 'owner', self.tenant_id, task.owner))
