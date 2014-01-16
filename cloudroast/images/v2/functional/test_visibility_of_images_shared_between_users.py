@@ -14,6 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import unittest2 as unittest
+
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.images.common.types import ImageMemberStatus, ImageVisibility
 from cloudroast.images.fixtures import ImagesFixture
@@ -21,47 +23,44 @@ from cloudroast.images.fixtures import ImagesFixture
 
 class VisibilityOfImagesSharedBetweenUsersTest(ImagesFixture):
 
+    @unittest.skip('Bug, Redmine #4337')
     @tags(type='positive', regression='true')
     def test_visibility_of_images_shared_between_users(self):
         """
-        @summary: Image visibility of available images to user.
+        @summary: Image visibility of available images to user
 
-        1. Register a public image (image_public) as tenant
-        2. Register another image (image_share_accept) as tenant
-        3. Register another image (image_share_reject) as tenant
-        4. Register another image (image_share_pending) as tenant
-        5. Register an image (alt_user_image) as alternative tenant
-        6. Register an image (third_user_image) as third tenant
-        7. Share image_share_accept with alternative tenant
-        8. Share image_share_reject with alternative tenant
-        9. Share image_share_pending with alternative tenant
-        10. Update alternative tenant membership status to 'accepted'
-            for image_share_accept
-        11. Update alternative tenant membership status to 'rejected'
-            for image_share_reject
-        12. Verify that alternative tenant images list contains alt_user_image
-            and image_public
-        13. Verify that alternative tenant images list does not contain
-            image_share_reject, image_share_pending and third_user_image
-        14. Verify that alternative tenant can access image_share_reject
-        15. Verify that alternative tenant can access image_share_pending
+        1) Create image (image_share_accept) as tenant
+        2) Create another image (image_share_reject) as tenant
+        3) Create another image (image_share_pending) as tenant
+        4) Create an image (alt_user_image) as alternative tenant
+        5) Create an image (third_user_image) as third tenant
+        6) Share image_share_accept with alternative tenant
+        7) Share image_share_reject with alternative tenant
+        8) Share image_share_pending with alternative tenant
+        9) Update alternative tenant membership status to 'accepted' for
+        image_share_accept
+        10) Update alternative tenant membership status to 'rejected' for
+        image_share_reject
+        11) Verify that alternative tenant images list contains alt_user_image
+        12) Verify that alternative tenant images list does not contain
+        image_share_reject, image_share_pending and third_user_image
+        13) Verify that alternative tenant can access image_share_reject
+        14) Verify that alternative tenant can access image_share_pending
         """
 
-        image_public = self.images_behavior.create_new_image(
-            visibility=ImageVisibility.PUBLIC)
+        alt_tenant_id = self.alt_user_config.tenant_id
 
-        image_share_accept = self.images_behavior.create_new_image()
-        image_share_reject = self.images_behavior.create_new_image()
-        image_share_pending = self.images_behavior.create_new_image()
+        images = self.images_behavior.create_new_images(count=3)
+        image_share_accept = images.pop()
+        image_share_reject = images.pop()
+        image_share_pending = images.pop()
         alt_user_image = self.alt_images_behavior.create_new_image()
         third_user_image = self.third_images_behavior.create_new_image()
-        alt_tenant_id = self.alt_access_data.token.tenant.id_
 
         for image_id in [image_share_accept.id_, image_share_reject.id_,
                          image_share_pending.id_]:
             response = self.images_client.add_member(
-                image_id=image_id,
-                member_id=alt_tenant_id)
+                image_id=image_id, member_id=alt_tenant_id)
             self.assertEqual(response.status_code, 200)
             member = response.entity
             self.assertEqual(member.member_id, alt_tenant_id)
@@ -83,7 +82,6 @@ class VisibilityOfImagesSharedBetweenUsersTest(ImagesFixture):
         self.assertEqual(response.status_code, 200)
         alt_user_images = response.entity
         self.assertIn(alt_user_image, alt_user_images)
-        self.assertIn(image_public, alt_user_images)
         self.assertIn(image_share_accept, alt_user_images)
         self.assertNotIn(image_share_reject, alt_user_images)
         self.assertNotIn(image_share_pending, alt_user_images)

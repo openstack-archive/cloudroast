@@ -18,8 +18,6 @@ import unittest2 as unittest
 
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.common.tools.datagen import rand_name
-from cloudcafe.images.common.types import \
-    ImageContainerFormat, ImageDiskFormat, ImageVisibility
 from cloudroast.images.fixtures import ImagesFixture
 
 
@@ -29,17 +27,11 @@ class TestGetImagesSort(ImagesFixture):
     def setUpClass(cls):
         super(TestGetImagesSort, cls).setUpClass()
         cls.image = cls.images_behavior.create_new_image(
-            container_format=ImageContainerFormat.OVF,
-            disk_format=ImageDiskFormat.VMDK, name=rand_name('image'),
-            visibility=ImageVisibility.PUBLIC)
+            image_properties={'name': rand_name('image')})
         cls.alt_image = cls.images_behavior.create_new_image(
-            container_format=ImageContainerFormat.ARI,
-            disk_format=ImageDiskFormat.QCOW2, name=rand_name('altimage'),
-            visibility=ImageVisibility.PRIVATE)
+            image_properties={'name': rand_name('altimage')})
         cls.third_image = cls.images_behavior.create_new_image(
-            container_format=ImageContainerFormat.ARI,
-            disk_format=ImageDiskFormat.QCOW2, name=rand_name('thirdimage'),
-            visibility=ImageVisibility.PRIVATE)
+            image_properties={'name': rand_name('thirdimage')})
         cls.owner = cls.user_config.tenant_id
 
     @tags(type='positive', regression='true')
@@ -107,8 +99,8 @@ class TestGetImagesSort(ImagesFixture):
 
         self._verify_list_order(sort_key='size')
 
-    @tags(type='positive', regression='true')
     @unittest.skip('Bug, Redmine #3679')
+    @tags(type='positive', regression='true')
     def test_get_images_using_id_sort_key(self):
         """
         @summary: Get images sorted by the id property
