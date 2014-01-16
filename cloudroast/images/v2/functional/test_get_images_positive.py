@@ -25,8 +25,9 @@ class TestGetImages(ImagesFixture):
     def setUpClass(cls):
         super(TestGetImages, cls).setUpClass()
         cls.image_name = rand_name('get_image')
+        image_properties = {'name': cls.image_name}
         cls.images = cls.images_behavior.create_new_images(
-            count=2, name=cls.image_name)
+            count=2, image_properties=image_properties)
 
     @tags(type='positive', regression='true')
     def test_get_images_using_marker_pagination(self):

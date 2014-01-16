@@ -125,6 +125,7 @@ class ImagesFixture(BaseTestFixture):
         cls.import_from = cls.images_config.import_from
         cls.import_from_format = cls.images_config.import_from_format
         cls.max_updated_at_delta = cls.images_config.max_updated_at_delta
+        cls.test_file = open(cls.images_config.test_file).read().rstrip()
 
         cls.image_schema_json = (
             open(cls.images_config.image_schema_json).read().rstrip())
@@ -147,6 +148,9 @@ class ImagesFixture(BaseTestFixture):
         cls.alt_images_behavior.resources.release()
         cls.admin_images_behavior.resources.release()
         cls.third_images_behavior.resources.release()
+
+#        cls.server_behaviors.resources.release()
+#        cls.compute_image_behaviors.resources.release()
 
     @classmethod
     def generate_images_client(cls, auth_data, internal_url=None):

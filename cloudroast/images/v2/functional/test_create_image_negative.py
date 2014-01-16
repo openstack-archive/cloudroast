@@ -14,13 +14,22 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import unittest2 as unittest
+
 from cafe.drivers.unittest.decorators import tags
+from cloudcafe.images.config import ImagesConfig
 from cloudroast.images.fixtures import ImagesFixture
+
+images_config = ImagesConfig()
+internal_url = images_config.internal_url
 
 
 class TestCreateImageNegative(ImagesFixture):
 
-    @tags(type='negative', regression='true')
+    @unittest.skipIf(internal_url is None,
+                     ('The internal_url property is None, test can only be '
+                      'executed against internal Glance nodes'))
+    @tags(type='negative', regression='true', internal='true')
     def test_create_image_using_unacceptable_disk_format(self):
         """
         @summary: Create image using an unacceptable disk format
@@ -32,7 +41,10 @@ class TestCreateImageNegative(ImagesFixture):
         response = self.images_client.create_image(disk_format='unacceptable')
         self.assertEqual(response.status_code, 400)
 
-    @tags(type='negative', regression='true')
+    @unittest.skipIf(internal_url is None,
+                     ('The internal_url property is None, test can only be '
+                      'executed against internal Glance nodes'))
+    @tags(type='negative', regression='true', internal='true')
     def test_create_image_using_unacceptable_container_format(self):
         """
         @summary: Create image using an unacceptable container format
