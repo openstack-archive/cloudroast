@@ -15,38 +15,44 @@ limitations under the License.
 """
 
 from cafe.drivers.unittest.decorators import tags
-from cloudroast.images.fixtures import ComputeIntegrationFixture
+from cloudroast.images.fixtures import ImagesFixture
 
 
-class TestGetImageMembers(ComputeIntegrationFixture):
-
-    @classmethod
-    def setUpClass(cls):
-        super(TestGetImageMembers, cls).setUpClass()
-        server = cls.server_behaviors.create_active_server().entity
-        image = cls.compute_image_behaviors.create_active_image(server.id)
-        cls.image = cls.images_client.get_image(image.entity.id).entity
+class TestGetImageMembers(ImagesFixture):
 
     @tags(type='smoke')
     def test_get_image_members(self):
         """
         @summary: Get image members
 
-        1) Given a previously created image, add image member
-        2) Verify that the response code is 200
-        3) Get image members
-        4) Verify that the response code is 200
-        5) Verify that the response contains the correct properties for the
+        1) Create an image
+        2) List image members
+        3) Verify that the response code is 200
+        4) Verify that list of member is empty
+        5) Add image member
+        6) Verify that the response code is 200
+        7) Get image members
+        8) Verify that the response code is 200
+        9) Verify that the response contains the correct properties for the
         member
         """
 
-        member_id = self.alt_user_config.tenant_id
-        response = self.images_client.add_member(self.image.id_, member_id)
-        self.assertEqual(response.status_code, 200)
-        member = response.entity
-        response = self.images_client.list_members(self.image.id_)
+        member_id = self.alt_tenant_id
+        image = self.images_behavior.create_new_image()
+
+        response = self.images_client.list_members(image.id_)
         self.assertEqual(response.status_code, 200)
         members = response.entity
+        self.assertEqual(len(members), 0)
+
+        response = self.images_client.add_member(image.id_, member_id)
+        self.assertEqual(response.status_code, 200)
+        member = response.entity
+
+        response = self.images_client.list_members(image.id_)
+        self.assertEqual(response.status_code, 200)
+        members = response.entity
+
         self.assertEqual(len(members), 1)
         self.assertEqual(members[0].created_at, member.created_at)
         self.assertEqual(members[0].image_id, member.image_id)

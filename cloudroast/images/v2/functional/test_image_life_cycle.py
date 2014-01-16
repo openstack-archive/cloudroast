@@ -17,6 +17,7 @@ limitations under the License.
 import calendar
 import re
 import time
+import unittest2 as unittest
 
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.common.tools.datagen import rand_name
@@ -24,12 +25,19 @@ from cloudcafe.images.common.constants import ImageProperties
 from cloudcafe.images.common.types import \
     ImageContainerFormat, ImageDiskFormat, ImageStatus, ImageVisibility, \
     Schemas
+from cloudcafe.images.config import ImagesConfig
 from cloudroast.images.fixtures import ImagesFixture
 
+images_config = ImagesConfig()
+internal_url = images_config.internal_url
 
+
+@unittest.skipIf(internal_url is None,
+                 ('The internal_url property is None, test can only be '
+                  'executed against internal Glance nodes'))
 class TestImageLifeCycle(ImagesFixture):
 
-    @tags(type='positive', regression='true')
+    @tags(type='positive', regression='true', internal='true')
     def test_image_life_cycle(self):
         """
         @summary: Image life cycle of create, list, get, update, and delete
@@ -61,30 +69,22 @@ class TestImageLifeCycle(ImagesFixture):
         upd_container_format = ImageContainerFormat.AKI
         upd_disk_format = ImageDiskFormat.ISO
         upd_name = rand_name('updated_image')
-        upd_protected = True
-        revert_protected = False
         upd_tags = rand_name('updated_tag')
-        upd_visibility = ImageVisibility.PRIVATE
-        self.images_behavior.create_new_image()
         id_regex = re.compile(ImageProperties.ID_REGEX)
-        image_resp = self.images_behavior.create_new_image(
+
+        image_resp = self.images_behavior.create_new_image_internal_only(
             container_format=ImageContainerFormat.BARE,
-            disk_format=ImageDiskFormat.RAW, name=name, tags=[tag],
-            visibility=ImageVisibility.PUBLIC)
+            disk_format=ImageDiskFormat.RAW, name=name, tags=[tag])
         image_creation_time_in_sec = calendar.timegm(time.gmtime())
         self.assertIsNotNone(image_resp)
-        created_at_in_sec = \
-            calendar.timegm(time.strptime(str(image_resp.created_at),
-                                          "%Y-%m-%dT%H:%M:%SZ"))
-        offset_in_image_created_time = \
-            abs(created_at_in_sec - image_creation_time_in_sec)
-        updated_at_in_sec = \
-            calendar.timegm(time.strptime(str(image_resp.updated_at),
-                                          "%Y-%m-%dT%H:%M:%SZ"))
-        offset_in_image_updated_time = \
-            abs(updated_at_in_sec - image_creation_time_in_sec)
+
+        get_created_at_delta = self.images_behavior.get_creation_delta(
+            image_creation_time_in_sec, image_resp.created_at)
+        get_updated_at_delta = self.images_behavior.get_creation_delta(
+            image_creation_time_in_sec, image_resp.updated_at)
+
         self.assertIsNone(image_resp.checksum)
-        self.assertLessEqual(offset_in_image_created_time, 60000)
+        self.assertLessEqual(get_created_at_delta, self.max_created_at_delta)
         self.assertEqual(image_resp.file_,
                          '/v2/images/{0}/file'.format(image_resp.id_))
         self.assertEqual(image_resp.container_format,
@@ -101,8 +101,9 @@ class TestImageLifeCycle(ImagesFixture):
         self.assertIsNone(image_resp.size)
         self.assertEqual(image_resp.status, ImageStatus.QUEUED)
         self.assertListEqual(image_resp.tags, [tag])
-        self.assertLessEqual(offset_in_image_updated_time, 60000)
-        self.assertEqual(image_resp.visibility, ImageVisibility.PUBLIC)
+        self.assertLessEqual(get_updated_at_delta, self.max_updated_at_delta)
+        self.assertEqual(image_resp.visibility, ImageVisibility.PRIVATE)
+
         list_images_resp = self.images_behavior.list_images_pagination()
         self.assertIsNotNone(list_images_resp)
         self.assertNotEqual(len(list_images_resp), 0)
@@ -110,19 +111,20 @@ class TestImageLifeCycle(ImagesFixture):
         for img in list_images_resp:
             if img.id_ == image_resp.id_:
                 listed_image = img
-        self.validate_response_contents(listed_image, image_resp)
+        self._validate_response_contents(listed_image, image_resp)
+
         response = self.images_client.get_image(image_resp.id_)
         self.assertEqual(response.status_code, 200)
         get_image_resp = response.entity
         self.assertIsNotNone(get_image_resp)
-        self.validate_response_contents(get_image_resp, image_resp)
+        self._validate_response_contents(get_image_resp, image_resp)
+
         response = self.images_client.update_image(
             image_resp.id_, replace={'container_format': upd_container_format,
                                      'disk_format': upd_disk_format,
                                      'name': upd_name,
-                                     'protected': upd_protected,
-                                     'tags': [upd_tags],
-                                     'visibility': upd_visibility})
+                                     'protected': True,
+                                     'tags': [upd_tags]})
         self.assertEqual(response.status_code, 200)
         update_image_resp = response.entity
         self.assertIsNotNone(update_image_resp)
@@ -136,7 +138,7 @@ class TestImageLifeCycle(ImagesFixture):
         self.assertEqual(update_image_resp.id_, image_resp.id_)
         self.assertEqual(update_image_resp.min_disk, image_resp.min_disk)
         self.assertEqual(update_image_resp.min_ram, image_resp.min_ram)
-        self.assertEqual(update_image_resp.protected, upd_protected)
+        self.assertEqual(update_image_resp.protected, True)
         self.assertEqual(update_image_resp.schema, image_resp.schema)
         self.assertEqual(update_image_resp.self_, image_resp.self_)
         self.assertEqual(update_image_resp.size, image_resp.size)
@@ -144,19 +146,23 @@ class TestImageLifeCycle(ImagesFixture):
         self.assertEqual(update_image_resp.tags, [upd_tags])
         self.assertGreaterEqual(update_image_resp.updated_at,
                                 image_resp.updated_at)
-        self.assertEqual(update_image_resp.visibility, upd_visibility)
+        self.assertEqual(update_image_resp.visibility, ImageVisibility.PRIVATE)
+
         # Need to revert protected property so that the image can be torn down
         response = self.images_client.update_image(
-            image_resp.id_, replace={'protected': revert_protected})
+            image_resp.id_, replace={'protected': False})
         self.assertEqual(response.status_code, 200)
+
         response = self.images_client.delete_image(image_resp.id_)
         self.assertEqual(response.status_code, 204)
+
         response = self.images_client.get_image(image_resp.id_)
         self.assertEqual(response.status_code, 404)
+
         list_images_resp = self.images_behavior.list_images_pagination()
         self.assertNotIn(image_resp, list_images_resp)
 
-    def validate_response_contents(self, actual_resp, expected_resp):
+    def _validate_response_contents(self, actual_resp, expected_resp):
         """
         @summary: Validate an actual response against an expected response
         """
@@ -169,6 +175,7 @@ class TestImageLifeCycle(ImagesFixture):
         self.assertEqual(actual_resp.disk_format, expected_resp.disk_format)
         self.assertEqual(actual_resp.name, expected_resp.name)
         self.assertEqual(actual_resp.id_, expected_resp.id_)
+        self.assertEqual(actual_resp.image_type, expected_resp.image_type)
         self.assertEqual(actual_resp.min_disk, expected_resp.min_disk)
         self.assertEqual(actual_resp.min_ram, expected_resp.min_ram)
         self.assertEqual(actual_resp.protected, expected_resp.protected)

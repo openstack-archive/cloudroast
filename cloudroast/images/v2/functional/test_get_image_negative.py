@@ -14,8 +14,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import unittest2 as unittest
+
 from cafe.drivers.unittest.decorators import tags
-from cloudcafe.images.common.types import ImageVisibility
 from cloudroast.images.fixtures import ImagesFixture
 
 
@@ -33,8 +34,7 @@ class TestGetImageNegative(ImagesFixture):
          3) Verify that the response code is 404
         """
 
-        image = self.images_behavior.create_new_image(
-            visibility=ImageVisibility.PRIVATE)
+        image = self.images_behavior.create_new_image()
         response = self.alt_images_client.get_image(image.id_)
         self.assertEqual(response.status_code, 404)
 
@@ -56,6 +56,7 @@ class TestGetImageNegative(ImagesFixture):
         response = self.images_client.get_image(image.id_)
         self.assertEqual(response.status_code, 404)
 
+    @unittest.skip('Bug, Redmine #4445')
     @tags(type='negative', regression='true')
     def test_get_image_using_blank_image_id(self):
         """

@@ -17,8 +17,7 @@ limitations under the License.
 import unittest2 as unittest
 
 from cafe.drivers.unittest.decorators import tags
-from cloudcafe.images.common.types import (
-    ImageContainerFormat, ImageDiskFormat, ImageVisibility)
+from cloudcafe.common.tools.datagen import rand_name
 from cloudroast.images.fixtures import ImagesFixture
 
 
@@ -28,13 +27,9 @@ class TestGetImagesFilter(ImagesFixture):
     def setUpClass(cls):
         super(TestGetImagesFilter, cls).setUpClass()
         cls.image = cls.images_behavior.create_new_image(
-            container_format=ImageContainerFormat.OVF,
-            disk_format=ImageDiskFormat.VMDK,
-            visibility=ImageVisibility.PUBLIC)
+            image_properties={'name': rand_name('image')})
         cls.alt_image = cls.images_behavior.create_new_image(
-            container_format=ImageContainerFormat.ARI,
-            disk_format=ImageDiskFormat.QCOW2,
-            visibility=ImageVisibility.PRIVATE)
+            image_properties={'name': rand_name('altimage')})
 
     @tags(type='positive', regression='true')
     def test_get_images_using_name_filter(self):
@@ -116,8 +111,8 @@ class TestGetImagesFilter(ImagesFixture):
 
         self._verify_expected_images(attribute='visibility')
 
-    @tags(type='positive', regression='true')
     @unittest.skip('Bug, Redmine #3724')
+    @tags(type='positive', regression='true')
     def test_get_images_using_size_min_filter(self):
         """
         @summary: Get images filtering by the size_min property
@@ -133,8 +128,8 @@ class TestGetImagesFilter(ImagesFixture):
 
         self._verify_expected_images(attribute='size_min', operation='>=')
 
-    @tags(type='positive', regression='true')
     @unittest.skip('Bug, Launchpad #1251313')
+    @tags(type='positive', regression='true')
     def test_get_images_using_size_max_filter(self):
         """
         @summary: Get images filtering by the size_max property
@@ -189,40 +184,36 @@ class TestGetImagesFilter(ImagesFixture):
         disk_format properties
 
         1) Given two previously created images, get images by passing in the
-        container_format and disk_format properties of the first image as a
+        name and disk_format properties of the first image as a
         filter
         2) Verify that the list is not empty
         3) Verify that the first image is in the returned list
         4) Verify that the second image is not in the returned list
-        5) Verify that each image returned contains the container_format and
-        the disk_format specified as the filter
-        6) Get images passing in the container_format property of the first
-        image and the disk_format property of the second image of the second
-        image as a filter
-        7) Verify that the first image is not in the returned list
+        5) Verify that each image returned contains the name and the
+        disk_format specified as the filter
+        6) Get images passing in the name property of the first image and the
+        disk_format property of the second image of the second image as a
+        filter
+        7) Verify that the first image is in the returned list
         8) Verify that the second image is not in the returned list
-        9) Verify that each image returned contains the container_format and
-        the disk_format specified as the filter
+        9) Verify that each image returned contains the name and the
+        disk_format specified as the filter
         """
 
         images = self.images_behavior.list_images_pagination(
-            container_format=self.image.container_format,
-            disk_format=self.image.disk_format)
+            name=self.image.name, disk_format=self.image.disk_format)
         self.assertNotEqual(len(images), 0)
         self.assertIn(self.image, images)
         self.assertNotIn(self.alt_image, images)
         for image in images:
-            self.assertEqual(image.container_format,
-                             self.image.container_format)
+            self.assertEqual(image.name, self.image.name)
             self.assertEqual(image.disk_format, self.image.disk_format)
         images = self.images_behavior.list_images_pagination(
-            container_format=self.image.container_format,
-            disk_format=self.alt_image.disk_format)
-        self.assertNotIn(self.image, images)
+            name=self.image.name, disk_format=self.alt_image.disk_format)
+        self.assertIn(self.image, images)
         self.assertNotIn(self.alt_image, images)
         for image in images:
-            self.assertEqual(image.container_format,
-                             self.image.container_format)
+            self.assertEqual(image.name, self.image.name)
             self.assertEqual(image.disk_format, self.alt_image.disk_format)
 
     def _verify_expected_images(self, attribute, operation='=='):
@@ -230,9 +221,6 @@ class TestGetImagesFilter(ImagesFixture):
         @summary: Verify that the expected images are returned and that each
         image contains a value for the given attribute that is acceptable
         """
-
-        primary_image_only_attributes = [
-            'name', 'container_format', 'disk_format', 'visibility']
 
         if operation == '==':
             api_args = {attribute: getattr(self.image, attribute)}
@@ -242,10 +230,10 @@ class TestGetImagesFilter(ImagesFixture):
         images = self.images_behavior.list_images_pagination(**api_args)
         self.assertNotEqual(len(images), 0)
         self.assertIn(self.image, images)
-        if attribute.lower() not in primary_image_only_attributes:
-            self.assertIn(self.alt_image, images)
-        else:
+        if attribute.lower() == 'name':
             self.assertNotIn(self.alt_image, images)
+        else:
+            self.assertIn(self.alt_image, images)
 
         for image in images:
             if operation == '>=':
