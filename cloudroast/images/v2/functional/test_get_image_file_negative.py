@@ -14,16 +14,25 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import StringIO
+import cStringIO as StringIO
+import unittest2 as unittest
 
 from cafe.drivers.unittest.decorators import tags
+from cloudcafe.images.config import ImagesConfig
 from cloudroast.images.fixtures import ImagesFixture
 
+images_config = ImagesConfig()
+internal_url = images_config.internal_url
 
+
+@unittest.skipIf(internal_url is None,
+                ('The internal_url property is None, test can only be '
+                 'executed against internal Glance nodes'))
 class GetImageFileNegativeTest(ImagesFixture):
 
     @classmethod
     def setUpClass(cls):
+        super(GetImageFileNegativeTest, cls).setUpClass()
         cls.image = cls.images_behavior.create_new_image()
 
     @tags(type='negative', regression='true')

@@ -14,22 +14,23 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import unittest2 as unittest
+
 from cafe.drivers.unittest.decorators import tags
-from cloudroast.images.fixtures import ComputeIntegrationFixture
+from cloudcafe.images.common.types import ImageType, TaskTypes
+from cloudcafe.images.config import ImagesConfig
+from cloudroast.images.fixtures import ImagesFixture
+
+images_config = ImagesConfig()
+internal_url = images_config.internal_url
 
 
-class TestGetImage(ComputeIntegrationFixture):
+class TestGetImage(ImagesFixture):
 
     @classmethod
     def setUpClass(cls):
         super(TestGetImage, cls).setUpClass()
-        cls.images = []
-        server = cls.server_behaviors.create_active_server().entity
-        image = cls.compute_image_behaviors.create_active_image(server.id)
-        alt_image = cls.compute_image_behaviors.create_active_image(server.id)
-        cls.images.append(cls.images_client.get_image(image.entity.id).entity)
-        cls.images.append(cls.images_client.get_image(
-            alt_image.entity.id).entity)
+        cls.images = cls.images_behavior.create_new_images(count=2)
 
     @tags(type='smoke')
     def test_get_image(self):
@@ -49,6 +50,86 @@ class TestGetImage(ComputeIntegrationFixture):
         self._validate_get_image(image, get_image)
 
     @tags(type='positive', regression='true')
+    def test_get_image_after_successful_import(self):
+        """
+        @summary: Get image after successful import
+
+        1) Create import task
+        2) From the successful import task, get image
+        3) Verify that the response code is 200
+        4) Verify that the response contains the correct properties
+        """
+
+        task = self.images_behavior.create_new_task()
+        image_id = task.result.image_id
+
+        response = self.images_client.get_image(image_id)
+        self.assertEqual(response.status_code, 200)
+        get_image = response.entity
+
+        errors = self.images_behavior.validate_image(get_image)
+        if get_image.image_type != ImageType.IMPORT:
+            errors.append(self.error_msg.format(
+                'image_type', ImageType.IMPORT, get_image.image_type))
+        self.assertEqual(errors, [])
+
+    @unittest.skipIf(internal_url is None,
+                     ('The internal_url property is None, test can only be '
+                      'executed against internal Glance nodes'))
+    @tags(type='positive', regression='true', internal='true')
+    def test_verify_object_and_imported_exported_image_content(self):
+        """
+        @summary: Verify that an imported image's content is same as the file
+        object's content in the customer's container and the exported image's
+        content
+
+        1) Get the import file object's content
+        2) Verify that the response code is 200
+        3) Create new image
+        4) Get the new image's file content
+        5) Verify that the response code is 200
+        6) Verify that the import file object's content is the same data as as
+        the image's file content
+        7) Export the image
+        8) Get the exported file object's content
+        9) Verify that the response code is 200
+        10) Verify that the export file object's content is the same data as as
+        the image's file content
+        11) Verify that the import file object's content is the same data as as
+        the export file object's content
+        """
+
+        response = self.object_storage_client.get_object(
+            container_name='test_container', object_name='import_test.vhd')
+        self.assertEqual(response.status_code, 200)
+        file_content = response.content
+
+        task = self.images_behavior.create_new_task()
+        image_id = task.result.image_id
+
+        response = self.images_client.get_image_file(image_id)
+        self.assertEqual(response.status_code, 200)
+        image_content = response.content
+
+        self.assertEqual(file_content, image_content)
+
+        input_ = {'image_uuid': image_id,
+                  'receiving_swift_container': self.export_to}
+
+        task = self.images_behavior.create_new_task(
+            input_=input_, type_=TaskTypes.EXPORT)
+
+        export_location = [
+            x.strip() for x in task.result.export_location.split('/')]
+        response = self.object_storage_client.get_object(
+            container_name=export_location[0], object_name=export_location[1])
+        self.assertEqual(response.status_code, 200)
+        new_file_content = response.content
+
+        self.assertEqual(new_file_content, image_content)
+        self.assertEqual(file_content, new_file_content)
+
+    @tags(type='positive', regression='true')
     def test_get_image_as_member_of_shared_image(self):
         """
         @summary: Get image as member of shared image
@@ -62,7 +143,7 @@ class TestGetImage(ComputeIntegrationFixture):
          the original tenant
         """
 
-        member_id = self.alt_user_config.tenant_id
+        member_id = self.alt_tenant_id
         image = self.images.pop()
         response = self.images_client.add_member(image.id_, member_id)
         self.assertEqual(response.status_code, 200)
@@ -94,6 +175,9 @@ class TestGetImage(ComputeIntegrationFixture):
         if image.id_ != get_image.id_:
             errors.append(self.error_msg.format(
                 'id_', image.id_, get_image.id_))
+        if image.image_type != get_image.image_type:
+            errors.append(self.error_msg.format(
+                'image_type', image.image_type, get_image.image_type))
         if image.min_disk != get_image.min_disk:
             errors.append(self.error_msg.format(
                 'min_disk', image.min_disk, get_image.min_disk))
