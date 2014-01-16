@@ -45,7 +45,7 @@ class TestDeleteImageMember(ComputeIntegrationFixture):
         11) Verify that the image member is not in the list of image members
         """
 
-        member_id = self.alt_user_config.tenant_id
+        member_id = self.alt_tenant_id
         image = self.image
         response = self.images_client.add_member(image.id_, member_id)
         self.assertEqual(response.status_code, 200)

@@ -14,9 +14,14 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import unittest2 as unittest
+
 from cafe.drivers.unittest.decorators import tags
-from cloudcafe.images.common.types import ImageVisibility
+from cloudcafe.images.config import ImagesConfig
 from cloudroast.images.fixtures import ImagesFixture
+
+images_config = ImagesConfig()
+internal_url = images_config.internal_url
 
 
 class TestDeleteImageNegative(ImagesFixture):
@@ -65,18 +70,29 @@ class TestDeleteImageNegative(ImagesFixture):
         response = self.images_client.delete_image(image.id_)
         self.assertEqual(response.status_code, 404)
 
-    @tags(type='negative', regression='true')
+    @unittest.skipIf(internal_url is None,
+                     ('The internal_url property is None, test can only be '
+                      'executed against internal Glance nodes'))
+    @tags(type='negative', regression='true', internal='true')
     def test_delete_image_that_is_protected(self):
         """
         @summary: Delete image that is protected
 
-        1) Create image that is protected
-        2) Delete image
-        3) Verify that the response code is 404
+        1) Create image
+        2) Verify that the response code is 201
+        3) Update image setting protected to true
+        4) Verify that the response code is 204
+        5) Delete image
+        6) Verify that the response code is 404
         """
 
         protected = True
-        image = self.images_behavior.create_new_image(protected=protected)
+        response = self.images_client.create_image()
+        self.assertEqual(response.status_code, 201)
+        image = response.entity
+        response = self.images_client.update_image(
+            image.id_, replace={'protected': protected})
+        self.assertEqual(response.status_code, 200)
         response = self.images_client.delete_image(image.id_)
         self.assertEqual(response.status_code, 403)
 
@@ -91,9 +107,8 @@ class TestDeleteImageNegative(ImagesFixture):
         4) Verify that the response code is 403
         """
 
-        member_id = self.alt_user_config.tenant_id
-        image = self.images_behavior.create_new_image(
-            visibility=ImageVisibility.PRIVATE)
+        member_id = self.alt_tenant_id
+        image = self.images_behavior.create_new_image()
         self.images_client.add_member(image.id_, member_id)
         response = self.alt_images_client.delete_image(image.id_)
         self.assertEqual(response.status_code, 403)
