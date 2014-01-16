@@ -14,11 +14,16 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import unittest2 as unittest
+
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.common.tools.datagen import rand_name
-from cloudcafe.images.common.types import ImageContainerFormat, \
-    ImageDiskFormat, ImageVisibility
+from cloudcafe.images.common.types import ImageContainerFormat, ImageDiskFormat
+from cloudcafe.images.config import ImagesConfig
 from cloudroast.images.fixtures import ImagesFixture
+
+images_config = ImagesConfig()
+internal_url = images_config.internal_url
 
 
 class TestUpdateImagePositive(ImagesFixture):
@@ -102,31 +107,32 @@ class TestUpdateImagePositive(ImagesFixture):
             if prop == new_prop:
                 self.assertEqual(prop_val, updated_new_prop_value)
 
-    @tags(type='positive', regression='true')
+    @unittest.skipIf(internal_url is None,
+                     ('The internal_url property is None, test can only be '
+                      'executed against internal Glance nodes'))
+    @tags(type='positive', regression='true', internal='true')
     def test_update_image_with_data_of_another_image(self):
         """
         @summary: Update image with data of another image (update ignores
         duplication)
 
-        1. Create an image (first_image)
-        2. Create another image (second_image)
-        3. Update first_image with data of second_image
-        4. Verify that response code is 200
-        5. Verify that the response contains an image entity with
+        1) Create an image (first_image)
+        2) Create another image (second_image)
+        3) Update first_image with data of second_image
+        4) Verify that response code is 200
+        5) Verify that the response contains an image entity with
         correct properties
         """
 
-        first_image = self.images_behavior.create_new_image()
-        second_image = self.images_behavior.create_new_image(
+        first_image = self.images_behavior.create_new_image_internal_only()
+        second_image = self.images_behavior.create_new_image_internal_only(
             name=rand_name("second_image"),
-            visibility=ImageVisibility.PUBLIC,
             container_format=ImageContainerFormat.AMI,
             disk_format=ImageDiskFormat.ISO, tags=[rand_name("tag")])
 
         response = self.images_client.update_image(
             image_id=first_image.id_,
             replace={"name": second_image.name,
-                     "visibility": second_image.visibility,
                      "container_format": second_image.container_format,
                      "disk_format": second_image.disk_format,
                      "tags": second_image.tags})
@@ -136,7 +142,7 @@ class TestUpdateImagePositive(ImagesFixture):
         self.assertEqual(updated_image.id_, first_image.id_)
         self.assertEqual(updated_image.name, second_image.name)
         self.assertEqual(updated_image.visibility, second_image.visibility)
-        self.assertEqual(updated_image.container_format,
-                         second_image.container_format)
+        self.assertEqual(
+            updated_image.container_format, second_image.container_format)
         self.assertEqual(updated_image.disk_format, second_image.disk_format)
         self.assertEqual(updated_image.tags, second_image.tags)
