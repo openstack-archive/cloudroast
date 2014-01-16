@@ -14,6 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import unittest2 as unittest
+
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.images.common.types import ImageMemberStatus
 from cloudroast.images.fixtures import ImagesFixture
@@ -21,22 +23,22 @@ from cloudroast.images.fixtures import ImagesFixture
 
 class ImageSharingDeletionAccessibilityCycleTest(ImagesFixture):
 
+    @unittest.skip('Bug, Redmine #4337')
     @tags(type='positive', regression='true')
     def test_image_sharing_deletion_accessibility_cycle(self):
         """
         @summary: Image sharing deletion and accessibility cycle
 
-        1. Register an image as tenant
-        2. Verify that alternative tenant cannot access image
-        3. Share image with alternative tenant
-        4. Verify that alternative tenant can access the image directly
-        5. Update alternative tenant membership status to 'Accepted'
-            for image
-        6. Verify that alternative tenant sees image in their list
-        7. Verify that alternative tenant cannot delete image
-        8. Delete image as tenant
-        9. Verify that tenant cannot access the deleted image
-        10. Verify that alternative tenant cannot access the deleted image
+        1) Create an image as tenant
+        2) Verify that alternative tenant cannot access image
+        3) Share image with alternative tenant
+        4) Verify that alternative tenant can access the image directly
+        5) Update alternative tenant membership status to 'Accepted' for image
+        6) Verify that alternative tenant sees image in their list
+        7) Verify that alternative tenant cannot delete image
+        8) Delete image as tenant
+        9) Verify that tenant cannot access the deleted image
+        10) Verify that alternative tenant cannot access the deleted image
         """
 
         image = self.images_behavior.create_new_image()
