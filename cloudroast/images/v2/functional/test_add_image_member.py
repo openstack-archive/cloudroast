@@ -20,17 +20,10 @@ import time
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.images.common.types import \
     ImageMemberStatus, Schemas
-from cloudroast.images.fixtures import ComputeIntegrationFixture
+from cloudroast.images.fixtures import ImagesFixture
 
 
-class TestAddImageMember(ComputeIntegrationFixture):
-
-    @classmethod
-    def setUpClass(cls):
-        super(TestAddImageMember, cls).setUpClass()
-        server = cls.server_behaviors.create_active_server().entity
-        image = cls.compute_image_behaviors.create_active_image(server.id)
-        cls.image = cls.images_client.get_image(image.entity.id).entity
+class TestAddImageMember(ImagesFixture):
 
     @tags(type='smoke')
     def test_add_image_member(self):
@@ -44,8 +37,8 @@ class TestAddImageMember(ComputeIntegrationFixture):
         list
         """
 
-        member_id = self.alt_user_config.tenant_id
-        image = self.image
+        member_id = self.alt_tenant_id
+        image = self.images_behavior.create_new_image()
         response = self.images_client.add_member(image.id_, member_id)
         image_member_creation_time_in_sec = calendar.timegm(time.gmtime())
         self.assertEqual(response.status_code, 200)
@@ -53,18 +46,18 @@ class TestAddImageMember(ComputeIntegrationFixture):
         created_at_in_sec = \
             calendar.timegm(time.strptime(str(member.created_at),
                                           "%Y-%m-%dT%H:%M:%SZ"))
-        offset_in_image_member_created_time = \
+        delta_in_image_member_created_time = \
             abs(created_at_in_sec - image_member_creation_time_in_sec)
         updated_at_in_sec = \
             calendar.timegm(time.strptime(str(member.updated_at),
                                           "%Y-%m-%dT%H:%M:%SZ"))
-        offset_in_image_member_updated_time = \
+        delta_in_image_member_updated_time = \
             abs(updated_at_in_sec - image_member_creation_time_in_sec)
         self.assertLessEqual(
-            offset_in_image_member_created_time, self.created_at_offset)
+            delta_in_image_member_created_time, self.max_created_at_delta)
         self.assertEqual(member.image_id, image.id_)
         self.assertEqual(member.member_id, member_id)
         self.assertEqual(member.schema, Schemas.IMAGE_MEMBER_SCHEMA)
         self.assertEqual(member.status, ImageMemberStatus.PENDING)
         self.assertLessEqual(
-            offset_in_image_member_updated_time, self.updated_at_offset)
+            delta_in_image_member_updated_time, self.max_updated_at_delta)

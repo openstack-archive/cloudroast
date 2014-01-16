@@ -81,3 +81,32 @@ class TestAddImageTagNegative(ImagesFixture):
         tag = '/?:*#@!'
         response = self.images_client.add_tag(self.image.id_, tag)
         self.assertEqual(response.status_code, 404)
+
+    @tags(type='negative', regression='true')
+    def test_add_image_tag_quota_limit(self):
+        """
+        @summary: Add image tags until quota limit is reached
+
+        1) Create image
+        2) Add image tags until quota limit is reached
+        3) Add one more image tag
+        4) Verify that the response code is 413
+        5) Get image
+        6) Verify that the response code is 200
+        7) Verify that the number of image tags matches the quota limit
+        """
+
+        quota_limit = self.images_config.image_tags_limit
+        image = self.images_behavior.create_new_image()
+
+        for i in range(quota_limit):
+            response = self.images_client.add_tag(image.id_, rand_name('tag'))
+            self.assertEqual(response.status_code, 204)
+
+        response = self.images_client.add_tag(image.id_, rand_name('tag'))
+        self.assertEqual(response.status_code, 413)
+
+        response = self.images_client.get_image(image.id_)
+        self.assertEqual(response.status_code, 200)
+        get_image = response.entity
+        self.assertEqual(len(get_image.tags), quota_limit)
