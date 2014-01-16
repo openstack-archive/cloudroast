@@ -20,7 +20,7 @@ from cloudroast.images.fixtures import ImagesFixture
 
 class TestGetTaskSchema(ImagesFixture):
 
-    @tags(type='smoke')
+    @tags(type='smokey')
     def test_get_task_schema(self):
         """
         @summary: Get schema that represents an task entity

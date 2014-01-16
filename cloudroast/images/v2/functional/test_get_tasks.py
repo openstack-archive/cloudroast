@@ -26,7 +26,7 @@ class TestGetTasks(ImagesFixture):
         super(TestGetTasks, cls).setUpClass()
         cls.tasks = cls.images_behavior.create_new_tasks(count=4)
 
-    @tags(type='smoke')
+    @tags(type='smokey')
     def test_get_tasks(self):
         """
         @summary: Get tasks
