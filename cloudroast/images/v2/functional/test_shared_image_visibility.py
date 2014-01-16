@@ -52,7 +52,7 @@ class TestSharedImageVisibility(ImagesFixture):
         23) Verify that the image member status is 'rejected'
         """
 
-        member_id = self.alt_user_config.tenant_id
+        member_id = self.alt_tenant_id
 
         image = self.images_behavior.create_new_image()
 

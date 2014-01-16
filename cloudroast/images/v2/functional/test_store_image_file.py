@@ -15,15 +15,23 @@ limitations under the License.
 """
 
 import cStringIO as StringIO
+import unittest2 as unittest
 
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.images.common.types import ImageStatus
+from cloudcafe.images.config import ImagesConfig
 from cloudroast.images.fixtures import ImagesFixture
 
+images_config = ImagesConfig()
+internal_url = images_config.internal_url
 
+
+@unittest.skipIf(internal_url is None,
+                ('The internal_url property is None, test can only be '
+                 'executed against internal Glance nodes'))
 class TestStoreImageFile(ImagesFixture):
 
-    @tags(type='positive')
+    @tags(type='positive', regression='true', internal='true')
     def test_store_image_file(self):
         """
         @summary: Store image file
