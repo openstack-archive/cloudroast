@@ -133,12 +133,12 @@ class ComputeFixture(BaseTestFixture):
                                                           cls.server_behaviors)
         cls.flavors_client.add_exception_handler(ExceptionHandler())
         cls.resources = ResourcePool()
+        cls.addClassCleanup(cls.resources.release)
 
     @classmethod
     def tearDownClass(cls):
         super(ComputeFixture, cls).tearDownClass()
         cls.flavors_client.delete_exception_handler(ExceptionHandler())
-        cls.resources.release()
 
     @classmethod
     def parse_image_id(cls, image_response):
