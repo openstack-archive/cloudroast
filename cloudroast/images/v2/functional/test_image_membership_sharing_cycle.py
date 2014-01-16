@@ -28,17 +28,17 @@ class ImageMembershipSharingCycleTest(ImagesFixture):
         tenant shares to alt_tenant, but alt_tenant cannot share to
         third_tenant.
 
-        1. Register an image as tenant
-        2. Verify that list of image members is empty
-        3. Verify that alternative tenant cannot access the image
-        4. Verify that third tenant cannot access the image
-        5. Share image with alternative tenant as tenant
-        6. Verify that list of image members contains alternative tenant
-        7. Update alternative tenant membership status to 'Accepted'
-        8. Share the image with third tenant as alternative tenant
-        9. Verify that the response code is 403
-        10. Verify that third tenant cannot access the image
-        11. Verify that list of image members does not contain third tenant
+        1) Create an image as tenant
+        2) Verify that list of image members is empty
+        3) Verify that alternative tenant cannot access the image
+        4) Verify that third tenant cannot access the image
+        5) Share image with alternative tenant as tenant
+        6) Verify that list of image members contains alternative tenant
+        7) Update alternative tenant membership status to 'Accepted'
+        8) Share the image with third tenant as alternative tenant
+        9) Verify that the response code is 403
+        10) Verify that third tenant cannot access the image
+        11) Verify that list of image members does not contain third tenant
         """
 
         image = self.images_behavior.create_new_image()
