@@ -47,7 +47,7 @@ class TestGetTasks(ImagesFixture):
         self.assertNotEqual(len(get_tasks), 0)
 
         for task in get_tasks:
-            self.assertEqual(task.owner, self.user_config.tenant_id)
+            self.assertEqual(task.owner, self.tenant_id)
             if (task.id_ == first_task.id_ or task.id_ == second_task.id_):
                 created_tasks.append(task)
 
@@ -71,5 +71,5 @@ class TestGetTasks(ImagesFixture):
         self.assertNotEqual(len(get_tasks), 0)
 
         for task in get_tasks:
-            self.assertEqual(task.owner, self.user_config.tenant_id)
+            self.assertEqual(task.owner, self.tenant_id)
             self.assertEqual(task.type_, TaskTypes.IMPORT)
