@@ -26,21 +26,20 @@ class OneToOneImageSharingTest(ImagesFixture):
         """
         @summary: One to one image sharing
 
-        1. Register an image as tenant
-        2. Register an image (alt_image) as alternative tenant
-        3. Verify that tenant cannot access alt_image
-        4. Verify that alternative tenant cannot access image
-        5. Add alternative tenant as a member of image
-        6. Verify that alternative tenant can now access image
-        7. Add tenant as a member of alt_image
-        8. Verify that tenant can now access alt_image
-        9. Update tenant membership status to 'Accepted' for alt_image
-        10. Verify that tenant sees alt_image in their list
-        11. Update alternative tenant membership status to 'Accepted'
-            for image
-        12. Verify that alternative tenant sees image in their list
-        13. Verify that image members list contains alternative tenant
-        14. Verify that alt_image members list contains tenant
+        1) Create an image as tenant
+        2) Create an image (alt_image) as alternative tenant
+        3) Verify that tenant cannot access alt_image
+        4) Verify that alternative tenant cannot access image
+        5) Add alternative tenant as a member of image
+        6) Verify that alternative tenant can now access image
+        7) Add tenant as a member of alt_image
+        8) Verify that tenant can now access alt_image
+        9) Update tenant membership status to 'Accepted' for alt_image
+        10) Verify that tenant sees alt_image in their list
+        11) Update alternative tenant membership status to 'Accepted' for image
+        12) Verify that alternative tenant sees image in their list
+        13) Verify that image members list contains alternative tenant
+        14) Verify that alt_image members list contains tenant
         """
 
         image = self.images_behavior.create_new_image()
