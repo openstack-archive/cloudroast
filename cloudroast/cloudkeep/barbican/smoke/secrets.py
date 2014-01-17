@@ -16,7 +16,8 @@ limitations under the License.
 from binascii import b2a_base64
 
 from cloudroast.cloudkeep.barbican.fixtures import SecretsFixture
-from cafe.drivers.unittest.decorators import tags, skip_open_issue
+from cafe.drivers.unittest.issue import skip_open_issue
+from cafe.drivers.unittest.decorators import tags
 from cloudcafe.cloudkeep.common.states import SecretsStates
 
 
