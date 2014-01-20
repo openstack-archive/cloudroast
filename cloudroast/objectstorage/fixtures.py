@@ -31,6 +31,10 @@ from cloudcafe.objectstorage.objectstorage_api.config \
 _auth_data = None
 
 
+class SwiftInfoError(Exception):
+    pass
+
+
 class ObjectStorageFixture(BaseTestFixture):
     """
     @summary: Base fixture for objectstorage tests
@@ -79,7 +83,69 @@ class ObjectStorageFixture(BaseTestFixture):
 
     @classmethod
     @memoized
-    def required_features(cls, *features):
+    def get_features(cls):
+        """
+        Used to get the features swift is configured with.
+
+        Returns one of the following:
+            a list representing the names of features configured.
+            a string representing that either all or no features are
+                configured.
+
+        The strings can be tested using the ObjectStorageAPIConfig constants:
+            ALL_FEATURES - indicates that CloudCafe should assume that all
+                           features have been configured with swfit.
+            NO_FEATURES - indicates that CloudCafe should assume that no
+                          features have been configured with swift.
+        """
+        api_config = ObjectStorageAPIConfig()
+
+        def get_swift_features(api_config):
+            data = ObjectStorageFixture.get_auth_data()
+            client = ObjectStorageAPIClient(
+                data['storage_url'], data['auth_token'])
+            behaviors = ObjectStorageAPI_Behaviors(client, api_config)
+            try:
+                features = behaviors.get_swift_features()
+            except Exception as e:
+                raise SwiftInfoError(e.message)
+
+            return features.split()
+
+        # Get features from swift if needed.
+        reported_features = []
+        if api_config.use_swift_info:
+            reported_features = get_swift_features(api_config)
+
+        def split_features(features):
+            if features == api_config.ALL_FEATURES:
+                return features
+            return unicode(features).split()
+
+        # Split the features if needed.
+        features = split_features(api_config.features)
+        excluded_features = split_features(
+            api_config.excluded_features)
+        if (features != api_config.ALL_FEATURES):
+            features = list(set(reported_features) | set(features))
+
+        # If all features are to be ignored, skip
+        if excluded_features == api_config.ALL_FEATURES:
+            return api_config.NO_FEATURES
+
+        # Remove all features
+        for feature in excluded_features:
+            try:
+                index = features.index(feature)
+                features.pop(index)
+            except ValueError:
+                pass
+
+        return features
+
+    @classmethod
+    @memoized
+    def required_features(cls, *required_features):
         """
         Test decorator to skip tests if features are not configured in swift.
         Configuration of what features are enabled can be done from the
@@ -96,30 +162,22 @@ class ObjectStorageFixture(BaseTestFixture):
         http://docs.python.org/2/library/unittest.html
         """
         objectstorage_api_config = ObjectStorageAPIConfig()
-        enabled_features = objectstorage_api_config.enabled_features
+        features = ObjectStorageFixture.get_features()
 
-        if enabled_features == objectstorage_api_config.ASK_SWIFT_FOR_FEATURES:
-            data = ObjectStorageFixture.get_auth_data()
-            client = ObjectStorageAPIClient(
-                data['storage_url'], data['auth_token'])
-            behaviors = ObjectStorageAPI_Behaviors(
-                client, objectstorage_api_config)
-            try:
-                enabled_features = behaviors.get_swift_features()
-            except Exception as e:
-                return unittest.skip(e.message)
-
-        elif enabled_features == objectstorage_api_config.ALL_FEATURES:
+        if features == objectstorage_api_config.ALL_FEATURES:
             return lambda func: func
-        elif enabled_features == objectstorage_api_config.NO_FEATURES:
-            return unittest.skip('no configurable features to be tested.')
 
-        enabled_features = enabled_features.split()
+        if features == objectstorage_api_config.NO_FEATURES:
+            return unittest.skip('skipping all features')
 
-        for feature in features:
-            if feature not in enabled_features:
-                return unittest.skip(
-                    '{0} not configured'.format(feature))
+        missing_reqs = False
+        for req in required_features:
+            if req not in features:
+                missing_reqs = True
+
+        if missing_reqs:
+            return unittest.skip(
+                'requires features: {0}'.format(', '.join(required_features)))
 
         return lambda func: func
 
