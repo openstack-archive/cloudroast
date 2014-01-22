@@ -18,6 +18,7 @@ from cafe.drivers.unittest.fixtures import BaseTestFixture
 from cloudcafe.stacktach.config import StacktachConfig, MarshallingConfig
 from cloudcafe.stacktach.stacktach_db_api.behaviors import StackTachDBBehavior
 from cloudcafe.stacktach.stacktach_db_api.client import StackTachDBClient
+from cloudcafe.stacktach.stacky_api.behaviors import StackTachBehavior
 from cloudcafe.stacktach.stacky_api.client import StackTachClient
 
 
@@ -41,6 +42,8 @@ class StackTachFixture(BaseTestFixture):
 
         cls.stacktach_client = StackTachClient(cls.url, cls.serializer,
                                                cls.deserializer)
+        cls.stacktach_behavior = StackTachBehavior(cls.stacktach_client,
+                                                   cls.stacktach_config)
 
 
 class StackTachDBFixture(BaseTestFixture):
