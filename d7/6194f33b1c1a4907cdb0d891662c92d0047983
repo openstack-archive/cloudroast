@@ -1,0 +1,12 @@
+Approved+1: James E. Blair <corvus@inaugust.com>
+Verified+2: Jenkins
+Code-Review+2: Daryl Walleck <daryl.walleck@rackspace.com>
+Approved+1: jose-idar <jose.idar@rackspace.com>
+Code-Review+2: jose-idar <jose.idar@rackspace.com>
+Approved+1: Carlos Martinez <carlos.martinez@rackspace.com>
+Code-Review+2: Carlos Martinez <carlos.martinez@rackspace.com>
+Submitted-by: Jenkins
+Submitted-at: Fri, 24 Jan 2014 23:18:39 +0000
+Reviewed-on: https://review.openstack.org/68462
+Project: stackforge/cloudroast
+Branch: refs/heads/master
