@@ -14,10 +14,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 from datetime import datetime, timedelta
+from json import loads as json_to_dict
 from sys import maxint
 import unittest2
 
 from cafe.drivers.unittest.datasets import DatasetList
+from cafe.drivers.unittest.issue import skip_open_issue
 from cafe.drivers.unittest.decorators import (tags, data_driven_test,
                                               DataDrivenFixture)
 from cloudroast.cloudkeep.barbican.fixtures import (
@@ -479,6 +481,20 @@ class OrdersAPI(OrdersFixture):
         Should return 400."""
         resp = self.behaviors.create_order_overriding_cfg(mode=400)
         self.assertEqual(resp.status_code, 400, 'Should have failed with 400')
+
+    @skip_open_issue('launchpad', '1269594')
+    @tags(type='negative')
+    def test_empty_error_message_on_invalid_order_creation(self):
+        resp = self.behaviors.create_order_overriding_cfg(
+            payload_content_type='text/plain')
+        create_resp = resp.create_resp
+
+        # Make sure we actually get a message back
+        error_msg = json_to_dict(create_resp.content).get('title')
+
+        self.assertEqual(create_resp.status_code, 400)
+        self.assertIsNotNone(error_msg)
+        self.assertNotEqual(error_msg, 'None')
 
 
 class OrdersPagingAPI(OrdersPagingFixture):
