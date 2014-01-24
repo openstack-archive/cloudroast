@@ -275,7 +275,6 @@ class BitLengthDataSetNegative(DatasetList):
 
         self.append_new_dataset('invalid', {'bit_length': 'not-an-int'})
         self.append_new_dataset('negative', {'bit_length': -1})
-        self.append_new_dataset('zero', {'bit_length': 0})
         self.append_new_dataset('empty', {'bit_length': ''})
         self.append_new_dataset('large_string', {'bit_length': large_string})
 
