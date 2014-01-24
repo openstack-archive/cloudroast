@@ -26,9 +26,9 @@ from cloudroast.cloudkeep.barbican.fixtures import (
     ContentTypeEncodingDataSetNegative, ContentTypeEncodingDataSetTextPositive,
     ContentTypeEncodingDataSetBase64Positive, ModeDataSetPositive,
     ModeDataSetNegative)
+from cafe.drivers.unittest.issue import skip_open_issue
 from cafe.drivers.unittest.decorators import (tags, data_driven_test,
-                                              DataDrivenFixture,
-                                              skip_open_issue)
+                                              DataDrivenFixture)
 
 
 class SecretBitLengthDataSetPositive(BitLengthDataSetPositive):
