@@ -629,10 +629,10 @@ class SecretsAPI(SecretsFixture):
 
         # first, ensure that the return code is 400
         self.assertEqual(create_resp.status_code, 400)
-
-        pattern = ('{\s*"title": "Provided object does not match schema '
-                   '\'Secret\': \'.*? is not one of \[.*?\]"\s*}')
-        result = re.match(pattern, create_resp.content)
+        pattern = (r".*\"title\": \"Provided object does not match schema "
+                   "'Secret': (.*?) is not one of (.*?)\".*")
+        regex_opts = re.DOTALL | re.MULTILINE
+        result = re.match(pattern, create_resp.content, regex_opts)
 
         # now see that the regexp matched (ie result is not None)
         self.assertIsNotNone(result, 'Error message was not as expected')
