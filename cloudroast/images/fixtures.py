@@ -13,6 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
+import StringIO
 
 import re
 
@@ -51,6 +52,8 @@ class ImagesFixture(BaseTestFixture):
         cls.resources = ResourcePool()
         cls.serialize_format = cls.marshalling.serializer
         cls.deserialize_format = cls.marshalling.deserializer
+        cls.image_data = '*' * 1024
+        cls.file_data = StringIO.StringIO(cls.image_data)
 
         # TODO: Remove once import/export functionality is implemented
         internal_url = cls.images_config.internal_url
@@ -160,9 +163,14 @@ class ImagesFixture(BaseTestFixture):
                        'deserialize_format': cls.deserialize_format}
         return ImagesClient(**client_args)
 
+    def _upload_image_file(self, image_id, file_data=None):
+        file_data = file_data or self.file_data
+        response = self.images_client.store_image_file(
+            image_id=image_id, file_data=file_data)
+        self.assertEqual(response.status_code, 204)
+
 
 class ComputeIntegrationFixture(ImagesFixture):
-
     @classmethod
     def setUpClass(cls):
         super(ComputeIntegrationFixture, cls).setUpClass()
