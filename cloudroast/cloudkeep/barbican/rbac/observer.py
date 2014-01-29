@@ -25,7 +25,8 @@ class RBACObserverRoleForSecretAPI(RBACSecretRoles):
     @classmethod
     def setUpClass(cls):
         super(RBACObserverRoleForSecretAPI, cls).setUpClass(
-            username=cls.rbac_config.observer)
+            username=cls.rbac_config.observer,
+            password=cls.rbac_config.observer_password)
 
     @tags(type='positive')
     def test_get_secret_metadata_as_observer(self):
@@ -94,7 +95,8 @@ class RBACObserverRoleForOrdersAPI(RBACOrderRoles):
     @classmethod
     def setUpClass(cls):
         super(RBACObserverRoleForOrdersAPI, cls).setUpClass(
-            username=cls.rbac_config.observer)
+            username=cls.rbac_config.observer,
+            password=cls.rbac_config.observer_password)
 
     @tags(type='positive')
     def test_get_order_as_observer(self):
