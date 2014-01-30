@@ -93,9 +93,8 @@ class ComputeIntegrationTestFixture(VolumesTestFixture):
 
         cls.volume_attachments.behaviors = VolumeAttachmentsAPI_Behaviors(
             volume_attachments_client=cls.volume_attachments.client,
-            volumes_client=cls.volumes.client,
             volume_attachments_config=cls.volume_attachments.config,
-            volumes_config=cls.volumes.config)
+            volumes_behaviors=cls.volumes.behaviors)
 
     @staticmethod
     def random_server_name():
