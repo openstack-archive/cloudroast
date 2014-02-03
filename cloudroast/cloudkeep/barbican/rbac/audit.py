@@ -23,7 +23,8 @@ class RBACAuditRoleForSecretAPI(RBACSecretRoles):
     @classmethod
     def setUpClass(cls):
         super(RBACAuditRoleForSecretAPI, cls).setUpClass(
-            username=cls.rbac_config.audit)
+            username=cls.rbac_config.audit,
+            password=cls.rbac_config.audit_password)
 
     @tags(type='positive')
     def test_get_secret_metadata_as_audit(self):
@@ -91,7 +92,8 @@ class RBACAuditRoleForOrdersAPI(RBACOrderRoles):
     @classmethod
     def setUpClass(cls):
         super(RBACAuditRoleForOrdersAPI, cls).setUpClass(
-            username=cls.rbac_config.audit)
+            username=cls.rbac_config.audit,
+            password=cls.rbac_config.audit_password)
 
     @tags(type='positive')
     def test_get_order_as_audit(self):

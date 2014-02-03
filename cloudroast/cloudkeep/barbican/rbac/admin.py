@@ -25,7 +25,8 @@ class RBACAdminRoleForSecretAPI(RBACSecretRoles):
     @classmethod
     def setUpClass(cls):
         super(RBACAdminRoleForSecretAPI, cls).setUpClass(
-            username=cls.rbac_config.admin)
+            username=cls.rbac_config.admin,
+            password=cls.rbac_config.admin_password)
 
     @tags(type='positive')
     def test_create_secret_as_admin(self):
@@ -100,7 +101,8 @@ class RBACAdminRoleForOrdersAPI(RBACOrderRoles):
     @classmethod
     def setUpClass(cls):
         super(RBACAdminRoleForOrdersAPI, cls).setUpClass(
-            username=cls.rbac_config.admin)
+            username=cls.rbac_config.admin,
+            password=cls.rbac_config.admin_password)
 
     @tags(type='positive')
     def test_create_order_as_admin(self):

@@ -22,10 +22,12 @@ class RBACSecretRoles(SecretsFixture):
     rbac_config = CloudKeepRBACRoleConfig()
 
     @classmethod
-    def setUpClass(cls, username=None):
+    def setUpClass(cls, username=None, password=None):
         config = cls._build_editable_keystone_config()
         if username:
             config.username = username
+        if password:
+            config.password = password
 
         super(RBACSecretRoles, cls).setUpClass(config)
 
@@ -44,10 +46,12 @@ class RBACOrderRoles(OrdersFixture):
     rbac_config = CloudKeepRBACRoleConfig()
 
     @classmethod
-    def setUpClass(cls, username=None):
+    def setUpClass(cls, username=None, password=None):
         config = cls._build_editable_keystone_config()
         if username:
             config.username = username
+        if password:
+            config.password = password
 
         super(RBACOrderRoles, cls).setUpClass(config)
 
