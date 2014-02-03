@@ -13,6 +13,8 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
+import json
+import requests
 
 from os import path
 from uuid import uuid4
@@ -31,11 +33,9 @@ from cloudcafe.cloudkeep.barbican.version.client import VersionClient
 from cloudcafe.cloudkeep.config import (MarshallingConfig, CloudKeepConfig,
                                         CloudKeepSecretsConfig,
                                         CloudKeepOrdersConfig,
-                                        CloudKeepVerificationsConfig)
+                                        CloudKeepVerificationsConfig,
+                                        CloudKeepAuthConfig)
 from cloudcafe.common.tools import randomstring
-from cloudcafe.identity.config import IdentityTokenConfig
-from cloudcafe.identity.v2_0.tokens_api.behaviors import TokenAPI_Behaviors
-from cloudcafe.identity.v2_0.tokens_api.client import TokenAPI_Client
 
 
 class BarbicanFixture(BaseTestFixture):
@@ -45,7 +45,7 @@ class BarbicanFixture(BaseTestFixture):
         super(BarbicanFixture, cls).setUpClass()
         cls.marshalling = MarshallingConfig()
         cls.cloudkeep = CloudKeepConfig()
-        cls.keystone = keystone_config or IdentityTokenConfig()
+        cls.keystone = keystone_config or CloudKeepAuthConfig()
 
     def get_id(self, request):
         """
@@ -67,34 +67,75 @@ class BarbicanFixture(BaseTestFixture):
 class AuthenticationFixture(BarbicanFixture):
 
     @classmethod
+    def _get_token_and_id(cls, endpoint, username, password,
+                          tenant, auth_type='keystone'):
+        """ This is temporary hack for Keystone and Rackspace Auth. This
+        is needed as the Rackspace identity provider does not allow for
+        password auth. Currently, I do not have the time to refactor the
+        identity provider to handle this.
+        THIS IS A HACK! DO NOT DUPLICATE THIS!
+
+        TODO: Refactor Identity rackspace auth provider to handle passwords
+              and multiple roles.
+        """
+        # Build request data
+        endpoint = '{base}/v2.0/tokens'.format(base=endpoint)
+        headers = {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        }
+
+        # All strict Keystone implementations should use 'tenantName'
+        auth_key = 'tenantId' if auth_type == 'rackspace' else 'tenantName'
+        auth = json.dumps({
+            'auth': {
+                'passwordCredentials': {
+                    'username': username,
+                    'password': password
+                },
+                auth_key: tenant
+            }
+        })
+
+        # Make request
+        resp = requests.post(endpoint, data=auth, headers=headers)
+        resp_dict = json.loads(resp.content)
+        if not resp.ok:
+            raise Exception('Failed to authenticate! {0}'.format(resp.content))
+
+        # Get dictionaries from response (default to empty)
+        access_dict = resp_dict.get('access', {})
+        token_dict = access_dict.get('token', {})
+        tenant_dict = token_dict.get('tenant', {})
+
+        token_id = token_dict.get('id')
+        tenant_id = tenant_dict.get('id')
+
+        return token_id, tenant_id
+
+    @classmethod
     def _build_editable_keystone_config(cls):
-        loaded_config = IdentityTokenConfig()
+        loaded_config = CloudKeepAuthConfig()
         # This is far from ideal, but I need to be able to edit the config
         config = type('SpoofedConfig', (object,), {
             'version': loaded_config.version,
             'username': loaded_config.username,
             'password': loaded_config.password,
             'tenant_name': loaded_config.tenant_name,
-            'authentication_endpoint': loaded_config.authentication_endpoint})
+            'authentication_endpoint': loaded_config.authentication_endpoint,
+            'auth_type': loaded_config.auth_type})
         return config
 
     @classmethod
     def setUpClass(cls, keystone_config=None):
         super(AuthenticationFixture, cls).setUpClass(keystone_config)
-        cls.auth_client = TokenAPI_Client(
-            url=cls.keystone.authentication_endpoint,
-            serialize_format=cls.marshalling.serializer,
-            deserialize_format=cls.marshalling.deserializer)
-        cls.auth_behaviors = TokenAPI_Behaviors(cls.auth_client)
-
-        # Get token and setup default_headers
-        access = cls.auth_behaviors.get_access_data(
+        # Get auth token and id
+        cls.token, cls.tenant_id = cls._get_token_and_id(
+            endpoint=cls.keystone.authentication_endpoint,
             username=cls.keystone.username,
             password=cls.keystone.password,
-            tenant_name=cls.keystone.tenant_name)
-
-        cls.token = access.token.id_ if access else None
-        cls.tenant_id = access.token.tenant.id_ if access else None
+            tenant=cls.keystone.tenant_name,
+            auth_type=cls.keystone.auth_type)
 
         cls.version_client = VersionClient(
             url=cls.cloudkeep.base_url,

@@ -27,11 +27,12 @@ class AuthenticationAPI(AuthenticationFixture):
         """Covers acquiring an authentication token and using it to get the
         version. Only getting the version is implemented with authentication.
         """
-        access = self.auth_behaviors.get_access_data(
+        token, tenant_id = self._get_token_and_id(
+            endpoint=self.keystone.authentication_endpoint,
             username=self.keystone.username,
             password=self.keystone.password,
-            tenant_name=self.keystone.tenant_name)
-        token = access.token.id_
+            tenant=self.keystone.tenant_name,
+            auth_type=self.keystone.auth_type)
 
         headers = {'X-Auth-Token': token,
                    'Accept': 'applicaton/json'}
