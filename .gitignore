@@ -30,3 +30,6 @@ pip-log.txt
 *.project
 *.pydev*
 *.idea
+
+#OSX files
+.DS_Store
