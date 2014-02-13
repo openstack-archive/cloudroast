@@ -15,6 +15,7 @@ limitations under the License.
 """
 from datetime import datetime, timedelta
 
+from cloudcafe.common.tools.time import string_to_datetime
 from cloudroast.stacktach.fixtures import StackTachDBFixture
 
 
@@ -126,6 +127,36 @@ class StackTachDBTest(StackTachDBFixture):
                                          response.content))
         self.verify_launches_entity_attribute_values(response.entity)
 
+    def test_get_launches_by_date_max(self):
+        """
+        @summary: Verify that Get Launches by maximum date
+                  returns 200 Success response
+            1.  Get Launches for the past few days
+            2.  Iterate through the list to look for a non null launched_at
+            3.  Add 1 day to the launched at for maximum date filter
+        """
+
+        date_min = datetime.utcnow() - timedelta(days=int(self.days_passed))
+        response = (self.stacktach_db_behavior
+                    .list_launches_by_date_min(launched_at_min=date_min))
+
+        for launch in response.entity:
+            if launch.launched_at is not None:
+                launched_at = str(launch.launched_at)
+                break
+        # Microseconds may or may not be returned
+        date_obj = string_to_datetime(launched_at)
+        date_max = date_obj + timedelta(days=1)
+        response = (self.stacktach_db_behavior
+                    .list_launches_by_date_max(launched_at_max=date_max))
+
+        self.assertEqual(response.status_code, 200,
+                         self.msg.format("status code", "200",
+                                         response.status_code,
+                                         response.reason,
+                                         response.content))
+        self.verify_launches_entity_attribute_values(response.entity)
+
     def test_get_launches_by_date_min_and_max(self):
         """
         @summary: Verify that Get Launches by minimum and maximum date
@@ -154,6 +185,31 @@ class StackTachDBTest(StackTachDBFixture):
         date_min = datetime.utcnow() - timedelta(days=int(self.days_passed))
         response = (self.stacktach_db_behavior
                     .list_deletes_by_date_min(deleted_at_min=date_min))
+
+        self.assertEqual(response.status_code, 200,
+                         self.msg.format("status code", "200",
+                                         response.status_code,
+                                         response.reason,
+                                         response.content))
+        self.verify_deletes_entity_attribute_values(response.entity)
+
+    def test_get_deletes_by_date_max(self):
+        """
+        @summary: Verify that Get Deletes by maximum date
+                  returns 200 Success response
+            1.  Get Deletes for the past few days
+            2.  Choose the first deleted at for maximum date filter
+        """
+
+        date_min = datetime.utcnow() - timedelta(days=int(self.days_passed))
+        response = (self.stacktach_db_behavior
+                    .list_deletes_by_date_min(deleted_at_min=date_min))
+
+        deleted_at = response.entity[0].deleted_at
+        # Microseconds may or may not be returned
+        date_max = string_to_datetime(deleted_at)
+        response = (self.stacktach_db_behavior
+                    .list_deletes_by_date_max(deleted_at_max=date_max))
 
         self.assertEqual(response.status_code, 200,
                          self.msg.format("status code", "200",
