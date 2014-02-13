@@ -1,7 +1,7 @@
-from cloudroast.stacktach.fixtures import StackTachFixture
+from cloudroast.stacktach.fixtures import StackTachFixture, StackTachDBFixture
 
 
-class StackTachTest(StackTachFixture):
+class StackTachTest(StackTachFixture, StackTachDBFixture):
 
     @classmethod
     def setUpClass(cls):
@@ -65,6 +65,42 @@ class StackTachTest(StackTachFixture):
             self.assertIsNotNone(element.timing)
             self.assertIsNotNone(element.uuid)
             self.assertIsNotNone(element.deployment)
+
+    def test_get_kpi_for_tenant_id(self):
+        """
+        @summary: Verify that Get KPI For Tenant ID
+                  returns 200 Success response
+        @note:  This test requires that the tenant_id has been actively
+                creating usage during the current audit period
+        """
+
+        tenant_id = (self.stacktach_db_behavior
+                     .get_active_tenant_id_from_launches())
+        response = self.stacktach_client.get_kpi_for_tenant_id(tenant_id)
+        self._verify_success_code_and_entity_len(response)
+        for element in response.entity:
+            self.assertIsNotNone(element.event_name)
+            self.assertIsNotNone(element.timing)
+            self.assertIsNotNone(element.uuid)
+            self.assertIsNotNone(element.deployment)
+
+    def test_get_watch_events(self):
+        """
+        @summary: Verify that Get Watch Events returns 200 Success response
+        """
+        response = (self.stacktach_client
+                    .get_watch_events(deployment_id='0',
+                                      service=self.service))
+        print vars(response)
+        self._verify_success_code_and_entity_len(response)
+        for element in response.entity:
+            self.assertIsNotNone(element.event_id)
+            self.assertIsNotNone(element.routing_key_type)
+            self.assertIsNotNone(element.when_date)
+            self.assertIsNotNone(element.when_time)
+            self.assertIsNotNone(element.deployment)
+            self.assertIsNotNone(element.event_name)
+            self.assertIsNotNone(element.uuid)
 
     def test_get_event_id_details(self):
         """
