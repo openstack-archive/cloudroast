@@ -17,7 +17,7 @@ import unittest
 
 from cafe.drivers.unittest.decorators import memoized
 from cafe.drivers.unittest.fixtures import BaseTestFixture
-from cloudcafe.auth.config import UserAuthConfig, UserConfig
+from cloudcafe.auth.config import UserAuthConfig
 from cloudcafe.auth.provider import AuthProvider
 from cloudcafe.objectstorage.config import ObjectStorageConfig
 from cloudcafe.objectstorage.objectstorage_api.behaviors \
@@ -28,7 +28,40 @@ from cloudcafe.objectstorage.objectstorage_api.config \
     import ObjectStorageAPIConfig
 
 
-_auth_data = None
+class AuthComposite(object):
+    #Currently a classmethod only because of a limitiation of memoized
+    @classmethod
+    @memoized
+    def authenticate(cls):
+        """ Should only be called from an instance of AuthComposite """
+        access_data = AuthProvider.get_access_data()
+        if access_data is None:
+            raise AssertionError('Authentication failed in setup')
+        return access_data
+
+
+class ObjectStorageAuthComposite(object):
+    """
+    Handles authing and retrieving the storage_url and auth_token.
+    """
+
+    def __init__(self):
+        self.storage_url = None
+        self.auth_token = None
+
+        self._access_data = AuthComposite.authenticate()
+        self.endpoint_config = UserAuthConfig()
+        self.objectstorage_config = ObjectStorageConfig()
+
+        if self.endpoint_config.strategy.lower() == 'saio_tempauth':
+            self.storage_url = self._access_data.storage_url
+            self.auth_token = self._access_data.auth_token
+        else:
+            service = self._access_data.get_service(
+                self.objectstorage_config.identity_service_name)
+            endpoint = service.get_endpoint(self.objectstorage_config.region)
+            self.storage_url = endpoint.public_url
+            self.auth_token = self._access_data.token.id_
 
 
 class SwiftInfoError(Exception):
@@ -39,47 +72,6 @@ class ObjectStorageFixture(BaseTestFixture):
     """
     @summary: Base fixture for objectstorage tests
     """
-
-    @staticmethod
-    def get_access_data():
-        endpoint_config = UserAuthConfig()
-        user_config = UserConfig()
-
-        auth_provider = AuthProvider()
-        access_data = auth_provider.get_access_data(
-            endpoint_config, user_config)
-
-        return access_data
-
-    @staticmethod
-    def get_auth_data():
-        """
-        Authenticate and return a dictionary containing the storage url and
-        auth token.
-        """
-        global _auth_data
-        if _auth_data:
-            return _auth_data
-
-        _auth_data = {
-            'storage_url': None,
-            'auth_token': None}
-
-        endpoint_config = UserAuthConfig()
-        access_data = ObjectStorageFixture.get_access_data()
-        objectstorage_config = ObjectStorageConfig()
-
-        if endpoint_config.strategy.lower() == 'saio_tempauth':
-            _auth_data['storage_url'] = access_data.storage_url
-            _auth_data['auth_token'] = access_data.auth_token
-        else:
-            service = access_data.get_service(
-                objectstorage_config.identity_service_name)
-            endpoint = service.get_endpoint(objectstorage_config.region)
-            _auth_data['storage_url'] = endpoint.public_url
-            _auth_data['auth_token'] = access_data.token.id_
-
-        return _auth_data
 
     @classmethod
     @memoized
@@ -188,17 +180,18 @@ class ObjectStorageFixture(BaseTestFixture):
     def setUpClass(cls):
         super(ObjectStorageFixture, cls).setUpClass()
 
-        cls.auth_data = cls.get_auth_data()
-        cls.storage_url = cls.auth_data['storage_url']
-        cls.auth_token = cls.auth_data['auth_token']
-
+        cls.auth_data = ObjectStorageAuthComposite()
         cls.objectstorage_api_config = ObjectStorageAPIConfig()
+        cls.storage_url = cls.auth_data.storage_url
+        cls.auth_token = cls.auth_data.auth_token
+
         cls.base_container_name = (
             cls.objectstorage_api_config.base_container_name)
         cls.base_object_name = cls.objectstorage_api_config.base_object_name
 
         cls.client = ObjectStorageAPIClient(cls.storage_url, cls.auth_token)
-        cls.behaviors = ObjectStorageAPI_Behaviors(client=cls.client)
+        cls.behaviors = ObjectStorageAPI_Behaviors(
+            client=cls.client, config=cls.objectstorage_api_config)
 
     def create_temp_container(self, descriptor='', headers=None):
         """
