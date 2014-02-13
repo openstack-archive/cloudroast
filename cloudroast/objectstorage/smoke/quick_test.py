@@ -13,9 +13,13 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
+from cafe.drivers.unittest.decorators import (
+    DataDrivenFixture, data_driven_test)
 from cloudroast.objectstorage.fixtures import ObjectStorageFixture
+from cloudroast.objectstorage.generators import ObjectDatasetList
 
 
+@DataDrivenFixture
 class QuickTest(ObjectStorageFixture):
     def test_create_container(self):
         response = self.client.create_container('quick_test_container')
@@ -23,3 +27,13 @@ class QuickTest(ObjectStorageFixture):
 
         response = self.client.delete_container('quick_test_container')
         self.assertTrue(response.ok)
+
+    @data_driven_test(ObjectDatasetList())
+    def ddtest_create_object(self, generate_object):
+        container_name = self.create_temp_container(
+            descriptor='quick_test_container')
+        object_name = 'quick_object'
+        generate_object(container_name, object_name)
+
+        response = self.client.get_object(container_name, object_name)
+        self.assertEqual(200, response.status_code, 'should return object')
