@@ -1,0 +1,9 @@
+Verified+2: Jenkins
+Approved+1: John Vrbanac <john.vrbanac@rackspace.com>
+Code-Review+2: John Vrbanac <john.vrbanac@rackspace.com>
+Code-Review+1: John Wood <john.wood@rackspace.com>
+Submitted-by: Jenkins
+Submitted-at: Fri, 14 Feb 2014 17:32:27 +0000
+Reviewed-on: https://review.openstack.org/73637
+Project: stackforge/cloudroast
+Branch: refs/heads/master
