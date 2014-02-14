@@ -540,6 +540,8 @@ class SecretsAPI(SecretsFixture):
         large_string = str(bytearray().zfill(10001))
         resp = self.behaviors.create_secret(
             payload_content_type=self.config.payload_content_type,
+            payload=self.config.payload,
+            payload_content_encoding=self.config.payload_content_encoding,
             name=large_string,
             algorithm=large_string,
             mode=large_string)
