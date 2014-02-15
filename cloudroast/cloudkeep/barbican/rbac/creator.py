@@ -36,8 +36,7 @@ class RBACCreatorRoleForSecretAPI(RBACSecretRoles):
     @tags(type='positive')
     def test_update_secret_as_creator(self):
         # Create
-        resp = self.admin_fixture.behaviors.create_secret_from_config(
-            use_payload=False)
+        resp = self.admin_fixture.behaviors.create_secret()
         self.assertEqual(resp.status_code, 201)
 
         # Update

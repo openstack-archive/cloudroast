@@ -297,6 +297,18 @@ class SecretsAPI(SecretsFixture):
             payload='', payload_content_type='', payload_content_encoding='')
         self.assertEqual(resp.status_code, 400, 'Should have failed with 400')
 
+    @tags(type='negative')
+    def test_creating_w_empty_name_and_content_type_no_payload(self):
+        """ When a test is created with an empty or null name attribute, the
+         system should return the secret's UUID on a get
+         - Reported in Barbican GitHub Issue #89
+        """
+        c_resp = self.behaviors.create_secret(
+            name='', payload_content_type=self.config.payload_content_type)
+
+        self.assertEqual(c_resp.status_code, 400,
+                         'Should have failed with 400 since no payload sent')
+
     @tags(type='positive')
     def test_creating_w_empty_name(self):
         """ When a test is created with an empty or null name attribute, the
@@ -304,7 +316,9 @@ class SecretsAPI(SecretsFixture):
          - Reported in Barbican GitHub Issue #89
         """
         c_resp = self.behaviors.create_secret(
-            name='', payload_content_type=self.config.payload_content_type)
+            name='', payload=self.config.payload,
+            payload_content_type=self.config.payload_content_type,
+            payload_content_encoding=self.config.payload_content_encoding)
 
         get_resp = self.client.get_secret(secret_id=c_resp.id)
         self.assertEqual(get_resp.entity.name, c_resp.id,
@@ -389,8 +403,7 @@ class SecretsAPI(SecretsFixture):
         """
         Covers case of putting empty String to a secret. Should return 400.
         """
-        resp = self.behaviors.create_secret(
-            payload_content_type=self.config.payload_content_type)
+        resp = self.behaviors.create_secret()
         put_resp = self.client.add_secret_payload(
             secret_id=resp.id,
             payload_content_type=self.config.payload_content_type,
@@ -459,27 +472,26 @@ class SecretsAPI(SecretsFixture):
                          self.config.payload_content_type,
                          'Default content type not correct')
 
-    @tags(type='positive')
+    @tags(type='negative')
     def test_checking_no_content_types_when_no_data(self):
-        """ Covers checking that the content types attribute is not shown if
-        the secret does not have encrypted data associated with it.
+        """ Covers checking that the secret create fails when a content type
+        is passed in without any payload data.
         """
         create_resp = self.behaviors.create_secret(
             payload_content_type=self.config.payload_content_type)
-        secret_id = create_resp.id
-        resp = self.client.get_secret(secret_id=secret_id)
-        secret = resp.entity
-        self.assertIsNone(secret.content_types,
-                          'Should not have had content types attribute')
+        self.assertEqual(create_resp.status_code, 400,
+                         'Should have failed with 400 since no payload')
 
-    @tags(type='positive')
-    def test_creating_secret_w_only_content_type(self):
-        """ Covers creating secret with only content type and no payload.
-        Should return 201.
+    @tags(type='negative')
+    def test_creating_secret_w_only_content_type_and_encoding(self):
+        """ Covers creating secret with only content type and encoding, with
+        no payload.  Should return 400.
         """
         resp = self.behaviors.create_secret(
-            payload_content_type=self.config.payload_content_type)
-        self.assertEqual(resp.status_code, 201)
+            payload_content_type=self.config.payload_content_type,
+            payload_content_encoding=self.config.payload_content_encoding)
+        self.assertEqual(resp.status_code, 400,
+                         'Should fail with 400 since no payload specified')
 
     @tags(type='positive')
     def test_creating_secret_w_aes_algorithm(self):
@@ -516,10 +528,20 @@ class SecretsAPI(SecretsFixture):
         self.assertEqual(config_get_resp.status_code, 200,
                          'Returned unexpected response code')
 
+    @tags(type='negative')
+    def test_creating_secret_w_text_plain_mime_type_no_payload(self):
+        """Covers case of attempting to create a secret with text/plain as
+        mime type, with no payload.  Should result in 400"""
+        resp = self.behaviors.create_secret(payload_content_type='text/plain')
+        self.assertEqual(resp.status_code, 400,
+                         'Should fail with 400 since no payload specified')
+
     @tags(type='positive')
     def test_creating_secret_w_text_plain_mime_type(self):
-        """Covers case of creating a secret with text/plain as mime type."""
-        resp = self.behaviors.create_secret(payload_content_type='text/plain')
+        """Covers case of attempting to create a secret with text/plain as
+        mime type"""
+        resp = self.behaviors.create_secret(payload="an interesting payload",
+                                            payload_content_type='text/plain')
         self.assertEqual(resp.status_code, 201,
                          'Returned unexpected response code')
 

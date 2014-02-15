@@ -69,8 +69,7 @@ class RBACObserverRoleForSecretAPI(RBACSecretRoles):
 
     @tags(type='negative')
     def test_update_secret_as_observer(self):
-        resp = self.admin_fixture.behaviors.create_secret_from_config(
-            use_payload=False)
+        resp = self.admin_fixture.behaviors.create_secret()
         self.assertEqual(resp.status_code, 201)
 
         # Update attempt should return 401
