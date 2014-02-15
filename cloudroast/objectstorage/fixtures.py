@@ -64,77 +64,10 @@ class ObjectStorageAuthComposite(object):
             self.auth_token = self._access_data.token.id_
 
 
-class SwiftInfoError(Exception):
-    pass
-
-
 class ObjectStorageFixture(BaseTestFixture):
     """
     @summary: Base fixture for objectstorage tests
     """
-
-    @classmethod
-    @memoized
-    def get_features(cls):
-        """
-        Used to get the features swift is configured with.
-
-        Returns a string indicating the swift features configured where the
-            features are separated by whitespace.
-            Alternatly one of two special constants from ObjectStorageAPIConfig
-            can be returned:
-                ALL_FEATURES - indicates that CloudCafe should assume that all
-                               features have been configured with swfit.
-                NO_FEATURES - indicates that CloudCafe should assume that no
-                              features have been configured with swift.
-        """
-        api_config = ObjectStorageAPIConfig()
-
-        def get_swift_features(api_config):
-            data = ObjectStorageFixture.get_auth_data()
-            client = ObjectStorageAPIClient(
-                data['storage_url'], data['auth_token'])
-            behaviors = ObjectStorageAPI_Behaviors(client, api_config)
-            try:
-                features = behaviors.get_swift_features()
-            except Exception as e:
-                raise SwiftInfoError(e.message)
-
-            return features.split()
-
-        # Get features from swift if needed.
-        reported_features = []
-        if api_config.use_swift_info:
-            reported_features = get_swift_features(api_config)
-
-        def split_features(features):
-            if features == api_config.ALL_FEATURES:
-                return features
-            return unicode(features).split()
-
-        # Split the features if needed.
-        features = split_features(api_config.features)
-        excluded_features = split_features(
-            api_config.excluded_features)
-
-        if features == api_config.ALL_FEATURES:
-            return features
-
-        features = list(set(reported_features) | set(features))
-
-        # If all features are to be ignored, skip
-        if excluded_features == api_config.ALL_FEATURES:
-            return api_config.NO_FEATURES
-
-        # Remove all features
-        for feature in excluded_features:
-            try:
-                index = features.index(feature)
-                features.pop(index)
-            except ValueError:
-                pass
-
-        return ' '.join(features)
 
     @classmethod
     @memoized
@@ -154,8 +87,14 @@ class ObjectStorageFixture(BaseTestFixture):
 
         http://docs.python.org/2/library/unittest.html
         """
+        auth_data = ObjectStorageAuthComposite()
         objectstorage_api_config = ObjectStorageAPIConfig()
-        features = ObjectStorageFixture.get_features()
+        client = ObjectStorageAPIClient(auth_data.storage_url,
+                                        auth_data.auth_token)
+        behaviors = ObjectStorageAPI_Behaviors(
+            client=client, config=objectstorage_api_config)
+
+        features = behaviors.get_configured_features()
 
         if features == objectstorage_api_config.ALL_FEATURES:
             return lambda func: func
