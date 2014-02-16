@@ -13,6 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
+from os import path
 from unittest import skip
 from requests.exceptions import MissingSchema
 
@@ -59,11 +60,73 @@ class OrdersAPI(OrdersFixture):
         self.assertIsNotNone(order)
         self.assertIn('http', order)
 
+    @tags(type='positive')
+    def test_create_order_w_empty_name_checking_name(self):
+        """Covers creating order with an empty name.  This will
+        create the secret with name equal to the uuid."""
+        order_ref = self.cl_behaviors.create_order(
+            name='',
+            payload_content_type=self.config.payload_content_type,
+            algorithm=self.config.algorithm,
+            bit_length=self.config.bit_length,
+            mode=self.config.mode)
+        self.assertIsNotNone(order_ref)
+        self.assertIn('http', order_ref)
+
+        # get the order from the order href
+        order = self.cl_client.get_order(order_ref)
+        self.assertIsNotNone(order)
+
+        # get the secret id from the order ref. It will be a uuid.
+        secret_id_from_order_ref = path.split(order.secret_ref)[-1]
+        self.assertIsNotNone(secret_id_from_order_ref)
+
+        # now get the secret name from the secret itself
+        secret_resp = self.secrets_client.get_secret(
+            secret_id=secret_id_from_order_ref)
+        self.assertIsNotNone(secret_resp)
+        self.assertIsNotNone(secret_resp.entity)
+        self.assertEqual(secret_id_from_order_ref, secret_resp.entity.name)
+
+    @tags(type='positive')
+    def test_create_order_w_none_name_checking_name(self):
+        """Covers creating order with no name.  This will
+        create the secret with name equal to the uuid."""
+        order_ref = self.cl_behaviors.create_order(
+            name=None,
+            payload_content_type=self.config.payload_content_type,
+            algorithm=self.config.algorithm,
+            bit_length=self.config.bit_length,
+            mode=self.config.mode)
+        self.assertIsNotNone(order_ref)
+        self.assertIn('http', order_ref)
+
+        # get the order from the order href
+        order = self.cl_client.get_order(order_ref)
+        self.assertIsNotNone(order)
+
+        # get the secret id from the order ref.  It will be a uuid.
+        secret_id_from_order_ref = path.split(order.secret_ref)[-1]
+        self.assertIsNotNone(secret_id_from_order_ref)
+
+        # now get the secret name from the secret itself
+        secret_resp = self.secrets_client.get_secret(
+            secret_id=secret_id_from_order_ref)
+        self.assertIsNotNone(secret_resp)
+        self.assertIsNotNone(secret_resp.entity)
+        self.assertEqual(secret_id_from_order_ref, secret_resp.entity.name)
+
     @tags(type='negative')
     def test_create_order_w_invalid_mime_type(self):
         self.assertRaises(ClientException,
                           self.cl_behaviors.create_order_overriding_cfg,
                           payload_content_type='crypto/boom')
+
+    @tags(type='negative')
+    def test_create_order_w_text_plain_type(self):
+        self.assertRaises(ClientException,
+                          self.cl_behaviors.create_order_overriding_cfg,
+                          payload_content_type='text/plain')
 
     @tags(type='negative')
     def test_create_order_w_invalid_bit_length(self):
@@ -119,6 +182,29 @@ class OrdersAPI(OrdersFixture):
         order = self.cl_client.get_order(href=order_ref)
         secret = order.secret
         self.assertIsNotNone(secret['expiration'])
+
+    @tags(type='positive')
+    def test_create_order_w_expiration(self):
+        """ Covers creating order with expiration."""
+        order = self.cl_behaviors.create_order_from_config(
+            use_expiration=True)
+        self.assertIsNotNone(order)
+        self.assertIn('http', order)
+
+    @tags(type='negative')
+    def test_create_order_w_invalid_expiration(self):
+        """ Covers creating order with an invalid expiration."""
+        self.assertRaises(ClientException,
+                          self.cl_behaviors.create_order_overriding_cfg,
+                          expiration='this-is-certainly-not-a-date')
+
+    @tags(type='negative')
+    def test_create_order_w_empty_values(self):
+        """Covers creating order with all empty values."""
+        self.assertRaises(ClientException,
+                          self.cl_behaviors.create_order,
+                          name='', expiration='', algorithm='', mode='',
+                          bit_length='', payload_content_type='')
 
 
 class OrdersPagingAPI(OrdersPagingFixture):
