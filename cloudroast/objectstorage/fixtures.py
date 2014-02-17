@@ -126,7 +126,6 @@ class ObjectStorageFixture(BaseTestFixture):
 
         cls.base_container_name = (
             cls.objectstorage_api_config.base_container_name)
-        cls.base_object_name = cls.objectstorage_api_config.base_object_name
 
         cls.client = ObjectStorageAPIClient(cls.storage_url, cls.auth_token)
         cls.behaviors = ObjectStorageAPI_Behaviors(
