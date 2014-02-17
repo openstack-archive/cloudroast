@@ -36,8 +36,7 @@ class RBACAdminRoleForSecretAPI(RBACSecretRoles):
     @tags(type='positive')
     def test_update_secret_as_admin(self):
         # Create
-        resp = self.admin_fixture.behaviors.create_secret_from_config(
-            use_payload=False)
+        resp = self.admin_fixture.behaviors.create_secret()
         self.assertEqual(resp.status_code, 201)
 
         # Update
@@ -53,6 +52,14 @@ class RBACAdminRoleForSecretAPI(RBACSecretRoles):
             payload_content_type=self.config.payload_content_type)
         self.assertEqual(sec_resp.status_code, 200)
         self.assertIn('testing_update_secret', sec_resp.content)
+
+    @tags(type='negative')
+    def test_create_secret_as_admin_no_payload(self):
+        # Create
+        resp = self.admin_fixture.behaviors.create_secret_from_config(
+            use_payload=False)
+        self.assertEqual(resp.status_code, 400,
+                         'Should fail with 400 since payload omitted')
 
     @tags(type='positive')
     def test_delete_secret_as_admin(self):

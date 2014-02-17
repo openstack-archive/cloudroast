@@ -75,8 +75,7 @@ class SecretsAPI(SecretsFixture):
     def test_updating_a_secret(self):
         """Covers giving a secret data."""
         # Create
-        resp = self.behaviors.create_secret_from_config(use_expiration=False,
-                                                        use_payload=False)
+        resp = self.behaviors.create_secret()
         self.assertEqual(resp.status_code, 201)
 
         # Update
@@ -96,8 +95,7 @@ class SecretsAPI(SecretsFixture):
     @tags(type='positive')
     def test_deleting_a_secret(self):
         """Covers deleting a secret."""
-        resp = self.behaviors.create_secret_from_config(use_expiration=False,
-                                                        use_payload=False)
+        resp = self.behaviors.create_secret()
         self.assertEqual(resp.status_code, 201)
 
         del_resp = self.behaviors.delete_secret(resp.id)
