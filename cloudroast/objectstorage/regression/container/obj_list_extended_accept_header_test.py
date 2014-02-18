@@ -110,7 +110,7 @@ class ExtendedAcceptHeaderTest(ObjectStorageFixture):
         object_data = 'Test file data'
         content_length = str(len(object_data))
         object_name = '{0}_{1}'.format(
-            self.base_object_name,
+            'extended_accept_header',
             randstring.get_random_string())
 
         headers = {'Content-Length': content_length,

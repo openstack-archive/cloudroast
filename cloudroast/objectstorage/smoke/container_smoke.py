@@ -321,8 +321,7 @@ class ContainerSmokeTest(ObjectStorageFixture):
         object_data = 'Test file data'
         content_length = str(len(object_data))
         object_name_prefix = 'path_test/nested_dir/'
-        object_name_postfix = '{0}_{1}'.format(
-            self.base_object_name,
+        object_name_postfix = 'object_{0}'.format(
             randstring.get_random_string())
         object_name = '{0}{1}'.format(object_name_prefix, object_name_postfix)
 
@@ -379,8 +378,7 @@ class ContainerSmokeTest(ObjectStorageFixture):
         object_data = 'Test file data'
         content_length = str(len(object_data))
         object_name_prefix = 'delimiter_test/'
-        object_name_postfix = '{0}_{1}'.format(
-            self.base_object_name,
+        object_name_postfix = 'object_{0}'.format(
             randstring.get_random_string())
         object_name = '{0}{1}'.format(object_name_prefix, object_name_postfix)
 
