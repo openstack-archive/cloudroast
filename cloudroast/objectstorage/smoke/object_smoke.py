@@ -34,7 +34,6 @@ class ObjectSmokeTest(ObjectStorageFixture):
     @classmethod
     def setUpClass(cls):
         super(ObjectSmokeTest, cls).setUpClass()
-
         cls.default_obj_name = cls.behaviors.VALID_OBJECT_NAME
 
     @data_driven_test(ObjectDatasetList())
@@ -501,6 +500,7 @@ class ObjectSmokeTest(ObjectStorageFixture):
         self.assertEqual(
             expected,
             received,
+
             msg='object created with Etag header'
                 ' value expected: {0} received: {1}'.format(
                     expected,

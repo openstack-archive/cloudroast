@@ -46,7 +46,7 @@ class ListLimitTest(ObjectStorageFixture):
     @classmethod
     def tearDownClass(cls):
         super(ListLimitTest, cls).setUpClass()
-        cls.client.force_delete_containers([cls.container_name])
+        cls.behaviors.force_delete_containers([cls.container_name])
 
     def test_list_limit(self):
         params = {"limit": "2", "format": "json"}

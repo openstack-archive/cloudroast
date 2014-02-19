@@ -106,7 +106,9 @@ class ExtractCorruptArchiveTest(ObjectStorageFixture):
 
         self.behaviors.create_container(container_name)
 
-        self.addCleanup(self.client.force_delete_containers, [container_name])
+        self.addCleanup(
+            self.behaviors.force_delete_containers,
+            [container_name])
 
         archive_format = "tar"
 
@@ -188,7 +190,9 @@ class ExtractCorruptArchiveTest(ObjectStorageFixture):
 
         self.behaviors.create_container(container_name)
 
-        self.addCleanup(self.client.force_delete_containers, [container_name])
+        self.addCleanup(
+            self.behaviors.force_delete_containers,
+            [container_name])
 
         archive_format = "tar"
 
@@ -271,7 +275,9 @@ class ExtractCorruptArchiveTest(ObjectStorageFixture):
 
         self.behaviors.create_container(container_name)
 
-        self.addCleanup(self.client.force_delete_containers, [container_name])
+        self.addCleanup(
+            self.behaviors.force_delete_containers,
+            [container_name])
 
         archive_format = "tar"
 
@@ -353,7 +359,9 @@ class ExtractCorruptArchiveTest(ObjectStorageFixture):
 
         self.behaviors.create_container(container_name)
 
-        self.addCleanup(self.client.force_delete_containers, [container_name])
+        self.addCleanup(
+            self.behaviors.force_delete_containers,
+            [container_name])
 
         archive_format = "tar.gz"
 
@@ -435,7 +443,9 @@ class ExtractCorruptArchiveTest(ObjectStorageFixture):
 
         self.behaviors.create_container(container_name)
 
-        self.addCleanup(self.client.force_delete_containers, [container_name])
+        self.addCleanup(
+            self.behaviors.force_delete_containers,
+            [container_name])
 
         archive_format = "tar.gz"
 
@@ -517,7 +527,9 @@ class ExtractCorruptArchiveTest(ObjectStorageFixture):
 
         self.behaviors.create_container(container_name)
 
-        self.addCleanup(self.client.force_delete_containers, [container_name])
+        self.addCleanup(
+            self.behaviors.force_delete_containers,
+            [container_name])
 
         archive_format = "tar.gz"
 
@@ -599,7 +611,9 @@ class ExtractCorruptArchiveTest(ObjectStorageFixture):
 
         self.behaviors.create_container(container_name)
 
-        self.addCleanup(self.client.force_delete_containers, [container_name])
+        self.addCleanup(
+            self.behaviors.force_delete_containers,
+            [container_name])
 
         archive_format = "tar.gz"
 
@@ -682,7 +696,9 @@ class ExtractCorruptArchiveTest(ObjectStorageFixture):
 
         self.behaviors.create_container(container_name)
 
-        self.addCleanup(self.client.force_delete_containers, [container_name])
+        self.addCleanup(
+            self.behaviors.force_delete_containers,
+            [container_name])
 
         archive_format = "tar.bz2"
 
@@ -764,7 +780,9 @@ class ExtractCorruptArchiveTest(ObjectStorageFixture):
 
         self.behaviors.create_container(container_name)
 
-        self.addCleanup(self.client.force_delete_containers, [container_name])
+        self.addCleanup(
+            self.behaviors.force_delete_containers,
+            [container_name])
 
         archive_format = "tar.bz2"
 
@@ -846,7 +864,9 @@ class ExtractCorruptArchiveTest(ObjectStorageFixture):
 
         self.behaviors.create_container(container_name)
 
-        self.addCleanup(self.client.force_delete_containers, [container_name])
+        self.addCleanup(
+            self.behaviors.force_delete_containers,
+            [container_name])
 
         archive_format = "tar.bz2"
 

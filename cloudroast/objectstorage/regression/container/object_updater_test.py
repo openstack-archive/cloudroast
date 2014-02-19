@@ -47,7 +47,9 @@ class ObjectUpdaterTest(ObjectStorageFixture):
                 headers=headers,
                 data=object_data)
 
-        self.addCleanup(self.client.force_delete_containers, [container_name])
+        self.addCleanup(
+            self.behaviors.force_delete_containers,
+            [container_name])
 
         get_response = self.client.list_objects(container_name)
         head_response = self.client.get_container_metadata(container_name)
@@ -86,7 +88,9 @@ class ObjectUpdaterTest(ObjectStorageFixture):
             if response.ok:
                 num_created_containers += 1
 
-        self.addCleanup(self.client.force_delete_containers, [container_name])
+        self.addCleanup(
+            self.behaviors.force_delete_containers,
+            [container_name])
 
         get_response = self.client.list_objects(container_name)
 

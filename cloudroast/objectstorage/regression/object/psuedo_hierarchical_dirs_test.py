@@ -69,7 +69,7 @@ class PsuedoHierarchalDirsTest(ObjectStorageFixture):
                 headers=headers)
 
         self.addCleanup(
-            self.client.force_delete_containers,
+            self.behaviors.force_delete_containers,
             [container_name])
 
         for delimiter in obj_names.keys():
@@ -149,7 +149,7 @@ class PsuedoHierarchalDirsTest(ObjectStorageFixture):
             headers=headers)
 
         self.addCleanup(
-            self.client.force_delete_containers,
+            self.behaviors.force_delete_containers,
             [container_name])
 
         delimiter = "/"
@@ -335,7 +335,7 @@ class PsuedoHierarchalDirsTest(ObjectStorageFixture):
         self.behaviors.create_container(container_name)
 
         self.addCleanup(
-            self.client.force_delete_containers,
+            self.behaviors.force_delete_containers,
             [container_name])
 
         """

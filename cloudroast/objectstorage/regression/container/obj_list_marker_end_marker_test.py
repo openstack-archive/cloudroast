@@ -46,7 +46,7 @@ class MarkerEndMarkerTest(ObjectStorageFixture):
     @classmethod
     def tearDownClass(cls):
         super(MarkerEndMarkerTest, cls).setUpClass()
-        cls.client.force_delete_containers([cls.container_name])
+        cls.behaviors.force_delete_containers([cls.container_name])
 
     def test_marker(self):
         params = {"marker": "c", "format": "json"}
