@@ -77,7 +77,7 @@ class ListFormatTest(ObjectStorageFixture):
     @classmethod
     def tearDownClass(cls):
         super(ListFormatTest, cls).setUpClass()
-        cls.client.force_delete_containers([cls.container_name])
+        cls.behaviors.force_delete_containers([cls.container_name])
 
     @data_driven_test(data_set_list)
     def ddtest_object_list_format(self, content_type=None, headers=None,

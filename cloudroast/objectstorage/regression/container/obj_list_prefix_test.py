@@ -37,7 +37,7 @@ class PrefixTest(ObjectStorageFixture):
     @classmethod
     def tearDownClass(cls):
         super(PrefixTest, cls).setUpClass()
-        cls.client.force_delete_containers([cls.container_name])
+        cls.behaviors.force_delete_containers([cls.container_name])
 
     def test_prefix(self):
         prefix = "music"

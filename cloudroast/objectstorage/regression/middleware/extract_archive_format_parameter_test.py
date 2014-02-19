@@ -111,7 +111,7 @@ class ExtractArchiveFormatParameterTest(ObjectStorageFixture):
 
         self.behaviors.create_container(container_name)
 
-        self.addCleanup(self.client.force_delete_containers, [container_name])
+        self.addCleanup(self.behaviors.force_delete_containers, [container_name])
 
         url = "{0}/{1}".format(
             self.storage_url,
@@ -189,10 +189,10 @@ class ExtractArchiveFormatParameterTest(ObjectStorageFixture):
 
         self.behaviors.create_container(container_name)
 
-        self.addCleanup(self.client.force_delete_containers, [container_name])
+        self.addCleanup(self.behaviors.force_delete_containers, [container_name])
 
         self.addCleanup(
-            self.client.force_delete_containers,
+            self.behaviors.force_delete_containers,
             [container_name])
 
         url = "{0}/{1}".format(
@@ -271,7 +271,7 @@ class ExtractArchiveFormatParameterTest(ObjectStorageFixture):
 
         self.behaviors.create_container(container_name)
 
-        self.addCleanup(self.client.force_delete_containers, [container_name])
+        self.addCleanup(self.behaviors.force_delete_containers, [container_name])
 
         url = "{0}/{1}".format(
             self.storage_url,
@@ -349,7 +349,7 @@ class ExtractArchiveFormatParameterTest(ObjectStorageFixture):
 
         self.behaviors.create_container(container_name)
 
-        self.addCleanup(self.client.force_delete_containers, [container_name])
+        self.addCleanup(self.behaviors.force_delete_containers, [container_name])
 
         url = "{0}/{1}".format(
             self.storage_url,
@@ -427,10 +427,10 @@ class ExtractArchiveFormatParameterTest(ObjectStorageFixture):
 
         self.behaviors.create_container(container_name)
 
-        self.addCleanup(self.client.force_delete_containers, [container_name])
+        self.addCleanup(self.behaviors.force_delete_containers, [container_name])
 
         self.addCleanup(
-            self.client.force_delete_containers,
+            self.behaviors.force_delete_containers,
             [container_name])
 
         url = "{0}/{1}".format(
@@ -509,7 +509,7 @@ class ExtractArchiveFormatParameterTest(ObjectStorageFixture):
 
         self.behaviors.create_container(container_name)
 
-        self.addCleanup(self.client.force_delete_containers, [container_name])
+        self.addCleanup(self.behaviors.force_delete_containers, [container_name])
 
         url = "{0}/{1}".format(
             self.storage_url,

@@ -472,6 +472,7 @@ class ObjectSmokeTest(ObjectStorageFixture):
 
         response = object_info.get('response')
         method = 'object creation with etag header'
+
         expected = 201
         received = response.status_code
 
@@ -501,6 +502,7 @@ class ObjectSmokeTest(ObjectStorageFixture):
         self.assertEqual(
             expected,
             received,
+
             msg='object created with Etag header'
                 ' value expected: {0} received: {1}'.format(
                     expected,
@@ -561,6 +563,7 @@ class ObjectSmokeTest(ObjectStorageFixture):
                                       headers=object_headers)
 
         response = object_info.get('response')
+
         method = 'object creation with Access-Control-Allow-Methods header'
         expected = 201
         received = response.status_code
@@ -605,6 +608,7 @@ class ObjectSmokeTest(ObjectStorageFixture):
                                       headers=object_headers)
 
         response = object_info.get('response')
+
         method = 'object creation with Access-Control-Allow-Origin header'
         expected = 201
         received = response.status_code
@@ -647,6 +651,7 @@ class ObjectSmokeTest(ObjectStorageFixture):
                                       headers=object_headers)
 
         response = object_info.get('response')
+
         method = 'object creation with Access-Control-Expose-Headers header'
         expected = 201
         received = response.status_code
@@ -690,6 +695,7 @@ class ObjectSmokeTest(ObjectStorageFixture):
                                       headers=object_headers)
 
         response = object_info.get('response')
+
         method = 'object creation with Access-Control-Max-Age header'
         expected = 201
         received = response.status_code
@@ -733,6 +739,7 @@ class ObjectSmokeTest(ObjectStorageFixture):
                                       headers=object_headers)
 
         response = object_info.get('response')
+
         method = 'object creation with Access-Control-Request-Headers header'
         expected = 201
         received = response.status_code
@@ -776,6 +783,7 @@ class ObjectSmokeTest(ObjectStorageFixture):
                                       headers=object_headers)
 
         response = object_info.get('response')
+
         method = 'object creation with Access-Control-Request-Method header'
         expected = 201
         received = response.status_code
@@ -883,7 +891,6 @@ class ObjectSmokeTest(ObjectStorageFixture):
             received,
             msg='object created with Content-Encoding header value'
                 ' expected: {0} recieved: {1}'.format(expected, received))
-
     @data_driven_test(ObjectDatasetList())
     def ddtest_object_creation_with_content_disposition(self, generate_object):
         container_name = self.create_temp_container(
@@ -924,7 +931,6 @@ class ObjectSmokeTest(ObjectStorageFixture):
             received,
             msg='object created with Content-Disposition header value'
                 ' expected: {0} recieved: {1}'.format(expected, received))
-
     @data_driven_test(ObjectDatasetList())
     def ddtest_object_creation_with_x_delete_at(self, generate_object):
         container_name = self.create_temp_container(
@@ -967,7 +973,6 @@ class ObjectSmokeTest(ObjectStorageFixture):
             received,
             msg='object created with X-Delete-At header value'
                 ' expected: {0} recieved: {1}'.format(expected, received))
-
     @data_driven_test(ObjectDatasetList())
     def ddtest_object_creation_with_delete_after(self, generate_object):
         container_name = self.create_temp_container(
@@ -1073,7 +1078,6 @@ class ObjectSmokeTest(ObjectStorageFixture):
                 method=method,
                 expected=expected,
                 received=str(received)))
-
     @data_driven_test(ObjectDatasetList())
     def ddtest_put_copy_object(self, generate_object):
         src_container_name = self.create_temp_container(

@@ -120,6 +120,7 @@ class ObjectStorageFixture(BaseTestFixture):
         super(ObjectStorageFixture, cls).setUpClass()
 
         cls.auth_data = ObjectStorageAuthComposite()
+
         cls.objectstorage_api_config = ObjectStorageAPIConfig()
         cls.storage_url = cls.auth_data.storage_url
         cls.auth_token = cls.auth_data.auth_token
@@ -141,5 +142,5 @@ class ObjectStorageFixture(BaseTestFixture):
         container_name = \
             self.behaviors.generate_unique_container_name(descriptor)
         self.client.create_container(container_name, headers=headers)
-        self.addCleanup(self.client.force_delete_containers, [container_name])
+        self.addCleanup(self.behaviors.force_delete_containers, [container_name])
         return container_name

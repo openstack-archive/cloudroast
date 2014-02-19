@@ -47,7 +47,7 @@ class ContainerSmokeTest(ObjectStorageFixture):
     @classmethod
     def tearDownClass(cls):
         super(ContainerSmokeTest, cls).setUpClass()
-        cls.client.force_delete_containers([cls.container_name])
+        cls.behaviors.force_delete_containers([cls.container_name])
 
     def test_objects_list_with_non_empty_container(self):
         response = self.client.list_objects(self.container_name)
@@ -297,7 +297,7 @@ class ContainerSmokeTest(ObjectStorageFixture):
         self.client.create_container(container_name)
 
         self.addCleanup(
-            self.client.force_delete_containers,
+            self.behaviors.force_delete_containers,
             [container_name])
 
         dir_marker = 'path_test/'
@@ -372,7 +372,7 @@ class ContainerSmokeTest(ObjectStorageFixture):
         self.client.create_container(container_name)
 
         self.addCleanup(
-            self.client.force_delete_containers,
+            self.behaviors.force_delete_containers,
             [container_name])
 
         object_data = 'Test file data'
@@ -428,7 +428,7 @@ class ContainerSmokeTest(ObjectStorageFixture):
         response = self.client.create_container(container_name)
 
         self.addCleanup(
-            self.client.force_delete_containers,
+            self.behaviors.force_delete_containers,
             [container_name])
 
         method = "container creation"
@@ -449,7 +449,7 @@ class ContainerSmokeTest(ObjectStorageFixture):
         response = self.client.create_container(container_name)
 
         self.addCleanup(
-            self.client.force_delete_containers,
+            self.behaviors.force_delete_containers,
             [container_name])
 
         method = "container creation"
@@ -488,7 +488,7 @@ class ContainerSmokeTest(ObjectStorageFixture):
             headers=headers)
 
         self.addCleanup(
-            self.client.force_delete_containers,
+            self.behaviors.force_delete_containers,
             [container_name])
 
         method = "container creation with metadata"
@@ -509,7 +509,7 @@ class ContainerSmokeTest(ObjectStorageFixture):
         response = self.client.create_container(container_name)
 
         self.addCleanup(
-            self.client.force_delete_containers,
+            self.behaviors.force_delete_containers,
             [container_name])
 
         method = "container creation"
@@ -561,7 +561,7 @@ class ContainerSmokeTest(ObjectStorageFixture):
             headers=headers)
 
         self.addCleanup(
-            self.client.force_delete_containers,
+            self.behaviors.force_delete_containers,
             [container_name])
 
         method = "container creation"
@@ -596,7 +596,7 @@ class ContainerSmokeTest(ObjectStorageFixture):
         self.client.create_container(container_name)
 
         self.addCleanup(
-            self.client.force_delete_containers,
+            self.behaviors.force_delete_containers,
             [container_name])
 
         headers = {'X-Container-Meta-Ebooks': 'grok_volumes_1_through_10'}
@@ -625,7 +625,7 @@ class ContainerSmokeTest(ObjectStorageFixture):
         self.client.create_container(container_name)
 
         self.addCleanup(
-            self.client.force_delete_containers,
+            self.behaviors.force_delete_containers,
             [container_name])
 
         headers = {'X-Container-Meta-Ebooks': 'grok_volumes_1_through_10'}
