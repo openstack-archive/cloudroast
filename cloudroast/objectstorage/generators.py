@@ -48,6 +48,9 @@ class ObjectDatasetList(DatasetList):
         behaviors = ObjectStorageAPI_Behaviors(client, api_config)
         features = behaviors.get_configured_features()
 
+        if features == api_config.ALL_FEATURES:
+            features = ['dlo', 'slo']
+
         generator = ObjectStorageGenerator(client)
 
         if exclude is None:
