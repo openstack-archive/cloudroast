@@ -14,44 +14,28 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import unittest2 as unittest
-
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.blockstorage.config import BlockStorageConfig
-from cloudroast.compute.fixtures import BlockstorageIntegrationFixture
+from cloudroast.compute.fixtures import ComputeFixture
 
 
-class BootStandardVolume(BlockstorageIntegrationFixture):
+class RebootServerHardTests(ComputeFixture):
 
     @classmethod
     def setUpClass(cls):
-        super(BootStandardVolume, cls).setUpClass()
+        super(RebootServerHardTests, cls).setUpClass()
         blockstorage_config = BlockStorageConfig()
         blockstorage_endpoint = cls.access_data.get_service(
             blockstorage_config.identity_service_name).get_endpoint(
             blockstorage_config.region)
         cls.key = cls.keypairs_client.create_keypair(rand_name("key")).entity
         cls.resources.add(cls.key.name, cls.keypairs_client.delete_keypair)
-        cls.volume_size = 100
-        cls.volume_type = "SATA"
-        cls.volume = cls.blockstorage_behavior.create_available_volume(
-            size=cls.volume_size, volume_type=cls.volume_type)
-        cls.resources.add(cls.volume.id_,
-                          cls.blockstorage_client.delete_volume)
-        cls.err_msg = ""
-        try:
-            cls.response, cls.volume_id = cls.server_behaviors.boot_volume(
-                cls.key, standard_volume_id=cls.volume)
-        except Exception as cls.err_msg:
-            pass
-        else:
-            cls.server = cls.response.entity
-            cls.resources.add(cls.server.id,
-                              cls.servers_client.delete_server)
+        response, cls.volume_id = cls.server_behaviors.boot_volume(cls.key)
+        cls.server = response.entity
+        cls.resources.add(cls.server.id, cls.servers_client.delete_server)
 
     @tags(type='smoke', net='yes')
-    @unittest.skip("Known issue")
-    def test_server_built(self):
-        self.assertNotEqual(self.err_msg, "",
-                            "Server built (should not have been built)")
+    def test_reboot_server_soft(self):
+        self.reboot_time(server=self.server, reboot="HARD",
+                         servers_config=self.servers_config)
