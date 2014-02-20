@@ -15,12 +15,13 @@ limitations under the License.
 """
 
 import sys
+import time
 
-from cloudcafe.blockstorage.volumes_api.v1.client import VolumesClient
+from cloudcafe.blockstorage.volumes_api.v2.client import VolumesClient
 from cloudcafe.blockstorage.config import BlockStorageConfig
-from cloudcafe.blockstorage.volumes_api.v1.behaviors import \
+from cloudcafe.blockstorage.volumes_api.v2.behaviors import \
     VolumesAPI_Behaviors
-from cloudcafe.blockstorage.volumes_api.v1.config import VolumesAPIConfig
+from cloudcafe.blockstorage.volumes_api.v2.config import VolumesAPIConfig
 from cafe.drivers.unittest.datasets import DatasetList
 from cafe.drivers.unittest.fixtures import BaseTestFixture
 from cloudcafe.common.resources import ResourcePool
@@ -53,9 +54,12 @@ from cloudcafe.auth.config import UserAuthConfig, UserConfig, \
 from cloudcafe.auth.provider import AuthProvider
 from cloudcafe.compute.flavors_api.config import FlavorsConfig
 from cloudcafe.compute.images_api.config import ImagesConfig
-from cloudcafe.compute.servers_api.config import ServersConfig
+from cloudcafe.compute.servers_api.config import ServersConfig, \
+    BlockDeviceMappingConfig
 from cloudcafe.compute.volume_attachments_api.client \
     import VolumeAttachmentsAPIClient
+from cloudcafe.compute.common.types import InstanceAuthStrategies
+from cloudcafe.compute.common.types import NovaServerRebootTypes
 
 
 class ComputeFixture(BaseTestFixture):
@@ -69,6 +73,7 @@ class ComputeFixture(BaseTestFixture):
         cls.flavors_config = FlavorsConfig()
         cls.images_config = ImagesConfig()
         cls.servers_config = ServersConfig()
+        cls.block_device_mapping = BlockDeviceMappingConfig()
         cls.compute_endpoint = ComputeEndpointConfig()
         cls.marshalling = MarshallingConfig()
         cls.config_drive_config = ConfigDriveConfig()
@@ -121,10 +126,24 @@ class ComputeFixture(BaseTestFixture):
         cls.vnc_client = VncConsoleClient(**client_args)
         cls.console_output_client = ConsoleOutputClient(**client_args)
         cls.limits_client = LimitsClient(**client_args)
+
+        cls.blockstorage_behavior = VolumesAPI_Behaviors()
+        block_config = BlockStorageConfig()
+        block_service = cls.access_data.get_service(
+            block_config.identity_service_name)
+        block_url = block_service.get_endpoint(
+            block_config.region).public_url
+        cls.volumes_client = VolumesClient(
+            block_url, cls.access_data.token.id_,
+            cls.marshalling.serializer, cls.marshalling.deserializer)
+
         cls.server_behaviors = ServerBehaviors(cls.servers_client,
                                                cls.servers_config,
                                                cls.images_config,
-                                               cls.flavors_config)
+                                               cls.flavors_config,
+                                               cls.block_device_mapping,
+                                               cls.volumes_client,
+                                               cls.blockstorage_behavior)
         cls.image_behaviors = ImageBehaviors(cls.images_client,
                                              cls.servers_client,
                                              cls.images_config)
@@ -174,6 +193,115 @@ class ComputeFixture(BaseTestFixture):
                                              action.request_id,
                                              request_id))
         self.assertIsNone(action.message)
+
+    def can_log_in_with_new_password(self, server_id, new_password,
+                                     servers_config):
+        """Verify the admin user can log in with the new password"""
+
+        # Get server details
+        server = self.servers_client.get_server(self.server.id).entity
+
+        # Set the server's admin_pass attribute to the new password
+        server.admin_pass = new_password
+
+        public_address = self.server_behaviors.get_public_ip_address(server)
+        # Get an instance of the remote client
+        remote_client = self.server_behaviors.get_remote_instance_client(
+            server, config=servers_config,
+            auth_strategy=InstanceAuthStrategies.PASSWORD)
+
+        self.assertTrue(
+            remote_client.can_authenticate(),
+            "Could not connect to server (%s) using new admin password %s" %
+            (public_address, self.new_password))
+
+    def server_instance_actions(self, server, action_type, user_config,
+                                action_resp):
+        """Verify the correct actions are logged"""
+
+        self.server = server
+        self.action_type = action_type
+        self.user_config = user_config
+        self.action_resp = action_resp
+
+        actions = self.servers_client.get_instance_actions(
+            self.server.id).entity
+
+        # Verify the resize action is listed
+        self.assertTrue(any(a.action == self.action_type for a in actions))
+        filtered_actions = [a for a in actions if a.action == self.action_type]
+        self.assertEquals(len(filtered_actions), 1)
+
+        self.validate_instance_action(
+            filtered_actions[0], self.server.id, self.user_config.user_id,
+            self.user_config.project_id,
+            self.action_resp.headers['x-compute-request-id'])
+
+    def compare_number_of_server_vcpus(self, server, servers_config, key,
+                                       flavor_vcpus):
+        """Verify the number of vCPUs reported matches the original flavor"""
+        self.server = server
+        self.servers_config = servers_config
+        self.key = key
+        self.flavor_vcpus = flavor_vcpus
+        remote_client = self.server_behaviors.get_remote_instance_client(
+            self.server, config=self.servers_config, key=self.key.private_key)
+        server_actual_vcpus = remote_client.get_number_of_cpus()
+        self.assertEqual(
+            server_actual_vcpus, self.flavor_vcpus,
+            msg="Expected number of vcpus to be {0}, was {1}.".format(
+                self.flavor_vcpus, server_actual_vcpus))
+
+    def compare_server_disk_size(self, server, servers_config, key,
+                                 flavor):
+        """Verify the size of the virtual disk matches the original flavor"""
+        self.server = server
+        self.servers_config = servers_config
+        self.key = key
+        self.flavor = flavor
+        remote_client = self.server_behaviors.get_remote_instance_client(
+            self.server, config=self.servers_config, key=self.key.private_key)
+        disk_size = remote_client.get_disk_size(
+            self.servers_config.instance_disk_path)
+        self.assertEqual(disk_size, self.flavor.disk,
+                         msg="Expected disk to be {0} GB, was {1} GB".format(
+                             self.flavor.disk, disk_size))
+
+    def compare_ram_after_process(self, server, servers_config,
+                                  key, flavor):
+        self.server = server
+        self.servers_config = servers_config
+        self.key = key
+        self.flavor = flavor
+        remote_instance = self.server_behaviors.get_remote_instance_client(
+            self.server, self.servers_config, key=self.key.private_key)
+        lower_limit = int(self.flavor.ram) - (int(self.flavor.ram) * .1)
+        server_ram_size = int(remote_instance.get_allocated_ram())
+        self.assertTrue((int(self.flavor.ram) == server_ram_size
+                         or lower_limit <= server_ram_size),
+                        msg='Ram size did not match.'
+                            'Expected ram size : %s, Actual ram size : %s' %
+                            (self.flavor.ram, server_ram_size))
+
+    def reboot_time(self, server=None, reboot=None, servers_config=None):
+        self.server = server
+        self.reboot = reboot
+        self.servers_config = servers_config
+        remote_instance = self.server_behaviors.get_remote_instance_client(
+            self.server, config=self.servers_config)
+        uptime_start = remote_instance.get_uptime()
+        start = time.time()
+        if reboot == "HARD":
+            self.server_behaviors.reboot_and_await(
+                self.server.id, NovaServerRebootTypes.HARD)
+        if reboot == "SOFT":
+            self.server_behaviors.reboot_and_await(
+                self.server.id, NovaServerRebootTypes.SOFT)
+        remote_client = self.server_behaviors.get_remote_instance_client(
+            self.server, config=self.servers_config)
+        finish = time.time()
+        uptime_post_reboot = remote_client.get_uptime()
+        self.assertLess(uptime_post_reboot, (uptime_start + (finish - start)))
 
     def _verify_ephemeral_disk_size(self, disks, flavor,
                                     split_ephemeral_disk_enabled=False,
@@ -304,3 +432,6 @@ class ServerIdNegativeDataList(DatasetList):
         with open(fuzz_config.input_fuzzing_file) as f:
             for line in f:
                 self.append_new_dataset(line, {'server_id': line})
+
+    '''The following definitions are assert statements for server
+       action tests'''
