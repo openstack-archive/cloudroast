@@ -12,7 +12,8 @@ class StackTachTest(StackTachFixture, StackTachDBFixture):
         """
         @summary: Verify that Get Event Names returns 200 Success response
         """
-        response = self.stacktach_client.get_event_names()
+        response = (self.stacktach_client
+                    .get_event_names(service=self.service))
 
         self._verify_success_code_and_entity_len(response)
         for element in response.entity:
@@ -22,8 +23,8 @@ class StackTachTest(StackTachFixture, StackTachDBFixture):
         """
         @summary: Verify that Get Host Names returns 200 Success response
         """
-        response = self.stacktach_client.get_host_names()
-
+        response = (self.stacktach_client
+                    .get_host_names(service=self.service))
         self._verify_success_code_and_entity_len(response)
         for element in response.entity:
             self.assertIsNotNone(element.host_name)
