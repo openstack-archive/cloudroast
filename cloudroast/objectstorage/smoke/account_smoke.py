@@ -40,7 +40,7 @@ class AccountSmokeTest(ObjectStorageFixture):
     def tearDownClass(cls):
         super(AccountSmokeTest, cls).setUpClass()
         for container_name in cls.container_names:
-            cls.client.force_delete_containers([container_name])
+            cls.behaviors.force_delete_containers([container_name])
 
     def test_container_list(self):
         response = self.client.list_containers()

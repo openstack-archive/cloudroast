@@ -104,7 +104,7 @@ class ExtendedAcceptHeaderTest(ObjectStorageFixture):
             randstring.get_random_string())
         self.client.create_container(container_name)
         self.addCleanup(
-            self.client.force_delete_containers,
+            self.behaviors.force_delete_containers,
             [container_name])
 
         object_data = 'Test file data'

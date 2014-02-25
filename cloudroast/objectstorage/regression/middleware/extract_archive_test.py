@@ -100,7 +100,9 @@ class ExtractArchiveTest(ObjectStorageFixture):
 
         self.behaviors.create_container(container_name)
 
-        self.addCleanup(self.client.force_delete_containers, [container_name])
+        self.addCleanup(
+            self.behaviors.force_delete_containers,
+            [container_name])
 
         archive_format = "tar"
 
@@ -197,7 +199,9 @@ class ExtractArchiveTest(ObjectStorageFixture):
 
         self.behaviors.create_container(container_name)
 
-        self.addCleanup(self.client.force_delete_containers, [container_name])
+        self.addCleanup(
+            self.behaviors.force_delete_containers,
+            [container_name])
 
         archive_format = "tar.gz"
 
@@ -294,7 +298,9 @@ class ExtractArchiveTest(ObjectStorageFixture):
 
         self.behaviors.create_container(container_name)
 
-        self.addCleanup(self.client.force_delete_containers, [container_name])
+        self.addCleanup(
+            self.behaviors.force_delete_containers,
+            [container_name])
 
         archive_format = "tar.bz2"
 
@@ -492,7 +498,7 @@ class ExtractArchiveTest(ObjectStorageFixture):
                     received))
 
         self.addCleanup(
-            self.client.force_delete_containers,
+            self.behaviors.force_delete_containers,
             containers)
 
     @ObjectStorageFixture.required_features('bulk')
@@ -613,7 +619,7 @@ class ExtractArchiveTest(ObjectStorageFixture):
                     received))
 
         self.addCleanup(
-            self.client.force_delete_containers,
+            self.behaviors.force_delete_containers,
             containers)
 
     @ObjectStorageFixture.required_features('bulk')
@@ -734,7 +740,7 @@ class ExtractArchiveTest(ObjectStorageFixture):
                     received))
 
         self.addCleanup(
-            self.client.force_delete_containers,
+            self.behaviors.force_delete_containers,
             containers)
 
     @ObjectStorageFixture.required_features('bulk')
@@ -751,7 +757,9 @@ class ExtractArchiveTest(ObjectStorageFixture):
 
         self.behaviors.create_container(container_name)
 
-        self.addCleanup(self.client.force_delete_containers, [container_name])
+        self.addCleanup(
+            self.behaviors.force_delete_containers,
+            [container_name])
 
         object_data = self.read_archive_data(self.archive_paths['tar'])
         headers = {'Content-Length': str(len(object_data))}
@@ -805,7 +813,9 @@ class ExtractArchiveTest(ObjectStorageFixture):
 
         self.behaviors.create_container(container_name)
 
-        self.addCleanup(self.client.force_delete_containers, [container_name])
+        self.addCleanup(
+            self.behaviors.force_delete_containers,
+            [container_name])
 
         object_data = self.read_archive_data(self.archive_paths['tar'])
         headers = {'Content-Length': str(len(object_data))}
@@ -859,7 +869,9 @@ class ExtractArchiveTest(ObjectStorageFixture):
 
         self.behaviors.create_container(container_name)
 
-        self.addCleanup(self.client.force_delete_containers, [container_name])
+        self.addCleanup(
+            self.behaviors.force_delete_containers,
+            [container_name])
 
         object_data = self.read_archive_data(self.archive_paths['tar'])
         headers = {'Content-Length': str(len(object_data))}
