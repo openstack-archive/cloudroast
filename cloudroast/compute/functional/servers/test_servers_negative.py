@@ -58,39 +58,6 @@ class ServersNegativeTest(ComputeFixture):
                 name, self.image_ref, self.flavor_ref, accessIPv6=accessIPv6)
 
     @tags(type='negative', net='no')
-    def test_server_metadata_item_nonexistent_server(self):
-        """Negative test: GET on nonexistent server should not succeed"""
-        with self.assertRaises(ItemNotFound):
-            self.servers_client.get_server_metadata_item(999, 'test2')
-
-    @tags(type='negative', net='no')
-    def test_list_server_metadata_nonexistent_server(self):
-        """List metadata on a non existent server should not succeed"""
-        with self.assertRaises(ItemNotFound):
-            self.servers_client.list_server_metadata(999)
-
-    @tags(type='negative', net='no')
-    def test_set_server_metadata_nonexistent_server(self):
-        """Set metadata on a non existent server should not succeed"""
-        meta = {'meta1': 'data1'}
-
-        with self.assertRaises(ItemNotFound):
-            self.servers_client.set_server_metadata(999, meta)
-
-    @tags(type='negative', net='no')
-    def test_update_server_metadata_nonexistent_server(self):
-        """An update should not happen for a non existent image"""
-        meta = {'key1': 'value1', 'key2': 'value2'}
-        with self.assertRaises(ItemNotFound):
-            self.servers_client.update_server_metadata(999, meta)
-
-    @tags(type='negative', net='no')
-    def test_delete_server_metadata_item_nonexistent_server(self):
-        """Deleting a metadata item from a non existent server should fail"""
-        with self.assertRaises(ItemNotFound):
-            self.servers_client.delete_server_metadata_item(999, 'delkey')
-
-    @tags(type='negative', net='no')
     def test_create_server_with_unknown_flavor(self):
         """Server creation with a flavor which does not exist should fail"""
         with self.assertRaises(BadRequest):
