@@ -13,8 +13,10 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-from cloudcafe.common.tools.time import (string_to_datetime,
-    are_datetimestrings_equal)
+from datetime import timedelta
+
+from cloudcafe.common.tools.time import string_to_datetime
+from cloudcafe.compute.common.equality_tools import EqualityTools
 
 from cloudroast.stacktach.fixtures import StackTachComputeIntegration,\
     StackTachTestAssertionsFixture
@@ -106,18 +108,20 @@ class StackTachDBDeleteServerTests(StackTachComputeIntegration,
                                          self.delete_response.reason,
                                          self.delete_response.content))
         self.assertTrue(
-            are_datetimestrings_equal(self.launched_at_created_server,
-                                      self.event_delete.launched_at,
-                                      self.leeway),
+            EqualityTools.are_datetimes_equal(
+                string_to_datetime(self.launched_at_created_server),
+                string_to_datetime(self.event_delete.launched_at),
+                timedelta(seconds=self.leeway)),
             self.msg.format("launched_at",
                             self.launched_at_created_server,
                             self.event_delete.launched_at,
                             self.delete_response.reason,
                             self.delete_response.content))
         self.assertTrue(
-            are_datetimestrings_equal(self.deleted_at,
-                                      self.event_delete.deleted_at,
-                                      self.leeway),
+            EqualityTools.are_datetimes_equal(
+                string_to_datetime(self.deleted_at),
+                string_to_datetime(self.event_delete.deleted_at),
+                timedelta(seconds=self.leeway)),
             self.msg.format("deleted_at",
                             self.deleted_at,
                             self.event_delete.deleted_at,
