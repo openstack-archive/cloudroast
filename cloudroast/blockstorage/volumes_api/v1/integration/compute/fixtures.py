@@ -16,7 +16,7 @@ from cloudcafe.compute.volume_attachments_api.config \
     import VolumeAttachmentsAPIConfig
 
 from cloudroast.blockstorage.volumes_api.v1.fixtures import VolumesTestFixture
-from cloudroast.blockstorage.fixtures import AuthComposite
+from cloudroast.blockstorage.composites import AuthComposite
 
 
 class ComputeAuthComposite(object):

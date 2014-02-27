@@ -29,7 +29,7 @@ class VolumesDatasets(BaseDataset):
 
     @classmethod
     @memoized
-    def volume_type(
+    def volume_types(
             cls, max_datasets=None, randomize=False, volume_type_filter=None):
         """Returns a DatasetList of Volume Type names and id's"""
 

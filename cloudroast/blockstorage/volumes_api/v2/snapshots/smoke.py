@@ -14,13 +14,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from cafe.drivers.unittest.decorators import \
-    data_driven_test, DataDrivenFixture
+from cafe.drivers.unittest.decorators import (
+    data_driven_test, DataDrivenFixture)
 from cafe.drivers.unittest.decorators import tags
 
-from cloudcafe.blockstorage.volumes_api.v1.models import statuses
-from cloudroast.blockstorage.volumes_api.v1.fixtures import \
-    VolumesTestFixture, VolumesDatasets
+from cloudcafe.blockstorage.volumes_api.v2.models import statuses
+from cloudroast.blockstorage.volumes_api.v2.fixtures import VolumesTestFixture
+from cloudroast.blockstorage.volumes_api.v2.datasets import VolumesDatasets
 
 
 @DataDrivenFixture

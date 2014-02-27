@@ -7,8 +7,8 @@ from cloudcafe.blockstorage.volumes_api.v1.client import VolumesClient
 from cloudcafe.blockstorage.volumes_api.v1.behaviors import \
     VolumesAPI_Behaviors
 
-from cloudroast.blockstorage.fixtures import \
-    BaseBlockstorageTestFixture, BlockstorageAuthComposite
+from cloudroast.blockstorage.fixtures import BaseBlockstorageTestFixture
+from cloudroast.blockstorage.composites import BlockstorageAuthComposite
 
 
 class VolumesComposite(object):

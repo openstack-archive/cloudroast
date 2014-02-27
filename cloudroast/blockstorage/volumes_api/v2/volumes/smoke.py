@@ -14,13 +14,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from cafe.drivers.unittest.decorators import \
-    data_driven_test, DataDrivenFixture
+from cafe.drivers.unittest.decorators import (
+    data_driven_test, DataDrivenFixture)
 from cafe.drivers.unittest.decorators import tags
-
-from cloudcafe.blockstorage.volumes_api.v1.models import statuses
-from cloudroast.blockstorage.volumes_api.v1.fixtures import \
-    VolumesTestFixture, VolumesDatasets
+from cloudcafe.blockstorage.volumes_api.v2.models import statuses
+from cloudroast.blockstorage.volumes_api.v2.fixtures import VolumesTestFixture
+from cloudroast.blockstorage.volumes_api.v2.datasets import VolumesDatasets
 
 
 @DataDrivenFixture
@@ -33,25 +32,26 @@ class VolumeActions(VolumesTestFixture):
 
         #Setup
         size = self.volumes.config.min_volume_size
-        display_name = self.random_volume_name()
-        display_description = "{0}".format(self.__class__.__name__)
+        name = self.random_volume_name()
+        description = "{0}".format(self.__class__.__name__)
         metadata = {"metadata_key_one": "metadata_value_one"}
         availability_zone = self.blockstorage.config.availability_zone or None
 
         resp = self.volumes.client.create_volume(
-            size, volume_type_id, display_name=display_name,
-            display_description=display_description,
+            size, volume_type_id, name=name,
+            description=description,
             availability_zone=availability_zone, metadata=metadata)
 
         self.assertExactResponseStatus(resp, 200, msg='Volume create failed')
         self.assertResponseIsDeserialized(resp)
         volume = resp.entity
+
         self.addCleanup(
             self.volumes.behaviors.delete_volume_confirmed, volume.id_)
 
         #Test
-        self.assertEquals(volume.display_name, display_name)
-        self.assertEquals(volume.display_description, display_description)
+        self.assertEquals(volume.name, name)
+        self.assertEquals(volume.description, description)
         self.assertEquals(str(volume.size), str(size))
         self.assertEquals(volume.metadata, metadata)
         self.assertEquals(volume.availability_zone, availability_zone)
@@ -75,9 +75,9 @@ class VolumeActions(VolumesTestFixture):
         volume_info = resp.entity
 
         #Test
-        self.assertEquals(volume.display_name, volume_info.display_name)
+        self.assertEquals(volume.name, volume_info.name)
         self.assertEquals(
-            volume.display_description, volume_info.display_description)
+            volume.description, volume_info.description)
         self.assertEquals(str(volume.size), str(volume_info.size))
         self.assertEquals(volume.metadata, volume_info.metadata)
         self.assertEquals(
@@ -122,9 +122,9 @@ class VolumeActions(VolumesTestFixture):
         volume_info = expected_volumes[0]
 
         #Test
-        self.assertEquals(volume.display_name, volume_info.display_name)
+        self.assertEquals(volume.name, volume_info.name)
         self.assertEquals(
-            volume.display_description, volume_info.display_description)
+            volume.description, volume_info.description)
         self.assertEquals(str(volume.size), str(volume_info.size))
         self.assertEquals(volume.metadata, volume_info.metadata)
         self.assertEquals(
@@ -139,6 +139,5 @@ class VolumeActions(VolumesTestFixture):
     @tags('volumes', 'smoke')
     def ddtest_delete_volume(self, volume_type_name, volume_type_id):
         volume = self.new_volume(vol_type=volume_type_id)
-        self.volumes.behaviors.wait_for_volume_status(volume.id_, 'available')
         result = self.volumes.behaviors.delete_volume_confirmed(volume.id_)
         self.assertTrue(result)
