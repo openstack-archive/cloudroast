@@ -98,14 +98,8 @@ class BVAvailVolumeTests(BlockstorageIntegrationFixture):
         Verify the number of vCPUs reported matches the amount set
         by the flavor
         """
-
-        remote_client = self.server_behaviors.get_remote_instance_client(
-            self.server, self.servers_config, key=self.key.private_key)
-        server_actual_vcpus = remote_client.get_number_of_cpus()
-        self.assertEqual(
-            server_actual_vcpus, self.flavor.vcpus,
-            msg="Expected number of vcpus to be {0}, was {1}.".format(
-                self.flavor.vcpus, server_actual_vcpus))
+        self.compare_number_of_server_vcpus(self.server, self.servers_config,
+                                            self.key, self.flavor.vcpus)
 
     @tags(type='smoke', net='yes')
     def test_created_server_ram(self):
@@ -113,16 +107,8 @@ class BVAvailVolumeTests(BlockstorageIntegrationFixture):
         The server's RAM and should be set to the amount specified
         in the flavor
         """
-        remote_instance = self.server_behaviors.get_remote_instance_client(
-            self.server, self.servers_config, key=self.key.private_key)
-        lower_limit = int(self.flavor.ram) - (int(self.flavor.ram) * .1)
-        server_ram_size = int(remote_instance.get_allocated_ram())
-        self.assertTrue(
-            (int(self.flavor.ram) == server_ram_size
-             or lower_limit <= server_ram_size),
-            msg='Unexpected ram size.'
-                'Expected ram size : %s, Actual ram size : %s'.format(
-                    self.flavor.ram, server_ram_size))
+        self.compare_ram_after_process(self.server, self.servers_config,
+                                       self.key, self.flavor)
 
     @tags(type='smoke', net='yes')
     def test_can_log_into_created_server(self):

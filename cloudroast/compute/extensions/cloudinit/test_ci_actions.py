@@ -34,11 +34,8 @@ class CloudInitActionsTest(ComputeFixture):
         cls.key = cls.keypairs_client.create_keypair(rand_name("key")).entity
         cls.resources.add(cls.key.name,
                           cls.keypairs_client.delete_keypair)
-
-        active_server_response = cls.server_behaviors.create_active_server(
-            config_drive=True,
-            user_data=user_data,
-            key_name=cls.key.name)
+        cls.active_server_response, cls.volume_id = cls.server_behaviors.boot_volume(
+            cls.key, user_data=user_data)
         cls.server = active_server_response.entity
         cls.resources.add(cls.server.id,
                           cls.servers_client.delete_server)

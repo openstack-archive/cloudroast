@@ -33,10 +33,8 @@ class CloudInitPartHandlerTest(ComputeFixture):
         cls.key = cls.keypairs_client.create_keypair(rand_name("key")).entity
         cls.resources.add(cls.key.name,
                           cls.keypairs_client.delete_keypair)
-        cls.server_response = cls.server_behaviors.create_active_server(
-            config_drive=True,
-            key_name=cls.key.name,
-            user_data=user_data)
+        cls.server_response, cls.volume_id = cls.server_behaviors.boot_volume(
+            cls.key, user_data=user_data)
         cls.server = cls.server_response.entity
         cls.user_data_filepath = '{0}/openstack/latest/user_data'.format(
             cls.config_drive_config.base_path_to_mount)
