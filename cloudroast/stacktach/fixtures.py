@@ -17,8 +17,9 @@ from datetime import datetime, timedelta
 
 from cafe.drivers.unittest.fixtures import BaseTestFixture
 from cloudcafe.common.tools.datagen import rand_name
-from cloudcafe.common.tools.time import are_datetimestrings_equal
+from cloudcafe.common.tools.time import string_to_datetime
 from cloudcafe.compute.common.constants import Constants
+from cloudcafe.compute.common.equality_tools import EqualityTools
 from cloudcafe.compute.common.types import NovaServerStatusTypes \
     as ServerStates, NovaServerRebootTypes as RebootTypes
 from cloudcafe.compute.servers_api.config import ServersConfig
@@ -644,9 +645,10 @@ class StackTachTestAssertionsFixture(StackTachDBFixture):
                              self.launch_response.reason,
                              self.launch_response.content))
         self.assertTrue(
-            are_datetimestrings_equal(self.launched_at,
-                                      self.event_launch_server.launched_at,
-                                      self.leeway),
+            EqualityTools.are_datetimes_equal(
+                string_to_datetime(self.launched_at),
+                string_to_datetime(self.event_launch_server.launched_at),
+                timedelta(seconds=self.leeway)),
             self.msg.format("launched_at",
                             self.launched_at,
                             self.event_launch_server.launched_at,
@@ -778,9 +780,10 @@ class StackTachTestAssertionsFixture(StackTachDBFixture):
                                       self.exist_response.reason,
                                       self.exist_response.content))
         self.assertTrue(
-            are_datetimestrings_equal(self.launched_at,
-                                      self.event_exist_server.launched_at,
-                                      self.leeway),
+            EqualityTools.are_datetimes_equal(
+                string_to_datetime(self.launched_at),
+                string_to_datetime(self.event_exist_server.launched_at),
+                timedelta(seconds=self.leeway)),
             self.msg.format("launched_at",
                             self.launched_at,
                             self.event_exist_server.launched_at,
