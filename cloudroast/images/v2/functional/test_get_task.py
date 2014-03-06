@@ -21,26 +21,21 @@ from cloudroast.images.fixtures import ImagesFixture
 
 class TestGetTask(ImagesFixture):
 
-    @classmethod
-    def setUpClass(cls):
-        super(TestGetTask, cls).setUpClass()
-        cls.tasks = cls.images_behavior.create_new_tasks(count=2)
-
     @tags(type='smoke')
     def test_get_task(self):
         """
         @summary: Get task
 
-        1) Given a created task, get task
-        2) Verify that the response code is 200
-        3) Verify that the task contains the expected data
+        1) Create task
+        2) Get task
+        3) Verify that the response code is 200
+        4) Verify that the task contains the expected data
         """
 
-        task = self.tasks.pop()
+        task = self.images_behavior.create_new_task()
 
         response = self.images_client.get_task(task.id_)
         self.assertEqual(response.status_code, 200)
-
         get_task = response.entity
 
         self._validate_get_task_response(task, get_task)
