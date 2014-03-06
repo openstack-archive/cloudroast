@@ -23,7 +23,7 @@ from cloudroast.images.fixtures import ImagesFixture
 
 class TestStoreImageFile(ImagesFixture):
 
-    @tags(type='positive')
+    @tags(type='positive', regression='true')
     def test_store_image_file(self):
         """
         @summary: Store image file
@@ -37,27 +37,65 @@ class TestStoreImageFile(ImagesFixture):
         """
 
         file_data = StringIO.StringIO(('*' * 1024))
+
         image = self.images_behavior.create_new_image()
+
         response = self.images_client.store_image_file(image.id_, file_data)
         self.assertEqual(response.status_code, 204)
+
         response = self.images_client.get_image(image.id_)
         self.assertEqual(response.status_code, 200)
         updated_image = response.entity
-        self.assertIsNotNone(updated_image.checksum)
-        self.assertEqual(updated_image.created_at, image.created_at)
-        self.assertEqual(updated_image.file_, image.file_)
-        self.assertEqual(updated_image.container_format,
-                         image.container_format)
-        self.assertEqual(updated_image.disk_format, image.disk_format)
-        self.assertEqual(updated_image.name, image.name)
-        self.assertEqual(updated_image.id_, image.id_)
-        self.assertEqual(updated_image.min_disk, image.min_disk)
-        self.assertEqual(updated_image.min_ram, image.min_ram)
-        self.assertEqual(updated_image.protected, image.protected)
-        self.assertEqual(updated_image.schema, image.schema)
-        self.assertEqual(updated_image.self_, image.self_)
-        self.assertEqual(updated_image.size, 1024)
-        self.assertEqual(updated_image.status, ImageStatus.ACTIVE)
-        self.assertListEqual(updated_image.tags, image.tags)
-        self.assertGreaterEqual(updated_image.updated_at, image.updated_at)
-        self.assertEqual(updated_image.visibility, image.visibility)
+
+        errors = self.images_behavior.validate_image(updated_image)
+
+        if updated_image.checksum is None:
+            errors.append(self.error_msg.format(
+                'checksum', 'not None', updated_image.checksum))
+        if updated_image.size != 1024:
+            errors.append(self.error_msg.format(
+                'size', 1024, updated_image.size))
+        if updated_image.status != ImageStatus.ACTIVE:
+            errors.append(self.error_msg.format(
+                'status', ImageStatus.ACTIVE, updated_image.status))
+
+        self.assertEqual(errors, [])
+
+    @tags(type='positive', regression='true')
+    def test_store_image_file_with_larger_file_size(self):
+        """
+        @summary: Store image file with larger file size
+
+        1) Create image
+        2) Store image file of a larger size
+        3) Verify that the response code is 204
+        4) Get image
+        5) Verify that the response code is 200
+        6) Verify that the image contains the correct updated properties
+        """
+
+        larger_file_data = StringIO.StringIO("*" * 10000 * 1024)
+
+        image = self.images_behavior.create_new_image()
+
+        response = self.images_client.store_image_file(
+            image_id=image.id_, file_data=larger_file_data)
+        self.assertEqual(response.status_code, 204)
+
+        response = self.images_client.get_image(image_id=image.id_)
+        self.assertEqual(response.status_code, 200)
+        updated_image = response.entity
+
+        errors = self.images_behavior.validate_image(updated_image)
+
+        if updated_image.checksum is None:
+            errors.append(self.error_msg.format(
+                'checksum', 'not None', updated_image.checksum))
+        if updated_image.size != 10000 * 1024:
+            errors.append(self.error_msg.format(
+                'size', 10000 * 1024, updated_image.size))
+        if updated_image.status != ImageStatus.ACTIVE:
+            errors.append(self.error_msg.format(
+                'status', ImageStatus.ACTIVE, updated_image.status))
+
+        self.assertEqual(errors, [])
