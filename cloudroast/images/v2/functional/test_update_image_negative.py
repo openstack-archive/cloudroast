@@ -13,11 +13,12 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-import StringIO
+
+import cStringIO as StringIO
 
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.common.tools.datagen import rand_name
-from cloudcafe.images.common.types import ImageStatus
+from cloudcafe.images.common.types import ImageStatus, ImageVisibility
 from cloudroast.images.fixtures import ImagesFixture
 
 
@@ -26,7 +27,8 @@ class TestUpdateImageNegative(ImagesFixture):
     @classmethod
     def setUpClass(cls):
         super(TestUpdateImageNegative, cls).setUpClass()
-        cls.image = cls.images_behavior.create_new_image()
+        cls.images = cls.images_behavior.create_images_via_task(count=4)
+        cls.empty_image = cls.images_behavior.create_new_image()
 
     @tags(type='negative', regression='true')
     def test_update_image_replace_core_property(self):
@@ -42,15 +44,16 @@ class TestUpdateImageNegative(ImagesFixture):
         6) Verify that image is still valid
         """
 
+        image = self.images.pop()
         updated_status = ImageStatus.ACTIVE
         response = self.images_client.update_image(
-            self.image.id_, replace={'status': updated_status})
+            image.id_, replace={'status': updated_status})
         self.assertEqual(response.status_code, 403)
-        response = self.images_client.get_image(self.image.id_)
+        response = self.images_client.get_image(image.id_)
         self.assertEqual(response.status_code, 200)
         get_image = response.entity
-        self.assertEqual(get_image.status, self.image.status)
-        self.images_behavior.validate_image(self.image)
+        self.assertEqual(get_image.status, image.status)
+        self.images_behavior.validate_image(image)
 
     @tags(type='negative', regression='true')
     def test_update_image_add_core_property(self):
@@ -66,15 +69,16 @@ class TestUpdateImageNegative(ImagesFixture):
         6) Verify that image is still valid
         """
 
+        image = self.images.pop()
         status = ImageStatus.ACTIVE
         response = self.images_client.update_image(
-            self.image.id_, add={"status": status})
+            image.id_, add={"status": status})
         self.assertEqual(response.status_code, 403)
-        response = self.images_client.get_image(self.image.id_)
+        response = self.images_client.get_image(image.id_)
         self.assertEqual(response.status_code, 200)
         get_image = response.entity
-        self.assertEqual(get_image.status, self.image.status)
-        self.images_behavior.validate_image(self.image)
+        self.assertEqual(get_image.status, image.status)
+        self.images_behavior.validate_image(image)
 
     @tags(type='negative', regression='true')
     def test_update_image_remove_core_property(self):
@@ -90,14 +94,15 @@ class TestUpdateImageNegative(ImagesFixture):
         6) Verify that image is still valid
         """
 
+        image = self.images.pop()
         response = self.images_client.update_image(
-            self.image.id_, remove={'status': ImageStatus.QUEUED})
+            image.id_, remove={'status': ImageStatus.QUEUED})
         self.assertEqual(response.status_code, 403)
-        response = self.images_client.get_image(self.image.id_)
+        response = self.images_client.get_image(image.id_)
         self.assertEqual(response.status_code, 200)
         get_image = response.entity
-        self.assertEqual(get_image.status, self.image.status)
-        self.images_behavior.validate_image(self.image)
+        self.assertEqual(get_image.status, image.status)
+        self.images_behavior.validate_image(image)
 
     @tags(type='negative', regression='true')
     def test_update_image_using_blank_image_id(self):
@@ -121,31 +126,24 @@ class TestUpdateImageNegative(ImagesFixture):
 
         self._validate_update_image_with_negative_value('invalid')
 
-    def _validate_update_image_with_negative_value(self, image_id):
-        """@summary: Update negative image"""
-
-        response = self.images_client.update_image(
-            image_id, add={'new_prop': rand_name('new_prop_value')})
-        self.assertEqual(response.status_code, 404)
-
     @tags(type='negative', regression='true')
     def test_ensure_location_of_active_image_cannot_be_updated(self):
         """
         @summary: Ensure location of active image cannot be updated
 
-        1. Create an image
-        2. Upload an image file
-        3. Verify that the response code is 204
-        4. Get the uploaded image
-        5. Verify that the image is active
-        6. Update image location
-        7. Verify that the response code is 403
-        8. Get the image
-        9. Verify that image location has not changed
+        1) Using a previously created image, store an image file
+        2) Verify that the response code is 204
+        3) Get the stored image
+        4) Verify that the image is active
+        5) Update image location
+        6) Verify that the response code is 403
+        7) Get the image
+        8) Verify that image location has not changed
         """
 
-        image = self.images_behavior.create_new_image()
         file_data = StringIO.StringIO("*" * 1024)
+
+        image = self.empty_image
         updated_location = "/v2/images/{0}/new_file".format(image.id_)
 
         response = self.images_client.store_image_file(
@@ -158,10 +156,45 @@ class TestUpdateImageNegative(ImagesFixture):
         self.assertEqual(active_image.status, ImageStatus.ACTIVE)
 
         response = self.images_client.update_image(
-            image_id=self.image.id_, replace={"location": updated_location})
+            image_id=active_image.id_, replace={"location": updated_location})
         self.assertEqual(response.status_code, 403)
 
         response = self.images_client.get_image(image_id=image.id_)
         self.assertEqual(response.status_code, 200)
         updated_image = response.entity
         self.assertEqual(updated_image.file_, image.file_)
+
+    @tags(type='negative', regression='true')
+    def test_attempt_to_update_image_setting_visibility_to_public(self):
+        """
+        @summary: Attempt to update an image setting the visibility property to
+        public
+
+        1) Given a previously created image, update image setting the
+        visibility property to 'public'
+        2) Verify that the response code is 403
+        3) List images accounting for pagination passing the filter for
+        visibility set to 'public'
+        4) Verify that the image that was attempted to be updated is not
+        present in the list
+        """
+
+        image_names = []
+
+        image = self.images.pop()
+        response = self.images_client.update_image(
+            image.id_, replace={'visibility': ImageVisibility.PUBLIC})
+        self.assertEqual(response.status_code, 403)
+
+        images = self.images_behavior.list_images_pagination(
+            visibility=ImageVisibility.PUBLIC)
+        for listed_image in images:
+            image_names.append(listed_image.name)
+        self.assertNotIn(image.name, image_names)
+
+    def _validate_update_image_with_negative_value(self, image_id):
+        """@summary: Update negative image"""
+
+        response = self.images_client.update_image(
+            image_id, add={'new_prop': rand_name('new_prop_value')})
+        self.assertEqual(response.status_code, 404)
