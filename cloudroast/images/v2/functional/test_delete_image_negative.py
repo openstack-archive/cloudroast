@@ -15,7 +15,6 @@ limitations under the License.
 """
 
 from cafe.drivers.unittest.decorators import tags
-from cloudcafe.images.common.types import ImageVisibility
 from cloudroast.images.fixtures import ImagesFixture
 
 
@@ -59,7 +58,7 @@ class TestDeleteImageNegative(ImagesFixture):
         5) Verify that the response code is 404
         """
 
-        image = self.images_behavior.create_new_image()
+        image = self.images_behavior.create_image_via_task()
         response = self.images_client.delete_image(image.id_)
         self.assertEqual(response.status_code, 204)
         response = self.images_client.delete_image(image.id_)
@@ -70,13 +69,21 @@ class TestDeleteImageNegative(ImagesFixture):
         """
         @summary: Delete image that is protected
 
-        1) Create image that is protected
-        2) Delete image
-        3) Verify that the response code is 404
+        1) Create image
+        2) Verify that the response code is 201
+        3) Update image setting protected to true
+        4) Verify that the response code is 204
+        5) Delete image
+        6) Verify that the response code is 404
         """
 
         protected = True
-        image = self.images_behavior.create_new_image(protected=protected)
+        response = self.images_client.create_image()
+        self.assertEqual(response.status_code, 201)
+        image = response.entity
+        response = self.images_client.update_image(
+            image.id_, replace={'protected': protected})
+        self.assertEqual(response.status_code, 200)
         response = self.images_client.delete_image(image.id_)
         self.assertEqual(response.status_code, 403)
 
@@ -91,9 +98,8 @@ class TestDeleteImageNegative(ImagesFixture):
         4) Verify that the response code is 403
         """
 
-        member_id = self.alt_user_config.tenant_id
-        image = self.images_behavior.create_new_image(
-            visibility=ImageVisibility.PRIVATE)
+        member_id = self.alt_tenant_id
+        image = self.images_behavior.create_image_via_task()
         self.images_client.add_member(image.id_, member_id)
         response = self.alt_images_client.delete_image(image.id_)
         self.assertEqual(response.status_code, 403)

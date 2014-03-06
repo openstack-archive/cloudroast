@@ -15,6 +15,9 @@ limitations under the License.
 """
 
 from cafe.drivers.unittest.decorators import tags
+from cloudcafe.common.tools.datagen import rand_name
+from cloudcafe.images.common.types import (
+    ImageContainerFormat, ImageDiskFormat, ImageVisibility)
 from cloudroast.images.fixtures import ImagesFixture
 
 
@@ -44,3 +47,30 @@ class TestCreateImageNegative(ImagesFixture):
         response = self.images_client.create_image(
             container_format='unacceptable')
         self.assertEqual(response.status_code, 400)
+
+    @tags(type='negative', regression='true')
+    def test_attempt_to_create_public_image(self):
+        """
+        @summary: Attempt to create a public image by setting the visibility
+        property to public
+
+        1) Attempt to create image setting the visibility property to 'public'
+        2) Verify that the response code is 403
+        3) List images accounting for pagination
+        4) Verify that the image that was attempted to be created is not
+        present in the list
+        """
+
+        image_name = rand_name('image')
+        image_names = []
+
+        response = self.images_client.create_image(
+            container_format=ImageContainerFormat.ARI,
+            disk_format=ImageDiskFormat.AKI, name=image_name,
+            visibility=ImageVisibility.PUBLIC)
+        self.assertEqual(response.status_code, 403)
+
+        images = self.images_behavior.list_images_pagination()
+        for image in images:
+            image_names.append(image.name)
+        self.assertNotIn(image_name, image_names)
