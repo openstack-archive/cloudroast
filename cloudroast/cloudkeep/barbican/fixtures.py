@@ -25,15 +25,10 @@ from cloudcafe.cloudkeep.barbican.orders.behaviors import OrdersBehavior
 from cloudcafe.cloudkeep.barbican.orders.client import OrdersClient
 from cloudcafe.cloudkeep.barbican.secrets.behaviors import SecretsBehaviors
 from cloudcafe.cloudkeep.barbican.secrets.client import SecretsClient
-from cloudcafe.cloudkeep.barbican.verifications.behaviors \
-    import VerificationsBehavior
-from cloudcafe.cloudkeep.barbican.verifications.client \
-    import VerificationsClient
 from cloudcafe.cloudkeep.barbican.version.client import VersionClient
 from cloudcafe.cloudkeep.config import (MarshallingConfig, CloudKeepConfig,
                                         CloudKeepSecretsConfig,
                                         CloudKeepOrdersConfig,
-                                        CloudKeepVerificationsConfig,
                                         CloudKeepAuthConfig)
 from cloudcafe.common.tools import randomstring
 
@@ -246,41 +241,6 @@ class OrdersFixture(AuthenticationFixture):
     def tearDown(self):
         self.behaviors.delete_all_created_orders_and_secrets()
         super(OrdersFixture, self).tearDown()
-
-
-class VerificationsFixture(AuthenticationFixture):
-    @classmethod
-    def setUpClass(cls, keystone_config=None):
-        super(VerificationsFixture, cls).setUpClass(keystone_config)
-        cls.config = CloudKeepVerificationsConfig()
-        cls.verifications_client = VerificationsClient(
-            url=cls.cloudkeep.base_url,
-            api_version=cls.cloudkeep.api_version,
-            tenant_id=cls.tenant_id or cls.cloudkeep.tenant_id,
-            token=cls.token,
-            serialize_format=cls.marshalling.serializer,
-            deserialize_format=cls.marshalling.deserializer)
-        cls.behaviors = VerificationsBehavior(
-            verifications_client=cls.verifications_client,
-            config=cls.config)
-
-    def _check_list_of_verifications(self, resp, limit):
-        """Checks that the response from getting list of verifications
-        returns a 200 status code and the correct number of verifications.
-        Also returns the list of verifications from the response.
-        """
-        self.assertEqual(resp.status_code, 200,
-                         'Returned unexpected response code')
-        verifications_group = resp.entity
-        self.assertIsNotNone(verifications_group,
-                             "Verifications group is None")
-        self.assertEqual(len(verifications_group.verifications), limit,
-                         'Returned wrong number of verifications')
-        return verifications_group
-
-    def tearDown(self):
-        self.behaviors.delete_all_created_verifications()
-        super(VerificationsFixture, self).tearDown()
 
 
 class OrdersPagingFixture(OrdersFixture):
