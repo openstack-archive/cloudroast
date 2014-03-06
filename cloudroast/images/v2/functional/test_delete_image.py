@@ -15,6 +15,7 @@ limitations under the License.
 """
 
 from cafe.drivers.unittest.decorators import tags
+
 from cloudroast.images.fixtures import ImagesFixture
 
 
@@ -30,7 +31,7 @@ class TestDeleteImage(ImagesFixture):
         """
         @summary: Delete image
 
-        1) Given a previously created image, delete image
+        1) Given a previously created image, delete the image
         2) Verify that the response code is 204
         3) Get deleted image
         4) Verify that the response code is 404
@@ -38,5 +39,6 @@ class TestDeleteImage(ImagesFixture):
 
         response = self.images_client.delete_image(self.image.id_)
         self.assertEqual(response.status_code, 204)
+
         response = self.images_client.get_image(self.image.id_)
         self.assertEqual(response.status_code, 404)
