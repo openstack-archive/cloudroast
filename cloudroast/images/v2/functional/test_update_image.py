@@ -17,6 +17,7 @@ limitations under the License.
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.images.common.types import ImageContainerFormat, ImageDiskFormat
+
 from cloudroast.images.fixtures import ImagesFixture
 
 
