@@ -15,30 +15,27 @@ limitations under the License.
 """
 
 from cafe.drivers.unittest.decorators import tags
-from cloudroast.images.fixtures import ComputeIntegrationFixture
+from cloudroast.images.fixtures import ImagesFixture
 
 
-class TestDeleteImage(ComputeIntegrationFixture):
-
-    @classmethod
-    def setUpClass(cls):
-        super(TestDeleteImage, cls).setUpClass()
-        server = cls.server_behaviors.create_active_server().entity
-        image = cls.compute_image_behaviors.create_active_image(server.id)
-        cls.image = cls.images_client.get_image(image.entity.id).entity
+class TestDeleteImage(ImagesFixture):
 
     @tags(type='smoke')
     def test_delete_image(self):
         """
         @summary: Delete image
 
-        1) Given a previously created image, delete image
-        2) Verify that the response code is 204
-        3) Get deleted image
-        4) Verify that the response code is 404
+        1) Create an image
+        2) Delete the image
+        3) Verify that the response code is 204
+        4) Get deleted image
+        5) Verify that the response code is 404
         """
 
-        response = self.images_client.delete_image(self.image.id_)
+        image = self.images_behavior.create_image_via_task()
+
+        response = self.images_client.delete_image(image.id_)
         self.assertEqual(response.status_code, 204)
-        response = self.images_client.get_image(self.image.id_)
+
+        response = self.images_client.get_image(image.id_)
         self.assertEqual(response.status_code, 404)
