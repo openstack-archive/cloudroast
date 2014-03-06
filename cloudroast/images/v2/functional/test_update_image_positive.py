@@ -16,8 +16,8 @@ limitations under the License.
 
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.common.tools.datagen import rand_name
-from cloudcafe.images.common.types import ImageContainerFormat, \
-    ImageDiskFormat, ImageVisibility
+from cloudcafe.images.common.types import ImageContainerFormat, ImageDiskFormat
+
 from cloudroast.images.fixtures import ImagesFixture
 
 
@@ -37,7 +37,7 @@ class TestUpdateImagePositive(ImagesFixture):
 
         new_prop = 'user_prop'
         new_prop_value = rand_name('new_prop_value')
-        image = self.images_behavior.create_new_image()
+        image = self.images_behavior.create_image_via_task()
         response = self.images_client.update_image(
             image.id_, add={new_prop: new_prop_value})
         self.assertEqual(response.status_code, 200)
@@ -62,7 +62,7 @@ class TestUpdateImagePositive(ImagesFixture):
 
         new_prop = 'user_prop'
         new_prop_value = rand_name('new_prop_value')
-        image = self.images_behavior.create_new_image()
+        image = self.images_behavior.create_image_via_task()
         response = self.images_client.update_image(
             image.id_, add={new_prop: new_prop_value})
         self.assertEqual(response.status_code, 200)
@@ -89,7 +89,7 @@ class TestUpdateImagePositive(ImagesFixture):
         new_prop = 'user_prop'
         new_prop_value = rand_name('new_prop_value')
         updated_new_prop_value = rand_name('updated_new_prop_value')
-        image = self.images_behavior.create_new_image()
+        image = self.images_behavior.create_image_via_task()
         response = self.images_client.update_image(
             image.id_, add={new_prop: new_prop_value})
         self.assertEqual(response.status_code, 200)
@@ -108,25 +108,23 @@ class TestUpdateImagePositive(ImagesFixture):
         @summary: Update image with data of another image (update ignores
         duplication)
 
-        1. Create an image (first_image)
-        2. Create another image (second_image)
-        3. Update first_image with data of second_image
-        4. Verify that response code is 200
-        5. Verify that the response contains an image entity with
+        1) Create an image (first_image)
+        2) Create another image (second_image)
+        3) Update first_image with data of second_image
+        4) Verify that response code is 200
+        5) Verify that the response contains an image entity with
         correct properties
         """
 
         first_image = self.images_behavior.create_new_image()
         second_image = self.images_behavior.create_new_image(
             name=rand_name("second_image"),
-            visibility=ImageVisibility.PUBLIC,
             container_format=ImageContainerFormat.AMI,
             disk_format=ImageDiskFormat.ISO, tags=[rand_name("tag")])
 
         response = self.images_client.update_image(
             image_id=first_image.id_,
             replace={"name": second_image.name,
-                     "visibility": second_image.visibility,
                      "container_format": second_image.container_format,
                      "disk_format": second_image.disk_format,
                      "tags": second_image.tags})
@@ -136,7 +134,7 @@ class TestUpdateImagePositive(ImagesFixture):
         self.assertEqual(updated_image.id_, first_image.id_)
         self.assertEqual(updated_image.name, second_image.name)
         self.assertEqual(updated_image.visibility, second_image.visibility)
-        self.assertEqual(updated_image.container_format,
-                         second_image.container_format)
+        self.assertEqual(
+            updated_image.container_format, second_image.container_format)
         self.assertEqual(updated_image.disk_format, second_image.disk_format)
         self.assertEqual(updated_image.tags, second_image.tags)
