@@ -14,68 +14,62 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from cloudcafe.images.common.types import ImageMemberStatus, ImageVisibility
-from cloudroast.images.fixtures import ImagesFixture
+from cafe.drivers.unittest.decorators import tags
+from cloudcafe.images.common.types import ImageMemberStatus
+from cloudroast.images.fixtures import ComputeIntegrationFixture
 
 
-class ImageDiscoverySharedImagesOwnedByUserTest(ImagesFixture):
+class ImageDiscoverySharedImagesOwnedByUserTest(ComputeIntegrationFixture):
 
+    @tags(type='positive', regression='true')
     def test_image_discovery_of_shared_images_owned_by_user(self):
         """
         @summary: Image discovery of shared images owned by user
 
-        1. Register an image, image_one, as tenant
-        2. Register an image, image_two, as tenant
-        3. Register an image, image_three, as tenant
-        4. Register a public image, image_four, as tenant
-        5. List images owned by tenant, as an admin user
-        6. Verify that the returned list contains image_one, image_two,
-          image_three and image_four
-        7. List images owned by tenant, as alternative tenant
-        8. Verify that the returned list of images only contains image_four
-        9. Add alternative tenant as a member of image_one
-        10. Add alternative tenant as a member of image_two
-        11. Add alternative tenant as a member of image_three
-        12. Update membership of alternative tenant to 'Accepted' for image_one
-        13. Update membership of alternative tenant to 'Rejected' for image_one
-        14. List images owned by tenant, as alternative tenant
-        15. Verify that the returned list of images now contains image_one and
-          image_four
-        16 Verify that the returned list does not contain image_two and
-         image_three
+        1) Create three images as tenant
+        2) List images owned by tenant, as tenant
+        3) Verify that the returned list contains all three images
+        4) List images owned by tenant, as alternate tenant
+        5) Verify that the returned list of images does not contain any of the
+        three images
+        6) Add alternate tenant as a member of all three images
+        7) Update membership of alternate tenant to 'Accepted' for image_one
+        8) Update membership of alternate tenant to 'Rejected' for image_two
+        9) List images owned by tenant, as alternate tenant
+        10) Verify that the returned list of images now contains image_one only
+        11) Verify that the returned list does not contain image_two or
+        image_three
+        12) List images via nova, as alternate tenant
+        13) Verify that the response code is 200
+        14) Verify that the returned list of images contains image_one
+        15) Verify that the returns list does not contain image_two or
+        image_three
         """
 
-        image_one = self.images_behavior.create_new_image()
-        image_two = self.images_behavior.create_new_image()
-        image_three = self.images_behavior.create_new_image()
-        image_four = self.images_behavior.create_new_image(
-            visibility=ImageVisibility.PUBLIC)
-        tenant_id = self.access_data.token.tenant.id_
-        alt_tenant_id = self.alt_access_data.token.tenant.id_
+        created_images = self.images_behavior.create_images_via_task(count=3)
+        tenant_id = self.tenant_id
+        alt_tenant_id = self.alt_tenant_id
 
-        response = self.admin_images_client.list_images(owner=tenant_id)
-        self.assertEqual(response.status_code, 200)
-        images = response.entity
-        self.assertIn(image_one, images)
-        self.assertIn(image_two, images)
-        self.assertIn(image_three, images)
-        self.assertIn(image_four, images)
+        images = self.images_behavior.list_images_pagination(owner=tenant_id)
+        for image in created_images:
+            self.assertIn(image, images)
 
-        response = self.alt_images_client.list_images(owner=tenant_id)
-        self.assertEqual(response.status_code, 200)
-        images = response.entity
-        self.assertNotIn(image_one, images)
-        self.assertNotIn(image_two, images)
-        self.assertNotIn(image_three, images)
-        self.assertIn(image_four, images)
+        images = self.alt_images_behavior.list_images_pagination(
+            owner=tenant_id)
+        for image in created_images:
+            self.assertNotIn(image, images)
 
-        for image_id in [image_one.id_, image_two.id_, image_three.id_]:
-            response = self.images_client.add_member(image_id=image_id,
-                                                     member_id=alt_tenant_id)
+        for image_id in [x.id_ for x in created_images]:
+            response = self.images_client.add_member(
+                image_id=image_id, member_id=alt_tenant_id)
             self.assertEqual(response.status_code, 200)
             member = response.entity
             self.assertEqual(member.member_id, alt_tenant_id)
             self.assertEqual(member.status, ImageMemberStatus.PENDING)
+
+        image_one = created_images.pop()
+        image_two = created_images.pop()
+        image_three = created_images.pop()
 
         response = self.alt_images_client.update_member(
             image_id=image_one.id_, member_id=alt_tenant_id,
@@ -93,10 +87,18 @@ class ImageDiscoverySharedImagesOwnedByUserTest(ImagesFixture):
         self.assertEqual(member.member_id, alt_tenant_id)
         self.assertEqual(member.status, ImageMemberStatus.REJECTED)
 
-        response = self.alt_images_client.list_images(owner=tenant_id)
+        glance_images = self.alt_images_behavior.list_images_pagination(
+            owner=tenant_id)
+        self.assertIn(image_one, glance_images)
+        self.assertNotIn(image_two, glance_images)
+        self.assertNotIn(image_three, glance_images)
+
+        response = self.alt_compute_images_client.list_images_with_detail()
         self.assertEqual(response.status_code, 200)
-        images = response.entity
-        self.assertIn(image_one, images)
-        self.assertNotIn(image_two, images)
-        self.assertNotIn(image_three, images)
-        self.assertIn(image_four, images)
+        nova_images = response.entity
+
+        nova_image_names = [image.name for image in nova_images]
+
+        self.assertIn(image_one.name, nova_image_names)
+        self.assertNotIn(image_two.name, nova_image_names)
+        self.assertNotIn(image_three.name, nova_image_names)
