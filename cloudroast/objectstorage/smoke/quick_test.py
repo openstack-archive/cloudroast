@@ -29,7 +29,7 @@ class QuickTest(ObjectStorageFixture):
         self.assertTrue(response.ok)
 
     @data_driven_test(ObjectDatasetList())
-    def ddtest_create_object(self, generate_object):
+    def ddtest_create_object(self, object_type, generate_object):
         container_name = self.create_temp_container(
             descriptor='quick_test_container')
         object_name = 'quick_object'
