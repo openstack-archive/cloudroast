@@ -17,7 +17,7 @@ limitations under the License.
 import StringIO
 
 from cafe.drivers.unittest.decorators import tags
-from cloudcafe.images.common.types import ImageMemberStatus
+from cloudcafe.images.common.types import ImageMemberStatus, TaskTypes
 from cloudroast.images.fixtures import ImagesFixture
 
 
@@ -84,3 +84,56 @@ class TestGetImageFile(ImagesFixture):
         response = self.alt_images_client.get_image_file(image_id=image.id_)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.content, self.image_data)
+
+    @tags(type='positive', regression='true')
+    def test_verify_object_and_imported_exported_image_content(self):
+        """
+        @summary: Verify that an imported image's content is same as the file
+        object's content in the customer's container and the exported image's
+        content
+
+        1) Get the import file object's content
+        2) Verify that the response code is 200
+        3) Create new image
+        4) Get the new image's file content
+        5) Verify that the response code is 200
+        6) Verify that the import file object's content is the same data as as
+        the image's file content
+        7) Export the image
+        8) Get the exported file object's content
+        9) Verify that the response code is 200
+        10) Verify that the export file object's content is the same data as as
+        the image's file content
+        11) Verify that the import file object's content is the same data as as
+        the export file object's content
+        """
+
+        response = self.object_storage_client.get_object(
+            container_name='test_container', object_name='import_test.vhd')
+        self.assertEqual(response.status_code, 200)
+        file_content = response.content
+
+        task = self.images_behavior.create_new_task()
+        image_id = task.result.image_id
+
+        response = self.images_client.get_image_file(image_id)
+        self.assertEqual(response.status_code, 200)
+        image_content = response.content
+
+        self.assertEqual(file_content, image_content)
+
+        input_ = {'image_uuid': image_id,
+                  'receiving_swift_container': self.export_to}
+
+        task = self.images_behavior.create_new_task(
+            input_=input_, type_=TaskTypes.EXPORT)
+
+        export_location = [
+            x.strip() for x in task.result.export_location.split('/')]
+        response = self.object_storage_client.get_object(
+            container_name=export_location[0], object_name=export_location[1])
+        self.assertEqual(response.status_code, 200)
+        new_file_content = response.content
+
+        self.assertEqual(new_file_content, image_content)
+        self.assertEqual(file_content, new_file_content)

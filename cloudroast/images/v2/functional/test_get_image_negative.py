@@ -33,7 +33,7 @@ class TestGetImageNegative(ImagesFixture):
          3) Verify that the response code is 404
         """
 
-        image = self.images_behavior.create_new_image(
+        image = self.images_behavior.create_image_via_task(
             visibility=ImageVisibility.PRIVATE)
         response = self.alt_images_client.get_image(image.id_)
         self.assertEqual(response.status_code, 404)
@@ -50,7 +50,7 @@ class TestGetImageNegative(ImagesFixture):
          5) Verify that the response code is 404
         """
 
-        image = self.images_behavior.create_new_image()
+        image = self.images_behavior.create_image_via_task()
         response = self.images_client.delete_image(image.id_)
         self.assertEqual(response.status_code, 204)
         response = self.images_client.get_image(image.id_)
