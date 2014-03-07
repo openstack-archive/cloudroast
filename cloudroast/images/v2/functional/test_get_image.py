@@ -15,54 +15,55 @@ limitations under the License.
 """
 
 from cafe.drivers.unittest.decorators import tags
-from cloudroast.images.fixtures import ComputeIntegrationFixture
+from cloudcafe.images.common.types import ImageType
+from cloudroast.images.fixtures import ObjectStorageIntegrationFixture
 
 
-class TestGetImage(ComputeIntegrationFixture):
+class TestGetImage(ObjectStorageIntegrationFixture):
 
     @classmethod
     def setUpClass(cls):
         super(TestGetImage, cls).setUpClass()
-        cls.images = []
-        server = cls.server_behaviors.create_active_server().entity
-        image = cls.compute_image_behaviors.create_active_image(server.id)
-        alt_image = cls.compute_image_behaviors.create_active_image(server.id)
-        cls.images.append(cls.images_client.get_image(image.entity.id).entity)
-        cls.images.append(cls.images_client.get_image(
-            alt_image.entity.id).entity)
+        cls.images = cls.images_behavior.create_images_via_task(count=2)
 
     @tags(type='smoke')
     def test_get_image(self):
         """
         @summary: Get image
 
-        1) Given a previously created image
-        2) Get image
-        3) Verify that the response code is 200
-        4) Verify that the created image is returned
+        1) Given a previously created image, get image
+        2) Verify that the response code is 200
+        3) Verify that the created image is returned
         """
 
         image = self.images.pop()
         response = self.images_client.get_image(image.id_)
         self.assertEqual(response.status_code, 200)
         get_image = response.entity
-        self._validate_get_image(image, get_image)
+        errors = self._validate_get_image(image, get_image)
+        if get_image.image_type != ImageType.IMPORT:
+            errors.append(self.error_msg.format(
+                'image_type', ImageType.IMPORT, get_image.image_type))
+        if get_image.min_disk != self.images_config.min_disk:
+            errors.append(self.error_msg.format(
+                'min_disk', self.images_config.min_disk, get_image.min_disk))
+        self.assertEqual(errors, [])
 
     @tags(type='positive', regression='true')
     def test_get_image_as_member_of_shared_image(self):
         """
         @summary: Get image as member of shared image
 
-         1) Given a previously created image
-         2) Add member to image using an alternate tenant id
-         3) Verify that the response code is 200
-         4) Get image using the tenant who was added as a member
-         5) Verify that the response code is 200
-         6) Verify that the image returned is the image that was created by
+         1) Given a previously created image, add member to image using an
+         alternate tenant id
+         2) Verify that the response code is 200
+         3) Get image using the tenant who was added as a member
+         4) Verify that the response code is 200
+         5) Verify that the image returned is the image that was created by
          the original tenant
         """
 
-        member_id = self.alt_user_config.tenant_id
+        member_id = self.alt_tenant_id
         image = self.images.pop()
         response = self.images_client.add_member(image.id_, member_id)
         self.assertEqual(response.status_code, 200)
@@ -75,6 +76,10 @@ class TestGetImage(ComputeIntegrationFixture):
         """@summary: Validate that the image and get_image responses match"""
 
         errors = []
+
+        if image.auto_disk_config != 'False':
+            errors.append(self.error_msg.format(
+                'auto_disk_config', 'False', image.auto_disk_config))
         if image.checksum != get_image.checksum:
             errors.append(self.error_msg.format(
                 'checksum', image.checksum, get_image.checksum))
@@ -94,6 +99,9 @@ class TestGetImage(ComputeIntegrationFixture):
         if image.id_ != get_image.id_:
             errors.append(self.error_msg.format(
                 'id_', image.id_, get_image.id_))
+        if image.image_type != get_image.image_type:
+            errors.append(self.error_msg.format(
+                'image_type', image.image_type, get_image.image_type))
         if image.min_disk != get_image.min_disk:
             errors.append(self.error_msg.format(
                 'min_disk', image.min_disk, get_image.min_disk))
@@ -103,6 +111,9 @@ class TestGetImage(ComputeIntegrationFixture):
         if image.name != get_image.name:
             errors.append(self.error_msg.format(
                 'name', image.name, get_image.name))
+        if image.os_type != 'linux':
+            errors.append(self.error_msg.format(
+                'os_type', 'linux', image.os_type))
         if image.protected != get_image.protected:
             errors.append(self.error_msg.format(
                 'protected', image.protected, get_image.protected))
@@ -124,6 +135,11 @@ class TestGetImage(ComputeIntegrationFixture):
         if image.updated_at != get_image.updated_at:
             errors.append(self.error_msg.format(
                 'updated_at', image.updated_at, get_image.updated_at))
+        if image.user_id != self.access_data.user.id_:
+            errors.append(self.error_msg.format(
+                'user_id', 'not None', image.user_id))
         if image.visibility != get_image.visibility:
             errors.append(self.error_msg.format(
                 'visibility', image.visibility, get_image.visibility))
+
+        return errors
