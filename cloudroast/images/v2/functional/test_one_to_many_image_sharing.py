@@ -26,27 +26,27 @@ class OneToManyImageSharingTest(ImagesFixture):
         """
         @summary: One to many image sharing
 
-        1. Register an image (third_user_image) as a third user tenant
-        2. Verify that tenant cannot access the image
-        3. Verify that alternative tenant cannot access the image
-        4. Add tenant as a member of the image
-        5. Verify that tenant can now access the image
-        6. Add alternative tenant as a member of the image
-        7. Verify that alternative tenant can now access the image
-        8. Update tenant membership status to 'Accepted' for the image
-        9. Verify that tenant can now see the image in their list
-        10. Update alternative tenant membership status to 'Accepted'
-            for the image
-        11. Verify that alternative tenant can now see the image in their list
-        12. List all members of the image
-        13. Verify that tenant belongs to the image members list
-        14. Verify that alternative tenant belongs to the image members list
+        1) Create an image (third_user_image) as a third user tenant
+        2) Verify that tenant cannot access the image
+        3) Verify that alternative tenant cannot access the image
+        4) Add tenant as a member of the image
+        5) Verify that tenant can now access the image
+        6) Add alternative tenant as a member of the image
+        7) Verify that alternative tenant can now access the image
+        8) Update tenant membership status to 'Accepted' for the image
+        9) Verify that tenant can now see the image in their list
+        10) Update alternative tenant membership status to 'Accepted' for the
+        image
+        11) Verify that alternative tenant can now see the image in their list
+        12) List all members of the image
+        13) Verify that tenant belongs to the image members list
+        14) Verify that alternative tenant belongs to the image members list
         """
 
-        tenant_id = self.access_data.token.tenant.id_
-        alt_tenant_id = self.alt_access_data.token.tenant.id_
+        tenant_id = self.tenant_id
+        alt_tenant_id = self.alt_tenant_id
 
-        third_user_image = self.third_images_behavior.create_new_image()
+        third_user_image = self.third_images_behavior.create_image_via_task()
 
         response = self.images_client.get_image(image_id=third_user_image.id_)
         self.assertEqual(response.status_code, 404)

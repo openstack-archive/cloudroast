@@ -14,6 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import unittest2 as unittest
+
 from cloudcafe.images.common.types import ImageMemberStatus
 from cloudroast.images.fixtures import ImagesFixture
 from cafe.drivers.unittest.decorators import tags
@@ -21,32 +23,32 @@ from cafe.drivers.unittest.decorators import tags
 
 class OneToOneImageSharingTest(ImagesFixture):
 
+    @unittest.skip('Bug, Redmine #4337')
     @tags(type='positive', regression='true')
     def test_one_to_one_image_sharing(self):
         """
         @summary: One to one image sharing
 
-        1. Register an image as tenant
-        2. Register an image (alt_image) as alternative tenant
-        3. Verify that tenant cannot access alt_image
-        4. Verify that alternative tenant cannot access image
-        5. Add alternative tenant as a member of image
-        6. Verify that alternative tenant can now access image
-        7. Add tenant as a member of alt_image
-        8. Verify that tenant can now access alt_image
-        9. Update tenant membership status to 'Accepted' for alt_image
-        10. Verify that tenant sees alt_image in their list
-        11. Update alternative tenant membership status to 'Accepted'
-            for image
-        12. Verify that alternative tenant sees image in their list
-        13. Verify that image members list contains alternative tenant
-        14. Verify that alt_image members list contains tenant
+        1) Create an image as tenant
+        2) Create an image (alt_image) as alternative tenant
+        3) Verify that tenant cannot access alt_image
+        4) Verify that alternative tenant cannot access image
+        5) Add alternative tenant as a member of image
+        6) Verify that alternative tenant can now access image
+        7) Add tenant as a member of alt_image
+        8) Verify that tenant can now access alt_image
+        9) Update tenant membership status to 'Accepted' for alt_image
+        10) Verify that tenant sees alt_image in their list
+        11) Update alternative tenant membership status to 'Accepted' for image
+        12) Verify that alternative tenant sees image in their list
+        13) Verify that image members list contains alternative tenant
+        14) Verify that alt_image members list contains tenant
         """
 
-        image = self.images_behavior.create_new_image()
-        alt_image = self.alt_images_behavior.create_new_image()
-        tenant_id = self.access_data.token.tenant.id_
-        alt_tenant_id = self.alt_access_data.token.tenant.id_
+        image = self.images_behavior.create_image_via_task()
+        alt_image = self.alt_images_behavior.create_image_via_task()
+        tenant_id = self.tenant_id
+        alt_tenant_id = self.alt_tenant_id
 
         response = self.images_client.get_image(image_id=alt_image.id_)
         self.assertEqual(response.status_code, 404)
