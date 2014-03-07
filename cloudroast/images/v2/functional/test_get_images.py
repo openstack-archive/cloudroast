@@ -15,34 +15,28 @@ limitations under the License.
 """
 
 from cafe.drivers.unittest.decorators import tags
-from cloudroast.images.fixtures import ComputeIntegrationFixture
+from cloudroast.images.fixtures import ImagesFixture
 
 
-class TestGetImages(ComputeIntegrationFixture):
+class TestGetImages(ImagesFixture):
 
     @classmethod
     def setUpClass(cls):
         super(TestGetImages, cls).setUpClass()
-        cls.images = []
-        server = cls.server_behaviors.create_active_server().entity
-        image = cls.compute_image_behaviors.create_active_image(server.id)
-        alt_image = cls.compute_image_behaviors.create_active_image(server.id)
-        cls.images.append(cls.images_client.get_image(image.entity.id).entity)
-        cls.images.append(cls.images_client.get_image(
-            alt_image.entity.id).entity)
+        cls.images = cls.images_behavior.create_images_via_task(count=2)
 
     @tags(type='smoke')
     def test_get_images(self):
         """
         @summary: Get images
 
-        1) Given two images
-        2) Get images
-        3) Verify that the list is not empty
-        4) Verify that the created images are in the list of images
+        1) Given two previously created images, get images
+        2) Verify that the list is not empty
+        3) Verify that the created images are in the list of images
         """
 
-        images = self.images_behavior.list_images_pagination()
-        self.assertNotEqual(len(images), 0)
-        self.assertIn(self.images.pop(), images)
-        self.assertIn(self.images.pop(), images)
+        list_images = self.images_behavior.list_images_pagination()
+        self.assertNotEqual(len(list_images), 0)
+
+        self.assertIn(self.images.pop(), list_images)
+        self.assertIn(self.images.pop(), list_images)
