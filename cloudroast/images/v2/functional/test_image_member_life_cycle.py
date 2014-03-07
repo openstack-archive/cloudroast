@@ -18,8 +18,7 @@ import calendar
 import time
 
 from cafe.drivers.unittest.decorators import tags
-from cloudcafe.images.common.types import \
-    ImageMemberStatus, ImageVisibility, Schemas
+from cloudcafe.images.common.types import ImageMemberStatus, Schemas
 from cloudroast.images.fixtures import ImagesFixture
 
 
@@ -53,9 +52,8 @@ class TestImageMemberLifeCycle(ImagesFixture):
         18) Verify that the list is empty
         """
 
-        member_id = self.alt_user_config.tenant_id
-        image = self.images_behavior.create_new_image(
-            visibility=ImageVisibility.PRIVATE)
+        member_id = self.alt_tenant_id
+        image = self.images_behavior.create_image_via_task()
         response = self.images_client.list_members(image.id_)
         self.assertEqual(response.status_code, 200)
         get_members_resp = response.entity
@@ -69,19 +67,19 @@ class TestImageMemberLifeCycle(ImagesFixture):
         created_at_in_sec = \
             calendar.timegm(time.strptime(str(member_resp.created_at),
                                           "%Y-%m-%dT%H:%M:%SZ"))
-        offset_in_image_member_created_time = \
+        delta_in_image_member_created_time = \
             abs(created_at_in_sec - image_member_creation_time_in_sec)
         updated_at_in_sec = \
             calendar.timegm(time.strptime(str(member_resp.updated_at),
                                           "%Y-%m-%dT%H:%M:%SZ"))
-        offset_in_image_member_updated_time = \
+        delta_in_image_member_updated_time = \
             abs(updated_at_in_sec - image_member_creation_time_in_sec)
-        self.assertLessEqual(offset_in_image_member_created_time, 60000)
+        self.assertLessEqual(delta_in_image_member_created_time, 60000)
         self.assertEqual(member_resp.image_id, image.id_)
         self.assertEqual(member_resp.member_id, member_id)
         self.assertEqual(member_resp.schema, Schemas.IMAGE_MEMBER_SCHEMA)
         self.assertEqual(member_resp.status, ImageMemberStatus.PENDING)
-        self.assertLessEqual(offset_in_image_member_updated_time, 60000)
+        self.assertLessEqual(delta_in_image_member_updated_time, 60000)
         response = self.images_client.list_members(image.id_)
         self.assertEqual(response.status_code, 200)
         get_members_resp = response.entity
