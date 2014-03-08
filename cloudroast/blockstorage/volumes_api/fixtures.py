@@ -1,8 +1,6 @@
 from cloudcafe.common.tools.datagen import random_string
-
+from cloudcafe.blockstorage.composites import VolumesAutoComposite
 from cloudroast.blockstorage.fixtures import BaseBlockstorageTestFixture
-from cloudroast.blockstorage.composites import BlockstorageAuthComposite
-from cloudroast.blockstorage.volumes_api.v2.composites import VolumesComposite
 
 
 class VolumesTestFixture(BaseBlockstorageTestFixture):
@@ -13,8 +11,7 @@ class VolumesTestFixture(BaseBlockstorageTestFixture):
     @classmethod
     def setUpClass(cls):
         super(VolumesTestFixture, cls).setUpClass()
-        cls.blockstorage = BlockstorageAuthComposite()
-        cls.volumes = VolumesComposite()
+        cls.volumes = VolumesAutoComposite()
 
     @staticmethod
     def random_volume_name():

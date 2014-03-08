@@ -14,13 +14,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from cafe.drivers.unittest.decorators import \
-    data_driven_test, DataDrivenFixture
+from cafe.drivers.unittest.decorators import (
+    data_driven_test, DataDrivenFixture)
 from cafe.drivers.unittest.decorators import tags
 
-from cloudcafe.blockstorage.volumes_api.v1.models import statuses
-from cloudroast.blockstorage.volumes_api.v1.fixtures import \
-    VolumesTestFixture, VolumesDatasets
+from cloudcafe.blockstorage.volumes_api.common.models import statuses
+from cloudroast.blockstorage.volumes_api.fixtures import VolumesTestFixture
+from cloudroast.blockstorage.volumes_api.datasets import VolumesDatasets
 
 
 @DataDrivenFixture
@@ -28,15 +28,33 @@ class SnapshotActions(VolumesTestFixture):
 
     @data_driven_test(VolumesDatasets.volume_types())
     @tags('snapshots', 'smoke')
+    def ddtest_verify_snapshot_status_progression(
+            self, volume_type_name, volume_type_id):
+        volume = self.new_volume(vol_type=volume_type_id)
+        snapshot_name = self.random_snapshot_name()
+        snapshot_description = "CBS QE Test Snapshot"
+        snapshot = self.volumes.behaviors.create_available_snapshot(
+            volume.id_, name=snapshot_name, description=snapshot_description)
+
+        self.assertEquals(snapshot.volume_id, volume.id_)
+        self.assertEquals(snapshot.name, snapshot_name)
+        self.assertEquals(snapshot.description, snapshot_description)
+        self.assertIn(
+            snapshot.status,
+            [statuses.Snapshot.AVAILABLE, statuses.Snapshot.CREATING])
+        self.assertEquals(snapshot.size, volume.size)
+
+    @data_driven_test(VolumesDatasets.volume_types())
+    @tags('snapshots', 'smoke')
     def ddtest_create_minimum_size_volume_snapshot(
             self, volume_type_name, volume_type_id):
         volume = self.new_volume(vol_type=volume_type_id)
-        snapshot_display_name = self.random_snapshot_name()
-        snapshot_display_description = "Test snapshot"
+        snapshot_name = self.random_snapshot_name()
+        snapshot_description = "Test snapshot"
 
         resp = self.volumes.client.create_snapshot(
-            volume.id_, display_name=snapshot_display_name,
-            display_description=snapshot_display_description,
+            volume.id_, display_name=snapshot_name,
+            display_description=snapshot_description,
             force_create=True)
 
         self.assertExactResponseStatus(
@@ -44,10 +62,10 @@ class SnapshotActions(VolumesTestFixture):
         self.assertResponseIsDeserialized(resp)
         snapshot = resp.entity
         self.assertEquals(snapshot.volume_id, volume.id_)
-        self.assertEquals(snapshot.display_name, snapshot_display_name)
+        self.assertEquals(snapshot.display_name, snapshot_name)
         self.assertEquals(
             snapshot.display_description,
-            snapshot_display_description)
+            snapshot_description)
         self.assertIn(
             snapshot.status,
             [statuses.Snapshot.AVAILABLE, statuses.Snapshot.CREATING])

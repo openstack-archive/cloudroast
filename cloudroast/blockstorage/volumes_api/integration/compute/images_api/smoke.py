@@ -16,9 +16,9 @@ limitations under the License.
 from cafe.drivers.unittest.decorators import \
     data_driven_test, DataDrivenFixture, tags
 
-from cloudroast.blockstorage.volumes_api.v2.integration.compute.fixtures \
+from cloudroast.blockstorage.volumes_api.integration.compute.fixtures \
     import VolumesImagesIntegrationFixture
-from cloudroast.blockstorage.volumes_api.v2.integration.compute.datasets \
+from cloudroast.blockstorage.volumes_api.integration.compute.datasets \
     import ComputeDatasets
 
 
