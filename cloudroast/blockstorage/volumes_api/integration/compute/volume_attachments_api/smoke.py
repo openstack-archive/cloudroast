@@ -14,11 +14,25 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 from cafe.drivers.unittest.decorators import tags
-from cloudroast.blockstorage.volumes_api.v1.integration.compute.fixtures \
+from cafe.drivers.unittest.suite import OpenCafeUnittestTestSuite
+from cloudroast.blockstorage.volumes_api.integration.compute.fixtures \
     import ComputeIntegrationTestFixture
 
 
+def load_tests(loader, standard_tests, pattern):
+    suite = OpenCafeUnittestTestSuite()
+    suite.addTest(VolumeAttachmentsAPISmoke("test_attach_volume_to_server"))
+    suite.addTest(
+        VolumeAttachmentsAPISmoke("test_list_server_volume_attachments"))
+    suite.addTest(
+        VolumeAttachmentsAPISmoke("test_get_volume_attachment_details"))
+    suite.addTest(VolumeAttachmentsAPISmoke("test_volume_attachment_delete"))
+
+    return suite
+
+
 class VolumeAttachmentsAPISmoke(ComputeIntegrationTestFixture):
+    """Tests attaching a single volume to a server"""
 
     @classmethod
     def setUpClass(cls):
@@ -42,7 +56,7 @@ class VolumeAttachmentsAPISmoke(ComputeIntegrationTestFixture):
     def test_attach_volume_to_server(self):
         # Note: For the attach test, I rely on the behavior that waits for
         # attachment propagation and status changes because in a smoke test,
-        # all I care about is that the attachmnet eventually works.
+        # all I care about is that the attachment eventually works
         self.assertEqual(
             self.test_attachment.server_id, self.test_server.id,
             "Attachment's Server id and actual Server id did not match")
