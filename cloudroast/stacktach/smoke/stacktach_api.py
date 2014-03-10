@@ -92,15 +92,10 @@ class StackTachTest(StackTachFixture, StackTachDBFixture):
         response = (self.stacktach_client
                     .get_watch_events(deployment_id='0',
                                       service=self.service))
-        self._verify_success_code_and_entity_len(response)
-        for element in response.entity:
-            self.assertIsNotNone(element.event_id)
-            self.assertIsNotNone(element.routing_key_type)
-            self.assertIsNotNone(element.when_date)
-            self.assertIsNotNone(element.when_time)
-            self.assertIsNotNone(element.deployment)
-            self.assertIsNotNone(element.event_name)
-            self.assertIsNotNone(element.uuid)
+        self.assertEqual(response.status_code, 200,
+                         self.msg.format("status code", 200,
+                                         response.status_code, response.reason,
+                                         response.content))
 
     def test_get_event_id_details(self):
         """

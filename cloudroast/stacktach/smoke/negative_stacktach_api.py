@@ -85,9 +85,9 @@ class StackTachTest(StackTachFixture):
                                          "Not a 2xx Success response",
                                          response.status_code, response.reason,
                                          response.content))
-        resp_entity_obj = response.entity
-        self.assertIsNone(resp_entity_obj,
-                          msg="The response entity is not NONE")
+        self.assertTrue('BAD REQUEST' in response.reason,
+                        msg="Expected the request to fail for reason: "
+                            "Bad Request, but it didn't")
 
     def test_get_events_for_invalid_uuid(self):
         """
