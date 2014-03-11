@@ -39,7 +39,8 @@ class CreateServerVolumeIntegrationTest(BlockstorageIntegrationFixture):
         cls.resources.add(cls.server.id,
                           cls.servers_client.delete_server)
         cls.volume = cls.blockstorage_behavior.create_available_volume(
-            'test-volume', cls.volume_size, cls.volume_type,
+            display_name='test-volume', size=cls.volume_size,
+            volume_type=cls.volume_type,
             timeout=cls.volume_status_timeout)
         cls.resources.add(cls.volume.id_,
                           cls.blockstorage_client.delete_volume)
@@ -52,9 +53,7 @@ class CreateServerVolumeIntegrationTest(BlockstorageIntegrationFixture):
         cls.volume_attachments_client.delete_volume_attachment(
             cls.volume.id_, cls.server.id)
         cls.blockstorage_behavior.wait_for_volume_status(
-            cls.volume.id_, statuses.Volume.AVAILABLE,
-            timeout=cls.volume_status_timeout,
-            wait_period=cls.poll_frequency)
+            cls.volume.id_, statuses.Volume.AVAILABLE)
         super(CreateServerVolumeIntegrationTest, cls).tearDownClass()
 
     @tags(type='smoke', net='no')
@@ -63,9 +62,7 @@ class CreateServerVolumeIntegrationTest(BlockstorageIntegrationFixture):
         self.volume_attachments_client.attach_volume(
             self.server.id, self.volume.id_, device=self.device)
         self.blockstorage_behavior.wait_for_volume_status(
-            self.volume.id_, statuses.Volume.IN_USE,
-            timeout=self.volume_status_timeout,
-            wait_period=self.poll_frequency)
+            self.volume.id_, statuses.Volume.IN_USE)
 
     @tags(type='smoke', net='yes')
     def test_format_and_mount_volume(self):

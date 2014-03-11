@@ -49,16 +49,15 @@ class RebuildServerVolumeIntegrationTest(BlockstorageIntegrationFixture):
         cls.flavor = response.entity
         cls.resources.add(cls.server.id, cls.servers_client.delete_server)
         cls.volume = cls.blockstorage_behavior.create_available_volume(
-            'test-volume', cls.volume_size, cls.volume_type,
+            display_name='test-volume', size=cls.volume_size,
+            volume_type=cls.volume_type,
             timeout=cls.volume_status_timeout)
         cls.resources.add(cls.volume.id_,
                           cls.blockstorage_client.delete_volume)
         cls.volume_attachments_client.attach_volume(
             cls.server.id, cls.volume.id_)
         cls.blockstorage_behavior.wait_for_volume_status(
-            cls.volume.id_, statuses.Volume.IN_USE,
-            timeout=cls.volume_status_timeout,
-            wait_period=cls.poll_frequency)
+            cls.volume.id_, statuses.Volume.IN_USE)
 
     @tags(type='smoke', net='no')
     def test_rebuild_server(self):
@@ -73,7 +72,7 @@ class RebuildServerVolumeIntegrationTest(BlockstorageIntegrationFixture):
 
     @tags(type='smoke', net='no')
     def test_volume_detached_after_rebuild(self):
-        volume_after_rebuild = self.storage_client.get_volume_info(
+        volume_after_rebuild = self.blockstorage_client.get_volume_info(
             self.volume.id_).entity
         self.assertEqual(volume_after_rebuild.status, 'available')
 
@@ -81,7 +80,5 @@ class RebuildServerVolumeIntegrationTest(BlockstorageIntegrationFixture):
     def test_reattach_volume_after_rebuild(self):
         self.volume_attachments_client.attach_volume(
             self.server.id, self.volume.id_)
-        self.storage_behavior.wait_for_volume_status(
-            self.volume.id_, 'in-use',
-            timeout=self.volume_status_timeout,
-            wait_period=self.poll_frequency)
+        self.blockstorage_behavior.wait_for_volume_status(
+            self.volume.id_, 'in-use')

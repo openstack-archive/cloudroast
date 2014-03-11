@@ -53,7 +53,8 @@ class ResizeServerVolumeIntegrationTest(BlockstorageIntegrationFixture):
         cls.resources.add(cls.server.id,
                           cls.servers_client.delete_server)
         cls.volume = cls.blockstorage_behavior.create_available_volume(
-            'test-volume', cls.volume_size, cls.volume_type,
+            display_name='test-volume', size=cls.volume_size,
+            volume_type=cls.volume_type,
             timeout=cls.volume_status_timeout)
         cls.resources.add(cls.volume.id_,
                           cls.blockstorage_client.delete_volume)
@@ -61,17 +62,14 @@ class ResizeServerVolumeIntegrationTest(BlockstorageIntegrationFixture):
             cls.server.id, cls.volume.id_)
         cls.blockstorage_behavior.wait_for_volume_status(
             cls.volume.id_, statuses.Volume.IN_USE,
-            timeout=cls.volume_status_timeout,
-            wait_period=cls.poll_frequency)
+            timeout=cls.volume_status_timeout)
 
     @classmethod
     def tearDownClass(cls):
         cls.volume_attachments_client.delete_volume_attachment(
             cls.volume.id_, cls.server.id)
         cls.blockstorage_behavior.wait_for_volume_status(
-            cls.volume.id_, statuses.Volume.AVAILABLE,
-            timeout=cls.volume_status_timeout,
-            wait_period=cls.poll_frequency)
+            cls.volume.id_, statuses.Volume.AVAILABLE)
         super(ResizeServerVolumeIntegrationTest, cls).tearDownClass()
 
     @tags(type='smoke', net='no')
@@ -88,6 +86,6 @@ class ResizeServerVolumeIntegrationTest(BlockstorageIntegrationFixture):
 
     @tags(type='smoke', net='no')
     def test_volume_attached_after_resize(self):
-        volume_after_rebuild = self.storage_client.get_volume_info(
+        volume_after_rebuild = self.blockstorage_client.get_volume_info(
             self.volume.id_).entity
-        self.assertEqual(volume_after_rebuild.status, 'available')
+        self.assertEqual(volume_after_rebuild.status, 'in-use')
