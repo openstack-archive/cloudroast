@@ -41,3 +41,21 @@ class GlanceStackTachTest(StackTachFixture):
         self.assertTrue('BAD REQUEST' in response.reason,
                         msg="Expected the request to fail for reason: "
                             "Bad Request, but it didn't")
+
+    def test_watch_events_with_invalid_deployment(self):
+        """
+        @summary: Verify that Get Watch Events with
+            Invalid Deployment ID fails
+        """
+
+        response = (self.stacktach_client
+                    .get_watch_events(service=self.service,
+                                      deployment_id='aa'))
+        self.assertFalse(response.ok,
+                         self.msg.format("status code",
+                                         "Not a 2xx Success response",
+                                         response.status_code, response.reason,
+                                         response.content))
+        resp_entity_obj = response.entity
+        self.assertIsNone(resp_entity_obj,
+                          msg="The response entity is not NONE")

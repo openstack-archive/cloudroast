@@ -34,6 +34,18 @@ class GlanceStackTachTest(StackTachFixture):
         for element in response.entity:
             self.assertIsNotNone(element.host_name)
 
+    def test_get_watch_events(self):
+        """
+        @summary: Verify that Get Watch Events returns 200 Success response
+        """
+        response = (self.stacktach_client
+                    .get_watch_events(deployment_id='0',
+                                      service=self.service))
+        self.assertEqual(response.status_code, 200,
+                         self.msg.format("status code", 200,
+                                         response.status_code, response.reason,
+                                         response.content))
+
     def test_get_event_id_details(self):
         """
         @summary: Verify that Get Event ID Details returns 200 Success response
