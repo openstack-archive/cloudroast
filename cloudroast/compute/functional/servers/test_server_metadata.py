@@ -14,11 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import unittest2 as unittest
-
 from cafe.drivers.unittest.decorators import tags
-from cloudcafe.common.tools.datagen import rand_name
-from cloudcafe.compute.common.exceptions import ItemNotFound
 from cloudroast.compute.fixtures import ComputeFixture
 
 
@@ -146,25 +142,3 @@ class ServerMetadataTest(ComputeFixture):
             self.server.id)
         metadata = metadata_response.entity
         self.assertNotIn('meta_key_1', metadata)
-
-    @tags(type='negative', net='no')
-    def test_delete_nonexistent_server_metadata_item(self):
-        with self.assertRaises(ItemNotFound):
-            self.servers_client.delete_server_metadata_item(
-                self.server.id, 'meta_key_5')
-
-    @tags(type='negative', net='no')
-    def test_get_nonexistent_server_metadata_item(self):
-        with self.assertRaises(ItemNotFound):
-            self.servers_client.get_server_metadata_item(
-                self.server.id, 'meta_key_5')
-
-    @tags(type='negative', net='no')
-    @unittest.skip('Failing, under review')
-    def test_set_blank_metadata_dict(self):
-        blank_meta = {'': ''}
-        create_resp = self.servers_client.create_server(
-            rand_name('testserver'), self.image_ref, self.flavor_ref,
-            metadata=blank_meta)
-        server = self.servers_client.get_server(create_resp.entity.id).entity
-        self.assertEqual("", server.metadata[''])
