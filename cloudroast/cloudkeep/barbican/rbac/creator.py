@@ -58,9 +58,9 @@ class RBACCreatorRoleForSecretAPI(RBACSecretRoles):
         resp = self.admin_fixture.behaviors.create_secret_from_config()
         self.assertEqual(resp.status_code, 201)
 
-        # Delete attempt should return 401
+        # Delete attempt should return 403
         resp = self.behaviors.delete_secret(resp.id)
-        self.assertEqual(resp.status_code, 401)
+        self.assertEqual(resp.status_code, 403)
 
     @tags(type='positive')
     def test_get_secret_list_as_creator(self):
@@ -116,7 +116,7 @@ class RBACCreatorRoleForOrdersAPI(RBACOrderRoles):
         self.assertEqual(resp.status_code, 202)
 
         resp = self.behaviors.delete_order(order_id=resp.id)
-        self.assertEqual(resp.status_code, 401)
+        self.assertEqual(resp.status_code, 403)
 
     @tags(type='positive')
     def test_get_orders_as_creator(self):

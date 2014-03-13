@@ -63,30 +63,30 @@ class RBACObserverRoleForSecretAPI(RBACSecretRoles):
 
     @tags(type='negative')
     def test_create_secret_as_observer(self):
-        """Should return 401 as observer user doesn't have permission"""
+        """Should return 403 as observer user doesn't have permission"""
         resp = self.behaviors.create_secret_from_config()
-        self.assertEqual(resp.status_code, 401)
+        self.assertEqual(resp.status_code, 403)
 
     @tags(type='negative')
     def test_update_secret_as_observer(self):
         resp = self.admin_fixture.behaviors.create_secret()
         self.assertEqual(resp.status_code, 201)
 
-        # Update attempt should return 401
+        # Update attempt should return 403
         update_resp = self.client.add_secret_payload(
             secret_id=resp.id,
             payload_content_type=self.config.payload_content_type,
             payload='testing_update_secret')
-        self.assertEqual(update_resp.status_code, 401)
+        self.assertEqual(update_resp.status_code, 403)
 
     @tags(type='negative')
     def test_delete_secret_as_observer(self):
         resp = self.admin_fixture.behaviors.create_secret_from_config()
         self.assertEqual(resp.status_code, 201)
 
-        # Delete attempt should return 401
+        # Delete attempt should return 403
         resp = self.behaviors.delete_secret(resp.id)
-        self.assertEqual(resp.status_code, 401)
+        self.assertEqual(resp.status_code, 403)
 
 
 class RBACObserverRoleForOrdersAPI(RBACOrderRoles):
@@ -118,7 +118,7 @@ class RBACObserverRoleForOrdersAPI(RBACOrderRoles):
     @tags(type='negative')
     def test_create_order_as_observer(self):
         resp = self.behaviors.create_order_overriding_cfg()
-        self.assertEqual(resp.status_code, 401)
+        self.assertEqual(resp.status_code, 403)
 
     @tags(type='negative')
     def test_delete_order_as_observer(self):
@@ -127,4 +127,4 @@ class RBACObserverRoleForOrdersAPI(RBACOrderRoles):
         self.assertEqual(resp.status_code, 202)
 
         resp = self.behaviors.delete_order(order_id=resp.id)
-        self.assertEqual(resp.status_code, 401)
+        self.assertEqual(resp.status_code, 403)

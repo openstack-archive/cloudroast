@@ -41,30 +41,30 @@ class RBACAuditRoleForSecretAPI(RBACSecretRoles):
 
     @tags(type='negative')
     def test_create_secret_as_audit(self):
-        """Should return 401 as audit user doesn't have permission"""
+        """Should return 403 as audit user doesn't have permission"""
         resp = self.behaviors.create_secret_from_config()
-        self.assertEqual(resp.status_code, 401)
+        self.assertEqual(resp.status_code, 403)
 
     @tags(type='negative')
     def test_update_secret_as_audit(self):
         resp = self.admin_fixture.behaviors.create_secret()
         self.assertEqual(resp.status_code, 201)
 
-        # Update attempt should return 401
+        # Update attempt should return 403
         update_resp = self.client.add_secret_payload(
             secret_id=resp.id,
             payload_content_type=self.config.payload_content_type,
             payload='testing_update_secret')
-        self.assertEqual(update_resp.status_code, 401)
+        self.assertEqual(update_resp.status_code, 403)
 
     @tags(type='negative')
     def test_delete_secret_as_audit(self):
         resp = self.admin_fixture.behaviors.create_secret_from_config()
         self.assertEqual(resp.status_code, 201)
 
-        # Delete attempt should return 401
+        # Delete attempt should return 403
         resp = self.behaviors.delete_secret(resp.id)
-        self.assertEqual(resp.status_code, 401)
+        self.assertEqual(resp.status_code, 403)
 
     @tags(type='negative')
     def test_get_secrets_as_audit(self):
@@ -73,7 +73,7 @@ class RBACAuditRoleForSecretAPI(RBACSecretRoles):
             self.admin_fixture.behaviors.create_secret_from_config()
 
         get_resp = self.client.get_secrets()
-        self.assertEqual(get_resp.status_code, 401)
+        self.assertEqual(get_resp.status_code, 403)
 
     @tags(type='negative')
     def test_get_secret_content_as_audit(self):
@@ -83,7 +83,7 @@ class RBACAuditRoleForSecretAPI(RBACSecretRoles):
         sec_resp = self.client.get_secret(
             secret_id=resp.id,
             payload_content_type=self.config.payload_content_type)
-        self.assertEqual(sec_resp.status_code, 401)
+        self.assertEqual(sec_resp.status_code, 403)
 
 
 class RBACAuditRoleForOrdersAPI(RBACOrderRoles):
@@ -106,7 +106,7 @@ class RBACAuditRoleForOrdersAPI(RBACOrderRoles):
     @tags(type='negative')
     def test_create_order_as_audit(self):
         resp = self.behaviors.create_order_overriding_cfg()
-        self.assertEqual(resp.status_code, 401)
+        self.assertEqual(resp.status_code, 403)
 
     @tags(type='negative')
     def test_delete_order_as_audit(self):
@@ -115,7 +115,7 @@ class RBACAuditRoleForOrdersAPI(RBACOrderRoles):
         self.assertEqual(resp.status_code, 202)
 
         resp = self.behaviors.delete_order(order_id=resp.id)
-        self.assertEqual(resp.status_code, 401)
+        self.assertEqual(resp.status_code, 403)
 
     @tags(type='negative')
     def test_get_orders_as_audit(self):
@@ -124,4 +124,4 @@ class RBACAuditRoleForOrdersAPI(RBACOrderRoles):
             self.admin_fixture.behaviors.create_order_from_config()
 
         resp = self.orders_client.get_orders()
-        self.assertEqual(resp.status_code, 401)
+        self.assertEqual(resp.status_code, 403)
