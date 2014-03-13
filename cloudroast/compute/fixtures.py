@@ -16,11 +16,11 @@ limitations under the License.
 
 import sys
 
-from cloudcafe.blockstorage.volumes_api.v1.client import VolumesClient
+from cloudcafe.blockstorage.volumes_api.v2.client import VolumesClient
 from cloudcafe.blockstorage.config import BlockStorageConfig
-from cloudcafe.blockstorage.volumes_api.v1.behaviors import \
+from cloudcafe.blockstorage.volumes_api.v2.behaviors import \
     VolumesAPI_Behaviors
-from cloudcafe.blockstorage.volumes_api.v1.config import VolumesAPIConfig
+from cloudcafe.blockstorage.volumes_api.v2.config import VolumesAPIConfig
 from cafe.drivers.unittest.datasets import DatasetList
 from cafe.drivers.unittest.fixtures import BaseTestFixture
 from cloudcafe.common.resources import ResourcePool
@@ -53,7 +53,8 @@ from cloudcafe.auth.config import UserAuthConfig, UserConfig, \
 from cloudcafe.auth.provider import AuthProvider
 from cloudcafe.compute.flavors_api.config import FlavorsConfig
 from cloudcafe.compute.images_api.config import ImagesConfig
-from cloudcafe.compute.servers_api.config import ServersConfig
+from cloudcafe.compute.servers_api.config import ServersConfig, \
+    BlockDeviceMappingConfig
 from cloudcafe.compute.volume_attachments_api.client \
     import VolumeAttachmentsAPIClient
 
@@ -69,6 +70,7 @@ class ComputeFixture(BaseTestFixture):
         cls.flavors_config = FlavorsConfig()
         cls.images_config = ImagesConfig()
         cls.servers_config = ServersConfig()
+        cls.block_device_mapping = BlockDeviceMappingConfig()
         cls.compute_endpoint = ComputeEndpointConfig()
         cls.marshalling = MarshallingConfig()
         cls.config_drive_config = ConfigDriveConfig()
@@ -121,10 +123,24 @@ class ComputeFixture(BaseTestFixture):
         cls.vnc_client = VncConsoleClient(**client_args)
         cls.console_output_client = ConsoleOutputClient(**client_args)
         cls.limits_client = LimitsClient(**client_args)
+
+        cls.blockstorage_behavior = VolumesAPI_Behaviors()
+        cls.block_config = BlockStorageConfig()
+        block_service = cls.access_data.get_service(
+            cls.block_config.identity_service_name)
+        block_url = block_service.get_endpoint(
+            cls.block_config.region).public_url
+        cls.volumes_client = VolumesClient(
+            block_url, cls.access_data.token.id_,
+            cls.marshalling.serializer, cls.marshalling.deserializer)
+
         cls.server_behaviors = ServerBehaviors(cls.servers_client,
                                                cls.servers_config,
                                                cls.images_config,
-                                               cls.flavors_config)
+                                               cls.flavors_config,
+                                               cls.block_device_mapping,
+                                               cls.volumes_client,
+                                               cls.blockstorage_behavior)
         cls.image_behaviors = ImageBehaviors(cls.images_client,
                                              cls.servers_client,
                                              cls.images_config)
@@ -260,7 +276,6 @@ class BlockstorageIntegrationFixture(ComputeFixture):
     def setUpClass(cls):
         super(BlockstorageIntegrationFixture, cls).setUpClass()
 
-        block_config = BlockStorageConfig()
         volumes_config = VolumesAPIConfig()
         cls.poll_frequency = volumes_config.volume_status_poll_frequency
         cls.volume_status_timeout = volumes_config.volume_create_timeout
@@ -268,9 +283,9 @@ class BlockstorageIntegrationFixture(ComputeFixture):
         cls.volume_type = volumes_config.default_volume_type
 
         block_service = cls.access_data.get_service(
-            block_config.identity_service_name)
+            cls.block_config.identity_service_name)
         block_url = block_service.get_endpoint(
-            block_config.region).public_url
+            cls.block_config.region).public_url
         cls.blockstorage_client = VolumesClient(
             block_url, cls.access_data.token.id_,
             cls.marshalling.serializer, cls.marshalling.deserializer)
