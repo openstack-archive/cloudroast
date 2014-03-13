@@ -16,11 +16,11 @@ limitations under the License.
 
 import sys
 
-from cloudcafe.blockstorage.volumes_api.v1.client import VolumesClient
+from cloudcafe.blockstorage.volumes_api.v2.client import VolumesClient
 from cloudcafe.blockstorage.config import BlockStorageConfig
-from cloudcafe.blockstorage.volumes_api.v1.behaviors import \
+from cloudcafe.blockstorage.volumes_api.v2.behaviors import \
     VolumesAPI_Behaviors
-from cloudcafe.blockstorage.volumes_api.v1.config import VolumesAPIConfig
+from cloudcafe.blockstorage.volumes_api.v2.config import VolumesAPIConfig
 from cafe.drivers.unittest.datasets import DatasetList
 from cafe.drivers.unittest.fixtures import BaseTestFixture
 from cloudcafe.common.resources import ResourcePool
@@ -124,6 +124,7 @@ class ComputeFixture(BaseTestFixture):
         cls.vnc_client = VncConsoleClient(**client_args)
         cls.console_output_client = ConsoleOutputClient(**client_args)
         cls.limits_client = LimitsClient(**client_args)
+
         cls.server_behaviors = ServerBehaviors(cls.servers_client,
                                                cls.servers_config,
                                                cls.images_config,
@@ -262,7 +263,6 @@ class BlockstorageIntegrationFixture(ComputeFixture):
     @classmethod
     def setUpClass(cls):
         super(BlockstorageIntegrationFixture, cls).setUpClass()
-
         block_config = BlockStorageConfig()
         volumes_config = VolumesAPIConfig()
         cls.poll_frequency = volumes_config.volume_status_poll_frequency
