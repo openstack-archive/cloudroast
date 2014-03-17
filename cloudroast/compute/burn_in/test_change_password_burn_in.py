@@ -16,6 +16,7 @@ limitations under the License.
 
 import unittest2 as unittest
 
+from cafe.drivers.unittest.decorators import tags
 from cloudcafe.compute.common.types import ComputeHypervisors
 from cloudcafe.compute.common.types import NovaServerStatusTypes as \
     ServerStates
@@ -39,6 +40,7 @@ class ChangePasswordBurnIn(ComputeFixture):
         cls.server = resp.entity
         cls.resources.add(cls.server.id, cls.servers_client.delete_server)
 
+    @tags(type='burn-in', net='no')
     def test_change_password(self):
         new_password = "p@ssw0Rd"
 
