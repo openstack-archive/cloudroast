@@ -22,6 +22,8 @@ from cloudcafe.compute.common.types import ComputeHypervisors
 from cloudcafe.compute.common.types import NovaServerStatusTypes
 from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.compute.config import ComputeConfig
+from cloudcafe.compute.servers_api.config import ServersConfig
+
 from cloudroast.compute.fixtures import ComputeFixture
 
 
@@ -29,6 +31,9 @@ class CreateServerTest(ComputeFixture):
 
     compute_config = ComputeConfig()
     hypervisor = compute_config.hypervisor.lower()
+
+    servers_config = ServersConfig()
+    file_injection_enabled = servers_config.personality_file_injection_enabled
 
     @classmethod
     def setUpClass(cls):
@@ -41,6 +46,11 @@ class CreateServerTest(ComputeFixture):
         cls.file_contents = 'This is a test file.'
         files = [{'path': '/test.txt', 'contents': base64.b64encode(
             cls.file_contents)}]
+        files = None
+        if cls.file_injection_enabled:
+            cls.file_contents = 'This is a test file.'
+            files = [{'path': '/test.txt', 'contents': base64.b64encode(
+                cls.file_contents)}]
         cls.key = cls.keypairs_client.create_keypair(rand_name("key")).entity
         cls.resources.add(cls.key.name,
                           cls.keypairs_client.delete_keypair)
@@ -220,6 +230,7 @@ class CreateServerTest(ComputeFixture):
                         msg="Cannot connect to server using public ip")
 
     @tags(type='smoke', net='yes')
+    @unittest.skipUnless(file_injection_enabled, "File injection disabled.")
     def test_personality_file_created(self):
         """
         Validate the injected file was created on the server with

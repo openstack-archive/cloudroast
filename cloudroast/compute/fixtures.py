@@ -85,6 +85,8 @@ class ComputeFixture(BaseTestFixture):
             cls.servers_config.ephemeral_disk_max_size
         cls.disk_format_type = cls.servers_config.disk_format_type
         cls.expected_networks = cls.servers_config.expected_networks
+        cls.file_injection_enabled = \
+            cls.servers_config.personality_file_injection_enabled
 
         cls.endpoint_config = UserAuthConfig()
         cls.user_config = UserConfig()
