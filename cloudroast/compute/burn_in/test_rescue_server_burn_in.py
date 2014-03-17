@@ -16,6 +16,8 @@ limitations under the License.
 
 from unittest2.suite import TestSuite
 
+from cafe.drivers.unittest.decorators import tags
+
 from cloudroast.compute.fixtures import ComputeFixture
 
 
@@ -35,11 +37,13 @@ class RescueServerBurnIn(ComputeFixture):
         cls.server = resp.entity
         cls.resources.add(cls.server.id, cls.servers_client.delete_server)
 
+    @tags(type='burn-in', net='no')
     def test_rescue_server(self):
         self.rescue_client.rescue(self.server.id)
         self.server_behaviors.wait_for_server_status(
             self.server.id, 'RESCUE')
 
+    @tags(type='burn-in', net='no')
     def test_unrescue_server(self):
         self.rescue_client.unrescue(self.server.id)
         self.server_behaviors.wait_for_server_status(

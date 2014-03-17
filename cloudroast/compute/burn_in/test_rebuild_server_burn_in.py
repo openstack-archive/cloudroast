@@ -14,8 +14,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+from cafe.drivers.unittest.decorators import tags
 from cloudcafe.compute.common.types import NovaServerStatusTypes
 from cloudcafe.common.tools.datagen import rand_name
+
 from cloudroast.compute.fixtures import ComputeFixture
 
 
@@ -29,8 +31,13 @@ class RebuildServerBurnIn(ComputeFixture):
         cls.name = rand_name("server")
         cls.resources.add(cls.server.id, cls.servers_client.delete_server)
 
+    @tags(type='burn-in', net='no')
     def test_rebuild_server(self):
+
+        networks = None
+        if self.servers_config.default_network:
+            networks = [{'uuid': self.servers_config.default_network}]
         self.servers_client.rebuild(self.server.id,
-                                    self.image_ref_alt, name=self.name)
+                                    self.image_ref_alt, name=self.name, networks=networks)
         self.server_behaviors.wait_for_server_status(
             self.server.id, NovaServerStatusTypes.ACTIVE)

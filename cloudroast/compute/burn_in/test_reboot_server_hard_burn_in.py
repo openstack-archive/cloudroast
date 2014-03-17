@@ -14,8 +14,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from cloudroast.compute.fixtures import ComputeFixture
+from cafe.drivers.unittest.decorators import tags
 from cloudcafe.compute.common.types import NovaServerRebootTypes
+
+from cloudroast.compute.fixtures import ComputeFixture
 
 
 class RebootServerHardBurnIn(ComputeFixture):
@@ -27,6 +29,7 @@ class RebootServerHardBurnIn(ComputeFixture):
         cls.server = resp.entity
         cls.resources.add(cls.server.id, cls.servers_client.delete_server)
 
+    @tags(type='burn-in', net='no')
     def test_reboot_server_hard(self):
         self.server_behaviors.reboot_and_await(
             self.server.id, NovaServerRebootTypes.HARD)
