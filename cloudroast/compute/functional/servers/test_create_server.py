@@ -36,6 +36,8 @@ class CreateServerTest(ComputeFixture):
         cls.name = rand_name("server")
         cls.metadata = {'meta_key_1': 'meta_value_1',
                         'meta_key_2': 'meta_value_2'}
+        if cls.servers_config.default_network:
+            networks = [{'uuid': cls.servers_config.default_network}]
         cls.file_contents = 'This is a test file.'
         files = [{'path': '/test.txt', 'contents': base64.b64encode(
             cls.file_contents)}]
@@ -44,7 +46,7 @@ class CreateServerTest(ComputeFixture):
                           cls.keypairs_client.delete_keypair)
         cls.create_resp = cls.servers_client.create_server(
             cls.name, cls.image_ref, cls.flavor_ref, metadata=cls.metadata,
-            personality=files, key_name=cls.key.name)
+            personality=files, key_name=cls.key.name, networks=networks)
         created_server = cls.create_resp.entity
         cls.resources.add(created_server.id,
                           cls.servers_client.delete_server)

@@ -26,24 +26,28 @@ class ServerListTest(ComputeFixture):
     def setUpClass(cls):
         super(ServerListTest, cls).setUpClass()
 
+        networks = None
+        if cls.servers_config.default_network:
+            networks = [{'uuid': cls.servers_config.default_network}]
+
         cls.name = rand_name("server")
         first_response = cls.servers_client.create_server(
             name=cls.name, image_ref=cls.image_ref,
-            flavor_ref=cls.flavor_ref).entity
+            flavor_ref=cls.flavor_ref, networks=networks).entity
         cls.resources.add(first_response.id,
                           cls.servers_client.delete_server)
 
         cls.name = rand_name("server")
         second_response = cls.servers_client.create_server(
             name=cls.name, image_ref=cls.image_ref,
-            flavor_ref=cls.flavor_ref).entity
+            flavor_ref=cls.flavor_ref, networks=networks).entity
         cls.resources.add(second_response.id,
                           cls.servers_client.delete_server)
 
         cls.name = rand_name("server")
         third_response = cls.servers_client.create_server(
             name=cls.name, image_ref=cls.image_ref_alt,
-            flavor_ref=cls.flavor_ref_alt).entity
+            flavor_ref=cls.flavor_ref_alt, networks=networks).entity
         cls.resources.add(third_response.id,
                           cls.servers_client.delete_server)
 
