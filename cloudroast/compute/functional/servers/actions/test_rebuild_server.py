@@ -58,16 +58,8 @@ class RebuildServerTests(ComputeFixture):
 
     @tags(type='smoke', net='no')
     def test_verify_rebuild_server_response(self):
-        # Verify the properties in the initial response are correct
+        """Verify the properties in the initial response are correct"""
         rebuilt_server = self.rebuilt_server_response.entity
-
-        if rebuilt_server.addresses.public is not None:
-            v4_address = rebuilt_server.addresses.public.ipv4
-            v6_address = rebuilt_server.addresses.public.ipv6
-            self.assertEqual(v4_address, self.server.accessIPv4,
-                             msg="AccessIPv4 did not match")
-            self.assertEqual(v6_address, self.server.accessIPv6,
-                             msg="AccessIPv6 did not match")
 
         self.assertEqual(rebuilt_server.name, self.name,
                          msg="Server name did not match")
@@ -88,19 +80,48 @@ class RebuildServerTests(ComputeFixture):
         self.assertEquals(rebuilt_server.addresses, self.server.addresses,
                           msg="Server IP addresses changed after rebuild")
 
+    @tags(type='smoke', net='no')
+    def test_rebuilt_server_addresses(self):
+        """
+        The server should have the expected network configuration
+        after being rebuilt.
+        """
+        rebuilt_server = self.rebuilt_server_response.entity
+        addresses = rebuilt_server.addresses
+
+        for name, ip_addresses in self.expected_networks.iteritems():
+            network = addresses.get_by_name(name)
+
+            if ip_addresses.get('v4'):
+                self.assertIsNotNone(
+                    network.ipv4,
+                    msg='Expected {name} network to have an IPv4 address.')
+            else:
+                self.assertIsNone(
+                    network.ipv4,
+                    msg='Expected {name} network to not have an IPv4 address.')
+
+            if ip_addresses.get('v6'):
+                self.assertIsNotNone(
+                    network.ipv6,
+                    msg='Expected {name} network to have an IPv6 address.')
+            else:
+                self.assertIsNone(
+                    network.ipv6,
+                    msg='Expected {name} network to not have an IPv6 address.')
+
+    @tags(type='smoke', net='no')
+    def test_address_not_changed_on_rebuild(self):
+        rebuilt_server = self.rebuilt_server_response.entity
+        addresses = rebuilt_server.addresses
+        self.assertEqual(addresses, self.server.addresses)
+
     @tags(type='smoke', net='yes')
     def test_can_log_into_server_after_rebuild(self):
-        server = self.rebuilt_server_response.entity
-        rebuilt_server = self.rebuilt_server_response.entity
-        public_address = self.server_behaviors.get_public_ip_address(
-            rebuilt_server)
         remote_instance = self.server_behaviors.get_remote_instance_client(
-            server, config=self.servers_config, password=self.password,
+            self.server, config=self.servers_config, password=self.password,
             key=self.key.private_key)
-        self.assertTrue(
-            remote_instance.can_authenticate(),
-            msg="Could not connect to server (%s) using new admin password %s"
-                % (public_address, server.admin_pass))
+        self.assertTrue(remote_instance.can_authenticate())
 
     @tags(type='smoke', net='yes')
     def test_rebuilt_server_vcpus(self):
