@@ -14,14 +14,25 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import unittest2 as unittest
+
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.common.tools.datagen import rand_name
+from cloudcafe.compute.common.types import ComputeHypervisors
+from cloudcafe.compute.common.types import InstanceAuthStrategies
 from cloudcafe.compute.common.types import NovaServerStatusTypes
+from cloudcafe.compute.config import ComputeConfig
 from cloudroast.compute.fixtures import ComputeFixture
 
 
 class ServersTest(ComputeFixture):
 
+    compute_config = ComputeConfig()
+    hypervisor = compute_config.hypervisor.lower()
+
+    @unittest.skipIf(
+        hypervisor in [ComputeHypervisors.KVM, ComputeHypervisors.QEMU],
+        'Password authentication disabled.')
     @tags(type='positive', net='yes')
     def test_create_server_with_admin_password(self):
         """
@@ -37,7 +48,8 @@ class ServersTest(ComputeFixture):
 
         self.assertEqual(admin_password, server.admin_pass)
         remote_client = self.server_behaviors.get_remote_instance_client(
-            server, self.servers_config, password=admin_password)
+            server, self.servers_config, password=admin_password,
+            auth_strategy=InstanceAuthStrategies.PASSWORD)
         self.assertTrue(remote_client.can_authenticate(),
                         msg="Cannot authenticate to the server.")
 
