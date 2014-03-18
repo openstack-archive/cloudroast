@@ -90,30 +90,32 @@ class CreateServerTest(ComputeFixture):
                                     'after the created date.')
 
     @tags(type='smoke', net='no')
-    def test_server_access_addresses(self):
+    def test_server_addresses(self):
         """
-        If the server has public addresses, the access IP addresses
-        should be same as the public addresses
+        The server should have the expected network configuration.
         """
         addresses = self.server.addresses
-        if addresses.public is not None:
-            self.assertTrue(
-                addresses.public.ipv4 is not None,
-                msg="Expected server to have a public IPv4 address set.")
-            self.assertTrue(
-                addresses.public.ipv6 is not None,
-                msg="Expected server to have a public IPv6 address set.")
-            self.assertTrue(
-                addresses.private.ipv4 is not None,
-                msg="Expected server to have a private IPv4 address set.")
-            self.assertEqual(
-                addresses.public.ipv4, self.server.accessIPv4,
-                msg="Expected access IPv4 address to be {0}, was {1}.".format(
-                    addresses.public.ipv4, self.server.accessIPv4))
-            self.assertEqual(
-                addresses.public.ipv6, self.server.accessIPv6,
-                msg="Expected access IPv6 address to be {0}, was {1}.".format(
-                    addresses.public.ipv6, self.server.accessIPv6))
+
+        for name, ip_addresses in self.expected_networks.iteritems():
+            network = addresses.get_by_name(name)
+
+            if ip_addresses.get('v4'):
+                self.assertIsNotNone(
+                    network.ipv4,
+                    msg='Expected {name} network to have an IPv4 address.')
+            else:
+                self.assertIsNone(
+                    network.ipv4,
+                    msg='Expected {name} network to not have an IPv4 address.')
+
+            if ip_addresses.get('v6'):
+                self.assertIsNotNone(
+                    network.ipv6,
+                    msg='Expected {name} network to have an IPv6 address.')
+            else:
+                self.assertIsNone(
+                    network.ipv6,
+                    msg='Expected {name} network to not have an IPv6 address.')
 
     @tags(type='smoke', net='yes')
     def test_created_server_vcpus(self):
