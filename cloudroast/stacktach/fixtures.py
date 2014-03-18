@@ -390,6 +390,52 @@ class StackTachComputeIntegration(ComputeFixture, StackTachDBFixture):
         cls.rebuilt_server = wait_response.entity
 
     @classmethod
+    def create_and_rescue_server(cls, name=None, image_ref=None,
+                                 flavor_ref=None, personality=None,
+                                 metadata=None, disk_config=None,
+                                 networks=None):
+        """
+        @summary: Creates an Active server, Makes a rescue request for the
+            server and waits for the rescued state.
+            Connects to StackTach DB to obtain relevant validation data.
+        @param name: The name of the server.
+        @type name: String
+        @param image_ref: The reference to the image used to build the server.
+        @type image_ref: String
+        @param flavor_ref: The flavor used to build the server.
+        @type flavor_ref: String
+        @param personality: A list of dictionaries for files to be
+            injected into the server.
+        @type personality: List
+        @param metadata: A dictionary of values to be used as metadata.
+        @type metadata: Dictionary. The limit is 5 key/values.
+        @param disk_config: MANUAL/AUTO/None
+        @type disk_config: String
+        @param networks: The networks to which you want to attach the server.
+        @type networks: String
+        """
+
+        cls.create_server(name=name, image_ref=image_ref,
+                          flavor_ref=flavor_ref, personality=personality,
+                          metadata=metadata, disk_config=disk_config,
+                          networks=networks)
+
+        cls.rescue_client.rescue(server_id=cls.created_server.id)
+        wait_response = (cls.server_behaviors
+                         .wait_for_server_status(cls.created_server.id,
+                                                 ServerStates.RESCUE))
+
+        cls.launched_at_rescued_server = (datetime.utcnow()
+                                          .strftime(Constants
+                                                    .DATETIME_FORMAT))
+        cls.stacktach_db_behavior.wait_for_launched_at(
+            server_id=cls.created_server.id,
+            interval_time=cls.servers_config.server_status_interval,
+            timeout=cls.servers_config.server_build_timeout)
+
+        cls.rescued_server = wait_response.entity
+
+    @classmethod
     def create_and_hard_reboot_server(cls, name=None, image_ref=None,
                                       flavor_ref=None, personality=None,
                                       metadata=None, disk_config=None,
