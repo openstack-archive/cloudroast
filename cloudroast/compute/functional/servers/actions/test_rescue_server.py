@@ -15,7 +15,7 @@ limitations under the License.
 """
 
 from cafe.drivers.unittest.decorators import tags
-from cloudcafe.compute.common.types import InstanceAuthStrategies
+from cloudcafe.common.tools.datagen import rand_name
 from cloudroast.compute.fixtures import ComputeFixture
 
 
@@ -24,7 +24,11 @@ class ServerRescueTests(ComputeFixture):
     @classmethod
     def setUpClass(cls):
         super(ServerRescueTests, cls).setUpClass()
-        server_response = cls.server_behaviors.create_active_server()
+        cls.key = cls.keypairs_client.create_keypair(rand_name("key")).entity
+        cls.resources.add(cls.key.name,
+                          cls.keypairs_client.delete_keypair)
+        server_response = cls.server_behaviors.create_active_server(
+            key_name=cls.key.name)
         cls.server = server_response.entity
         cls.resources.add(cls.server.id, cls.servers_client.delete_server)
         flavor_response = cls.flavors_client.get_flavor_details(cls.flavor_ref)
@@ -37,7 +41,7 @@ class ServerRescueTests(ComputeFixture):
         # Get the number of disks the server has
         remote_client = self.server_behaviors.get_remote_instance_client(
             self.server, self.servers_config,
-            auth_strategy=InstanceAuthStrategies.PASSWORD)
+            key=self.key.private_key)
         disks = remote_client.get_all_disks()
         original_num_disks = len(disks.keys())
 
@@ -56,7 +60,7 @@ class ServerRescueTests(ComputeFixture):
         # Verify if original disks plus rescue disk are attached
         remote_client = self.server_behaviors.get_remote_instance_client(
             rescue_server, self.servers_config,
-            auth_strategy=InstanceAuthStrategies.PASSWORD)
+            key=self.key.private_key)
         disks = remote_client.get_all_disks()
         self.assertEqual(len(disks.keys()), original_num_disks + 1)
 
@@ -66,6 +70,6 @@ class ServerRescueTests(ComputeFixture):
         self.server_behaviors.wait_for_server_status(self.server.id, 'ACTIVE')
         remote_client = self.server_behaviors.get_remote_instance_client(
             self.server, self.servers_config,
-            auth_strategy=InstanceAuthStrategies.PASSWORD)
+            key=self.key.private_key)
         disks = remote_client.get_all_disks()
         self.assertEqual(len(disks.keys()), original_num_disks)
