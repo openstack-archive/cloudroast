@@ -14,10 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import unittest2 as unittest
-
 from cafe.drivers.unittest.decorators import tags
-from cloudcafe.compute.common.exceptions import BadRequest
+from cloudcafe.compute.common.exceptions import BadRequest, ComputeFault
 from cloudroast.compute.fixtures import ComputeFixture
 
 
@@ -51,10 +49,10 @@ class ServerMissingParameterTests(ComputeFixture):
         with self.assertRaises(BadRequest):
             self.servers_client.change_password(self.server.id, None)
 
-    @unittest.skip('Bug, lp# pending submission')
     @tags(type='negative', net='no')
     def test_reboot_server_without_type(self):
-        with self.assertRaises(BadRequest):
+        # Raises ComputeFault in Havana or earlier, BadRequest after then
+        with self.assertRaises(BadRequest or ComputeFault):
             self.servers_client.reboot(self.server.id, None)
 
     @tags(type='negative', net='no')
