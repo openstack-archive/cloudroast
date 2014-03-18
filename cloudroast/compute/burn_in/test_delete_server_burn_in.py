@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+from cafe.drivers.unittest.decorators import tags
 from cloudroast.compute.fixtures import ComputeFixture
 
 
@@ -25,6 +26,7 @@ class DeleteServerBurnIn(ComputeFixture):
         resp = cls.server_behaviors.create_active_server()
         cls.server = resp.entity
 
+    @tags(type='burn-in', net='no')
     def test_delete_server(self):
         self.servers_client.delete_server(self.server.id)
         self.server_behaviors.wait_for_server_to_be_deleted(self.server.id)
