@@ -37,7 +37,8 @@ class ObjectSmokeTest(ObjectStorageFixture):
         cls.default_obj_name = cls.behaviors.VALID_OBJECT_NAME
 
     @data_driven_test(ObjectDatasetList())
-    def ddtest_object_retrieval_with_valid_object_name(self, generate_object):
+    def ddtest_object_retrieval_with_valid_object_name(
+            self, object_type, generate_object):
         container_name = self.create_temp_container(
             descriptor=CONTAINER_DESCRIPTOR)
         object_name = self.default_obj_name
@@ -58,7 +59,8 @@ class ObjectSmokeTest(ObjectStorageFixture):
                 received=str(received)))
 
     @data_driven_test(ObjectDatasetList(exclude=['dlo', 'slo']))
-    def ddtest_object_retrieval_with_if_match(self, generate_object):
+    def ddtest_object_retrieval_with_if_match(
+            self, object_type, generate_object):
         """
         Bug filed for dlo/slo support of If-match Header:
         https://bugs.launchpad.net/swift/+bug/1279076
@@ -88,7 +90,8 @@ class ObjectSmokeTest(ObjectStorageFixture):
                 received=str(received)))
 
     @data_driven_test(ObjectDatasetList(exclude=['dlo', 'slo']))
-    def ddtest_object_retrieval_with_if_none_match(self, generate_object):
+    def ddtest_object_retrieval_with_if_none_match(
+            self, object_type, generate_object):
         """
         Bug filed for dlo/slo support of If-match Header:
         https://bugs.launchpad.net/swift/+bug/1279076
@@ -137,7 +140,8 @@ class ObjectSmokeTest(ObjectStorageFixture):
                 received=str(received)))
 
     @data_driven_test(ObjectDatasetList())
-    def ddtest_object_retrieval_with_if_modified_since(self, generate_object):
+    def ddtest_object_retrieval_with_if_modified_since(
+            self, object_type, generate_object):
         container_name = self.create_temp_container(
             descriptor=CONTAINER_DESCRIPTOR)
         object_name = self.default_obj_name
@@ -164,7 +168,7 @@ class ObjectSmokeTest(ObjectStorageFixture):
 
     @data_driven_test(ObjectDatasetList())
     def ddtest_object_not_modified_with_if_modified_since(
-            self, generate_object):
+            self, object_type, generate_object):
         container_name = self.create_temp_container(
             descriptor=CONTAINER_DESCRIPTOR)
         object_name = self.default_obj_name
@@ -191,7 +195,7 @@ class ObjectSmokeTest(ObjectStorageFixture):
 
     @data_driven_test(ObjectDatasetList())
     def ddtest_object_retrieval_with_if_unmodified_since(
-            self, generate_object):
+            self, object_type, generate_object):
         container_name = self.create_temp_container(
             descriptor=CONTAINER_DESCRIPTOR)
         object_name = self.default_obj_name
@@ -218,7 +222,7 @@ class ObjectSmokeTest(ObjectStorageFixture):
 
     @data_driven_test(ObjectDatasetList())
     def ddtest_object_retrieval_fails_with_if_unmodified_since(
-            self, generate_object):
+            self, object_type, generate_object):
         container_name = self.create_temp_container(
             descriptor=CONTAINER_DESCRIPTOR)
         object_name = self.default_obj_name
@@ -246,7 +250,7 @@ class ObjectSmokeTest(ObjectStorageFixture):
 
     @data_driven_test(ObjectDatasetList())
     def ddtest_partial_object_retrieval_with_start_range(
-            self, generate_object):
+            self, object_type, generate_object):
         container_name = self.create_temp_container(
             descriptor=CONTAINER_DESCRIPTOR)
         object_name = self.default_obj_name
@@ -270,7 +274,8 @@ class ObjectSmokeTest(ObjectStorageFixture):
                 method=method, expected=expected, received=str(received)))
 
     @data_driven_test(ObjectDatasetList())
-    def ddtest_partial_object_retrieval_with_end_range(self, generate_object):
+    def ddtest_partial_object_retrieval_with_end_range(
+            self, object_type, generate_object):
         container_name = self.create_temp_container(
             descriptor=CONTAINER_DESCRIPTOR)
         object_name = self.default_obj_name
@@ -296,7 +301,8 @@ class ObjectSmokeTest(ObjectStorageFixture):
                 received=str(received)))
 
     @data_driven_test(ObjectDatasetList())
-    def ddtest_partial_object_retrieval_with_range(self, generate_object):
+    def ddtest_partial_object_retrieval_with_range(
+            self, object_type, generate_object):
         container_name = self.create_temp_container(
             descriptor=CONTAINER_DESCRIPTOR)
         object_name = self.default_obj_name
@@ -323,7 +329,7 @@ class ObjectSmokeTest(ObjectStorageFixture):
 
     @data_driven_test(ObjectDatasetList())
     def ddtest_partial_object_retrieval_with_complete_range(
-            self, generate_object):
+            self, object_type, generate_object):
         container_name = self.create_temp_container(
             descriptor=CONTAINER_DESCRIPTOR)
         object_name = self.default_obj_name
@@ -349,7 +355,8 @@ class ObjectSmokeTest(ObjectStorageFixture):
                 received=str(received)))
 
     @data_driven_test(ObjectDatasetList())
-    def ddtest_object_creation_with_valid_object_name(self, generate_object):
+    def ddtest_object_creation_with_valid_object_name(
+            self, object_type, generate_object):
         container_name = self.create_temp_container(
             descriptor=CONTAINER_DESCRIPTOR)
         object_name = self.default_obj_name
@@ -391,7 +398,8 @@ class ObjectSmokeTest(ObjectStorageFixture):
             msg='should return identical object')
 
     @data_driven_test(ObjectDatasetList(exclude=['dlo', 'slo']))
-    def ddtest_object_update_with_valid_object_name(self, generate_object):
+    def ddtest_object_update_with_valid_object_name(
+            self, object_type, generate_object):
         container_name = self.create_temp_container(
             descriptor=CONTAINER_DESCRIPTOR)
         object_name = self.default_obj_name
@@ -420,7 +428,8 @@ class ObjectSmokeTest(ObjectStorageFixture):
                 received=str(received)))
 
     @data_driven_test(ObjectDatasetList(exclude=['dlo', 'slo']))
-    def ddtest_object_creation_with_etag(self, generate_object):
+    def ddtest_object_creation_with_etag(
+            self, object_type, generate_object):
         container_name = self.create_temp_container(
             descriptor=CONTAINER_DESCRIPTOR)
         object_name = self.default_obj_name
@@ -463,7 +472,8 @@ class ObjectSmokeTest(ObjectStorageFixture):
                     received))
 
     @data_driven_test(ObjectDatasetList(exclude=['standard']))
-    def ddtest_large_object_creation_with_etag(self, generate_object):
+    def ddtest_large_object_creation_with_etag(
+            self, object_type, generate_object):
         container_name = self.create_temp_container(
             descriptor=CONTAINER_DESCRIPTOR)
         object_name = self.default_obj_name
@@ -507,7 +517,7 @@ class ObjectSmokeTest(ObjectStorageFixture):
 
     @data_driven_test(ObjectDatasetList())
     def ddtest_object_creation_with_access_control_allow_credentials(
-            self, generate_object):
+            self, object_type, generate_object):
         container_name = self.create_temp_container(
             descriptor=CONTAINER_DESCRIPTOR)
         object_name = self.default_obj_name
@@ -550,7 +560,7 @@ class ObjectSmokeTest(ObjectStorageFixture):
 
     @data_driven_test(ObjectDatasetList())
     def ddtest_object_creation_with_access_control_allow_methods(
-            self, generate_object):
+            self, object_type, generate_object):
         container_name = self.create_temp_container(
             descriptor=CONTAINER_DESCRIPTOR)
         object_name = self.default_obj_name
@@ -594,7 +604,7 @@ class ObjectSmokeTest(ObjectStorageFixture):
 
     @data_driven_test(ObjectDatasetList())
     def ddtest_object_creation_with_access_control_allow_origin(
-            self, generate_object):
+            self, object_type, generate_object):
         container_name = self.create_temp_container(
             descriptor=CONTAINER_DESCRIPTOR)
         object_name = self.default_obj_name
@@ -637,7 +647,7 @@ class ObjectSmokeTest(ObjectStorageFixture):
 
     @data_driven_test(ObjectDatasetList())
     def ddtest_object_creation_with_access_control_expose_headers(
-            self, generate_object):
+            self, object_type, generate_object):
         container_name = self.create_temp_container(
             descriptor=CONTAINER_DESCRIPTOR)
         object_name = self.default_obj_name
@@ -680,7 +690,7 @@ class ObjectSmokeTest(ObjectStorageFixture):
 
     @data_driven_test(ObjectDatasetList())
     def ddtest_object_creation_with_access_controle_max_age(
-            self, generate_object):
+            self, object_type, generate_object):
         container_name = self.create_temp_container(
             descriptor=CONTAINER_DESCRIPTOR)
         object_name = self.default_obj_name
@@ -723,7 +733,7 @@ class ObjectSmokeTest(ObjectStorageFixture):
 
     @data_driven_test(ObjectDatasetList())
     def ddtest_object_creation_with_access_control_request_headers(
-            self, generate_object):
+            self, object_type, generate_object):
         container_name = self.create_temp_container(
             descriptor=CONTAINER_DESCRIPTOR)
         object_name = self.default_obj_name
@@ -766,7 +776,7 @@ class ObjectSmokeTest(ObjectStorageFixture):
 
     @data_driven_test(ObjectDatasetList())
     def ddtest_object_creation_with_access_control_request_method(
-            self, generate_object):
+            self, object_type, generate_object):
         container_name = self.create_temp_container(
             descriptor=CONTAINER_DESCRIPTOR)
         object_name = self.default_obj_name
@@ -808,7 +818,8 @@ class ObjectSmokeTest(ObjectStorageFixture):
                     received))
 
     @data_driven_test(ObjectDatasetList())
-    def ddtest_object_retrieval_with_origin(self, generate_object):
+    def ddtest_object_retrieval_with_origin(
+            self, object_type, generate_object):
         container_name = self.create_temp_container(
             descriptor=CONTAINER_DESCRIPTOR)
         object_name = self.default_obj_name
@@ -838,7 +849,8 @@ class ObjectSmokeTest(ObjectStorageFixture):
                 ' expected: {0} recieved: {1}'.format(expected, received))
 
     @data_driven_test(ObjectDatasetList(exclude=['dlo', 'slo']))
-    def ddtest_object_creation_with_file_compression(self, generate_object):
+    def ddtest_object_creation_with_file_compression(
+            self, object_type, generate_object):
         container_name = self.create_temp_container(
             descriptor=CONTAINER_DESCRIPTOR)
         object_name = self.default_obj_name
@@ -884,7 +896,8 @@ class ObjectSmokeTest(ObjectStorageFixture):
                 ' expected: {0} recieved: {1}'.format(expected, received))
 
     @data_driven_test(ObjectDatasetList())
-    def ddtest_object_creation_with_content_disposition(self, generate_object):
+    def ddtest_object_creation_with_content_disposition(
+            self, object_type, generate_object):
         container_name = self.create_temp_container(
             descriptor=CONTAINER_DESCRIPTOR)
         object_name = self.default_obj_name
@@ -925,7 +938,8 @@ class ObjectSmokeTest(ObjectStorageFixture):
                 ' expected: {0} recieved: {1}'.format(expected, received))
 
     @data_driven_test(ObjectDatasetList())
-    def ddtest_object_creation_with_x_delete_at(self, generate_object):
+    def ddtest_object_creation_with_x_delete_at(
+            self, object_type, generate_object):
         container_name = self.create_temp_container(
             descriptor=CONTAINER_DESCRIPTOR)
         object_name = self.default_obj_name
@@ -968,7 +982,8 @@ class ObjectSmokeTest(ObjectStorageFixture):
                 ' expected: {0} recieved: {1}'.format(expected, received))
 
     @data_driven_test(ObjectDatasetList())
-    def ddtest_object_creation_with_delete_after(self, generate_object):
+    def ddtest_object_creation_with_delete_after(
+            self, object_type, generate_object):
         container_name = self.create_temp_container(
             descriptor=CONTAINER_DESCRIPTOR)
         object_name = self.default_obj_name
@@ -1003,7 +1018,7 @@ class ObjectSmokeTest(ObjectStorageFixture):
     #@ObjectStorageFixture.required_features('object_versioning')
     @data_driven_test(ObjectDatasetList())
     def ddtest_versioned_container_creation_with_valid_data(
-            self, generate_object):
+            self, object_type, generate_object):
         object_history_container_name = self.create_temp_container(
             descriptor=CONTAINER_DESCRIPTOR)
         container_name = self.create_temp_container(
@@ -1074,7 +1089,7 @@ class ObjectSmokeTest(ObjectStorageFixture):
                 received=str(received)))
 
     @data_driven_test(ObjectDatasetList())
-    def ddtest_put_copy_object(self, generate_object):
+    def ddtest_put_copy_object(self, object_type, generate_object):
         src_container_name = self.create_temp_container(
             descriptor=CONTAINER_DESCRIPTOR)
         dest_container_name = self.create_temp_container(
@@ -1121,7 +1136,7 @@ class ObjectSmokeTest(ObjectStorageFixture):
                 received=str(received)))
 
     @data_driven_test(ObjectDatasetList())
-    def ddtest_copy_object(self, generate_object):
+    def ddtest_copy_object(self, object_type, generate_object):
         src_container_name = self.create_temp_container(
             descriptor=CONTAINER_DESCRIPTOR)
         dest_container_name = self.create_temp_container(
@@ -1168,7 +1183,8 @@ class ObjectSmokeTest(ObjectStorageFixture):
                 received=str(received)))
 
     @data_driven_test(ObjectDatasetList())
-    def ddtest_object_deletion_with_valid_object(self, generate_object):
+    def ddtest_object_deletion_with_valid_object(
+            self, object_type, generate_object):
         container_name = self.create_temp_container(
             descriptor=CONTAINER_DESCRIPTOR)
         object_name = self.default_obj_name
@@ -1208,7 +1224,7 @@ class ObjectSmokeTest(ObjectStorageFixture):
 
     @data_driven_test(ObjectDatasetList())
     def ddtest_obj_metadata_update_with_object_possessing_metadata(
-            self, generate_object):
+            self, object_type, generate_object):
         container_name = self.create_temp_container(
             descriptor=CONTAINER_DESCRIPTOR)
         object_name = self.default_obj_name
@@ -1269,7 +1285,7 @@ class ObjectSmokeTest(ObjectStorageFixture):
                 ' recieved: {1}'.format(expected, received))
 
     @data_driven_test(ObjectDatasetList())
-    def ddtest_obj_metadata_update(self, generate_object):
+    def ddtest_obj_metadata_update(self, object_type, generate_object):
         container_name = self.create_temp_container(
             descriptor=CONTAINER_DESCRIPTOR)
         object_name = self.default_obj_name
@@ -1311,7 +1327,7 @@ class ObjectSmokeTest(ObjectStorageFixture):
 
     @data_driven_test(ObjectDatasetList())
     def ddtest_content_type_not_detected_without_detect_content_type_header(
-            self, generate_object):
+            self, object_type, generate_object):
         container_name = self.create_temp_container(
             descriptor=CONTAINER_DESCRIPTOR)
         object1_name = 'object1.txt'
@@ -1346,7 +1362,7 @@ class ObjectSmokeTest(ObjectStorageFixture):
 
     @data_driven_test(ObjectDatasetList())
     def ddtest_content_type_detected_with_detect_content_type(
-            self, generate_object):
+            self, object_type, generate_object):
         container_name = self.create_temp_container(
             descriptor=CONTAINER_DESCRIPTOR)
         object1_name = 'object1.txt'

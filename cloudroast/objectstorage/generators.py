@@ -59,17 +59,20 @@ class ObjectDatasetList(DatasetList):
         if 'standard' not in exclude:
             self.append_new_dataset(
                 'standard',
-                {'generate_object': generator.generate_object})
+                {'object_type': 'standard',
+                 'generate_object': generator.generate_object})
 
         if 'dlo' in features and 'dlo' not in exclude:
             self.append_new_dataset(
                 'dlo',
-                {'generate_object': generator.generate_dynamic_large_object})
+                {'object_type': 'dlo',
+                 'generate_object': generator.generate_dynamic_large_object})
 
         if 'slo' in features and 'slo' not in exclude:
             self.append_new_dataset(
                 'slo',
-                {'generate_object': generator.generate_static_large_object})
+                {'object_type': 'slo',
+                 'generate_object': generator.generate_static_large_object})
 
 
 class ObjectStorageGenerator(object):
@@ -81,9 +84,19 @@ class ObjectStorageGenerator(object):
         self.client = client
         self.api_config = ObjectStorageAPIConfig()
 
+    def _get_default_data_pool(self):
+        """
+        Returns the default data pool.
+
+        @return: Characters to be used in object data generation.
+        @rtype: list
+        """
+        return [x for x in UNICODE_BLOCKS.get_range(
+            BLOCK_NAMES.basic_latin).encoded_codepoints()]
+
     def generate_object(self, container_name, object_name,
-                        data_size=None, data_pool=None, data_op=None,
-                        headers=None, params=None):
+                        data=None, data_size=None, data_pool=None,
+                        data_op=None, headers=None, params=None):
         """
         Create a standard object (non slo/dlo)
 
@@ -91,6 +104,8 @@ class ObjectStorageGenerator(object):
         @type container_name: string
         @param object_name: name of object to be created
         @type object_name: string
+        @param data: use this instead of generating data for the object.
+        @type data: string
         @param data_size: size of object to be created
         @type data_size: int
         @param data_pool: characters to use in generating object content
@@ -115,19 +130,22 @@ class ObjectStorageGenerator(object):
         """
         if not data_size:
             data_size = 100
+        elif data:
+            data_size = len(data)
 
         if not data_pool:
-            data_pool = [x for x in UNICODE_BLOCKS.get_range(
-                BLOCK_NAMES.basic_latin).encoded_codepoints()]
+            data_pool = self._get_default_data_pool()
 
-        object_data = ''.join([choice(data_pool) for x in xrange(data_size)])
+        if not data:
+            data = ''.join(
+                [choice(data_pool) for x in xrange(data_size)])
         extra_data = {}
-        if data_op is not None:
-            (object_data, extra_data) = data_op(object_data, extra_data)
-        data_md5 = md5.new(object_data).hexdigest()
+        if data_op:
+            (data, extra_data) = data_op(data, extra_data)
+        data_md5 = md5.new(data).hexdigest()
         data_etag = data_md5
 
-        default_headers = {'Content-Length': str(len(object_data)),
+        default_headers = {'Content-Length': str(len(data)),
                            'Content-Type': CONTENT_TYPES.get('text'),
                            'Etag': data_etag}
 
@@ -139,7 +157,7 @@ class ObjectStorageGenerator(object):
             all_headers[key] = value
 
         response = self.client.create_object(
-            container_name, object_name, data=object_data,
+            container_name, object_name, data=data,
             headers=all_headers)
 
         return {'md5': data_md5,
@@ -151,7 +169,7 @@ class ObjectStorageGenerator(object):
 
     def generate_dynamic_large_object(self, container_name, object_name,
                                       segment_size=None, data_size=None,
-                                      data_pool=None, data_op=None,
+                                      data=None, data_pool=None, data_op=None,
                                       headers=None, params=None):
         """
         Create a dynamic large object from provided data.
@@ -160,6 +178,8 @@ class ObjectStorageGenerator(object):
         @type container_name: string
         @param object_name: name of object to be created
         @type object_name: string
+        @param data: use this instead of generating data for the object.
+        @type data: string
         @param data_size: size of object to be created
         @type data_size: int
         @param data_pool: characters to use in generating object content
@@ -182,33 +202,41 @@ class ObjectStorageGenerator(object):
         @return: data about the generated segments and  object
         @type: dict
         """
-        if not data_size:
+        if data and not data_size:
+            data_size = len(data)
+        elif not data_size:
             data_size = 550
 
         if not data_pool:
-            data_pool = [x for x in UNICODE_BLOCKS.get_range(
-                BLOCK_NAMES.basic_latin).encoded_codepoints()]
+            data_pool = self._get_default_data_pool()
 
-        if not segment_size:
+        if data and not segment_size:
+            segment_size = int(data_size / 3)
+        elif not segment_size:
             segment_size = 100
 
         num_segments = int(math.ceil(data_size / float(segment_size)))
 
         data_md5 = md5.new()
         data_etag = md5.new()
-
         extra_data = {'segments': []}
         for segment_id in [x for x in xrange(num_segments)]:
+            segment_start = segment_id * segment_size
             if segment_id + 1 == num_segments:
                 segment_size = data_size % segment_size
+            segment_end = segment_start + segment_size
             segment_name = 'segment.{0}.{1}'.format(object_name, segment_id)
-            segment_data = ''.join([choice(data_pool) for x in xrange(
-                segment_size)])
+            if data:
+                segment_data = data[segment_start:segment_end]
+            else:
+                segment_data = ''.join([choice(data_pool) for x in xrange(
+                    segment_size)])
+
             segment_md5 = md5.new(segment_data).hexdigest()
             segment_extra_data = {'name': segment_name,
                                   'size': segment_size,
                                   'md5': segment_md5}
-            if data_op is not None:
+            if data_op:
                 (segment_data, segment_extra_data) = data_op(
                     segment_data, segment_extra_data)
             extra_data['segments'].append(segment_extra_data)
@@ -241,8 +269,9 @@ class ObjectStorageGenerator(object):
 
     def generate_static_large_object(self, container_name, object_name,
                                      data_size=None, data_pool=None,
-                                     data_op=None, segment_size=None,
-                                     headers=None, params=None):
+                                     data=None, data_op=None,
+                                     segment_size=None, headers=None,
+                                     params=None):
         """
         Generate a static large object from provided data.
 
@@ -250,6 +279,8 @@ class ObjectStorageGenerator(object):
         @type container_name: string
         @param object_name: name of object to be created
         @type object_name: string
+        @param data: use this instead of generating data for the object.
+        @type data: string
         @param data_size: size of object to be created
         @type data_size: int
         @param data_pool: characters to use in generating object content
@@ -272,14 +303,18 @@ class ObjectStorageGenerator(object):
         @return: data about the generated segments and  object
         @type: dict
         """
-        if not data_size:
+        if data and not data_size:
+            data_size = len(data)
+        elif not data_size:
             data_size = int(self.api_config.min_slo_segment_size * 3.5)
 
         if not data_pool:
-            data_pool = [x for x in UNICODE_BLOCKS.get_range(
-                BLOCK_NAMES.basic_latin).encoded_codepoints()]
+            data_pool = self._get_default_data_pool()
 
-        if not segment_size:
+        if data and not segment_size:
+            segment_size = int(len(data) / 3)
+
+        elif not segment_size:
             segment_size = self.api_config.min_slo_segment_size
 
         num_segments = int(math.ceil(data_size / float(segment_size)))
@@ -288,21 +323,25 @@ class ObjectStorageGenerator(object):
 
         data_md5 = md5.new()
         data_etag = md5.new()
-
         extra_data = {'segments': []}
         for segment_id in [x for x in xrange(num_segments)]:
+            segment_start = segment_id * segment_size
             if segment_id + 1 == num_segments:
                 segment_size = data_size % segment_size
-
+            segment_end = segment_start + segment_size
             segment_name = '{0}.{1}'.format(object_name, segment_id)
             segment_path = '/{0}/{1}'.format(container_name, segment_name)
-            segment_data = ''.join([choice(data_pool) for x in xrange(
-                segment_size)])
+
+            if data:
+                segment_data = data[segment_start:segment_end]
+            else:
+                segment_data = ''.join([choice(data_pool) for x in xrange(
+                    segment_size)])
             segment_md5 = md5.new(segment_data).hexdigest()
             segment_extra_data = {'name': segment_name,
                                   'size': segment_size,
                                   'md5': segment_md5}
-            if data_op is not None:
+            if data_op:
                 (segment_data, segment_extra_data) = data_op(
                     segment_data, segment_extra_data)
             extra_data['segments'].append(segment_extra_data)
