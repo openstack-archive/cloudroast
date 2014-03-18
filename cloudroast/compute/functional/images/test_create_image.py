@@ -48,7 +48,8 @@ class CreateImageTest(ComputeFixture):
     def test_new_image_in_image_list(self):
         """Verify the new image appears in the list of images."""
         images = self.images_client.list_images_with_detail().entity
-        self.assertIn(self.image, images)
+        image_ids = [image.id for image in images]
+        self.assertIn(self.image.id, image_ids)
 
     @tags(type='smoke', net='no')
     def test_get_image(self):
