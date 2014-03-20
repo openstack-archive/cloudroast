@@ -23,12 +23,16 @@ from cloudcafe.compute.common.types import NovaServerStatusTypes
 from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.compute.config import ComputeConfig
 from cloudroast.compute.fixtures import ComputeFixture
+from cloudcafe.compute.servers_api.config import ServersConfig
 
 
 class RebuildServerTests(ComputeFixture):
 
     compute_config = ComputeConfig()
     hypervisor = compute_config.hypervisor.lower()
+
+    servers_config = ServersConfig()
+    file_injection_enabled = servers_config.personality_file_injection_enabled
 
     @classmethod
     def setUpClass(cls):
@@ -44,9 +48,12 @@ class RebuildServerTests(ComputeFixture):
         cls.resources.add(cls.server.id, cls.servers_client.delete_server)
         cls.metadata = {'key': 'value'}
         cls.name = rand_name('testserver')
-        cls.file_contents = 'Test server rebuild.'
-        personality = [{'path': '/rebuild.txt',
-                        'contents': base64.b64encode(cls.file_contents)}]
+
+        personality = None
+        if cls.file_injection_enabled:
+            cls.file_contents = 'Test server rebuild.'
+            personality = [{'path': '/rebuild.txt',
+                            'contents': base64.b64encode(cls.file_contents)}]
         cls.password = 'R3builds3ver'
 
         cls.rebuilt_server_response = cls.servers_client.rebuild(
@@ -195,6 +202,7 @@ class RebuildServerTests(ComputeFixture):
                             (self.flavor.ram, server_ram_size))
 
     @tags(type='smoke', net='yes')
+    @unittest.skipUnless(file_injection_enabled, "File injection disabled.")
     def test_personality_file_created_on_rebuild(self):
         """
         Validate the injected file was created on the rebuilt server with
