@@ -18,7 +18,9 @@ import unittest2 as unittest
 
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.common.tools.datagen import rand_name
+from cloudcafe.compute.common.types import ComputeHypervisors
 from cloudcafe.compute.common.types import NovaServerStatusTypes
+from cloudcafe.compute.config import ComputeConfig
 from cloudcafe.compute.flavors_api.config import FlavorsConfig
 from cloudroast.compute.fixtures import ComputeFixture
 
@@ -29,6 +31,9 @@ resize_enabled = flavors_config.resize_enabled
 @unittest.skipUnless(
     resize_enabled, 'Resize not enabled for this flavor class.')
 class ResizeServerDownConfirmTests(ComputeFixture):
+
+    compute_config = ComputeConfig()
+    hypervisor = compute_config.hypervisor.lower()
 
     @classmethod
     def setUpClass(cls):
@@ -81,6 +86,9 @@ class ResizeServerDownConfirmTests(ComputeFixture):
                 self.resized_flavor.vcpus, server_actual_vcpus))
 
     @tags(type='positive', net='yes')
+    @unittest.skipIf(
+        hypervisor == ComputeHypervisors.KVM,
+        'Disks do resize down for KVM.')
     def test_created_server_disk_size(self):
         """Verify the size of the virtual disk matches that of the flavor"""
         remote_client = self.server_behaviors.get_remote_instance_client(

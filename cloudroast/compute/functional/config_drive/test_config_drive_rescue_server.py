@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 import base64
+import unittest
 
 from cloudcafe.common.tools.datagen import rand_name
 from cloudroast.compute.fixtures import ComputeFixture
@@ -21,6 +22,7 @@ from cloudcafe.compute.common.types import NovaServerStatusTypes
 from cloudcafe.compute.common.types import InstanceAuthStrategies
 
 
+@unittest.skip("Test is currently broken.")
 class ServerRescueTests(ComputeFixture):
 
     @classmethod

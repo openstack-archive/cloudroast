@@ -16,6 +16,7 @@ limitations under the License.
 
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.common.tools.datagen import rand_name
+from cloudcafe.compute.common.types import NovaImageStatusTypes
 from cloudcafe.compute.common.types import NovaServerStatusTypes
 from cloudroast.compute.fixtures import ComputeFixture
 
@@ -44,17 +45,28 @@ class ServerListTest(ComputeFixture):
         cls.resources.add(second_response.id,
                           cls.servers_client.delete_server)
 
-        cls.name = rand_name("server")
-        third_response = cls.servers_client.create_server(
-            name=cls.name, image_ref=cls.image_ref_alt,
-            flavor_ref=cls.flavor_ref_alt, networks=networks).entity
-        cls.resources.add(third_response.id,
-                          cls.servers_client.delete_server)
-
         cls.server = cls.server_behaviors.wait_for_server_status(
             first_response.id, NovaServerStatusTypes.ACTIVE).entity
         cls.second_server = cls.server_behaviors.wait_for_server_status(
             second_response.id, NovaServerStatusTypes.ACTIVE).entity
+
+        # Create a unique image
+        other_image_name = rand_name('image')
+        resp = cls.servers_client.create_image(
+            cls.second_server.id, other_image_name)
+        assert resp.status_code == 202
+        cls.other_image_id = cls.parse_image_id(resp)
+        cls.resources.add(cls.other_image_id, cls.images_client.delete_image)
+
+        cls.image_behaviors.wait_for_image_status(
+            cls.other_image_id, NovaImageStatusTypes.ACTIVE)
+
+        cls.name = rand_name("server")
+        third_response = cls.servers_client.create_server(
+            name=cls.name, image_ref=cls.other_image_id,
+            flavor_ref=cls.flavor_ref_alt, networks=networks).entity
+        cls.resources.add(third_response.id,
+                          cls.servers_client.delete_server)
         cls.third_server = cls.server_behaviors.wait_for_server_status(
             third_response.id, NovaServerStatusTypes.ACTIVE).entity
 

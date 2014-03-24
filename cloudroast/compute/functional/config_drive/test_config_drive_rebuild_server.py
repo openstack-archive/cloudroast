@@ -22,12 +22,14 @@ specific tolerances.
 """
 
 import base64
+import unittest
 
 from cloudcafe.common.tools.datagen import rand_name
 from cloudroast.compute.fixtures import ComputeFixture
 from cloudcafe.compute.common.types import NovaServerStatusTypes
 
 
+@unittest.skip("Test is currently broken.")
 class ConfigDriveRebuildTest(ComputeFixture):
 
     @classmethod

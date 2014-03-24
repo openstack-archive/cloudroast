@@ -51,9 +51,15 @@ class ServerMissingParameterTests(ComputeFixture):
 
     @tags(type='negative', net='no')
     def test_reboot_server_without_type(self):
-        # Raises ComputeFault in Havana or earlier, BadRequest after then
-        with self.assertRaises(BadRequest or ComputeFault):
+        try:
             self.servers_client.reboot(self.server.id, None)
+        except (BadRequest, ComputeFault):
+            # Raises ComputeFault in Havana or earlier, BadRequest after then
+            pass
+        else:
+            self.fail(
+                "Expected ComputeFault or BadRequest to be raised when "
+                "reboot type parameter is excluded.")
 
     @tags(type='negative', net='no')
     def test_rebuild_server_without_name(self):
