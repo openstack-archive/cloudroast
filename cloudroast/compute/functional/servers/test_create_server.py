@@ -41,6 +41,7 @@ class CreateServerTest(ComputeFixture):
         cls.name = rand_name("server")
         cls.metadata = {'meta_key_1': 'meta_value_1',
                         'meta_key_2': 'meta_value_2'}
+        networks = None
         if cls.servers_config.default_network:
             networks = [{'uuid': cls.servers_config.default_network}]
         cls.file_contents = 'This is a test file.'
