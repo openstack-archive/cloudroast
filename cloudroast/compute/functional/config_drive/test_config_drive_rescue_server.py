@@ -14,7 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 import base64
-import unittest
 
 from cloudcafe.common.tools.datagen import rand_name
 from cloudroast.compute.fixtures import ComputeFixture
@@ -22,13 +21,12 @@ from cloudcafe.compute.common.types import NovaServerStatusTypes
 from cloudcafe.compute.common.types import InstanceAuthStrategies
 
 
-@unittest.skip("Test is currently broken.")
-class ServerRescueTests(ComputeFixture):
+class ConfigDriveRescueTests(ComputeFixture):
 
     @classmethod
     def setUpClass(cls):
 
-        super(ServerRescueTests, cls).setUpClass()
+        super(ConfigDriveRescueTests, cls).setUpClass()
 
         cls.metadata = {'meta_key_1': 'meta_value_1',
                         'meta_key_2': 'meta_value_2'}
@@ -102,7 +100,7 @@ class ServerRescueTests(ComputeFixture):
             directory_path='{0}/openstack/content'.format(
                 cls.config_drive_config.base_path_to_mount))
 
-        test_values = cls.config_drive_behaviors.get_test_values(
+        test_values = cls.config_drive_behaviors.get_config_drive_details(
             cls.user_data_filepath, cls.config_drive_config.base_path_to_mount,
             cls.server, cls.servers_config, cls.key.private_key,
             cls.config_drive_config.openstack_meta_filepath)
