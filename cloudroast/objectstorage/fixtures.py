@@ -26,17 +26,29 @@ from cloudcafe.objectstorage.objectstorage_api.client \
     import ObjectStorageAPIClient
 from cloudcafe.objectstorage.objectstorage_api.config \
     import ObjectStorageAPIConfig
+from cloudcafe.identity.v2_0.tokens_api.client import TokenAPI_Client
 
 
 class AuthComposite(object):
     #Currently a classmethod only because of a limitiation of memoized
     @classmethod
     @memoized
-    def authenticate(cls):
+    def authenticate(cls, username=None, password=None):
         """ Should only be called from an instance of AuthComposite """
-        access_data = AuthProvider.get_access_data()
+        if username and password:
+            client = TokenAPI_Client(
+                UserAuthConfig().auth_endpoint,
+                serialize_format="json",
+                deserialize_format="json")
+            access_data = client.authenticate(
+                username=username,
+                password=password).entity
+        else:
+            access_data = AuthProvider.get_access_data()
+
         if access_data is None:
             raise AssertionError('Authentication failed in setup')
+
         return access_data
 
 
@@ -45,11 +57,13 @@ class ObjectStorageAuthComposite(object):
     Handles authing and retrieving the storage_url and auth_token.
     """
 
-    def __init__(self):
+    def __init__(self, username=None, password=None):
         self.storage_url = None
         self.auth_token = None
 
-        self._access_data = AuthComposite.authenticate()
+        self._access_data = AuthComposite.authenticate(
+            username,
+            password)
         self.endpoint_config = UserAuthConfig()
         self.objectstorage_config = ObjectStorageConfig()
 
