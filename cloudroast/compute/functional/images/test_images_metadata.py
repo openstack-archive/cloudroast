@@ -14,14 +14,22 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import unittest2 as unittest
+
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.compute.common.exceptions import ItemNotFound
 from cloudcafe.compute.common.types import NovaImageStatusTypes
+from cloudcafe.compute.images_api.config import ImagesConfig
+
 from cloudroast.compute.fixtures import ComputeFixture
 
 
 class ImagesMetadataTest(ComputeFixture):
+
+    images_config = ImagesConfig()
+    has_protected_properties = \
+        images_config.primary_image_has_protected_properties
 
     @classmethod
     def setUpClass(cls):
@@ -42,7 +50,7 @@ class ImagesMetadataTest(ComputeFixture):
     def setUp(self):
         super(ImagesMetadataTest, self).setUp()
         meta = {'user_key1': 'value1', 'user_key2': 'value2'}
-        self.images_client.set_image_metadata(self.image.id, meta)
+        self.images_client.update_image_metadata(self.image.id, meta)
 
     @tags(type='negative', net='no')
     def test_delete_nonexistant_image_metadata_item(self):
@@ -67,6 +75,9 @@ class ImagesMetadataTest(ComputeFixture):
         self.assertEqual(image_metadata.get('user_key2'), 'value2')
 
     @tags(type='positive', net='no')
+    @unittest.skipIf(
+        has_protected_properties,
+        "Cannot overwrite metadata for images with protected properties.")
     def test_set_image_metadata(self):
         """Test user should be able to set the metadata of an image"""
         meta = {'user_key3': 'meta3', 'user_key4': 'meta4'}
