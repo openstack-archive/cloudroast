@@ -16,11 +16,11 @@ limitations under the License.
 
 import sys
 
-from cloudcafe.blockstorage.volumes_api.v1.client import VolumesClient
+from cloudcafe.blockstorage.volumes_api.v2.client import VolumesClient
 from cloudcafe.blockstorage.config import BlockStorageConfig
-from cloudcafe.blockstorage.volumes_api.v1.behaviors import \
+from cloudcafe.blockstorage.volumes_api.v2.behaviors import \
     VolumesAPI_Behaviors
-from cloudcafe.blockstorage.volumes_api.v1.config import VolumesAPIConfig
+from cloudcafe.blockstorage.volumes_api.common.config import VolumesAPIConfig
 from cafe.drivers.unittest.datasets import DatasetList
 from cafe.drivers.unittest.fixtures import BaseTestFixture
 from cloudcafe.common.resources import ResourcePool
@@ -34,6 +34,8 @@ from cloudcafe.compute.extensions.console_output_api.client\
 from cloudcafe.compute.flavors_api.client import FlavorsClient
 from cloudcafe.compute.quotas_api.client import QuotasClient
 from cloudcafe.compute.servers_api.client import ServersClient
+from cloudcafe.compute.extensions.volumes_boot_api.client import \
+    VolumesBootClient
 from cloudcafe.compute.images_api.client import ImagesClient
 from cloudcafe.compute.hosts_api.client import HostsClient
 from cloudcafe.compute.hypervisors_api.client import HypervisorsClient
@@ -111,6 +113,7 @@ class ComputeFixture(BaseTestFixture):
 
         cls.flavors_client = FlavorsClient(**client_args)
         cls.servers_client = ServersClient(**client_args)
+        cls.boot_from_volume_client = VolumesBootClient(**client_args)
         cls.images_client = ImagesClient(**client_args)
         cls.keypairs_client = KeypairsClient(**client_args)
         cls.security_groups_client = SecurityGroupsClient(**client_args)
@@ -127,7 +130,8 @@ class ComputeFixture(BaseTestFixture):
         cls.server_behaviors = ServerBehaviors(cls.servers_client,
                                                cls.servers_config,
                                                cls.images_config,
-                                               cls.flavors_config)
+                                               cls.flavors_config,
+                                               cls.boot_from_volume_client)
         cls.image_behaviors = ImageBehaviors(cls.images_client,
                                              cls.servers_client,
                                              cls.images_config)
@@ -266,10 +270,8 @@ class BlockstorageIntegrationFixture(ComputeFixture):
         block_config = BlockStorageConfig()
         volumes_config = VolumesAPIConfig()
         cls.poll_frequency = volumes_config.volume_status_poll_frequency
-        cls.volume_status_timeout = volumes_config.volume_create_timeout
         cls.volume_size = int(volumes_config.min_volume_size)
         cls.volume_type = volumes_config.default_volume_type
-
         block_service = cls.access_data.get_service(
             block_config.identity_service_name)
         block_url = block_service.get_endpoint(
@@ -280,6 +282,70 @@ class BlockstorageIntegrationFixture(ComputeFixture):
         cls.blockstorage_behavior = VolumesAPI_Behaviors(
             volumes_api_client=cls.blockstorage_client,
             volumes_api_config=volumes_config)
+
+
+class ServerFromImageFixture(ComputeFixture):
+
+    @classmethod
+    def create_server(cls, flavor_ref=None, key_name=None):
+        cls.server_response = cls.server_behaviors.create_active_server(
+            flavor_ref=flavor_ref, key_name=key_name)
+        cls.server = cls.server_response.entity
+        cls.resources.add(cls.server.id, cls.servers_client.delete_server)
+        return cls.server
+
+
+class ServerFromVolumeV1Fixture(BlockstorageIntegrationFixture):
+
+    @classmethod
+    def create_server(cls, flavor_ref=None, key_name=None):
+        # Creating a volume for the block device mapping
+        cls.volume = cls.blockstorage_behavior.create_available_volume(
+            size=cls.volume_size,
+            volume_type=cls.volume_type,
+            image_ref=cls.image_ref)
+        cls.resources.add(cls.volume.id_,
+                          cls.blockstorage_client.delete_volume)
+        # Creating block device mapping used for server creation
+        cls.block_device_mapping_matrix = [{
+            "volume_id": cls.volume.id_,
+            "delete_on_termination": True,
+            "device_name": cls.images_config.primary_image_default_device,
+            "size": cls.volume_size,
+            "type": ''}]
+        # Creating the Boot from Volume Version 1 Instance
+        cls.server_response = cls.server_behaviors.create_active_server(
+            block_device_mapping=cls.block_device_mapping_matrix,
+            flavor_ref=flavor_ref, key_name=key_name)
+        cls.server = cls.server_response.entity
+        cls.resources.add(cls.server.id, cls.servers_client.delete_server)
+        return cls.server
+
+
+class ServerFromVolumeV2Fixture(BlockstorageIntegrationFixture):
+
+    @classmethod
+    def create_server(cls, flavor_ref=None, key_name=None):
+        """
+        @summary: Base fixture for compute tests creating the Boot from Volume
+        Version 2 Instance Changes between the two versions are block device
+        mapping is deprecated in favor of block device which is now creating
+        the volume behind the scenes
+        Creating block device used for server creation
+        """
+        cls.block_device_matrix = [{
+            "boot_index": 0,
+            "uuid": cls.image_ref,
+            "volume_size": cls.volume_size,
+            "source_type": 'image',
+            "destination_type": 'volume',
+            "delete_on_termination": True}]
+        cls.server_response = cls.server_behaviors.create_active_server(
+            block_device=cls.block_device_matrix, flavor_ref=flavor_ref,
+            key_name=key_name)
+        cls.server = cls.server_response.entity
+        cls.resources.add(cls.server.id, cls.servers_client.delete_server)
+        return cls.server
 
 
 class FlavorIdNegativeDataList(DatasetList):
