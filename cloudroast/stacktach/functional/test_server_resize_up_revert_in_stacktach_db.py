@@ -27,7 +27,8 @@ class StackTachDBServerResizeUpRevertTests(StackTachComputeIntegration,
 
     @classmethod
     def setUpClass(cls):
-        cls.create_and_revert_resize_server()
+        cls.create_server()
+        cls.resize_and_revert_resize_server()
 
         cls.stacktach_events_for_server(server=cls.reverted_resized_server)
         cls.event_launch_resize_server = cls.event_launches[1]

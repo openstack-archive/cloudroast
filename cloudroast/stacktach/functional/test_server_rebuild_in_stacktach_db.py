@@ -25,7 +25,8 @@ class StackTachDBRebuildServerTests(StackTachComputeIntegration,
 
     @classmethod
     def setUpClass(cls):
-        cls.create_and_rebuild_server()
+        cls.create_server()
+        cls.rebuild_server()
         cls.stacktach_events_for_server(cls.rebuilt_server)
         cls.event_launch_rebuilt_server = cls.event_launches[1]
 

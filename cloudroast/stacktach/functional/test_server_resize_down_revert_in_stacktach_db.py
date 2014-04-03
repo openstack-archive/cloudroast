@@ -37,8 +37,8 @@ class StackTachDBServerResizeDownRevertTests(StackTachComputeIntegration,
                 'flavor_ref: {0}  flavor_ref_alt: {1}'.format(
                     cls.flavor_ref, cls.flavor_ref_alt))
 
-        cls.create_and_revert_resize_server(flavor_ref=cls.flavor_ref_alt,
-                                            resize_flavor=cls.flavor_ref)
+        cls.create_server(flavor_ref=cls.flavor_ref_alt)
+        cls.resize_and_revert_resize_server(resize_flavor=cls.flavor_ref)
 
         cls.stacktach_events_for_server(server=cls.reverted_resized_server)
         cls.event_launch_resize_server = cls.event_launches[1]

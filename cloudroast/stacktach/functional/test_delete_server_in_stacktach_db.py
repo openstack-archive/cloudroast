@@ -29,7 +29,8 @@ class StackTachDBDeleteServerTests(StackTachComputeIntegration,
     """
     @classmethod
     def setUpClass(cls):
-        cls.create_and_delete_server()
+        cls.create_server()
+        cls.delete_server()
         cls.stacktach_events_for_server(server=cls.deleted_server)
 
     def test_launch_entry_on_create_server_response(self):
