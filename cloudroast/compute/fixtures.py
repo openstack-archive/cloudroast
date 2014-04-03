@@ -53,7 +53,8 @@ from cloudcafe.auth.config import UserAuthConfig, UserConfig, \
 from cloudcafe.auth.provider import AuthProvider
 from cloudcafe.compute.flavors_api.config import FlavorsConfig
 from cloudcafe.compute.images_api.config import ImagesConfig
-from cloudcafe.compute.servers_api.config import ServersConfig
+from cloudcafe.compute.servers_api.config import ServersConfig, \
+    BlockDeviceMappingConfig
 from cloudcafe.compute.volume_attachments_api.client \
     import VolumeAttachmentsAPIClient
 
@@ -73,6 +74,7 @@ class ComputeFixture(BaseTestFixture):
         cls.marshalling = MarshallingConfig()
         cls.config_drive_config = ConfigDriveConfig()
         cls.cloud_init_config = CloudInitConfig()
+        cls.block_device_mapping = BlockDeviceMappingConfig()
 
         cls.flavor_ref = cls.flavors_config.primary_flavor
         cls.flavor_ref_alt = cls.flavors_config.secondary_flavor
@@ -280,6 +282,43 @@ class BlockstorageIntegrationFixture(ComputeFixture):
         cls.blockstorage_behavior = VolumesAPI_Behaviors(
             volumes_api_client=cls.blockstorage_client,
             volumes_api_config=volumes_config)
+
+
+class ServerFromImageFixture(ComputeFixture):
+
+    @classmethod
+    def create_server(cls):
+        cls.server_response = cls.server_behaviors.create_active_server()
+        cls.server = cls.server_response.entity
+        cls.resources.add(cls.server.id, cls.servers_client.delete_server)
+        return cls.server
+
+
+class ServerFromVolumeV1Fixture(BlockstorageIntegrationFixture):
+
+    @classmethod
+    def setUpClass(cls):
+        super(ServerFromVolumeV1Fixture, cls).setUpClass()
+        #Creating a volume for the block device mapping
+        cls.volume = cls.volumes_client.create_volume(
+            volume_size, vol_type, bootable=True,
+            name=volume_name, image_ref=volume_image).entity
+        # Creating block device mapping used for server creation
+        cls.block_device_mapping_matrix = [{
+            "volume_id": cls.volume.id_,
+            "delete_on_termination": \
+            cls.block_device_mapping.bdm_delete_on_termination,
+            "device_name": cls.block_device_mapping.bdm_devname,
+            "size": cls.block_device_mapping.bdm_type,
+            "type": cls.block_device_mapping.bdm_size}]
+
+    @classmethod
+    def create_server(cls):
+        cls.server_response = cls.server_behaviors.create_active_server(
+            block_device_mapping=cls.block_device_mapping_matrix)
+        cls.server = cls.server_response.entity
+        cls.resources.add(cls.server.id, cls.servers_client.delete_server)
+        return cls.server
 
 
 class FlavorIdNegativeDataList(DatasetList):
