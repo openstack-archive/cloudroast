@@ -22,7 +22,7 @@ from cloudcafe.compute.common.types import NovaServerStatusTypes as \
     ServerStates
 from cloudcafe.compute.common.types import InstanceAuthStrategies
 from cloudcafe.compute.config import ComputeConfig
-from cloudroast.compute.fixtures import ComputeFixture
+from cloudroast.compute.fixtures import ServerFromImageFixture
 
 compute_config = ComputeConfig()
 hypervisor = compute_config.hypervisor.lower()
@@ -31,21 +31,7 @@ hypervisor = compute_config.hypervisor.lower()
 @unittest.skipIf(hypervisor in [ComputeHypervisors.KVM,
                                 ComputeHypervisors.QEMU],
                  'Change password not supported in current configuration.')
-class ChangeServerPasswordTests(ComputeFixture):
-
-    @classmethod
-    def setUpClass(cls):
-        super(ChangeServerPasswordTests, cls).setUpClass()
-        response = cls.server_behaviors.create_active_server()
-        cls.server = response.entity
-        cls.resources.add(cls.server.id, cls.servers_client.delete_server)
-        cls.new_password = "newslice129690TuG72Bgj2"
-
-        # Change password and wait for server to return to active state
-        cls.resp = cls.servers_client.change_password(cls.server.id,
-                                                      cls.new_password)
-        cls.server_behaviors.wait_for_server_status(cls.server.id,
-                                                    ServerStates.ACTIVE)
+class ChangeServerPasswordTests(object):
 
     @tags(type='smoke', net='no')
     def test_change_password_response(self):
@@ -92,3 +78,27 @@ class ChangeServerPasswordTests(ComputeFixture):
             password_action, self.server.id, self.user_config.user_id,
             self.user_config.project_id,
             self.resp.headers['x-compute-request-id'])
+
+
+class ServerFromImageChangePasswordTests(ServerFromImageFixture,
+                                         ChangeServerPasswordTests):
+
+    @classmethod
+    def setUpClass(cls):
+        super(ServerFromImageChangePasswordTests, cls).setUpClass()
+        cls.create_server()
+        ChangePasswordFixturePlugin.change_password(fixture=cls)
+
+
+class ChangePasswordFixturePlugin(object):
+
+    @classmethod
+    def change_password(cls, fixture):
+        fixture.new_password = "newslice129690TuG72Bgj2"
+        # Change password and wait for server to return to active state
+        fixture.resp = fixture.servers_client.change_password(
+            fixture.server.id,
+            fixture.new_password)
+        fixture.server_behaviors.wait_for_server_status(
+            fixture.server.id,
+            ServerStates.ACTIVE)
