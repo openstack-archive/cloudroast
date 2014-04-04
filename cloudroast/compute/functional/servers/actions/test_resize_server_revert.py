@@ -20,44 +20,13 @@ from cafe.drivers.unittest.decorators import tags
 from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.compute.common.types import NovaServerStatusTypes
 from cloudcafe.compute.flavors_api.config import FlavorsConfig
-from cloudroast.compute.fixtures import ComputeFixture
+from cloudroast.compute.fixtures import ServerFromImageFixture
 
 flavors_config = FlavorsConfig()
 resize_enabled = flavors_config.resize_enabled
 
 
-@unittest.skipUnless(
-    resize_enabled, 'Resize not enabled for this flavor class.')
-class ResizeServerUpRevertTests(ComputeFixture):
-
-    @classmethod
-    def setUpClass(cls):
-        super(ResizeServerUpRevertTests, cls).setUpClass()
-        cls.key = cls.keypairs_client.create_keypair(rand_name("key")).entity
-        cls.resources.add(cls.key.name,
-                          cls.keypairs_client.delete_keypair)
-        server_response = cls.server_behaviors.create_active_server(
-            key_name=cls.key.name)
-        server_to_resize = server_response.entity
-        cls.resources.add(
-            server_to_resize.id, cls.servers_client.delete_server)
-
-        # resize server and confirm
-        cls.resize_resp = cls.servers_client.resize(
-            server_to_resize.id, cls.flavor_ref_alt)
-        cls.server_behaviors.wait_for_server_status(
-            server_to_resize.id, NovaServerStatusTypes.VERIFY_RESIZE)
-
-        cls.revert_resize_resp = cls.servers_client.revert_resize(
-            server_to_resize.id)
-        cls.server_behaviors.wait_for_server_status(
-            server_to_resize.id, NovaServerStatusTypes.ACTIVE)
-        resized_server_response = cls.servers_client.get_server(
-            server_to_resize.id)
-        cls.server = resized_server_response.entity
-        cls.server.admin_pass = server_to_resize.admin_pass
-        cls.flavor = cls.flavors_client.get_flavor_details(
-            cls.flavor_ref).entity
+class ResizeServerUpRevertTests(object):
 
     @tags(type='smoke', net='no')
     def test_server_properties_after_resize(self):
@@ -136,3 +105,45 @@ class ResizeServerUpRevertTests(ComputeFixture):
             resize_action, self.server.id, self.user_config.user_id,
             self.user_config.project_id,
             self.revert_resize_resp.headers['x-compute-request-id'])
+
+
+class ResizeUpRevertBaseFixture(object):
+
+    @classmethod
+    def resize_up_and_revert(self):
+        server_to_resize = self.server
+        # resize server and revert
+        self.resize_resp = self.servers_client.resize(
+            server_to_resize.id, self.flavor_ref_alt)
+        self.server_behaviors.wait_for_server_status(
+            server_to_resize.id, NovaServerStatusTypes.VERIFY_RESIZE)
+
+        self.revert_resize_resp = self.servers_client.revert_resize(
+            server_to_resize.id)
+        self.server_behaviors.wait_for_server_status(
+            server_to_resize.id, NovaServerStatusTypes.ACTIVE)
+        resized_server_response = self.servers_client.get_server(
+            server_to_resize.id)
+
+        self.server = resized_server_response.entity
+        self.server.admin_pass = server_to_resize.admin_pass
+        self.resized_flavor = self.flavors_client.get_flavor_details(
+            self.flavor_ref_alt).entity
+
+
+@unittest.skipUnless(
+    resize_enabled, 'Resize not enabled for this flavor class.')
+class ServerFromImageResizeServerUpRevertTests(ServerFromImageFixture,
+                                               ResizeServerUpRevertTests,
+                                               ResizeUpRevertBaseFixture):
+
+    @classmethod
+    def setUpClass(cls):
+        super(ServerFromImageResizeServerUpRevertTests, cls).setUpClass()
+        response = cls.flavors_client.get_flavor_details(cls.flavor_ref)
+        cls.flavor = response.entity
+        cls.key = cls.keypairs_client.create_keypair(rand_name("key")).entity
+        cls.resources.add(cls.key.name,
+                          cls.keypairs_client.delete_keypair)
+        cls.create_server(key_name=cls.key.name)
+        cls.resize_up_and_revert()
