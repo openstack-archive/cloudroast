@@ -22,48 +22,16 @@ from cloudcafe.compute.common.types import ComputeHypervisors
 from cloudcafe.compute.common.types import NovaServerStatusTypes
 from cloudcafe.compute.config import ComputeConfig
 from cloudcafe.compute.flavors_api.config import FlavorsConfig
-from cloudroast.compute.fixtures import ComputeFixture
+from cloudroast.compute.fixtures import ServerFromImageFixture
 
 flavors_config = FlavorsConfig()
 resize_enabled = flavors_config.resize_enabled
 
 
-@unittest.skipUnless(
-    resize_enabled, 'Resize not enabled for this flavor class.')
-class ResizeServerDownConfirmTests(ComputeFixture):
+class ResizeServerDownConfirmTests(object):
 
     compute_config = ComputeConfig()
     hypervisor = compute_config.hypervisor.lower()
-
-    @classmethod
-    def setUpClass(cls):
-        super(ResizeServerDownConfirmTests, cls).setUpClass()
-        cls.key = cls.keypairs_client.create_keypair(rand_name("key")).entity
-        cls.resources.add(cls.key.name,
-                          cls.keypairs_client.delete_keypair)
-        server_response = cls.server_behaviors.create_active_server(
-            flavor_ref=cls.flavor_ref_alt, key_name=cls.key.name)
-        server_to_resize = server_response.entity
-        cls.resources.add(server_to_resize.id,
-                          cls.servers_client.delete_server)
-
-        # resize server and confirm
-        cls.resize_resp = cls.servers_client.resize(
-            server_to_resize.id, cls.flavor_ref)
-        cls.server_behaviors.wait_for_server_status(
-            server_to_resize.id, NovaServerStatusTypes.VERIFY_RESIZE)
-
-        cls.confirm_resize_resp = cls.servers_client.confirm_resize(
-            server_to_resize.id)
-        cls.server_behaviors.wait_for_server_status(
-            server_to_resize.id, NovaServerStatusTypes.ACTIVE)
-        resized_server_response = cls.servers_client.get_server(
-            server_to_resize.id)
-
-        cls.server = resized_server_response.entity
-        cls.server.admin_pass = server_to_resize.admin_pass
-        cls.resized_flavor = cls.flavors_client.get_flavor_details(
-            cls.flavor_ref).entity
 
     @tags(type='positive', net='no')
     def test_verify_confirm_resize_response(self):
@@ -150,3 +118,43 @@ class ResizeServerDownConfirmTests(ComputeFixture):
             resize_action, self.server.id, self.user_config.user_id,
             self.user_config.project_id,
             self.confirm_resize_resp.headers['x-compute-request-id'])
+
+
+@unittest.skipUnless(
+    resize_enabled, 'Resize not enabled for this flavor class.')
+class ServerFromImageResizeServerDownConfirmTests(
+        ServerFromImageFixture,
+        ResizeServerDownConfirmTests):
+
+    @classmethod
+    def setUpClass(cls):
+        super(ServerFromImageResizeServerDownConfirmTests, cls).setUpClass()
+        cls.key = cls.keypairs_client.create_keypair(rand_name("key")).entity
+        cls.resources.add(cls.key.name,
+                          cls.keypairs_client.delete_keypair)
+        cls.create_server(flavor_ref=cls.flavor_ref_alt, key_name=cls.key.name)
+        ResizeDownConfirmPlugin.resize_down_and_confirm(fixture=cls)
+
+
+class ResizeDownConfirmPlugin(object):
+
+    @classmethod
+    def resize_down_and_confirm(cls, fixture):
+        server_to_resize = fixture.server
+        # resize server and confirm
+        fixture.resize_resp = fixture.servers_client.resize(
+            server_to_resize.id, fixture.flavor_ref)
+        fixture.server_behaviors.wait_for_server_status(
+            server_to_resize.id, NovaServerStatusTypes.VERIFY_RESIZE)
+
+        fixture.confirm_resize_resp = fixture.servers_client.confirm_resize(
+            server_to_resize.id)
+        fixture.server_behaviors.wait_for_server_status(
+            server_to_resize.id, NovaServerStatusTypes.ACTIVE)
+        resized_server_response = fixture.servers_client.get_server(
+            server_to_resize.id)
+
+        fixture.server = resized_server_response.entity
+        fixture.server.admin_pass = server_to_resize.admin_pass
+        fixture.resized_flavor = fixture.flavors_client.get_flavor_details(
+            fixture.flavor_ref).entity

@@ -22,46 +22,17 @@ from cloudcafe.compute.common.types import ComputeHypervisors
 from cloudcafe.compute.common.types import NovaServerStatusTypes
 from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.compute.config import ComputeConfig
-from cloudroast.compute.fixtures import ComputeFixture
+from cloudroast.compute.fixtures import ServerFromImageFixture
 from cloudcafe.compute.servers_api.config import ServersConfig
 
 
-class RebuildServerTests(ComputeFixture):
+class RebuildServerTests(object):
 
     compute_config = ComputeConfig()
     hypervisor = compute_config.hypervisor.lower()
 
     servers_config = ServersConfig()
     file_injection_enabled = servers_config.personality_file_injection_enabled
-
-    @classmethod
-    def setUpClass(cls):
-        super(RebuildServerTests, cls).setUpClass()
-        cls.key = cls.keypairs_client.create_keypair(rand_name("key")).entity
-        cls.resources.add(cls.key.name,
-                          cls.keypairs_client.delete_keypair)
-        response = cls.server_behaviors.create_active_server(
-            key_name=cls.key.name)
-        cls.server = response.entity
-        response = cls.flavors_client.get_flavor_details(cls.flavor_ref)
-        cls.flavor = response.entity
-        cls.resources.add(cls.server.id, cls.servers_client.delete_server)
-        cls.metadata = {'key': 'value'}
-        cls.name = rand_name('testserver')
-
-        personality = None
-        if cls.file_injection_enabled:
-            cls.file_contents = 'Test server rebuild.'
-            personality = [{'path': '/rebuild.txt',
-                            'contents': base64.b64encode(cls.file_contents)}]
-        cls.password = 'R3builds3ver'
-
-        cls.rebuilt_server_response = cls.servers_client.rebuild(
-            cls.server.id, cls.image_ref_alt, name=cls.name,
-            metadata=cls.metadata, personality=personality,
-            admin_pass=cls.password, key_name=cls.key.name)
-        cls.server_behaviors.wait_for_server_status(
-            cls.server.id, NovaServerStatusTypes.ACTIVE)
 
     @tags(type='smoke', net='no')
     def test_verify_rebuild_server_response(self):
@@ -276,3 +247,42 @@ class RebuildServerTests(ComputeFixture):
         actual_disk_config = rebuilt_server.disk_config
         self.assertEqual(auto_config_enabled,
                          actual_disk_config.lower() == 'auto')
+
+
+class ServerFromImageRebuildTests(ServerFromImageFixture,
+                                  RebuildServerTests):
+
+    @classmethod
+    def setUpClass(cls):
+        super(ServerFromImageRebuildTests, cls).setUpClass()
+        cls.key = cls.keypairs_client.create_keypair(rand_name("key")).entity
+        cls.resources.add(cls.key.name,
+                          cls.keypairs_client.delete_keypair)
+        cls.create_server(key_name=cls.key.name)
+        response = cls.flavors_client.get_flavor_details(cls.flavor_ref)
+        cls.flavor = response.entity
+        RebuildFixturePlugin.rebuild_and_await(fixture=cls)
+
+
+class RebuildFixturePlugin(object):
+
+    @classmethod
+    def rebuild_and_await(cls, fixture):
+        # Rebuild and wait for server to return to active state
+        fixture.metadata = {'key': 'value'}
+        fixture.name = rand_name('testserver')
+
+        personality = None
+        if fixture.file_injection_enabled:
+            fixture.file_contents = 'Test server rebuild.'
+            personality = [{'path': '/rebuild.txt',
+                            'contents': base64.b64encode(
+                                fixture.file_contents)}]
+        fixture.password = 'R3builds3ver'
+
+        fixture.rebuilt_server_response = fixture.servers_client.rebuild(
+            fixture.server.id, fixture.image_ref_alt, name=fixture.name,
+            metadata=fixture.metadata, personality=personality,
+            admin_pass=fixture.password, key_name=fixture.key.name)
+        fixture.server_behaviors.wait_for_server_status(
+            fixture.server.id, NovaServerStatusTypes.ACTIVE)
