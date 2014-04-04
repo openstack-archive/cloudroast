@@ -19,21 +19,10 @@ import time
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.compute.common.types import NovaServerRebootTypes
-from cloudroast.compute.fixtures import ComputeFixture
+from cloudroast.compute.fixtures import ServerFromImageFixture
 
 
-class RebootServerSoftTests(ComputeFixture):
-
-    @classmethod
-    def setUpClass(cls):
-        super(RebootServerSoftTests, cls).setUpClass()
-        cls.key = cls.keypairs_client.create_keypair(rand_name("key")).entity
-        cls.resources.add(cls.key.name,
-                          cls.keypairs_client.delete_keypair)
-        response = cls.server_behaviors.create_active_server(
-            key_name=cls.key.name)
-        cls.server = response.entity
-        cls.resources.add(cls.server.id, cls.servers_client.delete_server)
+class RebootServerSoftTests(object):
 
     @tags(type='smoke', net='yes')
     def test_reboot_server_soft(self):
@@ -50,3 +39,15 @@ class RebootServerSoftTests(ComputeFixture):
         finish = time.time()
         uptime_post_reboot = remote_client.get_uptime()
         self.assertLess(uptime_post_reboot, (uptime_start + (finish - start)))
+
+
+class ServerFromImageRebootServerSoftTests(ServerFromImageFixture,
+                                           RebootServerSoftTests):
+
+    @classmethod
+    def setUpClass(cls):
+        super(ServerFromImageRebootServerSoftTests, cls).setUpClass()
+        cls.key = cls.keypairs_client.create_keypair(rand_name("key")).entity
+        cls.resources.add(cls.key.name,
+                          cls.keypairs_client.delete_keypair)
+        cls.create_server(key_name=cls.key.name)

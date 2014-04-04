@@ -20,8 +20,7 @@ from cafe.drivers.unittest.decorators import tags
 from cloudcafe.compute.common.types import ComputeHypervisors, \
     InstanceAuthStrategies, NovaServerStatusTypes as ServerStates
 from cloudcafe.compute.config import ComputeConfig
-
-from cloudroast.compute.fixtures import ComputeFixture
+from cloudroast.compute.fixtures import ServerFromImageFixture
 
 compute_config = ComputeConfig()
 hypervisor = compute_config.hypervisor.lower()
@@ -30,22 +29,8 @@ hypervisor = compute_config.hypervisor.lower()
 @unittest.skipIf(
     hypervisor in [ComputeHypervisors.KVM, ComputeHypervisors.QEMU,
                    ComputeHypervisors.IRONIC, ComputeHypervisors.LXC_LIBVIRT],
-    'Change password not supported in current configuration.')
-class ChangeServerPasswordTests(ComputeFixture):
-
-    @classmethod
-    def setUpClass(cls):
-        super(ChangeServerPasswordTests, cls).setUpClass()
-        response = cls.server_behaviors.create_active_server()
-        cls.server = response.entity
-        cls.resources.add(cls.server.id, cls.servers_client.delete_server)
-        cls.new_password = "newslice129690TuG72Bgj2"
-
-        # Change password and wait for server to return to active state
-        cls.resp = cls.servers_client.change_password(cls.server.id,
-                                                      cls.new_password)
-        cls.server_behaviors.wait_for_server_status(cls.server.id,
-                                                    ServerStates.ACTIVE)
+                   'Change password not supported in current configuration.')
+class ChangeServerPasswordTests(object):
 
     @tags(type='smoke', net='no')
     def test_change_password_response(self):
@@ -92,3 +77,28 @@ class ChangeServerPasswordTests(ComputeFixture):
             password_action, self.server.id, self.user_config.user_id,
             self.user_config.project_id,
             self.resp.headers['x-compute-request-id'])
+
+
+class ChangePasswordBaseFixture(object):
+
+    @classmethod
+    def change_password(self):
+        self.new_password = "newslice129690TuG72Bgj2"
+        # Change password and wait for server to return to active state
+        self.resp = self.servers_client.change_password(
+            self.server.id,
+            self.new_password)
+        self.server_behaviors.wait_for_server_status(
+            self.server.id,
+            ServerStates.ACTIVE)
+
+
+class ServerFromImageChangePasswordTests(ServerFromImageFixture,
+                                         ChangeServerPasswordTests,
+                                         ChangePasswordBaseFixture):
+
+    @classmethod
+    def setUpClass(cls):
+        super(ServerFromImageChangePasswordTests, cls).setUpClass()
+        cls.create_server()
+        cls.change_password()

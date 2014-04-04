@@ -22,8 +22,7 @@ from cloudcafe.compute.common.types import ComputeHypervisors, \
     NovaServerStatusTypes
 from cloudcafe.compute.config import ComputeConfig
 from cloudcafe.compute.flavors_api.config import FlavorsConfig
-
-from cloudroast.compute.fixtures import ComputeFixture
+from cloudroast.compute.fixtures import ServerFromImageFixture
 
 compute_config = ComputeConfig()
 hypervisor = compute_config.hypervisor.lower()
@@ -39,40 +38,10 @@ can_resize = (
 
 @unittest.skipUnless(
     can_resize, 'Resize not enabled for this configuration.')
-class ResizeServerDownConfirmTests(ComputeFixture):
+class ResizeServerDownConfirmTests(object):
 
     compute_config = ComputeConfig()
     hypervisor = compute_config.hypervisor.lower()
-
-    @classmethod
-    def setUpClass(cls):
-        super(ResizeServerDownConfirmTests, cls).setUpClass()
-        cls.key = cls.keypairs_client.create_keypair(rand_name("key")).entity
-        cls.resources.add(cls.key.name,
-                          cls.keypairs_client.delete_keypair)
-        server_response = cls.server_behaviors.create_active_server(
-            flavor_ref=cls.flavor_ref_alt, key_name=cls.key.name)
-        server_to_resize = server_response.entity
-        cls.resources.add(server_to_resize.id,
-                          cls.servers_client.delete_server)
-
-        # resize server and confirm
-        cls.resize_resp = cls.servers_client.resize(
-            server_to_resize.id, cls.flavor_ref)
-        cls.server_behaviors.wait_for_server_status(
-            server_to_resize.id, NovaServerStatusTypes.VERIFY_RESIZE)
-
-        cls.confirm_resize_resp = cls.servers_client.confirm_resize(
-            server_to_resize.id)
-        cls.server_behaviors.wait_for_server_status(
-            server_to_resize.id, NovaServerStatusTypes.ACTIVE)
-        resized_server_response = cls.servers_client.get_server(
-            server_to_resize.id)
-
-        cls.server = resized_server_response.entity
-        cls.server.admin_pass = server_to_resize.admin_pass
-        cls.resized_flavor = cls.flavors_client.get_flavor_details(
-            cls.flavor_ref).entity
 
     @tags(type='positive', net='no')
     def test_verify_confirm_resize_response(self):
@@ -159,3 +128,44 @@ class ResizeServerDownConfirmTests(ComputeFixture):
             resize_action, self.server.id, self.user_config.user_id,
             self.user_config.project_id,
             self.confirm_resize_resp.headers['x-compute-request-id'])
+
+
+class ResizeDownConfirmBaseFixture(object):
+
+    @classmethod
+    def resize_down_and_confirm(self):
+        server_to_resize = self.server
+        # resize server and confirm
+        self.resize_resp = self.servers_client.resize(
+            server_to_resize.id, self.flavor_ref)
+        self.server_behaviors.wait_for_server_status(
+            server_to_resize.id, NovaServerStatusTypes.VERIFY_RESIZE)
+
+        self.confirm_resize_resp = self.servers_client.confirm_resize(
+            server_to_resize.id)
+        self.server_behaviors.wait_for_server_status(
+            server_to_resize.id, NovaServerStatusTypes.ACTIVE)
+        resized_server_response = self.servers_client.get_server(
+            server_to_resize.id)
+
+        self.server = resized_server_response.entity
+        self.server.admin_pass = server_to_resize.admin_pass
+        self.resized_flavor = self.flavors_client.get_flavor_details(
+            self.flavor_ref).entity
+
+
+@unittest.skipUnless(
+    resize_enabled, 'Resize not enabled for this flavor class.')
+class ServerFromImageResizeServerDownConfirmTests(
+        ServerFromImageFixture,
+        ResizeServerDownConfirmTests,
+        ResizeDownConfirmBaseFixture):
+
+    @classmethod
+    def setUpClass(cls):
+        super(ServerFromImageResizeServerDownConfirmTests, cls).setUpClass()
+        cls.key = cls.keypairs_client.create_keypair(rand_name("key")).entity
+        cls.resources.add(cls.key.name,
+                          cls.keypairs_client.delete_keypair)
+        cls.create_server(flavor_ref=cls.flavor_ref_alt, key_name=cls.key.name)
+        cls.resize_down_and_confirm()
