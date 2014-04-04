@@ -16,17 +16,12 @@ limitations under the License.
 
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.compute.common.types import VncConsoleTypes
-from cloudroast.compute.fixtures import ComputeFixture
+from cloudroast.compute.fixtures import ServerFromImageFixture
+from cloudroast.compute.fixtures import ServerFromVolumeV1Fixture
+from cloudroast.compute.fixtures import ServerFromVolumeV2Fixture
 
 
-class ServerVncConsoleTests(ComputeFixture):
-
-    @classmethod
-    def setUpClass(cls):
-        super(ServerVncConsoleTests, cls).setUpClass()
-        response = cls.server_behaviors.create_active_server()
-        cls.server = response.entity
-        cls.resources.add(cls.server.id, cls.servers_client.delete_server)
+class ServerVncConsoleTests(object):
 
     @tags(type='smoke', net='no')
     def test_get_xvpvnc_console(self):
@@ -47,3 +42,30 @@ class ServerVncConsoleTests(ComputeFixture):
         console = resp.entity
         self.assertEqual(console.type, VncConsoleTypes.NOVNC)
         self.assertIsNotNone(console.url)
+
+
+class ServerFromImageVncConsoleTests(ServerFromImageFixture,
+                                     ServerVncConsoleTests):
+
+    @classmethod
+    def setUpClass(cls):
+        super(ServerFromImageVncConsoleTests, cls).setUpClass()
+        cls.create_server()
+
+
+class ServerFromVolumeV1VncConsoleTests(ServerFromVolumeV1Fixture,
+                                        ServerVncConsoleTests):
+
+    @classmethod
+    def setUpClass(cls):
+        super(ServerFromVolumeV1VncConsoleTests, cls).setUpClass()
+        cls.create_server()
+
+
+class ServerFromVolumeV2VncConsoleTests(ServerFromVolumeV2Fixture,
+                                        ServerVncConsoleTests):
+
+    @classmethod
+    def setUpClass(cls):
+        super(ServerFromVolumeV2VncConsoleTests, cls).setUpClass()
+        cls.create_server()
