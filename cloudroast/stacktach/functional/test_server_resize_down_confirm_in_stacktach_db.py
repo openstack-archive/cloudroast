@@ -39,8 +39,8 @@ class StackTachDBServerResizeDownConfirmTests(StackTachComputeIntegration,
                 'flavor_ref: {0}  flavor_ref_alt: {1}'.format(
                     cls.flavor_ref, cls.flavor_ref_alt))
 
-        cls.create_and_confirm_resize_server(flavor_ref=cls.flavor_ref_alt,
-                                             resize_flavor=cls.flavor_ref)
+        cls.create_server(flavor_ref=cls.flavor_ref_alt)
+        cls.resize_and_confirm_resize_server(resize_flavor=cls.flavor_ref)
         cls.audit_period_beginning = \
             datetime.utcnow().strftime(Constants.DATETIME_0AM_FORMAT)
 

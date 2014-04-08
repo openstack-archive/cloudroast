@@ -185,37 +185,13 @@ class StackTachComputeIntegration(ComputeFixture, StackTachDBFixture):
         cls.created_server = wait_response.entity
 
     @classmethod
-    def create_and_resize_server(cls, name=None, image_ref=None,
-                                 flavor_ref=None, personality=None,
-                                 metadata=None, disk_config=None,
-                                 networks=None, resize_flavor=None):
+    def resize_server(cls, resize_flavor=None):
         """
-        @summary: Create an active server, resizes it and waits for
+        @summary: Performs a resize on the created server and waits for
             verify_resize state.
-        @param name: The name of the server.
-        @type name: String
-        @param image_ref: The reference to the image used to build the server.
-        @type image_ref: String
-        @param flavor_ref: The flavor used to build the server.
-        @type flavor_ref: String
-        @param personality: A list of dictionaries for files to be
-            injected into the server.
-        @type personality: List
-        @param metadata: A dictionary of values to be used as metadata.
-        @type metadata: Dictionary. The limit is 5 key/values.
-        @param disk_config: MANUAL/AUTO/None
-        @type disk_config: String
-        @param networks:The networks to which you want to attach the server.
-        @type networks: String
         @param resize_flavor: Flavor to which Server needs to be resized.
         @type resize_flavor: String
         """
-
-        cls.create_server(name=name, image_ref=image_ref,
-                          flavor_ref=flavor_ref, personality=personality,
-                          metadata=metadata, disk_config=disk_config,
-                          networks=networks)
-
         cls.resize_flavor = cls.flavor_ref_alt
         if resize_flavor is not None:
             cls.resize_flavor = resize_flavor
@@ -239,39 +215,14 @@ class StackTachComputeIntegration(ComputeFixture, StackTachDBFixture):
         cls.verify_resized_server = wait_response.entity
 
     @classmethod
-    def create_and_confirm_resize_server(cls, name=None, image_ref=None,
-                                         flavor_ref=None, personality=None,
-                                         metadata=None, disk_config=None,
-                                         networks=None, resize_flavor=None):
+    def resize_and_confirm_resize_server(cls, resize_flavor=None):
         """
-        @summary: Create an active server, resizes it and confirms resize.
+        @summary: Performs a resize on the created server, confirms the resize.
             Connects to StackTach DB to obtain relevant validation data.
-        @param name: The name of the server.
-        @type name: String
-        @param image_ref: The reference to the image used to build the server.
-        @type image_ref: String
-        @param flavor_ref: The flavor used to build the server.
-        @type flavor_ref: String
-        @param personality: A list of dictionaries for files to be
-            injected into the server.
-        @type personality: List
-        @param metadata: A dictionary of values to be used as metadata.
-        @type metadata: Dictionary. The limit is 5 key/values.
-        @param disk_config: MANUAL/AUTO/None
-        @type disk_config: String
-        @param networks:The networks to which you want to attach the server.
-        @type networks: String
         @param resize_flavor: Flavor to which Server needs to be resized.
         @type resize_flavor: String
         """
-
-        cls.create_and_resize_server(name=name, image_ref=image_ref,
-                                     flavor_ref=flavor_ref,
-                                     personality=personality,
-                                     metadata=metadata,
-                                     disk_config=disk_config,
-                                     networks=networks,
-                                     resize_flavor=resize_flavor)
+        cls.resize_server(resize_flavor=resize_flavor)
 
         cls.servers_client.confirm_resize(cls.created_server.id)
         wait_response = (cls.server_behaviors
@@ -286,40 +237,15 @@ class StackTachComputeIntegration(ComputeFixture, StackTachDBFixture):
         cls.confirmed_resized_server = wait_response.entity
 
     @classmethod
-    def create_and_revert_resize_server(cls, name=None, image_ref=None,
-                                        flavor_ref=None, personality=None,
-                                        metadata=None, disk_config=None,
-                                        networks=None, resize_flavor=None):
+    def resize_and_revert_resize_server(cls, resize_flavor=None):
         """
-        @summary: Creates a server, resizes the server, reverts the resize and
-            waits for active state.  Connects to StackTach DB to obtain
+        @summary: Performs a resize on the created server, reverts the resize
+            and waits for active state.  Connects to StackTach DB to obtain
             relevant validation data.
-        @param name: The name of the server.
-        @type name: String
-        @param image_ref: The reference to the image used to build the server.
-        @type image_ref: String
-        @param flavor_ref: The flavor used to build the server.
-        @type flavor_ref: String
-        @param personality: A list of dictionaries for files to be
-            injected into the server.
-        @type personality: List
-        @param metadata: A dictionary of values to be used as metadata.
-        @type metadata: Dictionary. The limit is 5 key/values.
-        @param disk_config: MANUAL/AUTO/None
-        @type disk_config: String
-        @param networks:The networks to which you want to attach the server.
-        @type networks: String
         @param resize_flavor: Flavor to which Server needs to be resized.
         @type resize_flavor: String
         """
-
-        cls.create_and_resize_server(name=name, image_ref=image_ref,
-                                     flavor_ref=flavor_ref,
-                                     personality=personality,
-                                     metadata=metadata,
-                                     disk_config=disk_config,
-                                     networks=networks,
-                                     resize_flavor=resize_flavor)
+        cls.resize_server(resize_flavor=resize_flavor)
 
         cls.servers_client.revert_resize(cls.created_server.id)
         wait_response = cls.server_behaviors\
@@ -336,39 +262,15 @@ class StackTachComputeIntegration(ComputeFixture, StackTachDBFixture):
         cls.reverted_resized_server = wait_response.entity
 
     @classmethod
-    def create_and_rebuild_server(cls, name=None, image_ref=None,
-                                  flavor_ref=None, personality=None,
-                                  metadata=None, disk_config=None,
-                                  networks=None, rebuild_image_ref=None):
+    def rebuild_server(cls, rebuild_image_ref=None):
         """
-        @summary: Creates an Active server, Rebuilds the server using the
+        @summary: Performs a  rebuild on the created server using the
             configured secondary image and waits for the active state.
             Connects to StackTach DB to obtain relevant validation data.
-        @param name: The name of the server.
-        @type name: String
-        @param image_ref: The reference to the image used to build the server.
-        @type image_ref: String
-        @param flavor_ref: The flavor used to build the server.
-        @type flavor_ref: String
-        @param personality: A list of dictionaries for files to be
-            injected into the server.
-        @type personality: List
-        @param metadata: A dictionary of values to be used as metadata.
-        @type metadata: Dictionary. The limit is 5 key/values.
-        @param disk_config: MANUAL/AUTO/None
-        @type disk_config: String
-        @param networks:The networks to which you want to attach the server.
-        @type networks: String
         @param rebuild_image_ref: The reference to the image used to
             rebuild the server.
         @type rebuild_image_ref: String
         """
-
-        cls.create_server(name=name, image_ref=image_ref,
-                          flavor_ref=flavor_ref, personality=personality,
-                          metadata=metadata, disk_config=disk_config,
-                          networks=networks)
-
         cls.rebuild_image_ref = cls.image_ref_alt
         if rebuild_image_ref:
             cls.rebuild_image_ref = rebuild_image_ref
@@ -390,36 +292,12 @@ class StackTachComputeIntegration(ComputeFixture, StackTachDBFixture):
         cls.rebuilt_server = wait_response.entity
 
     @classmethod
-    def create_and_rescue_server(cls, name=None, image_ref=None,
-                                 flavor_ref=None, personality=None,
-                                 metadata=None, disk_config=None,
-                                 networks=None):
+    def rescue_server(cls):
         """
-        @summary: Creates an Active server, Makes a rescue request for the
+        @summary: Performs a rescue request on the created
             server and waits for the rescued state.
             Connects to StackTach DB to obtain relevant validation data.
-        @param name: The name of the server.
-        @type name: String
-        @param image_ref: The reference to the image used to build the server.
-        @type image_ref: String
-        @param flavor_ref: The flavor used to build the server.
-        @type flavor_ref: String
-        @param personality: A list of dictionaries for files to be
-            injected into the server.
-        @type personality: List
-        @param metadata: A dictionary of values to be used as metadata.
-        @type metadata: Dictionary. The limit is 5 key/values.
-        @param disk_config: MANUAL/AUTO/None
-        @type disk_config: String
-        @param networks: The networks to which you want to attach the server.
-        @type networks: String
         """
-
-        cls.create_server(name=name, image_ref=image_ref,
-                          flavor_ref=flavor_ref, personality=personality,
-                          metadata=metadata, disk_config=disk_config,
-                          networks=networks)
-
         cls.rescue_client.rescue(server_id=cls.created_server.id)
         wait_response = (cls.server_behaviors
                          .wait_for_server_status(cls.created_server.id,
@@ -436,36 +314,12 @@ class StackTachComputeIntegration(ComputeFixture, StackTachDBFixture):
         cls.rescued_server = wait_response.entity
 
     @classmethod
-    def create_and_hard_reboot_server(cls, name=None, image_ref=None,
-                                      flavor_ref=None, personality=None,
-                                      metadata=None, disk_config=None,
-                                      networks=None):
+    def hard_reboot_server(cls):
         """
         @summary: Performs a hard reboot on the created server and waits for
             the active state. Connects to StackTach DB to obtain relevant
             validation data.
-        @param name: The name of the server.
-        @type name: String
-        @param image_ref: The reference to the image used to build the server.
-        @type image_ref: String
-        @param flavor_ref: The flavor used to build the server.
-        @type flavor_ref: String
-        @param personality: A list of dictionaries for files to be
-            injected into the server.
-        @type personality: List
-        @param metadata: A dictionary of values to be used as metadata.
-        @type metadata: Dictionary. The limit is 5 key/values.
-        @param disk_config: MANUAL/AUTO/None
-        @type disk_config: String
-        @param networks:The networks to which you want to attach the server.
-        @type networks: String
         """
-
-        cls.create_server(name=name, image_ref=image_ref,
-                          flavor_ref=flavor_ref, personality=personality,
-                          metadata=metadata, disk_config=disk_config,
-                          networks=networks)
-
         cls.servers_client.reboot(cls.created_server.id, RebootTypes.HARD)
         wait_response = (cls.server_behaviors
                          .wait_for_server_status(cls.created_server.id,
@@ -477,36 +331,12 @@ class StackTachComputeIntegration(ComputeFixture, StackTachDBFixture):
         cls.hard_rebooted_server = wait_response.entity
 
     @classmethod
-    def create_and_soft_reboot_server(cls, name=None, image_ref=None,
-                                      flavor_ref=None, personality=None,
-                                      metadata=None, disk_config=None,
-                                      networks=None):
+    def soft_reboot_server(cls):
         """
         @summary: Performs a soft reboot on the created server and waits for
             the active state. Connects to StackTach DB to obtain
             relevant validation data.
-        @param name: The name of the server.
-        @type name: String
-        @param image_ref: The reference to the image used to build the server.
-        @type image_ref: String
-        @param flavor_ref: The flavor used to build the server.
-        @type flavor_ref: String
-        @param personality: A list of dictionaries for files to be
-            injected into the server.
-        @type personality: List
-        @param metadata: A dictionary of values to be used as metadata.
-        @type metadata: Dictionary. The limit is 5 key/values.
-        @param disk_config: MANUAL/AUTO/None
-        @type disk_config: String
-        @param networks:The networks to which you want to attach the server.
-        @type networks: String
         """
-
-        cls.create_server(name=name, image_ref=image_ref,
-                          flavor_ref=flavor_ref, personality=personality,
-                          metadata=metadata, disk_config=disk_config,
-                          networks=networks)
-
         cls.servers_client.reboot(cls.created_server.id, RebootTypes.SOFT)
         wait_response = (cls.server_behaviors
                          .wait_for_server_status(cls.created_server.id,
@@ -518,35 +348,12 @@ class StackTachComputeIntegration(ComputeFixture, StackTachDBFixture):
         cls.soft_rebooted_server = wait_response.entity
 
     @classmethod
-    def create_and_change_password_server(cls, name=None, image_ref=None,
-                                          flavor_ref=None, personality=None,
-                                          metadata=None, disk_config=None,
-                                          networks=None):
+    def change_password_server(cls):
         """
         @summary: Performs a change password on the created server and waits
             for the active state. Connects to StackTach DB to obtain
             relevant validation data.
-        @param name: The name of the server.
-        @type name: String
-        @param image_ref: The reference to the image used to build the server.
-        @type image_ref: String
-        @param flavor_ref: The flavor used to build the server.
-        @type flavor_ref: String
-        @param personality: A list of dictionaries for files to be
-            injected into the server.
-        @type personality: List
-        @param metadata: A dictionary of values to be used as metadata.
-        @type metadata: Dictionary. The limit is 5 key/values.
-        @param disk_config: MANUAL/AUTO/None
-        @type disk_config: String
-        @param networks:The networks to which you want to attach the server.
-        @type networks: String
         """
-        cls.create_server(name=name, image_ref=image_ref,
-                          flavor_ref=flavor_ref, personality=personality,
-                          metadata=metadata, disk_config=disk_config,
-                          networks=networks)
-
         cls.new_password = "newslice129690TuG72Bgj2"
         cls.changed_password_server = (
             cls.server_behaviors.change_password_and_await(
@@ -554,35 +361,12 @@ class StackTachComputeIntegration(ComputeFixture, StackTachDBFixture):
                 new_password=cls.new_password))
 
     @classmethod
-    def create_and_delete_server(cls, name=None, image_ref=None,
-                                 flavor_ref=None, personality=None,
-                                 metadata=None, disk_config=None,
-                                 networks=None):
+    def delete_server(cls):
         """
         @summary: Performs a delete on the created server and waits for
             the deleted state. Connects to StackTach DB to obtain
             relevant validation data.
-        @param name: The name of the server.
-        @type name: String
-        @param image_ref: The reference to the image used to build the server.
-        @type image_ref: String
-        @param flavor_ref: The flavor used to build the server.
-        @type flavor_ref: String
-        @param personality: A list of dictionaries for files to be
-            injected into the server.
-        @type personality: List
-        @param metadata: A dictionary of values to be used as metadata.
-        @type metadata: Dictionary. The limit is 5 key/values.
-        @param disk_config: MANUAL/AUTO/None
-        @type disk_config: String
-        @param networks: The networks to which you want to attach the server.
-        @type networks: String
         """
-
-        cls.create_server(name=name, image_ref=image_ref,
-                          flavor_ref=flavor_ref, personality=personality,
-                          metadata=metadata, disk_config=disk_config,
-                          networks=networks)
 
         wait_response = (cls.servers_client
                          .get_server(cls.created_server.id))

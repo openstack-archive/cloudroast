@@ -25,7 +25,8 @@ class StackTachDBRescueServerTests(StackTachComputeIntegration,
 
     @classmethod
     def setUpClass(cls):
-        cls.create_and_rescue_server()
+        cls.create_server()
+        cls.rescue_server()
         cls.stacktach_events_for_server(cls.rescued_server)
         cls.event_launch_rescued_server = cls.event_launches[1]
 

@@ -25,7 +25,8 @@ class StackTachDBRebootSoftServerTests(StackTachComputeIntegration,
     """
     @classmethod
     def setUpClass(cls):
-        cls.create_and_soft_reboot_server()
+        cls.create_server()
+        cls.soft_reboot_server()
         cls.stacktach_events_for_server(server=cls.soft_rebooted_server)
 
     def test_launch_entry_on_reboot_soft_server_response(self):

@@ -25,7 +25,8 @@ class StackTachDBChangePasswordServerTests(StackTachComputeIntegration,
     """
     @classmethod
     def setUpClass(cls):
-        cls.create_and_change_password_server()
+        cls.create_server()
+        cls.change_password_server()
         cls.stacktach_events_for_server(server=cls.changed_password_server)
 
     def test_launch_entry_on_change_password_server_response(self):
