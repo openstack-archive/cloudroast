@@ -14,6 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import unittest2 as unittest
+
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.images.common.types import ImageDiskFormat, ImageMemberStatus
@@ -22,43 +24,44 @@ from cloudroast.images.fixtures import ImagesFixture
 
 class ImageLifeCycleTenantPermissionsTest(ImagesFixture):
 
+    @unittest.skip('Bug, Redmine #4337')
     @tags(type='positive', regression='true')
     def test_tenant_permissions_on_image_life_cycle(self):
         """
         @summary: Test tenant permissions on image life cycle
 
-        1. Register an image as tenant
-        2. Register an image (alt_image) as alternative tenant
-        3. Verify that tenant can get the image
-        4. Verify that tenant can see the image in their images list
-        5. Verify that image members list is empty
-        6. Verify that alternative tenant cannot get the image
-        7. Verify that alternative tenant cannot see the image in their
-            images list
-        8. Verify that alternative tenant cannot update the image
-        9. Verify that alternative tenant cannot delete the image
-        10. Add alternative tenant as a member of the image (share image)
-        11. Verify that image members list contains alternative tenant
-        12. Verify that alternative tenant still cannot get the image
-        13. Verify that alternative tenant still cannot update the image
-        14. Verify that alternative tenant still cannot delete the image
-        15. Verify that alternative tenant still cannot see the image in
-            their list
-        16. Update alternative tenant membership status to 'Accepted' (
-        alternative tenant accepts image's membership)
-        17. Verify that alternative tenant can now see the image in their list
-        18. Verify that alternative tenant still cannot update the image
-        19. Verify that alternative tenant still cannot delete the image
-        20. Update alternative tenant membership status to 'Rejected' (
-        alternative tenant now rejects image's membership)
-        21. Verify that image members list still contains alternative
-        tenant
-        22. Verify that alternative tenant cannot see the image in their list
+        1) Create an image as tenant
+        2) Create an image (alt_image) as alternative tenant
+        3) Verify that tenant can get the image
+        4) Verify that tenant can see the image in their images list
+        5) Verify that image members list is empty
+        6) Verify that alternative tenant cannot get the image
+        7) Verify that alternative tenant cannot see the image in their images
+        list
+        8) Verify that alternative tenant cannot update the image
+        9) Verify that alternative tenant cannot delete the image
+        10) Add alternative tenant as a member of the image (share image)
+        11) Verify that image members list contains alternative tenant
+        12) Verify that alternative tenant still can get the image
+        13) Verify that alternative tenant still cannot update the image
+        14) Verify that alternative tenant still cannot delete the image
+        15) Verify that alternative tenant still cannot see the image in their
+        list
+        16) Update alternative tenant membership status to 'Accepted'
+        (alternative tenant accepts image's membership)
+        17) Verify that alternative tenant still can still get the image
+        18) Verify that alternative tenant can now see the image in their list
+        19) Verify that alternative tenant still cannot update the image
+        20) Verify that alternative tenant still cannot delete the image
+        21) Update alternative tenant membership status to 'Rejected'
+        (alternative tenant now rejects image's membership)
+        22) Verify that image members list still contains alternative tenant
+        23) Verify that alternative tenant cannot see the image in their list
         """
 
-        alt_tenant_id = self.alt_user_config.tenant_id
-        alt_image = self.alt_images_behavior.create_new_image()
-        image = self.images_behavior.create_new_image()
+        alt_tenant_id = self.alt_tenant_id
+        alt_image = self.alt_images_behavior.create_image_via_task()
+        image = self.images_behavior.create_image_via_task()
 
         response = self.images_client.get_image(image_id=image.id_)
         self.assertEqual(response.status_code, 200)
@@ -100,7 +103,7 @@ class ImageLifeCycleTenantPermissionsTest(ImagesFixture):
         self.assertIn(alt_tenant_id, members_ids)
 
         response = self.alt_images_client.get_image(image_id=image.id_)
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 200)
 
         response = self.alt_images_client.update_image(
             image_id=image.id_,
@@ -123,6 +126,10 @@ class ImageLifeCycleTenantPermissionsTest(ImagesFixture):
         member = response.entity
         self.assertEqual(member.member_id, alt_tenant_id)
         self.assertEqual(member.status, ImageMemberStatus.ACCEPTED)
+
+        response = self.alt_images_client.get_image(image_id=image.id_)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.entity, image)
 
         response = self.alt_images_client.list_images()
         self.assertEqual(response.status_code, 200)
