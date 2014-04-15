@@ -15,15 +15,26 @@ limitations under the License.
 """
 import os
 
-from cloudroast.objectstorage.fixtures import ObjectStorageFixture
-from cloudcafe.common.tools import randomstring as randstring
+from cafe.drivers.unittest.datasets import DatasetList
+from cafe.drivers.unittest.decorators import (
+    DataDrivenFixture, data_driven_test)
 from cafe.engine.config import EngineConfig
 from cloudcafe.common.tools.md5hash import get_md5_hash
+from cloudroast.objectstorage.fixtures import ObjectStorageFixture
 
 BASE_NAME = "extract_archive"
 HTTP_OK = 200
 
+archive_formats = DatasetList()
+archive_formats.append_new_dataset(
+    'tar', {'name': 'tar', 'archive_format': 'tar'})
+archive_formats.append_new_dataset(
+    'tar.gz', {'name': 'tar.gz', 'archive_format': 'tar.gz'})
+archive_formats.append_new_dataset(
+    'tar.bz2', {'name': 'tar.bz2', 'archive_format': 'tar.bz2'})
 
+
+@DataDrivenFixture
 class ExtractArchiveTest(ObjectStorageFixture):
     """
     Tests Swfit expand archive operations
@@ -83,28 +94,23 @@ class ExtractArchiveTest(ObjectStorageFixture):
 
         return archive_data
 
+    @data_driven_test(DatasetList(archive_formats))
     @ObjectStorageFixture.required_features('bulk')
-    def test_extract_tar_archive_to_existing_container(self):
+    def ddtest_extract_archive_to_existing_container(self, archive_format):
         """
-        Scenario: upload a tar archive with the extract-archive query string
+        Scenario: upload a archive with the extract-archive query string
         parameter
 
         Precondition: Container exists
 
-        Expected Results: tar archive is extracted to objects in an
+        Expected Results: archive is extracted to objects in an
         existing container
+
+        @param archive_format: Type of archive file to upload.
+        @type  archive_format: string
         """
-        container_name = '{0}_container_{1}'.format(
-            BASE_NAME,
-            randstring.get_random_string())
-
-        self.behaviors.create_container(container_name)
-
-        self.addCleanup(
-            self.behaviors.force_delete_containers,
-            [container_name])
-
-        archive_format = "tar"
+        container_name = self.create_temp_container(
+            descriptor=BASE_NAME)
 
         data = self.read_archive_data(self.archive_paths[archive_format])
 
@@ -151,10 +157,12 @@ class ExtractArchiveTest(ObjectStorageFixture):
 
         # check the actual number of objects and object names
         params = {'format': 'json'}
-        response = self.client.list_objects(container_name, params=params)
+        response_objects = self.behaviors.list_objects(
+            container_name, params=params,
+            expected_objects=self.obj_names)
 
         expected = self.num_archive_files
-        received = len(response.entity)
+        received = len(response_objects)
         self.assertEqual(
             expected,
             received,
@@ -162,8 +170,7 @@ class ExtractArchiveTest(ObjectStorageFixture):
             " received: {1} extracted objects".format(expected, received))
 
         # check that all the objects where extracted to the existing container
-        resp_obj_names = [storage_obj.name for
-                          storage_obj in response.entity]
+        resp_obj_names = [obj.name for obj in response_objects]
 
         self.assertEqual(sorted(self.obj_names), sorted(resp_obj_names))
 
@@ -182,216 +189,32 @@ class ExtractArchiveTest(ObjectStorageFixture):
                     expected,
                     received))
 
+    @data_driven_test(DatasetList(archive_formats))
     @ObjectStorageFixture.required_features('bulk')
-    def test_extract_tar_gz_archive_to_existing_container(self):
+    def ddtest_extract_archive_without_existing_container(
+            self, archive_format):
         """
-        Scenario: upload a tar.gz archive with the extract-archive query string
-        parameter
-
-        Precondition: Container exists
-
-        Expected Results: tar.gz archive is extracted to objects in an
-        existing container
-        """
-        container_name = '{0}_container_{1}'.format(
-            BASE_NAME,
-            randstring.get_random_string())
-
-        self.behaviors.create_container(container_name)
-
-        self.addCleanup(
-            self.behaviors.force_delete_containers,
-            [container_name])
-
-        archive_format = "tar.gz"
-
-        data = self.read_archive_data(self.archive_paths[archive_format])
-
-        headers = {'Accept': 'application/json'}
-
-        response = self.client.create_archive_object(
-            data,
-            archive_format,
-            upload_path=container_name,
-            headers=headers)
-
-        expected = HTTP_OK
-        received = response.status_code
-        self.assertEqual(
-            expected,
-            received,
-            "extract tar archive expected successful status code: {0}"
-            " received: {1}".format(expected, received))
-
-        # inspect the body of the response
-        expected = self.num_archive_files
-        received = int(response.entity.num_files_created)
-        self.assertEqual(
-            expected,
-            received,
-            msg="response body 'Number Files Created' expected: {0}"
-            " received {1}".format(expected, received))
-
-        expected = '201 Created'
-        received = response.entity.status
-        self.assertEqual(
-            expected,
-            received,
-            msg="response body 'Response Status' expected: {0}"
-            " received {1}".format(expected, received))
-
-        expected = 0
-        received = len(response.entity.errors)
-        self.assertEqual(
-            expected,
-            received,
-            msg="response body 'Errors' expected None received {0}".format(
-                response.entity.errors))
-
-        # check the actual number of objects and object names
-        params = {'format': 'json'}
-        response = self.client.list_objects(container_name, params=params)
-
-        expected = self.num_archive_files
-        received = len(response.entity)
-        self.assertEqual(
-            expected,
-            received,
-            msg="container list expected: {0} extracted objects."
-            " received: {1} extracted objects".format(expected, received))
-
-        # check that all the objects where extracted to the existing container
-        resp_obj_names = [storage_obj.name for
-                          storage_obj in response.entity]
-
-        self.assertEqual(sorted(self.obj_names), sorted(resp_obj_names))
-
-        # check that the content of the obj is correct
-        # the content should be the md5hash of the objects name
-        for obj_name in resp_obj_names:
-            # the content of the obj should be the md5 sum of the obj name
-            response = self.client.get_object(container_name, obj_name)
-
-            expected = get_md5_hash(obj_name)
-            received = response.content
-            self.assertEqual(
-                expected,
-                received,
-                msg="obj content expected: {0} received: {1}".format(
-                    expected,
-                    received))
-
-    @ObjectStorageFixture.required_features('bulk')
-    def test_extract_tar_bz2_archive_to_existing_container(self):
-        """
-        Scenario: upload a tar.bz2 archive with the extract-archive query
-        string parameter
-
-        Precondition: Container exists
-
-        Expected Results: tar archive is extracted to objects in an
-        existing container
-        """
-        container_name = '{0}_container_{1}'.format(
-            BASE_NAME,
-            randstring.get_random_string())
-
-        self.behaviors.create_container(container_name)
-
-        self.addCleanup(
-            self.behaviors.force_delete_containers,
-            [container_name])
-
-        archive_format = "tar.bz2"
-
-        data = self.read_archive_data(self.archive_paths[archive_format])
-
-        headers = {'Accept': 'application/json'}
-
-        response = self.client.create_archive_object(
-            data,
-            archive_format,
-            upload_path=container_name,
-            headers=headers)
-
-        expected = HTTP_OK
-        received = response.status_code
-        self.assertEqual(
-            expected,
-            received,
-            "extract tar archive expected successful status code: {0}"
-            " received: {1}".format(expected, received))
-
-        # inspect the body of the response
-        expected = self.num_archive_files
-        received = int(response.entity.num_files_created)
-        self.assertEqual(
-            expected,
-            received,
-            msg="response body 'Number Files Created' expected: {0}"
-            " received {1}".format(expected, received))
-
-        expected = '201 Created'
-        received = response.entity.status
-        self.assertEqual(
-            expected,
-            received,
-            msg="response body 'Response Status' expected: {0}"
-            " received {1}".format(expected, received))
-
-        expected = 0
-        received = len(response.entity.errors)
-        self.assertEqual(
-            expected,
-            received,
-            msg="response body 'Errors' expected None received {0}".format(
-                response.entity.errors))
-
-        # check the actual number of objects and object names
-        params = {'format': 'json'}
-        response = self.client.list_objects(container_name, params=params)
-
-        expected = self.num_archive_files
-        received = len(response.entity)
-        self.assertEqual(
-            expected,
-            received,
-            msg="container list expected: {0} extracted objects."
-            " received: {1} extracted objects".format(expected, received))
-
-        # check that all the objects where extracted to the existing container
-        resp_obj_names = [storage_obj.name for
-                          storage_obj in response.entity]
-
-        self.assertEqual(sorted(self.obj_names), sorted(resp_obj_names))
-
-        # check that the content of the obj is correct
-        # the content should be the md5hash of the objects name
-        for obj_name in resp_obj_names:
-            # the content of the obj should be the md5 sum of the obj name
-            response = self.client.get_object(container_name, obj_name)
-
-            expected = get_md5_hash(obj_name)
-            received = response.content
-            self.assertEqual(
-                expected,
-                received,
-                msg="obj content expected: {0} received: {1}".format(
-                    expected,
-                    received))
-
-    @ObjectStorageFixture.required_features('bulk')
-    def test_extract_tar_archive_without_existing_container(self):
-        """
-        Scenario: upload a tar archive with the extract-archive query string
+        Scenario: upload a archived file with the extract-archive query string
         parameter
 
         Precondition: Container does not exist
 
-        Expected Results: tar archive is object names with slashes are
+        Expected Results: archive with object names containing slashes are
         extracted to objects. names without slashes are ignored
+
+        @param archive_format: Type of archive file to upload.
+        @type  archive_format: string
         """
-        archive_format = "tar"
+        expected_listings = {}
+        for name in self.obj_names_with_slashes:
+            container_name, object_name = name.split('/', 1)
+            if container_name not in expected_listings:
+                expected_listings[container_name] = []
+            expected_listings[container_name].append(object_name)
+        expected_containers = list(expected_listings.iterkeys())
+        self.addCleanup(
+            self.behaviors.force_delete_containers,
+            list(expected_listings.iterkeys()))
 
         data = self.read_archive_data(self.archive_paths[archive_format])
 
@@ -439,43 +262,40 @@ class ExtractArchiveTest(ObjectStorageFixture):
         params = {'format': 'json',
                   'marker': BASE_NAME}
 
-        response = self.client.list_containers(params=params)
+        response = self.behaviors.list_containers(
+            params=params, expected_containers=expected_containers)
 
         resp_container_names = []
         resp_container_names[:-1] = [container.name for
-                                     container in response.entity]
+                                     container in response]
 
         # archive object names without slashes are ignored
         for name in self.obj_names_without_slashes:
             self.assertNotIn(name, resp_container_names)
 
-        # container names to be cleaned up
-        containers = []
-
         # names with slashes should create containers with objects in them
-        for name in self.obj_names_with_slashes:
+        for container_name in expected_containers:
             """
             an archive named foo/bar will create a container named 'foo'
             with an object named 'bar' in it.
             """
-            container_name = name.split('/')[0]
-            obj_name = name.split('/')[1]
-
-            containers.append(container_name)
+            expected_objects = expected_listings.get(container_name)
 
             # check to see if the expected container name is in the container
             # list response
-            self.assertIn(container_name, resp_container_names)
+            self.assertTrue(container_name in resp_container_names)
 
             # check to see if the expected number of objects and obj name are
             # in the obj list response
             params = {'format': 'json'}
-            response = self.client.list_objects(container_name, params=params)
+            response_objects = self.behaviors.list_objects(
+                container_name, params=params,
+                expected_objects=expected_objects)
 
-            resp_obj_names = [storage_obj.name for
-                              storage_obj in response.entity]
+            resp_obj_names = [obj.name for
+                              obj in response_objects]
 
-            expected = 1
+            expected = len(expected_objects)
             received = len(resp_obj_names)
             self.assertEqual(
                 expected,
@@ -483,397 +303,39 @@ class ExtractArchiveTest(ObjectStorageFixture):
                 msg="container list expected: {0} extracted objects."
                 " received: {1} extracted objects".format(expected, received))
 
-            self.assertIn(obj_name, resp_obj_names)
+            for object_name in expected_objects:
+                self.assertIn(object_name, resp_obj_names)
 
-            # the content of the obj should be the md5 sum of the obj name
-            response = self.client.get_object(container_name, obj_name)
+                # the content of the obj should be the md5 sum of the obj name
+                response = self.client.get_object(container_name, object_name)
 
-            expected = get_md5_hash(name)
-            received = response.content
-            self.assertEqual(
-                expected,
-                received,
-                msg="obj content expected: {0} received: {1}".format(
+                expected = get_md5_hash('{}/{}'.format(
+                    container_name, object_name))
+                received = response.content
+                self.assertEqual(
                     expected,
-                    received))
+                    received,
+                    msg="obj content expected: {0} received: {1}".format(
+                        expected,
+                        received))
 
-        self.addCleanup(
-            self.behaviors.force_delete_containers,
-            containers)
-
+    @data_driven_test(DatasetList(archive_formats))
     @ObjectStorageFixture.required_features('bulk')
-    def test_extract_tar_gz_archive_without_existing_container(self):
+    def ddtest_object_creation_with_archive(self, archive_format):
         """
-        Scenario: upload a tar.gz archive with the extract-archive query string
-        parameter
-
-        Precondition: Container does not exist
-
-        Expected Results: tar.gz archive is object names with slashes are
-        extracted to objects. names without slashes are ignored
-        """
-        archive_format = "tar.gz"
-
-        data = self.read_archive_data(self.archive_paths[archive_format])
-
-        headers = {'Accept': 'application/json'}
-
-        response = self.client.create_archive_object(
-            data,
-            archive_format,
-            headers=headers)
-
-        expected = HTTP_OK
-        received = response.status_code
-        self.assertEqual(
-            expected,
-            received,
-            "extract tar archive expected successful status code: {0}"
-            " received: {1}".format(expected, received))
-
-        # inspect the body of the response
-        expected = len(self.obj_names_with_slashes)
-        received = int(response.entity.num_files_created)
-        self.assertEqual(
-            expected,
-            received,
-            msg="response body 'Number Files Created' expected: {0}"
-            " received {1}".format(expected, received))
-
-        expected = '201 Created'
-        received = response.entity.status
-        self.assertEqual(
-            expected,
-            received,
-            msg="response body 'Response Status' expected: {0}"
-            " received {1}".format(expected, received))
-
-        expected = 0
-        received = len(response.entity.errors)
-        self.assertEqual(
-            expected,
-            received,
-            msg="response body 'Errors' expected None received {0}".format(
-                response.entity.errors))
-
-        # check the actual number of objects and object names
-        params = {'format': 'json',
-                  'marker': BASE_NAME}
-
-        response = self.client.list_containers(params=params)
-
-        resp_container_names = []
-        resp_container_names[:-1] = [container.name for
-                                     container in response.entity]
-
-        # archive object names without slashes are ignored
-        for name in self.obj_names_without_slashes:
-            self.assertNotIn(name, resp_container_names)
-
-        # container names to be cleaned up
-        containers = []
-
-        # names with slashes should create containers with objects in them
-        for name in self.obj_names_with_slashes:
-            """
-            an archive named foo/bar will create a container named 'foo'
-            with an object named 'bar' in it.
-            """
-            container_name = name.split('/')[0]
-            obj_name = name.split('/')[1]
-
-            containers.append(container_name)
-
-            # check to see if the expected container name is in the container
-            # list response
-            self.assertIn(container_name, resp_container_names)
-
-            # check to see if the expected number of objects and obj name are
-            # in the obj list response
-            params = {'format': 'json'}
-            response = self.client.list_objects(container_name, params=params)
-
-            resp_obj_names = [storage_obj.name for
-                              storage_obj in response.entity]
-
-            expected = 1
-            received = len(resp_obj_names)
-            self.assertEqual(
-                expected,
-                received,
-                msg="container list expected: {0} extracted objects."
-                " received: {1} extracted objects".format(expected, received))
-
-            self.assertIn(obj_name, resp_obj_names)
-
-            # the content of the obj should be the md5 sum of the obj name
-            response = self.client.get_object(container_name, obj_name)
-
-            expected = get_md5_hash(name)
-            received = response.content
-            self.assertEqual(
-                expected,
-                received,
-                msg="obj content expected: {0} received: {1}".format(
-                    expected,
-                    received))
-
-        self.addCleanup(
-            self.behaviors.force_delete_containers,
-            containers)
-
-    @ObjectStorageFixture.required_features('bulk')
-    def test_extract_tar_bz2_archive_without_existing_container(self):
-        """
-        Scenario: upload a tar.bz2 archive with the extract-archive query
-        string parameter
-
-        Precondition: Container does not exist
-
-        Expected Results: tar.bz2 archive is object names with slashes are
-        extracted to objects. names without slashes are ignored
-        """
-        archive_format = "tar.bz2"
-
-        data = self.read_archive_data(self.archive_paths[archive_format])
-
-        headers = {'Accept': 'application/json'}
-
-        response = self.client.create_archive_object(
-            data,
-            archive_format,
-            headers=headers)
-
-        expected = HTTP_OK
-        received = response.status_code
-        self.assertEqual(
-            expected,
-            received,
-            "extract tar archive expected successful status code: {0}"
-            " received: {1}".format(expected, received))
-
-        # inspect the body of the response
-        expected = len(self.obj_names_with_slashes)
-        received = int(response.entity.num_files_created)
-        self.assertEqual(
-            expected,
-            received,
-            msg="response body 'Number Files Created' expected: {0}"
-            " received {1}".format(expected, received))
-
-        expected = '201 Created'
-        received = response.entity.status
-        self.assertEqual(
-            expected,
-            received,
-            msg="response body 'Response Status' expected: {0}"
-            " received {1}".format(expected, received))
-
-        expected = 0
-        received = len(response.entity.errors)
-        self.assertEqual(
-            expected,
-            received,
-            msg="response body 'Errors' expected None received {0}".format(
-                response.entity.errors))
-
-        # check the actual number of objects and object names
-        params = {'format': 'json',
-                  'marker': BASE_NAME}
-
-        response = self.client.list_containers(params=params)
-
-        resp_container_names = []
-        resp_container_names[:-1] = [container.name for
-                                     container in response.entity]
-
-        # archive object names without slashes are ignored
-        for name in self.obj_names_without_slashes:
-            self.assertNotIn(name, resp_container_names)
-
-        # container names to be cleaned up
-        containers = []
-
-        # names with slashes should create containers with objects in them
-        for name in self.obj_names_with_slashes:
-            """
-            an archive named foo/bar will create a container named 'foo'
-            with an object named 'bar' in it.
-            """
-            container_name = name.split('/')[0]
-            obj_name = name.split('/')[1]
-
-            containers.append(container_name)
-
-            # check to see if the expected container name is in the container
-            # list response
-            self.assertIn(container_name, resp_container_names)
-
-            # check to see if the expected number of objects and obj name are
-            # in the obj list response
-            params = {'format': 'json'}
-            response = self.client.list_objects(container_name, params=params)
-
-            resp_obj_names = [storage_obj.name for
-                              storage_obj in response.entity]
-
-            expected = 1
-            received = len(resp_obj_names)
-            self.assertEqual(
-                expected,
-                received,
-                msg="container list expected: {0} extracted objects."
-                " received: {1} extracted objects".format(expected, received))
-
-            self.assertIn(obj_name, resp_obj_names)
-
-            # the content of the obj should be the md5 sum of the obj name
-            response = self.client.get_object(container_name, obj_name)
-
-            expected = get_md5_hash(name)
-            received = response.content
-            self.assertEqual(
-                expected,
-                received,
-                msg="obj content expected: {0} received: {1}".format(
-                    expected,
-                    received))
-
-        self.addCleanup(
-            self.behaviors.force_delete_containers,
-            containers)
-
-    @ObjectStorageFixture.required_features('bulk')
-    def test_object_creation_with_tar_archive(self):
-        """
-        Scenario: tar file is uploaded without the extract-archive query
+        Scenario: archive file is uploaded without the extract-archive query
         string parameter.
 
         Expected Results: contents of the archive are not expanded into objects
+
+        @param archive_format: Type of archive file to upload.
+        @type  archive_format: string
         """
-        container_name = '{0}_container_{1}'.format(
-            BASE_NAME,
-            randstring.get_random_string())
+        container_name = self.create_temp_container(
+            descriptor=BASE_NAME)
 
-        self.behaviors.create_container(container_name)
-
-        self.addCleanup(
-            self.behaviors.force_delete_containers,
-            [container_name])
-
-        object_data = self.read_archive_data(self.archive_paths['tar'])
-        headers = {'Content-Length': str(len(object_data))}
-        obj_name = "{0}_{1}".format(BASE_NAME, self.default_obj_name)
-        response = self.client.create_object(
-            container_name,
-            obj_name,
-            data=object_data,
-            headers=headers)
-
-        expected = 201
-        received = response.status_code
-        self.assertEqual(
-            expected,
-            received,
-            "object creation with tar archive expected successful status"
-            " code: {0} received: {1}".format(expected, received))
-
-        params = {'format': 'json'}
-        response = self.client.list_objects(container_name, params=params)
-
-        expected = 1
-        received = len(response.entity)
-        self.assertEqual(
-            expected,
-            received,
-            msg="container list expected: {0} objects."
-            " received: {1} objects".format(expected, received))
-
-        resp_obj = response.entity[0]
-
-        self.assertEqual(obj_name, resp_obj.name)
-
-        response = self.client.get_object(
-            container_name,
-            obj_name)
-
-        self.assertGreater(response.headers.get('content-length'), 0)
-
-    @ObjectStorageFixture.required_features('bulk')
-    def test_object_creation_with_tar_gz_archive(self):
-        """
-        Scenario: tar.gz file is uploaded without the extract-archive query
-        string parameter.
-
-        Expected Results: contents of the archive are not expanded into objects
-        """
-        container_name = '{0}_container_{1}'.format(
-            BASE_NAME,
-            randstring.get_random_string())
-
-        self.behaviors.create_container(container_name)
-
-        self.addCleanup(
-            self.behaviors.force_delete_containers,
-            [container_name])
-
-        object_data = self.read_archive_data(self.archive_paths['tar'])
-        headers = {'Content-Length': str(len(object_data))}
-        obj_name = "{0}_{1}".format(BASE_NAME, self.default_obj_name)
-        response = self.client.create_object(
-            container_name,
-            obj_name,
-            data=object_data,
-            headers=headers)
-
-        expected = 201
-        received = response.status_code
-        self.assertEqual(
-            expected,
-            received,
-            "object creation with tar archive expected successful status"
-            " code: {0} received: {1}".format(expected, received))
-
-        params = {'format': 'json'}
-        response = self.client.list_objects(container_name, params=params)
-
-        expected = 1
-        received = len(response.entity)
-        self.assertEqual(
-            expected,
-            received,
-            msg="container list expected: {0} objects."
-            " received: {1} objects".format(expected, received))
-
-        resp_obj = response.entity[0]
-
-        self.assertEqual(obj_name, resp_obj.name)
-
-        response = self.client.get_object(
-            container_name,
-            obj_name)
-
-        self.assertGreater(response.headers.get('content-length'), 0)
-
-    @ObjectStorageFixture.required_features('bulk')
-    def test_object_creation_with_tar_bz2_archive(self):
-        """
-        Scenario: tar.bz2 file is uploaded without the extract-archive query
-        string parameter.
-
-        Expected Results: contents of the archive are not expanded into objects
-        """
-        container_name = '{0}_container_{1}'.format(
-            BASE_NAME,
-            randstring.get_random_string())
-
-        self.behaviors.create_container(container_name)
-
-        self.addCleanup(
-            self.behaviors.force_delete_containers,
-            [container_name])
-
-        object_data = self.read_archive_data(self.archive_paths['tar'])
+        object_data = self.read_archive_data(
+            self.archive_paths[archive_format])
         headers = {'Content-Length': str(len(object_data))}
         obj_name = "{0}_{1}".format(BASE_NAME, self.default_obj_name)
         response = self.client.create_object(
