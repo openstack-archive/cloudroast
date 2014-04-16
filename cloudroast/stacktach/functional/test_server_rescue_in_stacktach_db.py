@@ -26,8 +26,8 @@ class StackTachDBRescueServerTests(StackTachComputeIntegration,
     @classmethod
     def setUpClass(cls):
         cls.create_server()
-        cls.rescue_server()
-        cls.stacktach_events_for_server(cls.rescued_server)
+        cls.rescue_and_unrescue_server()
+        cls.stacktach_events_for_server(cls.unrescued_server)
         cls.event_launch_rescued_server = cls.event_launches[1]
 
     def test_launch_entry_on_rescue_server_response(self):
@@ -42,7 +42,7 @@ class StackTachDBRescueServerTests(StackTachComputeIntegration,
         Verify that the first Launch entry will have all expected fields
         after a Server Rescue
         """
-        self.validate_launch_entry_field_values(server=self.rescued_server)
+        self.validate_launch_entry_field_values(server=self.unrescued_server)
 
     def test_launch_entry_fields_on_rescue(self):
         """
@@ -50,9 +50,9 @@ class StackTachDBRescueServerTests(StackTachComputeIntegration,
         after a Server Rescue
         """
         self.validate_launch_entry_field_values(
-            server=self.rescued_server,
+            server=self.unrescued_server,
             event_launch_server=self.event_launch_rescued_server,
-            launched_at=self.launched_at_rescued_server)
+            launched_at=self.launched_at_unrescued_server)
 
     def test_exist_entry_on_rescue(self):
         """
@@ -65,7 +65,7 @@ class StackTachDBRescueServerTests(StackTachComputeIntegration,
         Verify that the Exist entry will have all expected fields
         after Server Rescue
         """
-        self.validate_exist_entry_field_values(server=self.rescued_server)
+        self.validate_exist_entry_field_values(server=self.unrescued_server)
 
     def test_exist_launched_at_field_match_on_rescue(self):
         """

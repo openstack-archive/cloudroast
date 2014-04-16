@@ -198,7 +198,7 @@ class StackTachComputeIntegration(ComputeFixture, StackTachDBFixture):
 
         cls.servers_client.resize(server_id=cls.created_server.id,
                                   flavorRef=cls.resize_flavor)
-        cls.start_time_wait_resp_at_resize = (
+        cls.resize_start_time = (
             datetime.utcnow().strftime(Constants.DATETIME_FORMAT))
 
         wait_response = (cls.server_behaviors.wait_for_server_status(
@@ -275,8 +275,11 @@ class StackTachComputeIntegration(ComputeFixture, StackTachDBFixture):
         if rebuild_image_ref:
             cls.rebuild_image_ref = rebuild_image_ref
 
-        cls.servers_client.rebuild(server_id=cls.created_server.id,
-                                   image_ref=cls.rebuild_image_ref)
+        rebuild_response = cls.servers_client.rebuild(
+            server_id=cls.created_server.id,
+            image_ref=cls.rebuild_image_ref)
+        cls.rebuild_start_time = (
+            datetime.utcnow().strftime(Constants.DATETIME_FORMAT))
         wait_response = (cls.server_behaviors
                          .wait_for_server_status(cls.created_server.id,
                                                  ServerStates.ACTIVE))
@@ -290,28 +293,35 @@ class StackTachComputeIntegration(ComputeFixture, StackTachDBFixture):
             timeout=cls.servers_config.server_build_timeout)
 
         cls.rebuilt_server = wait_response.entity
+        cls.rebuilt_server.admin_pass = rebuild_response.entity.admin_pass
 
     @classmethod
-    def rescue_server(cls):
+    def rescue_and_unrescue_server(cls):
         """
-        @summary: Performs a rescue request on the created
-            server and waits for the rescued state.
+        @summary: Rescue instance and waits for server status RESCUE.
+            Then unrescues the instance and waits for server status ACTIVE.
             Connects to StackTach DB to obtain relevant validation data.
         """
         cls.rescue_client.rescue(server_id=cls.created_server.id)
+        cls.rescue_start_time = (datetime.utcnow().strftime(Constants
+                                 .DATETIME_FORMAT))
+        cls.server_behaviors.wait_for_server_status(cls.created_server.id,
+                                                    ServerStates.RESCUE)
+
+        cls.rescue_client.unrescue(server_id=cls.created_server.id)
         wait_response = (cls.server_behaviors
                          .wait_for_server_status(cls.created_server.id,
-                                                 ServerStates.RESCUE))
+                                                 ServerStates.ACTIVE))
 
-        cls.launched_at_rescued_server = (datetime.utcnow()
-                                          .strftime(Constants
-                                                    .DATETIME_FORMAT))
+        cls.launched_at_unrescued_server = (datetime.utcnow()
+                                            .strftime(Constants
+                                                      .DATETIME_FORMAT))
         cls.stacktach_db_behavior.wait_for_launched_at(
             server_id=cls.created_server.id,
             interval_time=cls.servers_config.server_status_interval,
             timeout=cls.servers_config.server_build_timeout)
 
-        cls.rescued_server = wait_response.entity
+        cls.unrescued_server = wait_response.entity
 
     @classmethod
     def hard_reboot_server(cls):
