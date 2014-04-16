@@ -18,26 +18,24 @@ from random import shuffle
 
 from cafe.drivers.unittest.datasets import DatasetList
 from cafe.drivers.unittest.decorators import memoized
+from cloudcafe.compute.composites import ImagesComposite
 
 from cloudroast.blockstorage.datasets import DatasetGeneratorError
-from cloudroast.blockstorage.volumes_api.v2.datasets import VolumesDatasets
-from cloudroast.blockstorage.volumes_api.v2.composites import VolumesComposite
-from cloudroast.blockstorage.volumes_api.v2.integration.compute.composites \
-    import ImagesComposite
+from cloudroast.blockstorage.volumes_api.datasets import VolumesDatasets
 
 
 class ComputeDatasets(VolumesDatasets):
     """Collection of dataset generators for blockstorage-images integration
     data driven tests
     """
+    images = ImagesComposite()
 
     @classmethod
     @memoized
     def _images(cls):
         """Get images list"""
 
-        images = ImagesComposite()
-        resp = images.client.list_images_with_detail()
+        resp = cls.images.client.list_images_with_detail()
         if not resp.ok:
             raise DatasetGeneratorError(
                 "Unable to retrieve list of images during data-driven-test "
@@ -93,9 +91,8 @@ class ComputeDatasets(VolumesDatasets):
         pre-configured image and volume_type filters.
         """
 
-        volumes = VolumesComposite()
-        image_filter = volumes.config.image_filter
-        volume_type_filter = volumes.config.volume_type_filter
+        image_filter = cls.volumes.config.image_filter
+        volume_type_filter = cls.volumes.config.volume_type_filter
         ret = cls.images_by_volume_type(
             max_datasets, randomize, image_filter, volume_type_filter)
         return ret

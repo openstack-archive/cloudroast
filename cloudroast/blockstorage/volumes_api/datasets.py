@@ -1,31 +1,24 @@
 from cafe.drivers.unittest.datasets import DatasetList
 from cafe.drivers.unittest.decorators import memoized
-
-from cloudroast.blockstorage.datasets import BaseDataset, DatasetGeneratorError
-from cloudroast.blockstorage.volumes_api.v2.composites import VolumesComposite
+from cloudroast.blockstorage.datasets import \
+    BaseDataset, DatasetGeneratorError
+from cloudcafe.blockstorage.composites import VolumesAutoComposite
 
 
 class VolumesDatasets(BaseDataset):
     """Collection of dataset generators for blockstorage data driven tests"""
+    volumes = VolumesAutoComposite()
 
     @classmethod
     @memoized
     def _volume_types(cls):
         """Get volume type list"""
-
-        volumes = VolumesComposite()
-        resp = volumes.client.list_all_volume_types()
-        if not resp.ok:
+        try:
+            return cls.volumes.behaviors.get_volume_types()
+        except:
             raise DatasetGeneratorError(
                 "Unable to retrieve list of volume types during "
                 "data-driven-test setup.")
-
-        if resp.entity is None:
-            raise DatasetGeneratorError(
-                "Unable to retrieve list of volume types during "
-                "data-driven-test setup: response did not deserialize")
-
-        return resp.entity
 
     @classmethod
     @memoized
