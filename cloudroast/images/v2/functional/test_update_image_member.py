@@ -16,17 +16,15 @@ limitations under the License.
 
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.images.common.types import ImageMemberStatus
-from cloudroast.images.fixtures import ComputeIntegrationFixture
+from cloudroast.images.fixtures import ImagesFixture
 
 
-class TestUpdateImageMember(ComputeIntegrationFixture):
+class TestUpdateImageMember(ImagesFixture):
 
     @classmethod
     def setUpClass(cls):
         super(TestUpdateImageMember, cls).setUpClass()
-        server = cls.server_behaviors.create_active_server().entity
-        image = cls.compute_image_behaviors.create_active_image(server.id)
-        cls.image = cls.images_client.get_image(image.entity.id).entity
+        cls.image = cls.images_behavior.create_image_via_task()
 
     @tags(type='smoke')
     def test_update_image_member_status_to_accepted(self):
@@ -42,7 +40,7 @@ class TestUpdateImageMember(ComputeIntegrationFixture):
         7) Verify that the response contains the correct updated properties
         """
 
-        member_id = self.alt_user_config.tenant_id
+        member_id = self.alt_tenant_id
         image = self.image
         response = self.images_client.add_member(image.id_, member_id)
         self.assertEqual(response.status_code, 200)
