@@ -15,17 +15,24 @@ limitations under the License.
 """
 
 import base64
-import unittest2 as unittest
+import unittest
 
 from cafe.drivers.unittest.decorators import tags
-from cloudcafe.compute.common.types import ComputeHypervisors
-from cloudcafe.compute.common.types import NovaServerStatusTypes
 from cloudcafe.common.tools.datagen import rand_name
+from cloudcafe.compute.common.types import ComputeHypervisors, \
+    NovaServerStatusTypes
 from cloudcafe.compute.config import ComputeConfig
-from cloudroast.compute.fixtures import ComputeFixture
 from cloudcafe.compute.servers_api.config import ServersConfig
 
+from cloudroast.compute.fixtures import ComputeFixture
 
+compute_config = ComputeConfig()
+hypervisor = compute_config.hypervisor.lower()
+
+
+@unittest.skipIf(
+    hypervisor in [ComputeHypervisors.LXC_LIBVIRT],
+    'Rebuild server not supported in current configuration.')
 class RebuildServerTests(ComputeFixture):
 
     compute_config = ComputeConfig()

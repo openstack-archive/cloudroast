@@ -14,23 +14,23 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import unittest2 as unittest
+import unittest
 
 from cafe.drivers.unittest.decorators import tags
-from cloudcafe.compute.common.types import ComputeHypervisors
-from cloudcafe.compute.common.types import NovaServerStatusTypes as \
-    ServerStates
-from cloudcafe.compute.common.types import InstanceAuthStrategies
+from cloudcafe.compute.common.types import ComputeHypervisors, \
+    InstanceAuthStrategies, NovaServerStatusTypes as ServerStates
 from cloudcafe.compute.config import ComputeConfig
+
 from cloudroast.compute.fixtures import ComputeFixture
 
 compute_config = ComputeConfig()
 hypervisor = compute_config.hypervisor.lower()
 
 
-@unittest.skipIf(hypervisor in [ComputeHypervisors.KVM,
-                                ComputeHypervisors.QEMU],
-                 'Change password not supported in current configuration.')
+@unittest.skipIf(
+    hypervisor in [ComputeHypervisors.KVM, ComputeHypervisors.QEMU,
+                   ComputeHypervisors.IRONIC, ComputeHypervisors.LXC_LIBVIRT],
+    'Change password not supported in current configuration.')
 class ChangeServerPasswordTests(ComputeFixture):
 
     @classmethod
