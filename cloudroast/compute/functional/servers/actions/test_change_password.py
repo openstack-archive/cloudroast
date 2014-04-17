@@ -29,7 +29,9 @@ hypervisor = compute_config.hypervisor.lower()
 
 
 @unittest.skipIf(hypervisor in [ComputeHypervisors.KVM,
-                                ComputeHypervisors.QEMU],
+                                ComputeHypervisors.QEMU,
+                                ComputeHypervisors.IRONIC,
+                                ComputeHypervisors.LXC_LIBVIRT],
                  'Change password not supported in current configuration.')
 class ChangeServerPasswordTests(ComputeFixture):
 
