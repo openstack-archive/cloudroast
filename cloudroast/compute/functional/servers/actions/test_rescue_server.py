@@ -13,12 +13,21 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
+import unittest
 
 from cafe.drivers.unittest.decorators import tags
+from cloudcafe.compute.common.types import ComputeHypervisors
 from cloudcafe.common.tools.datagen import rand_name
+from cloudcafe.compute.config import ComputeConfig
 from cloudroast.compute.fixtures import ComputeFixture
 
+compute_config = ComputeConfig()
+hypervisor = compute_config.hypervisor.lower()
 
+
+@unittest.skipIf(
+    hypervisor in [ComputeHypervisors.IRONIC, ComputeHypervisors.LXC_LIBVIRT],
+    'Rescue server not supported in current configuration.')
 class ServerRescueTests(ComputeFixture):
 
     @classmethod

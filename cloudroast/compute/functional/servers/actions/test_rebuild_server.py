@@ -25,7 +25,13 @@ from cloudcafe.compute.config import ComputeConfig
 from cloudroast.compute.fixtures import ComputeFixture
 from cloudcafe.compute.servers_api.config import ServersConfig
 
+compute_config = ComputeConfig()
+hypervisor = compute_config.hypervisor.lower()
 
+
+@unittest.skipIf(
+    hypervisor in [ComputeHypervisors.LXC_LIBVIRT],
+    'Rebuild server not supported in current configuration.')
 class RebuildServerTests(ComputeFixture):
 
     compute_config = ComputeConfig()

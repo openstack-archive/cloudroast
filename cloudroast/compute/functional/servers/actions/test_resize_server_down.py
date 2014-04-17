@@ -24,12 +24,20 @@ from cloudcafe.compute.config import ComputeConfig
 from cloudcafe.compute.flavors_api.config import FlavorsConfig
 from cloudroast.compute.fixtures import ComputeFixture
 
+compute_config = ComputeConfig()
+hypervisor = compute_config.hypervisor.lower()
+
 flavors_config = FlavorsConfig()
 resize_enabled = flavors_config.resize_enabled
 
+can_resize = (
+    resize_enabled
+    and hypervisor not in [ComputeHypervisors.IRONIC,
+                           ComputeHypervisors.LXC_LIBVIRT])
+
 
 @unittest.skipUnless(
-    resize_enabled, 'Resize not enabled for this flavor class.')
+    can_resize, 'Resize not enabled for this configuration.')
 class ResizeServerDownConfirmTests(ComputeFixture):
 
     compute_config = ComputeConfig()

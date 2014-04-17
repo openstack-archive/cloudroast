@@ -14,11 +14,20 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import unittest
+
 from cafe.drivers.unittest.decorators import tags
+from cloudcafe.compute.common.types import ComputeHypervisors
 from cloudcafe.compute.common.types import VncConsoleTypes
+from cloudcafe.compute.config import ComputeConfig
 from cloudroast.compute.fixtures import ComputeFixture
 
+compute_config = ComputeConfig()
+hypervisor = compute_config.hypervisor.lower()
 
+
+@unittest.skipIf(hypervisor in [ComputeHypervisors.IRONIC],
+                 'Get VNC console not supported in current configuration.')
 class ServerVncConsoleTests(ComputeFixture):
 
     @classmethod
