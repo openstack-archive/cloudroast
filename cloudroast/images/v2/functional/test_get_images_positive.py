@@ -16,17 +16,18 @@ limitations under the License.
 
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.common.tools.datagen import rand_name
-from cloudroast.images.fixtures import ImagesFixture
+from cloudcafe.images.common.types import ImageVisibility
+from cloudroast.images.fixtures import ComputeIntegrationFixture
 
 
-class TestGetImages(ImagesFixture):
+class TestGetImages(ComputeIntegrationFixture):
 
     @classmethod
     def setUpClass(cls):
         super(TestGetImages, cls).setUpClass()
         cls.image_name = rand_name('get_image')
-        cls.images = cls.images_behavior.create_new_images(
-            count=2, name=cls.image_name)
+        cls.images = cls.images_behavior.create_images_via_task(
+            count=2, image_properties={'name': cls.image_name})
 
     @tags(type='positive', regression='true')
     def test_get_images_using_marker_pagination(self):
@@ -44,7 +45,7 @@ class TestGetImages(ImagesFixture):
         7) Verify that the previously returned image is not in the current list
         """
 
-        owner = self.user_config.tenant_id
+        owner = self.tenant_id
         response = self.images_client.list_images(
             limit=1, name=self.image_name, owner=owner)
         self.assertEqual(response.status_code, 200)
@@ -73,3 +74,42 @@ class TestGetImages(ImagesFixture):
         self.assertEqual(response.status_code, 200)
         images = response.entity
         self.assertLessEqual(len(images), 50)
+
+    @tags(type='positive', regression='true')
+    def test_compare_image_list_from_glance_and_nova(self):
+        """
+        @summary: Compare the list of images returned via  glance and nova
+
+        1) Get images with a limit of 100 images via glance
+        2) Get images with a limit of 100 images via nova
+        3) Verify that the length of the list of images from glance is the same
+        as the length of the list of images from nova
+        4) Verify that each image name in the list of images from glance is in
+        the list of images from nova
+        """
+
+        test_image_name = self.images_config.test_image_name
+
+        response = self.images_client.list_images(
+            limit=100, visibility=ImageVisibility.PUBLIC)
+        self.assertEqual(response.status_code, 200)
+        glance_images = response.entity
+
+        # Remove test image from glance_images
+        for image in glance_images:
+            if image.name == test_image_name:
+                glance_images.remove(image)
+
+        glance_image_names = [image.name for image in glance_images]
+
+        response = self.compute_images_client.list_images_with_detail(
+            limit=100, image_type='base')
+        self.assertEqual(response.status_code, 200)
+        nova_images = response.entity
+
+        nova_image_names = [image.name for image in nova_images]
+
+        self.assertEqual(len(glance_images), len(nova_images))
+
+        for image_name in glance_image_names:
+            self.assertIn(image_name, nova_image_names)
