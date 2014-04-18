@@ -13,6 +13,9 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
+from datetime import datetime
+
+from cloudcafe.compute.common.constants import Constants
 from cloudroast.stacktach.fixtures import StackTachComputeIntegration,\
     StackTachTestAssertionsFixture
 
@@ -27,7 +30,10 @@ class StackTachDBServerResizeUpConfirmTests(StackTachComputeIntegration,
     @classmethod
     def setUpClass(cls):
         cls.create_server()
-        cls.resize_and_confirm_resize_server()
+        cls.resize_server()
+        cls.confirm_resize_server()
+        cls.audit_period_beginning = \
+            datetime.utcnow().strftime(Constants.DATETIME_0AM_FORMAT)
 
         cls.stacktach_events_for_server(server=cls.confirmed_resized_server)
         cls.event_launch_resize_server = cls.event_launches[1]
@@ -72,6 +78,9 @@ class StackTachDBServerResizeUpConfirmTests(StackTachComputeIntegration,
         """
         self.validate_exist_entry_field_values(
             server=self.created_server)
+        self.validate_exist_entry_audit_period_values(
+            expected_audit_period_ending=self.resize_start_time,
+            expected_audit_period_beginning=self.audit_period_beginning)
 
     def test_exist_launched_at_field_match_on_resize_up(self):
         """
