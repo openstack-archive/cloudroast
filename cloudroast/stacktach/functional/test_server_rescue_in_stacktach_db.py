@@ -13,6 +13,11 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
+from datetime import timedelta, datetime
+
+from cloudcafe.common.tools.time import string_to_datetime
+from cloudcafe.compute.common.constants import Constants
+from cloudcafe.compute.common.equality_tools import EqualityTools
 from cloudroast.stacktach.fixtures import StackTachComputeIntegration,\
     StackTachTestAssertionsFixture
 
@@ -27,6 +32,9 @@ class StackTachDBRescueServerTests(StackTachComputeIntegration,
     def setUpClass(cls):
         cls.create_server()
         cls.rescue_and_unrescue_server()
+        cls.audit_period_beginning = \
+            datetime.utcnow().strftime(Constants.DATETIME_0AM_FORMAT)
+
         cls.stacktach_events_for_server(cls.unrescued_server)
         cls.event_launch_rescued_server = cls.event_launches[1]
 
@@ -66,6 +74,18 @@ class StackTachDBRescueServerTests(StackTachComputeIntegration,
         after Server Rescue
         """
         self.validate_exist_entry_field_values(server=self.unrescued_server)
+        self.assertTrue(EqualityTools.are_datetimes_equal(
+            string_to_datetime(self.rescue_start_time),
+            string_to_datetime(self.event_exist.audit_period_ending),
+            timedelta(seconds=self.leeway)))
+        self.assertTrue(EqualityTools.are_datetimes_equal(
+            string_to_datetime(self.audit_period_beginning),
+            string_to_datetime(self.event_exist.audit_period_beginning),
+            timedelta(seconds=self.leeway)))
+        self.assertTrue(EqualityTools.are_datetimes_equal(
+            string_to_datetime(self.rescue_start_time),
+            string_to_datetime(self.event_exist.received),
+            timedelta(seconds=self.leeway)))
 
     def test_exist_launched_at_field_match_on_rescue(self):
         """

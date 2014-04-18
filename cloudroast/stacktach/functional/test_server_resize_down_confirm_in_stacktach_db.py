@@ -13,9 +13,11 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-from datetime import datetime
+from datetime import datetime, timedelta
 
+from cloudcafe.common.tools.time import string_to_datetime
 from cloudcafe.compute.common.constants import Constants
+from cloudcafe.compute.common.equality_tools import EqualityTools
 from cloudcafe.compute.flavors_api.config import FlavorsConfig
 from cloudroast.stacktach.fixtures import StackTachComputeIntegration,\
     StackTachTestAssertionsFixture
@@ -40,7 +42,8 @@ class StackTachDBServerResizeDownConfirmTests(StackTachComputeIntegration,
                     cls.flavor_ref, cls.flavor_ref_alt))
 
         cls.create_server(flavor_ref=cls.flavor_ref_alt)
-        cls.resize_and_confirm_resize_server(resize_flavor=cls.flavor_ref)
+        cls.resize_server(resize_flavor=cls.flavor_ref)
+        cls.confirm_resize_server()
         cls.audit_period_beginning = \
             datetime.utcnow().strftime(Constants.DATETIME_0AM_FORMAT)
 
@@ -88,6 +91,18 @@ class StackTachDBServerResizeDownConfirmTests(StackTachComputeIntegration,
         self.validate_exist_entry_field_values(
             server=self.created_server,
             expected_flavor_ref=self.flavor_ref_alt)
+        self.assertTrue(EqualityTools.are_datetimes_equal(
+            string_to_datetime(self.resize_start_time),
+            string_to_datetime(self.event_exist.audit_period_ending),
+            timedelta(seconds=self.leeway)))
+        self.assertTrue(EqualityTools.are_datetimes_equal(
+            string_to_datetime(self.audit_period_beginning),
+            string_to_datetime(self.event_exist.audit_period_beginning),
+            timedelta(seconds=self.leeway)))
+        self.assertTrue(EqualityTools.are_datetimes_equal(
+            string_to_datetime(self.resize_start_time),
+            string_to_datetime(self.event_exist.received),
+            timedelta(seconds=self.leeway)))
 
     def test_exist_launched_at_field_match_on_resize_down(self):
         """

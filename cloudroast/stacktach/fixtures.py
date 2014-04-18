@@ -64,7 +64,7 @@ class StackTachDBFixture(BaseTestFixture):
         super(StackTachDBFixture, cls).setUpClass()
         cls.marshalling = MarshallingConfig()
         cls.servers_config = ServersConfig()
-        cls.leeway = cls.servers_config.server_build_timeout * 3
+        cls.leeway = cls.servers_config.server_build_timeout
         cls.stacktach_config = StacktachConfig()
         cls.event_id = cls.stacktach_config.event_id
         cls.days_passed = cls.stacktach_config.days_passed
@@ -215,19 +215,19 @@ class StackTachComputeIntegration(ComputeFixture, StackTachDBFixture):
         cls.verify_resized_server = wait_response.entity
 
     @classmethod
-    def resize_and_confirm_resize_server(cls, resize_flavor=None):
+    def confirm_resize_server(cls):
         """
-        @summary: Performs a resize on the created server, confirms the resize.
+        @summary: Performs a confirm resize on the created server.
             Connects to StackTach DB to obtain relevant validation data.
-        @param resize_flavor: Flavor to which Server needs to be resized.
-        @type resize_flavor: String
         """
-        cls.resize_server(resize_flavor=resize_flavor)
-
         cls.servers_client.confirm_resize(cls.created_server.id)
+        cls.confirm_resize_start_time = (
+            datetime.utcnow().strftime(Constants.DATETIME_FORMAT))
         wait_response = (cls.server_behaviors
                          .wait_for_server_status(cls.created_server.id,
                                                  ServerStates.ACTIVE))
+        cls.launched_at_confirm_resize_server = (
+            datetime.utcnow().strftime(Constants.DATETIME_FORMAT))
 
         cls.stacktach_db_behavior.wait_for_launched_at(
             server_id=cls.created_server.id,
@@ -237,23 +237,22 @@ class StackTachComputeIntegration(ComputeFixture, StackTachDBFixture):
         cls.confirmed_resized_server = wait_response.entity
 
     @classmethod
-    def resize_and_revert_resize_server(cls, resize_flavor=None):
+    def revert_resize_server(cls):
         """
-        @summary: Performs a resize on the created server, reverts the resize
+        @summary: Performs a revert resize on the created server
             and waits for active state.  Connects to StackTach DB to obtain
             relevant validation data.
-        @param resize_flavor: Flavor to which Server needs to be resized.
-        @type resize_flavor: String
         """
-        cls.resize_server(resize_flavor=resize_flavor)
-
         cls.servers_client.revert_resize(cls.created_server.id)
-        wait_response = cls.server_behaviors\
+        cls.revert_resize_start_time = (
+            datetime.utcnow().strftime(Constants.DATETIME_FORMAT))
+
+        wait_response = cls.server_behaviors \
             .wait_for_server_status(cls.created_server.id,
                                     ServerStates.ACTIVE)
-
         cls.launched_at_revert_resize_server = (
             datetime.utcnow().strftime(Constants.DATETIME_FORMAT))
+
         cls.stacktach_db_behavior.wait_for_launched_at(
             server_id=cls.created_server.id,
             interval_time=cls.servers_config.server_status_interval,
