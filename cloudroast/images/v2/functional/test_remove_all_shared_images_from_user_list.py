@@ -14,82 +14,75 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import unittest2 as unittest
+
 from cafe.drivers.unittest.decorators import tags
-from cloudcafe.images.common.types import ImageMemberStatus, ImageVisibility
+from cloudcafe.images.common.types import ImageMemberStatus
 from cloudroast.images.fixtures import ImagesFixture
 
 
 class RemoveAllSharedImagesFromUserListTest(ImagesFixture):
 
+    @unittest.skip('Bug, Redmine #4337')
     @tags(type='positive', regression='true')
     def test_remove_all_shared_images_from_user_list(self):
         """
-        @summary: Remove all shared images from a user's images list.
-        Consider the following scenario: A tenant has two images. The
-        first image is private and shared with alternative tenant.
-        The second image is public, hence shared with all users.
+        @summary: Remove all shared images from a user's images list
 
-        1. Register an image (image_one) as tenant
-        2. Register a public image (image_two) as tenant
-        3. Register an image (alt_image) as alternative tenant
-        4. Get the list of alternative tenant images
-        5. Verify that alt_image is in alternative tenant's images list
-        6. Verify that image_two is in alternative tenant's images list
-        7. Verify that image_one is not in alternative tenant's images list
-        8. Share image_one with alternative tenant (add alternative tenant
-            as a member of image_one)
-        9. Verify that alternative tenant's membership status for
-            image_one is 'pending'
-        10. Verify that alternative tenant can access image_one
-        11. Get the list of alternative tenant images again
-        12. Verify that image_one is not in alternative tenant's images list
-        13. Verify that image_two and alt_image  are in alternative tenant's
-            images list
-        14. Update alternative tenant's membership status for image_one
-            (alternative tenant accepts membership of image_one)
-        15. Get the list of alternative tenant images again
-        16. Verify that alternative tenant now sees image_one in their list
-        17. Remove alternative tenant as a member of image_one
-        18. Update image_two visibility to private
-        19. Get the list of alternative tenant images again
-        20. Verify that alternative tenant does not see the previously
-            shared image_one and image_two in their list
-        21. Verify that alternative tenant sees alt_image in their list
+        1) Create an image (image) as tenant
+        2) Create an image (alt_image) as alternative tenant
+        3) Get the list of alternative tenant images
+        4) Verify that alt_image is in alternative tenant's images list
+        5) Verify that image is not in alternative tenant's images list
+        6) Share image with alternative tenant (add alternative tenant as a
+        member of image)
+        7) Verify that alternative tenant's membership status for image is
+        'pending'
+        8) Verify that alternative tenant can access image
+        9) Get the list of alternative tenant images again
+        10) Verify that image is not in alternative tenant's images list
+        11) Verify that alt_image is in alternative tenant's images list
+        12) Update alternative tenant's membership status for image
+        (alternative tenant accepts membership of image)
+        13) Get the list of alternative tenant images again
+        14) Verify that alternative tenant now sees image_one in their list
+        15) Remove alternative tenant as a member of image
+        16) Get the list of alternative tenant images again
+        17) Verify that alternative tenant does not see the previously shared
+        image in their list
+        18) Verify that alternative tenant sees alt_image in their list
         """
 
-        image_one = self.images_behavior.create_new_image()
-        image_two = self.images_behavior.create_new_image(
-            visibility=ImageVisibility.PUBLIC)
-        alt_image = self.alt_images_behavior.create_new_image()
-        alt_tenant_id = self.alt_access_data.token.tenant.id_
+        alt_tenant_id = self.alt_tenant_id
+
+        image = self.images_behavior.create_image_via_task()
+        alt_image = self.alt_images_behavior.create_image_via_task()
 
         response = self.alt_images_client.list_images()
         images = response.entity
         self.assertIn(alt_image, images)
-        self.assertNotIn(image_one, images)
-        self.assertIn(image_two, images)
+        self.assertNotIn(image, images)
 
-        response = self.images_client.add_member(image_id=image_one.id_,
-                                                 member_id=alt_tenant_id)
+        response = self.images_client.add_member(
+            image_id=image.id_, member_id=alt_tenant_id)
         self.assertEqual(response.status_code, 200)
         member = response.entity
         self.assertEqual(member.member_id, alt_tenant_id)
         self.assertEqual(member.status, ImageMemberStatus.PENDING)
 
-        response = self.alt_images_client.get_image(image_id=image_one.id_)
+        response = self.alt_images_client.get_image(image_id=image.id_)
         self.assertEqual(response.status_code, 200)
         image = response.entity
-        self.assertEqual(image, image_one)
+        self.assertEqual(image, image)
 
         response = self.alt_images_client.list_images()
         self.assertEqual(response.status_code, 200)
         images = response.entity
         self.assertIn(alt_image, images)
-        self.assertNotIn(image_one, images)
-        self.assertIn(image_two, images)
+        self.assertNotIn(image, images)
 
         response = self.alt_images_client.update_member(
-            image_id=image_one.id_, member_id=alt_tenant_id,
+            image_id=image.id_, member_id=alt_tenant_id,
             status=ImageMemberStatus.ACCEPTED)
         self.assertEqual(response.status_code, 200)
         member = response.entity
@@ -99,23 +92,13 @@ class RemoveAllSharedImagesFromUserListTest(ImagesFixture):
         response = self.alt_images_client.list_images()
         images = response.entity
         self.assertIn(alt_image, images)
-        self.assertIn(image_one, images)
-        self.assertIn(image_two, images)
+        self.assertIn(image, images)
 
         response = self.images_client.delete_member(
-            image_id=image_one.id_, member_id=alt_tenant_id)
+            image_id=image.id_, member_id=alt_tenant_id)
         self.assertEqual(response.status_code, 204)
-
-        response = self.images_client.update_image(
-            image_id=image_two.id_,
-            replace={"visibility": ImageVisibility.PRIVATE})
-        self.assertEqual(response.status_code, 200)
-        updated_image = response.entity
-        self.assertEqual(updated_image.id_, image_two.id_)
-        self.assertEqual(updated_image.visibility, ImageVisibility.PRIVATE)
 
         response = self.alt_images_client.list_images()
         images = response.entity
         self.assertIn(alt_image, images)
-        self.assertNotIn(image_one, images)
-        self.assertNotIn(image_two, images)
+        self.assertNotIn(image, images)

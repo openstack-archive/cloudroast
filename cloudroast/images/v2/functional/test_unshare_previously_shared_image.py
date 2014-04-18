@@ -25,20 +25,20 @@ class UnsharePreviouslySharedImageTest(ImagesFixture):
     def test_unshare_previously_shared_image(self):
         """@summary: Unshare previously shared image between two users.
 
-        1. Register an image as tenant
-        2. Verify that alternative tenant cannot access the image
-        3. Add alternative tenant as a member of the image
-        4. Verify that alternative tenant can now access the image
-        5. Update alternative tenant membership status to 'accepted' for image
-        6. Verify that the image belongs to alternative tenant list of images
-        7. Remove alternative tenant as a member of the image
-        8. Verify that the list of members for the image is empty
-        9. Verify that the image does not belong to alternative tenant list
-            of images
+        1) Create an image as tenant
+        2) Verify that alternative tenant cannot access the image
+        3) Add alternative tenant as a member of the image
+        4) Verify that alternative tenant can now access the image
+        5) Update alternative tenant membership status to 'accepted' for image
+        6) Verify that the image belongs to alternative tenant list of images
+        7) Remove alternative tenant as a member of the image
+        8) Verify that the list of members for the image is empty
+        9) Verify that the image does not belong to alternative tenant list of
+        images
         """
 
-        image = self.images_behavior.create_new_image()
-        alt_tenant_id = self.alt_access_data.token.tenant.id_
+        image = self.images_behavior.create_image_via_task()
+        alt_tenant_id = self.alt_tenant_id
 
         response = self.alt_images_client.get_image(image_id=image.id_)
         self.assertEqual(response.status_code, 404)
