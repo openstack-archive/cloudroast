@@ -13,6 +13,9 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
+from datetime import datetime
+
+from cloudcafe.compute.common.constants import Constants
 from cloudroast.stacktach.fixtures import StackTachComputeIntegration,\
     StackTachTestAssertionsFixture
 
@@ -28,7 +31,10 @@ class StackTachDBServerResizeUpRevertTests(StackTachComputeIntegration,
     @classmethod
     def setUpClass(cls):
         cls.create_server()
-        cls.resize_and_revert_resize_server()
+        cls.resize_server()
+        cls.revert_resize_server()
+        cls.audit_period_beginning = \
+            datetime.utcnow().strftime(Constants.DATETIME_0AM_FORMAT)
 
         cls.stacktach_events_for_server(server=cls.reverted_resized_server)
         cls.event_launch_resize_server = cls.event_launches[1]
@@ -88,6 +94,9 @@ class StackTachDBServerResizeUpRevertTests(StackTachComputeIntegration,
         """
         self.validate_exist_entry_field_values(
             server=self.created_server)
+        self.validate_exist_entry_audit_period_values(
+            expected_audit_period_ending=self.resize_start_time,
+            expected_audit_period_beginning=self.audit_period_beginning)
 
     def test_exist_launched_at_field_match_on_resize_up(self):
         """
@@ -113,6 +122,10 @@ class StackTachDBServerResizeUpRevertTests(StackTachComputeIntegration,
             event_exist_server=self.event_exist_revert_resize_server,
             expected_flavor_ref=self.flavor_ref_alt,
             launched_at=self.launched_at_resized_server)
+        self.validate_exist_entry_audit_period_values(
+            expected_audit_period_ending=self.revert_resize_start_time,
+            expected_audit_period_beginning=self.audit_period_beginning,
+            event_exist_server=self.event_exist_revert_resize_server)
 
     def test_exist_launched_at_field_match_on_revert_resize_up(self):
         """

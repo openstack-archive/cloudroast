@@ -40,7 +40,8 @@ class StackTachDBServerResizeDownConfirmTests(StackTachComputeIntegration,
                     cls.flavor_ref, cls.flavor_ref_alt))
 
         cls.create_server(flavor_ref=cls.flavor_ref_alt)
-        cls.resize_and_confirm_resize_server(resize_flavor=cls.flavor_ref)
+        cls.resize_server(resize_flavor=cls.flavor_ref)
+        cls.confirm_resize_server()
         cls.audit_period_beginning = \
             datetime.utcnow().strftime(Constants.DATETIME_0AM_FORMAT)
 
@@ -88,6 +89,9 @@ class StackTachDBServerResizeDownConfirmTests(StackTachComputeIntegration,
         self.validate_exist_entry_field_values(
             server=self.created_server,
             expected_flavor_ref=self.flavor_ref_alt)
+        self.validate_exist_entry_audit_period_values(
+            expected_audit_period_ending=self.resize_start_time,
+            expected_audit_period_beginning=self.audit_period_beginning)
 
     def test_exist_launched_at_field_match_on_resize_down(self):
         """

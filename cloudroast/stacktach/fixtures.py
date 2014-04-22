@@ -64,7 +64,7 @@ class StackTachDBFixture(BaseTestFixture):
         super(StackTachDBFixture, cls).setUpClass()
         cls.marshalling = MarshallingConfig()
         cls.servers_config = ServersConfig()
-        cls.leeway = cls.servers_config.server_build_timeout * 3
+        cls.leeway = cls.servers_config.server_build_timeout
         cls.stacktach_config = StacktachConfig()
         cls.event_id = cls.stacktach_config.event_id
         cls.days_passed = cls.stacktach_config.days_passed
@@ -215,19 +215,19 @@ class StackTachComputeIntegration(ComputeFixture, StackTachDBFixture):
         cls.verify_resized_server = wait_response.entity
 
     @classmethod
-    def resize_and_confirm_resize_server(cls, resize_flavor=None):
+    def confirm_resize_server(cls):
         """
-        @summary: Performs a resize on the created server, confirms the resize.
+        @summary: Performs a confirm resize on the created server.
             Connects to StackTach DB to obtain relevant validation data.
-        @param resize_flavor: Flavor to which Server needs to be resized.
-        @type resize_flavor: String
         """
-        cls.resize_server(resize_flavor=resize_flavor)
-
         cls.servers_client.confirm_resize(cls.created_server.id)
+        cls.confirm_resize_start_time = (
+            datetime.utcnow().strftime(Constants.DATETIME_FORMAT))
         wait_response = (cls.server_behaviors
                          .wait_for_server_status(cls.created_server.id,
                                                  ServerStates.ACTIVE))
+        cls.launched_at_confirm_resize_server = (
+            datetime.utcnow().strftime(Constants.DATETIME_FORMAT))
 
         cls.stacktach_db_behavior.wait_for_launched_at(
             server_id=cls.created_server.id,
@@ -237,23 +237,22 @@ class StackTachComputeIntegration(ComputeFixture, StackTachDBFixture):
         cls.confirmed_resized_server = wait_response.entity
 
     @classmethod
-    def resize_and_revert_resize_server(cls, resize_flavor=None):
+    def revert_resize_server(cls):
         """
-        @summary: Performs a resize on the created server, reverts the resize
+        @summary: Performs a revert resize on the created server
             and waits for active state.  Connects to StackTach DB to obtain
             relevant validation data.
-        @param resize_flavor: Flavor to which Server needs to be resized.
-        @type resize_flavor: String
         """
-        cls.resize_server(resize_flavor=resize_flavor)
-
         cls.servers_client.revert_resize(cls.created_server.id)
-        wait_response = cls.server_behaviors\
+        cls.revert_resize_start_time = (
+            datetime.utcnow().strftime(Constants.DATETIME_FORMAT))
+
+        wait_response = cls.server_behaviors \
             .wait_for_server_status(cls.created_server.id,
                                     ServerStates.ACTIVE)
-
         cls.launched_at_revert_resize_server = (
             datetime.utcnow().strftime(Constants.DATETIME_FORMAT))
+
         cls.stacktach_db_behavior.wait_for_launched_at(
             server_id=cls.created_server.id,
             interval_time=cls.servers_config.server_status_interval,
@@ -629,6 +628,38 @@ class StackTachTestAssertionsFixture(StackTachDBFixture):
                             self.event_exist_server.launched_at,
                             self.exist_response.reason,
                             self.exist_response.content))
+
+    def validate_exist_entry_audit_period_values(
+            self, expected_audit_period_ending,
+            expected_audit_period_beginning, event_exist_server=None):
+        """
+        @summary: Validate that the Exist entry will have all expected values
+         related to audit periods
+        @param expected_audit_period_ending: The expected audit period ending
+            of the server
+        @type expected_audit_period_ending: datetime
+        @param expected_audit_period_beginning: The expected audit period
+            beginning of the server
+        @type expected_audit_period_beginning: datetime
+        @param event_exist_server: Details of the event Exist from DB
+        @type event_exist_server: ServerExists
+        """
+        self.event_exist_server = self.event_exist
+        if event_exist_server:
+            self.event_exist_server = event_exist_server
+
+        self.assertTrue(EqualityTools.are_datetimes_equal(
+            string_to_datetime(expected_audit_period_ending),
+            string_to_datetime(self.event_exist_server.audit_period_ending),
+            timedelta(seconds=self.leeway)))
+        self.assertTrue(EqualityTools.are_datetimes_equal(
+            string_to_datetime(expected_audit_period_beginning),
+            string_to_datetime(self.event_exist_server.audit_period_beginning),
+            timedelta(seconds=self.leeway)))
+        self.assertTrue(EqualityTools.are_datetimes_equal(
+            string_to_datetime(expected_audit_period_ending),
+            string_to_datetime(self.event_exist_server.received),
+            timedelta(seconds=self.leeway)))
 
     def validate_no_exists_entry_returned(self):
         """
