@@ -45,14 +45,15 @@ class RebuildServerTests(ComputeFixture):
         cls.server = response.entity
         response = cls.flavors_client.get_flavor_details(cls.flavor_ref)
         cls.flavor = response.entity
-        cls.resources.add(cls.server.id, cls.servers_client.delete_server)
+        #cls.resources.add(cls.server.id, cls.servers_client.delete_server)
         cls.metadata = {'key': 'value'}
         cls.name = rand_name('testserver')
 
         personality = None
         if cls.file_injection_enabled:
+            cls.file_path = cls.servers_config.default_file_path + 'rebuild.txt'
             cls.file_contents = 'Test server rebuild.'
-            personality = [{'path': '/rebuild.txt',
+            personality = [{'path': cls.file_path,
                             'contents': base64.b64encode(cls.file_contents)}]
         cls.password = 'R3builds3ver'
 
@@ -212,9 +213,9 @@ class RebuildServerTests(ComputeFixture):
         remote_client = self.server_behaviors.get_remote_instance_client(
             self.server, self.servers_config, password=self.password,
             key=self.key.private_key)
-        self.assertTrue(remote_client.is_file_present('/rebuild.txt'))
+        self.assertTrue(remote_client.is_file_present(self.file_path))
         self.assertEqual(
-            remote_client.get_file_details('/rebuild.txt').content,
+            remote_client.get_file_details(self.file_path).content,
             self.file_contents)
 
     @tags(type='smoke', net='no')
