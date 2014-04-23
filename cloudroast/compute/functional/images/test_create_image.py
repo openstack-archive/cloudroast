@@ -17,27 +17,10 @@ limitations under the License.
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.compute.common.types import NovaImageStatusTypes
-from cloudroast.compute.fixtures import ComputeFixture
+from cloudroast.compute.fixtures import ServerFromImageFixture
 
 
-class CreateImageTest(ComputeFixture):
-
-    @classmethod
-    def setUpClass(cls):
-        super(CreateImageTest, cls).setUpClass()
-        cls.server = cls.server_behaviors.create_active_server().entity
-
-        cls.image_name = rand_name('image')
-        cls.metadata = {'user_key1': 'value1',
-                        'user_key2': 'value2'}
-        server_id = cls.server.id
-        cls.image_response = cls.servers_client.create_image(
-            server_id, cls.image_name, metadata=cls.metadata)
-        cls.image_id = cls.parse_image_id(cls.image_response)
-        cls.resources.add(cls.image_id, cls.images_client.delete_image)
-        cls.image_behaviors.wait_for_image_status(
-            cls.image_id, NovaImageStatusTypes.ACTIVE)
-        cls.image = cls.images_client.get_image(cls.image_id).entity
+class CreateImageTest(object):
 
     @tags(type='smoke', net='no')
     def test_create_image_response_code(self):
@@ -79,7 +62,11 @@ class CreateImageTest(ComputeFixture):
         Verify the metadata of the parent image was transferred
         to the new image
         """
-        non_inherited_meta = ['image_type', 'cache_in_nova']
+        non_inherited_meta = ['image_type', 'cache_in_nova',
+                              'com.rackspace__1__release_build_date',
+                              'com.rackspace__1__release_version',
+                              'com.rackspace__1__source',
+                              'com.rackspace__1__platform_target']
 
         original_image = self.images_client.get_image(self.image_ref).entity
         for key, value in original_image.metadata.iteritems():
@@ -97,3 +84,23 @@ class CreateImageTest(ComputeFixture):
         self.resources.add(
             server.id, self.servers_client.delete_server)
         self.assertEqual(server.image.id, self.image_id)
+
+
+class ServerFromImageCreateImageTests(ServerFromImageFixture,
+                                      CreateImageTest):
+
+    @classmethod
+    def setUpClass(cls):
+        super(ServerFromImageCreateImageTests, cls).setUpClass()
+        cls.create_server()
+        cls.image_name = rand_name('image')
+        cls.metadata = {'user_key1': 'value1',
+                        'user_key2': 'value2'}
+        server_id = cls.server.id
+        cls.image_response = cls.servers_client.create_image(
+            server_id, cls.image_name, metadata=cls.metadata)
+        cls.image_id = cls.parse_image_id(cls.image_response)
+        cls.resources.add(cls.image_id, cls.images_client.delete_image)
+        cls.image_behaviors.wait_for_image_status(
+            cls.image_id, NovaImageStatusTypes.ACTIVE)
+        cls.image = cls.images_client.get_image(cls.image_id).entity
