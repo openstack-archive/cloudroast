@@ -189,9 +189,9 @@ class RebuildServerTests(object):
         remote_client = self.server_behaviors.get_remote_instance_client(
             self.server, self.servers_config, password=self.password,
             key=self.key.private_key)
-        self.assertTrue(remote_client.is_file_present('/rebuild.txt'))
+        self.assertTrue(remote_client.is_file_present(self.file_path))
         self.assertEqual(
-            remote_client.get_file_details('/rebuild.txt').content,
+            remote_client.get_file_details(self.file_path).content,
             self.file_contents)
 
     @tags(type='smoke', net='no')
@@ -266,10 +266,12 @@ class RebuildBaseFixture(object):
 
         personality = None
         if self.file_injection_enabled:
+            separator = self.images_config.primary_image_path_separator
+            self.file_path = separator.join(
+                [self.servers_config.default_file_path, 'rebuild.txt'])
             self.file_contents = 'Test server rebuild.'
-            personality = [{'path': '/rebuild.txt',
-                            'contents': base64.b64encode(
-                                self.file_contents)}]
+            personality = [{'path': self.file_path,
+                            'contents': base64.b64encode(self.file_contents)}]
         self.password = 'R3builds3ver'
 
         self.rebuilt_server_response = self.servers_client.rebuild(
