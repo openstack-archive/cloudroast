@@ -45,12 +45,13 @@ class CreateServerTest(ComputeFixture):
         if cls.servers_config.default_network:
             networks = [{'uuid': cls.servers_config.default_network}]
         cls.file_contents = 'This is a test file.'
-        files = [{'path': '/test.txt', 'contents': base64.b64encode(
-            cls.file_contents)}]
         files = None
         if cls.file_injection_enabled:
             cls.file_contents = 'This is a test file.'
-            files = [{'path': '/test.txt', 'contents': base64.b64encode(
+            separator = cls.images_config.primary_image_path_separator
+            cls.file_path = separator.join(
+                [cls.servers_config.default_file_path, 'test.txt'])
+            files = [{'path': cls.file_path, 'contents': base64.b64encode(
                 cls.file_contents)}]
         cls.key = cls.keypairs_client.create_keypair(rand_name("key")).entity
         cls.resources.add(cls.key.name,
@@ -240,9 +241,9 @@ class CreateServerTest(ComputeFixture):
 
         remote_client = self.server_behaviors.get_remote_instance_client(
             self.server, self.servers_config, key=self.key.private_key)
-        self.assertTrue(remote_client.is_file_present('/test.txt'))
+        self.assertTrue(remote_client.is_file_present(self.file_path))
         self.assertEqual(
-            remote_client.get_file_details('/test.txt').content,
+            remote_client.get_file_details(self.file_path).content,
             self.file_contents)
 
     @tags(type='smoke', net='no')

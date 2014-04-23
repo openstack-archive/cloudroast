@@ -51,8 +51,11 @@ class RebuildServerTests(ComputeFixture):
 
         personality = None
         if cls.file_injection_enabled:
+            separator = cls.images_config.primary_image_path_separator
+            cls.file_path = separator.join(
+                [cls.servers_config.default_file_path, 'rebuild.txt'])
             cls.file_contents = 'Test server rebuild.'
-            personality = [{'path': '/rebuild.txt',
+            personality = [{'path': cls.file_path,
                             'contents': base64.b64encode(cls.file_contents)}]
         cls.password = 'R3builds3ver'
 
@@ -212,9 +215,9 @@ class RebuildServerTests(ComputeFixture):
         remote_client = self.server_behaviors.get_remote_instance_client(
             self.server, self.servers_config, password=self.password,
             key=self.key.private_key)
-        self.assertTrue(remote_client.is_file_present('/rebuild.txt'))
+        self.assertTrue(remote_client.is_file_present(self.file_path))
         self.assertEqual(
-            remote_client.get_file_details('/rebuild.txt').content,
+            remote_client.get_file_details(self.file_path).content,
             self.file_contents)
 
     @tags(type='smoke', net='no')
