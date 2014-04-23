@@ -124,16 +124,20 @@ class ComputeFixture(BaseTestFixture):
         cls.vnc_client = VncConsoleClient(**client_args)
         cls.console_output_client = ConsoleOutputClient(**client_args)
         cls.limits_client = LimitsClient(**client_args)
-        cls.server_behaviors = ServerBehaviors(cls.servers_client,
-                                               cls.servers_config,
-                                               cls.images_config,
-                                               cls.flavors_config)
-        cls.image_behaviors = ImageBehaviors(cls.images_client,
-                                             cls.servers_client,
-                                             cls.images_config)
-        cls.config_drive_behaviors = ConfigDriveBehaviors(cls.servers_client,
-                                                          cls.servers_config,
-                                                          cls.server_behaviors)
+        cls.server_behaviors = ServerBehaviors(
+            servers_client=cls.servers_client,
+            images_client=cls.images_client,
+            servers_config=cls.servers_config,
+            images_config=cls.images_config,
+            flavors_config=cls.flavors_config)
+        cls.image_behaviors = ImageBehaviors(
+            images_client=cls.images_client,
+            servers_client=cls.servers_client,
+            config=cls.images_config)
+        cls.config_drive_behaviors = ConfigDriveBehaviors(
+            servers_client=cls.servers_client,
+            servers_config=cls.servers_config,
+            server_behaviors=cls.server_behaviors)
         cls.flavors_client.add_exception_handler(ExceptionHandler())
         cls.resources = ResourcePool()
         cls.addClassCleanup(cls.resources.release)
@@ -210,6 +214,30 @@ class ComputeFixture(BaseTestFixture):
         remote_client.create_directory(mount_point)
         remote_client.mount_disk(disk, mount_point)
 
+    @classmethod
+    def _join_path_for_remote_instance(cls, file_path, file_name, image_id):
+        """
+        @summary: Creates a file path based on the distro of
+                  the remote instance.
+        @param file_path: The path of the file
+        @type file_path: String
+        @param file_name: The name of the file
+        @type file_name: String
+        @param image_id: The id of the image where the path will be used
+        @type image_id: String
+        @return: The joined file path
+        @rtype: String
+        """
+
+        # Try to determine distro
+        image = cls.images_client.get_image(image_id).entity
+
+        if image.metadata.get('os_type', '').lower() == 'windows':
+            return '\\'.join([file_path, file_name])
+        else:
+            # Assume Linux by default
+            return '/'.join([file_path, file_name])
+
 
 class ComputeAdminFixture(ComputeFixture):
     """
@@ -241,13 +269,16 @@ class ComputeAdminFixture(ComputeFixture):
         cls.admin_hosts_client = HostsClient(**client_args)
         cls.admin_quotas_client = QuotasClient(**client_args)
         cls.admin_hypervisors_client = HypervisorsClient(**client_args)
-        cls.admin_server_behaviors = ServerBehaviors(cls.admin_servers_client,
-                                                     cls.servers_config,
-                                                     cls.images_config,
-                                                     cls.flavors_config)
-        cls.admin_images_behaviors = ImageBehaviors(cls.admin_images_client,
-                                                    cls.admin_servers_client,
-                                                    cls.images_config)
+        cls.admin_server_behaviors = ServerBehaviors(
+            servers_client=cls.admin_servers_client,
+            images_client=cls.admin_images_client,
+            servers_config=cls.servers_config,
+            images_config=cls.images_config,
+            flavors_config=cls.flavors_config)
+        cls.admin_images_behaviors = ImageBehaviors(
+            images_client=cls.admin_images_client,
+            servers_client=cls.admin_servers_client,
+            config=cls.images_config)
         cls.admin_servers_client.add_exception_handler(ExceptionHandler())
 
     @classmethod
