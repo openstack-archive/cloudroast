@@ -142,12 +142,14 @@ class ComputeFixture(BaseTestFixture):
             flavors_config=cls.flavors_config,
             server_behaviors=cls.server_behaviors,
             boot_from_volume_client=cls.boot_from_volume_client)
-        cls.image_behaviors = ImageBehaviors(cls.images_client,
-                                             cls.servers_client,
-                                             cls.images_config)
-        cls.config_drive_behaviors = ConfigDriveBehaviors(cls.servers_client,
-                                                          cls.servers_config,
-                                                          cls.server_behaviors)
+        cls.image_behaviors = ImageBehaviors(
+            images_client=cls.images_client,
+            servers_client=cls.servers_client,
+            config=cls.images_config)
+        cls.config_drive_behaviors = ConfigDriveBehaviors(
+            servers_client=cls.servers_client,
+            servers_config=cls.servers_config,
+            server_behaviors=cls.server_behaviors)
         cls.flavors_client.add_exception_handler(ExceptionHandler())
         cls.resources = ResourcePool()
         cls.addClassCleanup(cls.resources.release)
@@ -386,4 +388,3 @@ class ServerFromVolumeV2Fixture(BlockstorageIntegrationFixture):
         cls.server = cls.server_response.entity
         cls.resources.add(cls.server.id, cls.servers_client.delete_server)
         return cls.server
-
