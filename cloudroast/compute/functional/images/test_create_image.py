@@ -17,27 +17,10 @@ limitations under the License.
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.compute.common.types import NovaImageStatusTypes
-from cloudroast.compute.fixtures import ComputeFixture
+from cloudroast.compute.fixtures import ServerFromImageFixture
 
 
-class CreateImageTest(ComputeFixture):
-
-    @classmethod
-    def setUpClass(cls):
-        super(CreateImageTest, cls).setUpClass()
-        cls.server = cls.server_behaviors.create_active_server().entity
-
-        cls.image_name = rand_name('image')
-        cls.metadata = {'user_key1': 'value1',
-                        'user_key2': 'value2'}
-        server_id = cls.server.id
-        cls.image_response = cls.servers_client.create_image(
-            server_id, cls.image_name, metadata=cls.metadata)
-        cls.image_id = cls.parse_image_id(cls.image_response)
-        cls.resources.add(cls.image_id, cls.images_client.delete_image)
-        cls.image_behaviors.wait_for_image_status(
-            cls.image_id, NovaImageStatusTypes.ACTIVE)
-        cls.image = cls.images_client.get_image(cls.image_id).entity
+class CreateImageTest(object):
 
     @tags(type='smoke', net='no')
     def test_create_image_response_code(self):
@@ -79,15 +62,30 @@ class CreateImageTest(ComputeFixture):
         Verify the metadata of the parent image was transferred
         to the new image
         """
-        non_inherited_meta = ['image_type', 'cache_in_nova']
-
+        intended_changed_meta = ['image_type', 'instance_uuid',
+                                 'user_id']
         original_image = self.images_client.get_image(self.image_ref).entity
         for key, value in original_image.metadata.iteritems():
             # The image_type field should be the only field that differs
             # from the original image
-            if key not in non_inherited_meta:
-                self.assertIn(key, self.image.metadata)
-                self.assertEqual(self.image.metadata.get(key), value)
+            if key not in self.image_behaviors.read_non_inherited_metadata():
+                if key not in intended_changed_meta:
+                    self.assertIn(key, self.image.metadata)
+                    self.assertEqual(self.image.metadata.get(key), value)
+                elif key == 'instance_uuid':
+                    self.assertEqual(self.image.metadata.get(key),
+                                     self.server.id)
+                elif key == 'user_id':
+                    self.assertEqual(self.image.metadata.get(key),
+                                     self.user_config.user_id)
+
+    def test_image_not_inherited_metadata(self):
+        """
+        Verify that non-inherited metadata of the parent image was not
+        transferred to the new image
+        """
+        for meta_elem in self.image_behaviors.read_non_inherited_metadata():
+            self.assertNotIn(meta_elem, self.image.metadata)
 
     @tags(type='positive', net='no')
     def test_can_create_server_from_image(self):
@@ -97,3 +95,23 @@ class CreateImageTest(ComputeFixture):
         self.resources.add(
             server.id, self.servers_client.delete_server)
         self.assertEqual(server.image.id, self.image_id)
+
+
+class ServerFromImageCreateImageTests(ServerFromImageFixture,
+                                      CreateImageTest):
+
+    @classmethod
+    def setUpClass(cls):
+        super(ServerFromImageCreateImageTests, cls).setUpClass()
+        cls.create_server()
+        cls.image_name = rand_name('image')
+        cls.metadata = {'user_key1': 'value1',
+                        'user_key2': 'value2'}
+        server_id = cls.server.id
+        cls.image_response = cls.servers_client.create_image(
+            server_id, cls.image_name, metadata=cls.metadata)
+        cls.image_id = cls.parse_image_id(cls.image_response)
+        cls.resources.add(cls.image_id, cls.images_client.delete_image)
+        cls.image_behaviors.wait_for_image_status(
+            cls.image_id, NovaImageStatusTypes.ACTIVE)
+        cls.image = cls.images_client.get_image(cls.image_id).entity
