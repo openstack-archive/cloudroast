@@ -14,20 +14,31 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import unittest2 as unittest
+import unittest
 
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.common.tools.datagen import rand_name
-from cloudcafe.compute.common.types import NovaServerStatusTypes
+from cloudcafe.compute.common.types import ComputeHypervisors, \
+    NovaServerStatusTypes
+from cloudcafe.compute.config import ComputeConfig
 from cloudcafe.compute.flavors_api.config import FlavorsConfig
+
 from cloudroast.compute.fixtures import ComputeFixture
+
+compute_config = ComputeConfig()
+hypervisor = compute_config.hypervisor.lower()
 
 flavors_config = FlavorsConfig()
 resize_enabled = flavors_config.resize_enabled
 
+can_resize = (
+    resize_enabled
+    and hypervisor not in [ComputeHypervisors.IRONIC,
+                           ComputeHypervisors.LXC_LIBVIRT])
+
 
 @unittest.skipUnless(
-    resize_enabled, 'Resize not enabled for this flavor class.')
+    can_resize, 'Resize not enabled for this configuration.')
 class ResizeServerUpConfirmTests(ComputeFixture):
 
     @classmethod
