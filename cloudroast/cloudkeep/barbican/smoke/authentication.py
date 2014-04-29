@@ -35,7 +35,7 @@ class AuthenticationAPI(AuthenticationFixture):
             auth_type=self.keystone.auth_type)
 
         headers = {'X-Auth-Token': token,
-                   'Accept': 'applicaton/json'}
+                   'Accept': 'application/json'}
         resp = self.version_client.get_version(headers=headers)
 
         version = resp.entity
