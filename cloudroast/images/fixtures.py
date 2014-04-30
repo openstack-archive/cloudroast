@@ -61,7 +61,6 @@ class ImagesFixture(BaseTestFixture):
         cls.deserialize_format = cls.marshalling.deserializer
         cls.image_data = '*' * 1024
         cls.file_data = StringIO.StringIO(cls.image_data)
-        cls.alt_url = cls.images_config.alt_url
 
         cls.access_data = AuthProvider.get_access_data(cls.endpoint_config,
                                                        cls.user_config)
@@ -153,11 +152,9 @@ class ImagesFixture(BaseTestFixture):
     def generate_images_client(cls, auth_data):
         """@summary: Returns new images client for requested auth data"""
 
-        client_args = {'alt_url': cls.alt_url,
-                       'auth_token': auth_data.token.id_,
-                       'base_url': cls.url,
-                       'deserialize_format': cls.deserialize_format,
-                       'serialize_format': cls.serialize_format}
+        client_args = {'base_url': cls.url, 'auth_token': auth_data.token.id_,
+                       'serialize_format': cls.serialize_format,
+                       'deserialize_format': cls.deserialize_format}
         return ImagesClient(**client_args)
 
 
@@ -202,17 +199,7 @@ class ComputeIntegrationFixture(ImagesFixture):
                            'deserialize_format': cls.deserialize_format}
         cls.alt_servers_client = ServersClient(**alt_client_args)
 
-        # Instantiate servers behavior
-        cls.server_behaviors = ServerBehaviors(
-            servers_client=cls.servers_client,
-            servers_config=cls.servers_config, images_config=cls.images_config,
-            flavors_config=cls.flavors_config)
-        cls.alt_server_behaviors = ServerBehaviors(
-            servers_client=cls.alt_servers_client,
-            servers_config=cls.servers_config, images_config=cls.images_config,
-            flavors_config=cls.flavors_config)
-
-        #Instantiate compute images client and behavior
+        # Instantiate compute images client and behavior
         cls.compute_images_client = ComputeImagesClient(**client_args)
         cls.alt_compute_images_client = ComputeImagesClient(**alt_client_args)
         cls.compute_image_behaviors = ComputeImageBehaviors(
@@ -221,6 +208,18 @@ class ComputeIntegrationFixture(ImagesFixture):
         cls.alt_compute_image_behaviors = ComputeImageBehaviors(
             images_client=cls.alt_compute_images_client,
             servers_client=cls.alt_servers_client, config=cls.images_config)
+
+        # Instantiate servers behavior
+        cls.server_behaviors = ServerBehaviors(
+            servers_client=cls.servers_client,
+            images_client=cls.compute_images_client,
+            servers_config=cls.servers_config, images_config=cls.images_config,
+            flavors_config=cls.flavors_config)
+        cls.alt_server_behaviors = ServerBehaviors(
+            servers_client=cls.alt_servers_client,
+            images_client=cls.alt_compute_images_client,
+            servers_config=cls.servers_config, images_config=cls.images_config,
+            flavors_config=cls.flavors_config)
 
 
 class ObjectStorageIntegrationFixture(ComputeIntegrationFixture):
