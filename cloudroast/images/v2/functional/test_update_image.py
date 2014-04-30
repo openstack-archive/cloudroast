@@ -16,49 +16,46 @@ limitations under the License.
 
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.common.tools.datagen import rand_name
-from cloudcafe.images.common.types import \
-    ImageContainerFormat, ImageDiskFormat, ImageVisibility
-from cloudroast.images.fixtures import ComputeIntegrationFixture
+from cloudcafe.images.common.types import ImageContainerFormat, ImageDiskFormat
+from cloudroast.images.fixtures import ImagesFixture
 
 
-class TestUpdateImage(ComputeIntegrationFixture):
+class TestUpdateImage(ImagesFixture):
 
     @classmethod
     def setUpClass(cls):
         super(TestUpdateImage, cls).setUpClass()
-        server = cls.server_behaviors.create_active_server().entity
-        image = cls.compute_image_behaviors.create_active_image(server.id)
-        cls.image = cls.images_client.get_image(image.entity.id).entity
+        cls.image = cls.images_behavior.create_new_image()
 
-    @tags(type='smoke')
+    @tags(type='positive', regression='true')
     def test_update_image_replace_core_properties(self):
         """
         @summary: Replace values of core properties
 
-        1) Create image
-        2) Update image replacing all allowed core properties
-        3) Verify that the response code is 200
-        4) Verify that the updated properties are correct
-        5) Revert protected property
-        6) Verify that the response code is 200
+        1) Given a previously created image, update image replacing all allowed
+        core properties
+        2) Verify that the response code is 200
+        3) Verify that the updated properties are correct
+        4) Revert protected property
+        5) Verify that the response code is 200
         """
 
         updated_container_format = ImageContainerFormat.AKI
         updated_disk_format = ImageDiskFormat.ISO
         updated_name = rand_name('updated_image')
         updated_tags = rand_name('updated_tag')
-        updated_visibility = ImageVisibility.PRIVATE
         errors = []
         image = self.image
+
         response = self.images_client.update_image(
             image.id_, replace={'container_format': updated_container_format,
                                 'disk_format': updated_disk_format,
                                 'name': updated_name,
                                 'protected': True,
-                                'tags': [updated_tags],
-                                'visibility': updated_visibility})
+                                'tags': [updated_tags]})
         self.assertEqual(response.status_code, 200)
         updated_image = response.entity
+
         attributes = ['checksum', 'created_at', 'file_', 'id_', 'min_disk',
                       'min_ram', 'schema', 'self_', 'size', 'status',
                       'visibility']
@@ -67,6 +64,7 @@ class TestUpdateImage(ComputeIntegrationFixture):
                 errors.append(self.error_msg.format(
                     attribute, getattr(image, attribute),
                     getattr(updated_image, attribute)))
+
         attributes = ['container_format', 'disk_format', 'name', 'protected',
                       'tags']
         for attribute in attributes:
@@ -74,9 +72,11 @@ class TestUpdateImage(ComputeIntegrationFixture):
                 errors.append(self.error_msg.format(
                     attribute, getattr(image, attribute),
                     getattr(updated_image, attribute)))
+
         if updated_image.updated_at < image.updated_at:
             errors.append(self.error_msg.format(
                 'updated_at', image.updated_at, updated_image.updated_at))
+
         # Need to revert protected property so that the image can be torn down
         response = self.images_client.update_image(
             image.id_, replace={'protected': False})

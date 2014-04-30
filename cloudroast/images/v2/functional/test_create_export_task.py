@@ -24,20 +24,23 @@ from cloudroast.images.fixtures import ImagesFixture
 
 class TestCreateExportTask(ImagesFixture):
 
+    @classmethod
+    def setUpClass(cls):
+        super(TestCreateExportTask, cls).setUpClass()
+        cls.image = cls.images_behavior.create_image_via_task()
+
     @tags(type='smoke')
     def test_create_export_task(self):
         """
         @summary: Create export task
 
-        1) Create new image
-        2) Create export task
-        3) Verify that the response code is 201
-        4) Wait for the task to complete successfully
-        5) Verify that the task properties are returned correctly
+        1) Given a previously created image, create export task
+        2) Verify that the response code is 201
+        3) Wait for the task to complete successfully
+        4) Verify that the task properties are returned correctly
         """
 
-        image = self.images_behavior.create_image_via_task()
-        input_ = {'image_uuid': image.id_,
+        input_ = {'image_uuid': self.image.id_,
                   'receiving_swift_container': self.export_to}
 
         response = self.images_client.create_task(
@@ -52,7 +55,7 @@ class TestCreateExportTask(ImagesFixture):
         errors = self.images_behavior.validate_task(task)
         self.assertListEqual(errors, [])
         self._validate_specific_task_properties(
-            image.id_, task, task_creation_time_in_sec)
+            self.image.id_, task, task_creation_time_in_sec)
 
     def _validate_specific_task_properties(self, image_id, task,
                                            task_creation_time_in_sec):
