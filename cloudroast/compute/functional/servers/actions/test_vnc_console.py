@@ -20,8 +20,7 @@ from cafe.drivers.unittest.decorators import tags
 from cloudcafe.compute.common.types import ComputeHypervisors, \
     VncConsoleTypes
 from cloudcafe.compute.config import ComputeConfig
-
-from cloudroast.compute.fixtures import ComputeFixture
+from cloudroast.compute.fixtures import ServerFromImageFixture
 
 compute_config = ComputeConfig()
 hypervisor = compute_config.hypervisor.lower()
@@ -30,14 +29,7 @@ hypervisor = compute_config.hypervisor.lower()
 @unittest.skipIf(
     hypervisor in [ComputeHypervisors.IRONIC],
     'Get VNC console not supported in current configuration.')
-class ServerVncConsoleTests(ComputeFixture):
-
-    @classmethod
-    def setUpClass(cls):
-        super(ServerVncConsoleTests, cls).setUpClass()
-        response = cls.server_behaviors.create_active_server()
-        cls.server = response.entity
-        cls.resources.add(cls.server.id, cls.servers_client.delete_server)
+class ServerVncConsoleTests(object):
 
     @tags(type='smoke', net='no')
     def test_get_xvpvnc_console(self):
@@ -58,3 +50,12 @@ class ServerVncConsoleTests(ComputeFixture):
         console = resp.entity
         self.assertEqual(console.type, VncConsoleTypes.NOVNC)
         self.assertIsNotNone(console.url)
+
+
+class ServerFromImageVncConsoleTests(ServerFromImageFixture,
+                                     ServerVncConsoleTests):
+
+    @classmethod
+    def setUpClass(cls):
+        super(ServerFromImageVncConsoleTests, cls).setUpClass()
+        cls.create_server()

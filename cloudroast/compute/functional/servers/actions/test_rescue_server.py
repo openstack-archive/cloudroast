@@ -19,8 +19,7 @@ from cafe.drivers.unittest.decorators import tags
 from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.compute.common.types import ComputeHypervisors
 from cloudcafe.compute.config import ComputeConfig
-
-from cloudroast.compute.fixtures import ComputeFixture
+from cloudroast.compute.fixtures import ServerFromImageFixture
 
 compute_config = ComputeConfig()
 hypervisor = compute_config.hypervisor.lower()
@@ -29,20 +28,7 @@ hypervisor = compute_config.hypervisor.lower()
 @unittest.skipIf(
     hypervisor in [ComputeHypervisors.IRONIC, ComputeHypervisors.LXC_LIBVIRT],
     'Rescue server not supported in current configuration.')
-class ServerRescueTests(ComputeFixture):
-
-    @classmethod
-    def setUpClass(cls):
-        super(ServerRescueTests, cls).setUpClass()
-        cls.key = cls.keypairs_client.create_keypair(rand_name("key")).entity
-        cls.resources.add(cls.key.name,
-                          cls.keypairs_client.delete_keypair)
-        server_response = cls.server_behaviors.create_active_server(
-            key_name=cls.key.name)
-        cls.server = server_response.entity
-        cls.resources.add(cls.server.id, cls.servers_client.delete_server)
-        flavor_response = cls.flavors_client.get_flavor_details(cls.flavor_ref)
-        cls.flavor = flavor_response.entity
+class ServerRescueTests(object):
 
     @tags(type='smoke', net='yes')
     def test_rescue_and_unrescue_server_test(self):
@@ -83,3 +69,17 @@ class ServerRescueTests(ComputeFixture):
             key=self.key.private_key)
         disks = remote_client.get_all_disks()
         self.assertEqual(len(disks.keys()), original_num_disks)
+
+
+class ServerFromImageRescueTests(ServerFromImageFixture,
+                                 ServerRescueTests):
+
+    @classmethod
+    def setUpClass(cls):
+        super(ServerFromImageRescueTests, cls).setUpClass()
+        cls.key = cls.keypairs_client.create_keypair(rand_name("key")).entity
+        cls.resources.add(cls.key.name,
+                          cls.keypairs_client.delete_keypair)
+        cls.create_server(key_name=cls.key.name)
+        flavor_response = cls.flavors_client.get_flavor_details(cls.flavor_ref)
+        cls.flavor = flavor_response.entity
