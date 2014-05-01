@@ -25,6 +25,11 @@ from cloudroast.images.fixtures import ObjectStorageIntegrationFixture
 
 class TestCreateExportTaskNegative(ObjectStorageIntegrationFixture):
 
+    @classmethod
+    def setUpClass(cls):
+        super(TestCreateExportTaskNegative, cls).setUpClass()
+        cls.image = cls.images_behavior.create_new_image()
+
     @tags(type='negative', regression='true')
     def test_attempt_duplicate_export_task(self):
         """
@@ -43,8 +48,7 @@ class TestCreateExportTaskNegative(ObjectStorageIntegrationFixture):
         11) Verify that only one image with the image name exists
         """
 
-        image = self.images_behavior.create_image_via_task()
-        input_ = {'image_uuid': image.id_,
+        input_ = {'image_uuid': self.image.id_,
                   'receiving_swift_container': self.export_to}
         error_msg = Messages.DUPLICATE_FILE_MSG
         exported_images = []
@@ -62,7 +66,7 @@ class TestCreateExportTaskNegative(ObjectStorageIntegrationFixture):
         task = self.images_behavior.wait_for_task_status(
             task_id, TaskStatus.FAILURE)
         self.assertEqual(
-            task.message, error_msg.format(image.id_, self.export_to))
+            task.message, error_msg.format(self.export_to, self.image.id_))
 
         response = self.object_storage_client.list_objects(self.export_to)
         self.assertEqual(response.status_code, 200)
@@ -70,10 +74,10 @@ class TestCreateExportTaskNegative(ObjectStorageIntegrationFixture):
 
         errors, file_names = self.images_behavior.validate_exported_files(
             export_to=self.export_to, expect_success=True, files=files,
-            image_id=image.id_)
+            image_id=self.image.id_)
         self.assertListEqual(errors, [])
         for name in file_names:
-            if name == '{0}.vhd'.format(image.id_):
+            if name == '{0}.vhd'.format(self.image.id_):
                 exported_images.append(name)
         self.assertEqual(len(exported_images), 1)
 
@@ -134,3 +138,29 @@ class TestCreateExportTaskNegative(ObjectStorageIntegrationFixture):
             image_id=snapshot.id)
         self.assertListEqual(errors, [])
         self.assertEqual(len(file_names), 1)
+
+    @tags(type='negative', regression='true')
+    def test_export_task_with_container_does_not_exist(self):
+        """
+        @summary: Create export task
+
+        1) Given a previously created image, create export task with container
+        does not exist
+        2) Verify that the response code is 201
+        3) Wait for the task to fail
+        4) Verify that the failed task contains the correct message
+        """
+
+        container_name = "nonexistent"
+        input_ = {'image_uuid': self.image.id_,
+                  'receiving_swift_container': container_name}
+        error_msg = Messages.CONTAINER_DNE
+
+        response = self.images_client.create_task(
+            input_=input_, type_=TaskTypes.EXPORT)
+        self.assertEqual(response.status_code, 201)
+        task_id = response.entity.id_
+
+        task = self.images_behavior.wait_for_task_status(
+            task_id, TaskStatus.FAILURE)
+        self.assertEqual(task.message, error_msg.format(container_name))
