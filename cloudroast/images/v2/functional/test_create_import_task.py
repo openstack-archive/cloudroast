@@ -36,8 +36,7 @@ class TestCreateImportTask(ImagesFixture):
         """
 
         input_ = {'image_properties': {},
-                  'import_from': self.import_from,
-                  'import_from_format': self.import_from_format}
+                  'import_from': self.import_from}
 
         response = self.images_client.create_task(
             input_=input_, type_=TaskTypes.IMPORT)
@@ -120,6 +119,34 @@ class TestCreateImportTask(ImagesFixture):
 
         for imported_image in imported_images:
             self.assertIn(imported_image, image_ids)
+
+    @tags(type='positive', regression='true')
+    def test_create_import_task_with_allowed_image_properties(self):
+        """
+        @summary: Create import task with allowed image properties
+
+        1) Create import task with allowed image properties
+        2) Verify that the response code is 201
+        3) Wait for the task to complete successfully
+        4) Verify that imported image is in the customer's image list
+        """
+
+        input_ = {'image_properties':
+                  {'name': 'test_img'},
+                  'import_from': self.import_from}
+
+        response = self.images_client.create_task(
+            input_=input_, type_=TaskTypes.IMPORT)
+        self.assertEqual(response.status_code, 201)
+        task_id = response.entity.id_
+
+        task = self.images_behavior.wait_for_task_status(
+            task_id, TaskStatus.SUCCESS)
+
+        images = self.images_behavior.list_images_pagination()
+        image_ids = [image.id_ for image in images]
+
+        self.assertIn(task.result.image_id, image_ids)
 
     def _validate_specific_task_properties(self, task,
                                            task_creation_time_in_sec):
