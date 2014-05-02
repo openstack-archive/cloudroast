@@ -1,0 +1,8 @@
+Verified+2: Jenkins
+Code-Review+2: Daryl Walleck <daryl.walleck@rackspace.com>
+Workflow+1: Daryl Walleck <daryl.walleck@rackspace.com>
+Submitted-by: Jenkins
+Submitted-at: Fri, 02 May 2014 14:26:51 +0000
+Reviewed-on: https://review.openstack.org/91590
+Project: stackforge/cloudroast
+Branch: refs/heads/master
