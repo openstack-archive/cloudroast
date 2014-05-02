@@ -38,14 +38,14 @@ class CreateVolumeServerfromSnapshotTest(ServerFromVolumeV2Fixture):
         """Verify the response code for a create image request is correct."""
         message = "Expected {0} to be {1}, was {2}."
         # Creating block device with snapshot data inside
-        self.block_device_matrix = self.server_behaviors.create_block_device(
+        self.block_data = self.server_behaviors.create_block_device_mapping_v2(
             boot_index=0, uuid=self.image.entity.id,
             volume_size=self.volume_size,
             source_type='snapshot', destination_type='volume',
             delete_on_termination=True)
         # Creating Instance from Volume V2
         self.server_response = self.boot_from_volume_client.create_server(
-            block_device_mapping_v2=self.block_device_matrix,
+            block_device_mapping_v2=self.block_data,
             flavor_ref=self.flavors_config.primary_flavor,
             name=rand_name("server"))
         # Verify response code is correct

@@ -26,7 +26,7 @@ class ServerFromVolumeV2CreateImageTests(ServerFromVolumeV2Fixture,
 
     @classmethod
     def setUpClass(cls):
-        super(ServerFromVolumeV2CreateTests, cls).setUpClass()
+        super(ServerFromVolumeV2CreateImageTests, cls).setUpClass()
         cls.create_server()
         cls.image_name = rand_name('image')
         cls.metadata = {'user_key1': 'value1',
