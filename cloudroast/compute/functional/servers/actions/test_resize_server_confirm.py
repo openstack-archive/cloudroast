@@ -36,8 +36,6 @@ can_resize = (
                            ComputeHypervisors.LXC_LIBVIRT])
 
 
-@unittest.skipUnless(
-    can_resize, 'Resize not enabled for this configuration.')
 class ResizeServerUpConfirmTests(object):
 
     @tags(type='smoke', net='no')

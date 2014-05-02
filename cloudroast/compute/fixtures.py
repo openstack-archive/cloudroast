@@ -49,6 +49,8 @@ from cloudcafe.compute.extensions.config_drive.behaviors import \
 from cloudcafe.compute.extensions.config_drive.config import ConfigDriveConfig
 from cloudcafe.compute.extensions.config_drive.config import CloudInitConfig
 from cloudcafe.compute.servers_api.behaviors import ServerBehaviors
+from cloudcafe.compute.extensions.volumes_boot_api.behaviors import \
+    VolumeServerBehaviors
 from cloudcafe.compute.images_api.behaviors import ImageBehaviors
 from cloudcafe.auth.config import UserAuthConfig, UserConfig, \
     ComputeAdminAuthConfig, ComputeAdminUserConfig
@@ -127,11 +129,20 @@ class ComputeFixture(BaseTestFixture):
         cls.vnc_client = VncConsoleClient(**client_args)
         cls.console_output_client = ConsoleOutputClient(**client_args)
         cls.limits_client = LimitsClient(**client_args)
-        cls.server_behaviors = ServerBehaviors(cls.servers_client,
-                                               cls.servers_config,
-                                               cls.images_config,
-                                               cls.flavors_config,
-                                               cls.boot_from_volume_client)
+        cls.server_behaviors = ServerBehaviors(
+            servers_client=cls.servers_client,
+            images_client=cls.images_client,
+            servers_config=cls.servers_config,
+            images_config=cls.images_config,
+            flavors_config=cls.flavors_config)
+        cls.volume_server_behaviors = VolumeServerBehaviors(
+            servers_client=cls.servers_client,
+            images_client=cls.images_client,
+            servers_config=cls.servers_config,
+            images_config=cls.images_config,
+            flavors_config=cls.flavors_config,
+            server_behaviors=cls.server_behaviors,
+            boot_from_volume_client=cls.boot_from_volume_client)
         cls.image_behaviors = ImageBehaviors(cls.images_client,
                                              cls.servers_client,
                                              cls.images_config)
@@ -368,7 +379,7 @@ class ServerFromVolumeV2Fixture(BlockstorageIntegrationFixture):
             "destination_type": 'volume',
             "delete_on_termination": True}]
         # Creating the Boot from Volume Version 2 Instance
-        cls.server_response = cls.server_behaviors.create_active_server(
+        cls.server_response = cls.volume_server_behaviors.create_active_server(
             block_device=cls.block_device_matrix, flavor_ref=flavor_ref,
             key_name=key_name)
         cls.server = cls.server_response.entity
