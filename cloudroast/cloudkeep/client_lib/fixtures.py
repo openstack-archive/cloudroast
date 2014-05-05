@@ -19,7 +19,7 @@ from cloudcafe.cloudkeep.barbican.secrets.client import SecretsClient
 from cloudcafe.cloudkeep.barbican.orders.client import OrdersClient
 from cloudcafe.cloudkeep.barbican.secrets.behaviors import SecretsBehaviors
 from cloudcafe.cloudkeep.barbican.orders.behaviors import OrdersBehavior
-from cloudcafe.identity.config import IdentityTokenConfig
+from cloudcafe.cloudkeep.config import CloudKeepAuthConfig
 from cloudcafe.cloudkeep.client_lib.secrets.clients import \
     ClientLibSecretsClient
 from cloudcafe.cloudkeep.client_lib.secrets.behaviors import \
@@ -49,7 +49,7 @@ class SecretsFixture(AuthenticationFixture):
     def setUpClass(cls):
         super(SecretsFixture, cls).setUpClass()
         cls.config = CloudKeepSecretsConfig()
-        cls.identity_config = IdentityTokenConfig()
+        cls.identity_config = CloudKeepAuthConfig()
         auth_endpoint = '{0}/v2.0'.format(
             cls.identity_config.authentication_endpoint)
 
@@ -107,7 +107,7 @@ class OrdersFixture(AuthenticationFixture):
     def setUpClass(cls):
         super(OrdersFixture, cls).setUpClass()
         cls.config = CloudKeepOrdersConfig()
-        cls.identity_config = IdentityTokenConfig()
+        cls.identity_config = CloudKeepAuthConfig()
         auth_endpoint = '{0}/v2.0'.format(
             cls.identity_config.authentication_endpoint)
 
