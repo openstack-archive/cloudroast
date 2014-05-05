@@ -24,50 +24,16 @@ from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.compute.config import ComputeConfig
 from cloudcafe.compute.servers_api.config import ServersConfig
 
-from cloudroast.compute.fixtures import ComputeFixture
+from cloudroast.compute.fixtures import ServerFromImageFixture
 
 
-class CreateServerTest(ComputeFixture):
+class CreateServerTest(object):
 
     compute_config = ComputeConfig()
     hypervisor = compute_config.hypervisor.lower()
 
     servers_config = ServersConfig()
     file_injection_enabled = servers_config.personality_file_injection_enabled
-
-    @classmethod
-    def setUpClass(cls):
-        super(CreateServerTest, cls).setUpClass()
-        cls.name = rand_name("server")
-        cls.metadata = {'meta_key_1': 'meta_value_1',
-                        'meta_key_2': 'meta_value_2'}
-        networks = None
-        if cls.servers_config.default_network:
-            networks = [{'uuid': cls.servers_config.default_network}]
-        cls.file_contents = 'This is a test file.'
-        files = [{'path': '/test.txt', 'contents': base64.b64encode(
-            cls.file_contents)}]
-        files = None
-        if cls.file_injection_enabled:
-            cls.file_contents = 'This is a test file.'
-            files = [{'path': '/test.txt', 'contents': base64.b64encode(
-                cls.file_contents)}]
-        cls.key = cls.keypairs_client.create_keypair(rand_name("key")).entity
-        cls.resources.add(cls.key.name,
-                          cls.keypairs_client.delete_keypair)
-        cls.create_resp = cls.servers_client.create_server(
-            cls.name, cls.image_ref, cls.flavor_ref, metadata=cls.metadata,
-            personality=files, key_name=cls.key.name, networks=networks)
-        created_server = cls.create_resp.entity
-        cls.resources.add(created_server.id,
-                          cls.servers_client.delete_server)
-        wait_response = cls.server_behaviors.wait_for_server_status(
-            created_server.id, NovaServerStatusTypes.ACTIVE)
-        wait_response.entity.admin_pass = created_server.admin_pass
-        cls.image = cls.images_client.get_image(cls.image_ref).entity
-        cls.flavor = cls.flavors_client.get_flavor_details(
-            cls.flavor_ref).entity
-        cls.server = wait_response.entity
 
     @tags(type='smoke', net='no')
     def test_create_server_response(self):
@@ -88,9 +54,6 @@ class CreateServerTest(ComputeFixture):
         self.assertEqual(self.server.name, self.name,
                          msg=message.format('server name', self.server.name,
                                             self.name))
-        self.assertEqual(self.image_ref, self.server.image.id,
-                         msg=message.format('image id', self.image_ref,
-                                            self.server.image.id))
         self.assertEqual(self.server.flavor.id, self.flavor_ref,
                          msg=message.format('flavor id', self.flavor_ref,
                                             self.server.flavor.id))
@@ -304,3 +267,46 @@ class CreateServerTest(ComputeFixture):
         actual_disk_config = self.server.disk_config
         self.assertEqual(auto_config_enabled,
                          actual_disk_config.lower() == 'auto')
+
+
+class ServerFromImageCreateServerTests(ServerFromImageFixture,
+                                       CreateServerTest):
+
+    @classmethod
+    def setUpClass(cls):
+        super(ServerFromImageCreateServerTests, cls).setUpClass()
+        cls.name = rand_name("server")
+        cls.metadata = {'meta_key_1': 'meta_value_1',
+                        'meta_key_2': 'meta_value_2'}
+        networks = None
+        if cls.servers_config.default_network:
+            networks = [{'uuid': cls.servers_config.default_network}]
+        cls.file_contents = 'This is a test file.'
+        if cls.file_injection_enabled:
+            cls.file_contents = 'This is a test file.'
+            files = [{'path': '/test.txt', 'contents': base64.b64encode(
+                cls.file_contents)}]
+        cls.key = cls.keypairs_client.create_keypair(rand_name("key")).entity
+        cls.resources.add(cls.key.name,
+                          cls.keypairs_client.delete_keypair)
+        cls.create_resp = cls.servers_client.create_server(
+            cls.name, cls.image_ref, cls.flavor_ref, metadata=cls.metadata,
+            personality=files, key_name=cls.key.name, networks=networks)
+        created_server = cls.create_resp.entity
+        cls.resources.add(created_server.id,
+                          cls.servers_client.delete_server)
+        wait_response = cls.server_behaviors.wait_for_server_status(
+            created_server.id, NovaServerStatusTypes.ACTIVE)
+        wait_response.entity.admin_pass = created_server.admin_pass
+        cls.image = cls.images_client.get_image(cls.image_ref).entity
+        cls.flavor = cls.flavors_client.get_flavor_details(
+            cls.flavor_ref).entity
+        cls.server = wait_response.entity
+
+    @tags(type='smoke', net='no')
+    def test_created_server_fields(self):
+        """Verify that a created server has all expected fields"""
+        message = "Expected {0} to be {1}, was {2}."
+        self.assertEqual(self.image_ref, self.server.image.id,
+                         msg=message.format('image id', self.image_ref,
+                                            self.server.image.id))

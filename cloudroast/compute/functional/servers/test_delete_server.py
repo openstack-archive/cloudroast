@@ -16,17 +16,11 @@ limitations under the License.
 
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.compute.common.exceptions import ItemNotFound
-from cloudroast.compute.fixtures import ComputeFixture
+
+from cloudroast.compute.fixtures import ServerFromImageFixture
 
 
-class ServersTest(ComputeFixture):
-
-    @classmethod
-    def setUpClass(cls):
-        super(ServersTest, cls).setUpClass()
-        cls.server = cls.server_behaviors.create_active_server().entity
-        cls.resp = cls.servers_client.delete_server(cls.server.id)
-        cls.server_behaviors.wait_for_server_to_be_deleted(cls.server.id)
+class DeleteServersTest(object):
 
     @tags(type='smoke', net='no')
     def test_delete_server_response(self):
@@ -106,3 +100,14 @@ class ServersTest(ComputeFixture):
         """A create image request for a deleted server should fail."""
         with self.assertRaises(ItemNotFound):
             self.servers_client.create_image(self.server.id, 'backup')
+
+
+class ServerFromImageDeleteServerTests(ServerFromImageFixture,
+                                       DeleteServersTest):
+
+    @classmethod
+    def setUpClass(cls):
+        super(ServerFromImageDeleteServerTests, cls).setUpClass()
+        cls.create_server()
+        cls.resp = cls.servers_client.delete_server(cls.server.id)
+        cls.server_behaviors.wait_for_server_to_be_deleted(cls.server.id)
