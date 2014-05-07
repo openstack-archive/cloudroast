@@ -17,15 +17,15 @@ limitations under the License.
 from cloudcafe.common.tools.datagen import rand_name
 from cloudroast.compute.functional.servers.actions.test_resize_server_down \
     import ResizeServerDownConfirmTests, ResizeDownConfirmBaseFixture
-from cloudroast.compute.fixtures import ServerFromVolumeV1Fixture
+from cloudroast.compute.fixtures import ServerFromVolumeV2Fixture
 
 
-class ServerFromVolumeV1ResizeDownConfirmTests(ServerFromVolumeV1Fixture,
+class ServerFromVolumeV2ResizeDownConfirmTests(ServerFromVolumeV2Fixture,
                                                ResizeServerDownConfirmTests):
 
     @classmethod
     def setUpClass(cls):
-        super(ServerFromVolumeV1ResizeDownConfirmTests, cls).setUpClass()
+        super(ServerFromVolumeV2ResizeDownConfirmTests, cls).setUpClass()
         cls.key = cls.keypairs_client.create_keypair(rand_name("key")).entity
         cls.resources.add(cls.key.name,
                           cls.keypairs_client.delete_keypair)
