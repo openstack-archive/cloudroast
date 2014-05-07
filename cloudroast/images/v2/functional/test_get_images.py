@@ -67,7 +67,7 @@ class TestGetImages(ImagesFixture):
             status=ImageStatus.QUEUED)
 
         import_images = self.images_behavior.list_images_pagination(
-            image_type=TaskTypes.IMPORT)
+            param_kwargs={"image_type": TaskTypes.IMPORT})
 
         images = self.images_behavior.list_images_pagination()
         images_list = [queued_images, import_images, images]
