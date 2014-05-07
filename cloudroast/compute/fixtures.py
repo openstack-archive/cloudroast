@@ -283,6 +283,8 @@ class BlockstorageIntegrationFixture(ComputeFixture):
         cls.poll_frequency = volumes_config.volume_status_poll_frequency
         cls.volume_size = int(volumes_config.min_volume_size)
         cls.volume_type = volumes_config.default_volume_type
+        cls.volume_delete_timeout = volumes_config.volume_delete_max_timeout
+        cls.volume_create_timeout = volumes_config.volume_create_max_timeout
         block_service = cls.access_data.get_service(
             block_config.identity_service_name)
         block_url = block_service.get_endpoint(
