@@ -15,6 +15,7 @@ limitations under the License.
 """
 
 from cafe.drivers.unittest.decorators import tags
+from cloudcafe.images.common.types import ImageStatus, TaskTypes
 from cloudroast.images.fixtures import ImagesFixture
 
 
@@ -40,3 +41,45 @@ class TestGetImages(ImagesFixture):
 
         self.assertIn(self.images.pop(), list_images)
         self.assertIn(self.images.pop(), list_images)
+
+    @tags(type='positive', regression='true')
+    def test_get_images_for_import_task(self):
+        """
+        @summary: Verify get images returns import images with status active
+
+        1) Create import task
+        2) Verify that the response code is 201
+        3) Get all images with status queued
+        4) Get all images with image_type import
+        5) Get all images
+        6) Verify all 3 above list doesn't have import image with status other
+        than active
+        """
+
+        input_ = {'image_properties': {},
+                  'import_from': self.import_from}
+
+        response = self.images_client.create_task(
+            input_=input_, type_=TaskTypes.IMPORT)
+        self.assertEqual(response.status_code, 201)
+
+        queued_images = self.images_behavior.list_images_pagination(
+            status=ImageStatus.QUEUED)
+
+        import_images = self.images_behavior.list_images_pagination(
+            image_type=TaskTypes.IMPORT)
+
+        images = self.images_behavior.list_images_pagination()
+        images_list = [queued_images, import_images, images]
+
+        errors = []
+        for images in images_list:
+            for image in images:
+                if (image.image_type == TaskTypes.IMPORT and
+                        image.status != ImageStatus.ACTIVE):
+                    errors.append(self.error_msg.format(
+                        image.id_, "Active", image.status))
+
+        # Override max length of diff to ensure that all errors can be viewed
+        self.assertEqual.im_class.maxDiff = None
+        self.assertListEqual(errors, [])
