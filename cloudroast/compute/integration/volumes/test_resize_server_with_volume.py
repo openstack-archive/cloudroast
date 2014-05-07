@@ -28,6 +28,7 @@ from cloudroast.compute.fixtures import BlockstorageIntegrationFixture
 flavors_config = FlavorsConfig()
 resize_enabled = flavors_config.resize_enabled
 
+
 def load_tests(loader, standard_tests, pattern):
     suite = TestSuite()
     suite.addTest(ResizeServerVolumeIntegrationTest(
@@ -53,23 +54,24 @@ class ResizeServerVolumeIntegrationTest(BlockstorageIntegrationFixture):
         cls.resources.add(cls.server.id,
                           cls.servers_client.delete_server)
         cls.volume = cls.blockstorage_behavior.create_available_volume(
-            display_name='test-volume', size=cls.volume_size,
+            size=cls.volume_size,
             volume_type=cls.volume_type,
-            timeout=cls.volume_status_timeout)
+            timeout=cls.volume_create_timeout)
         cls.resources.add(cls.volume.id_,
                           cls.blockstorage_client.delete_volume)
         cls.volume_attachments_client.attach_volume(
             cls.server.id, cls.volume.id_)
         cls.blockstorage_behavior.wait_for_volume_status(
             cls.volume.id_, statuses.Volume.IN_USE,
-            timeout=cls.volume_status_timeout)
+            timeout=cls.volume_create_timeout)
 
     @classmethod
     def tearDownClass(cls):
         cls.volume_attachments_client.delete_volume_attachment(
             cls.volume.id_, cls.server.id)
         cls.blockstorage_behavior.wait_for_volume_status(
-            cls.volume.id_, statuses.Volume.AVAILABLE)
+            cls.volume.id_, statuses.Volume.AVAILABLE,
+            cls.volume_delete_timeout)
         super(ResizeServerVolumeIntegrationTest, cls).tearDownClass()
 
     @tags(type='smoke', net='no')

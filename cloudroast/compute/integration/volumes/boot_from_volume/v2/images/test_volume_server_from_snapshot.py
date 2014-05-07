@@ -17,6 +17,7 @@ limitations under the License.
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.compute.common.types import NovaServerStatusTypes
+from cloudcafe.compute.common.constants import BlockDeviceConstants
 
 from cloudroast.compute.fixtures import ServerFromVolumeV2Fixture
 
@@ -28,20 +29,33 @@ class CreateVolumeServerfromSnapshotTest(ServerFromVolumeV2Fixture):
         super(CreateVolumeServerfromSnapshotTest, cls).setUpClass()
         cls.server = cls.server_behaviors.create_active_server().entity
         cls.image = cls.image_behaviors.create_active_image(cls.server.id)
+        # Create Sample Volume for Snapshot
+        cls.volume = cls.blockstorage_behavior.create_available_volume(
+            size=cls.volume_size, volume_type=cls.volume_type,
+            image_ref=cls.image_ref)
+        # Creating Snapshot
+        cls.snapshot = cls.blockstorage_behavior.create_available_snapshot(
+            volume_id=cls.volume.id_)
         # Clean-up
-        cls.resources.add(cls.server.id,
-                          cls.servers_client.delete_server)
+        cls.resources.add(cls.server.id, cls.servers_client.delete_server)
         cls.resources.add(cls.image.entity.id, cls.images_client.delete_image)
+        cls.resources.add(cls.volume.id_,
+                          cls.blockstorage_client.delete_volume)
+        cls.addClassCleanup(
+            cls.blockstorage_behavior.delete_snapshot_confirmed,
+            cls.snapshot.id_)
 
     @tags(type='smoke', net='no')
-    def test_create_volume_server_from_regular_snapshot(self):
-        """Verify the response code for a create image request is correct."""
+    def test_create_volume_server_from_image_snapshot(self):
+        """Verify the creation of volume server from image snapshot"""
         message = "Expected {0} to be {1}, was {2}."
         # Creating block device with snapshot data inside
         self.block_data = self.server_behaviors.create_block_device_mapping_v2(
-            boot_index=0, uuid=self.image.entity.id,
+            boot_index=BlockDeviceConstants.BOOT_INDEX,
+            uuid=self.image.entity.id,
             volume_size=self.volume_size,
-            source_type='snapshot', destination_type='volume',
+            source_type=BlockDeviceConstants.SOURCE_TYPE_IMAGE,
+            destination_type=BlockDeviceConstants.DESTINATION_TYPE,
             delete_on_termination=True)
         # Creating Instance from Volume V2
         self.server_response = self.boot_from_volume_client.create_server(
@@ -58,3 +72,25 @@ class CreateVolumeServerfromSnapshotTest(ServerFromVolumeV2Fixture):
         self.assertEqual(self.image.entity.id, self.volume_server.image.id,
                          msg=message.format('image id', self.image.entity.id,
                                             self.volume_server.image.id))
+
+    @tags(type='smoke', net='no')
+    def test_create_volume_server_from_volume_snapshot(self):
+        """Verify the creation of volume server from volume snapshot"""
+        # Creating block device with snapshot data inside
+        self.block_data = self.server_behaviors.create_block_device_mapping_v2(
+            boot_index=BlockDeviceConstants.BOOT_INDEX,
+            uuid=self.snapshot.id_,
+            volume_size=self.volume_size,
+            source_type=BlockDeviceConstants.SOURCE_TYPE_SNAPSHOT,
+            destination_type=BlockDeviceConstants.DESTINATION_TYPE,
+            delete_on_termination=True)
+        # Creating Instance from Volume V2
+        self.server_response = self.boot_from_volume_client.create_server(
+            block_device_mapping_v2=self.block_data,
+            flavor_ref=self.flavors_config.primary_flavor,
+            name=rand_name("server"))
+        # Verify response code is correct
+        self.assertEqual(self.server_response.status_code, 202)
+        # Verify the server reaches active status
+        self.server_behaviors.wait_for_server_status(
+            self.server_response.entity.id, NovaServerStatusTypes.ACTIVE)
