@@ -40,7 +40,6 @@ class StackTachFixture(BaseTestFixture):
         super(StackTachFixture, cls).setUpClass()
         cls.marshalling = MarshallingConfig()
         cls.stacktach_config = StacktachConfig()
-        cls.event_id = cls.stacktach_config.event_id
         cls.days_passed = cls.stacktach_config.days_passed
         cls.msg = "Unexpected {0} value received. Expected: {1}," \
                   "Received: {2}, Reason: {3}, Contents: {4}"
@@ -66,7 +65,6 @@ class StackTachDBFixture(BaseTestFixture):
         cls.servers_config = ServersConfig()
         cls.leeway = cls.servers_config.server_build_timeout
         cls.stacktach_config = StacktachConfig()
-        cls.event_id = cls.stacktach_config.event_id
         cls.days_passed = cls.stacktach_config.days_passed
         cls.msg = "Unexpected {0} value received. Expected: {1}," \
                   "Received: {2}, Reason: {3}, Contents: {4}"

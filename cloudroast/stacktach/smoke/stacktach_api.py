@@ -7,6 +7,11 @@ class StackTachTest(StackTachFixture, StackTachDBFixture):
     def setUpClass(cls):
         super(StackTachTest, cls).setUpClass()
         cls.service = 'nova'
+        cls.event_type = 'compute.instance.exists'
+        cls.event_id = (cls.stacktach_behavior
+                        .get_event_id_from_event_type_details(
+                            event_type=cls.event_type,
+                            service=cls.service))
 
     def test_get_event_names(self):
         """
