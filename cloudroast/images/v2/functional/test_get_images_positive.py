@@ -47,13 +47,14 @@ class TestGetImages(ComputeIntegrationFixture):
 
         owner = self.tenant_id
         response = self.images_client.list_images(
-            limit=1, name=self.image_name, owner=owner)
+            filters={"limit": 1, "name": self.image_name, "owner": owner})
         self.assertEqual(response.status_code, 200)
         image_list = response.entity
         self.assertEqual(len(image_list), 1)
         marker = image_list[0].id_
         response = self.images_client.list_images(
-            limit=1, marker=marker, name=self.image_name, owner=owner)
+            filters={"limit": 1, "marker": marker, "name": self.image_name,
+                     "owner": owner})
         self.assertEqual(response.status_code, 200)
         next_image_list = response.entity
         self.assertEqual(len(next_image_list), 1)
@@ -70,7 +71,7 @@ class TestGetImages(ComputeIntegrationFixture):
         4) Verify that the number of images returned in 50 or less
         """
 
-        response = self.images_client.list_images(limit=50)
+        response = self.images_client.list_images(filters={"limit": 50})
         self.assertEqual(response.status_code, 200)
         images = response.entity
         self.assertLessEqual(len(images), 50)
@@ -91,7 +92,7 @@ class TestGetImages(ComputeIntegrationFixture):
         test_image_name = self.images_config.test_image_name
 
         response = self.images_client.list_images(
-            limit=100, visibility=ImageVisibility.PUBLIC)
+            filters={"limit": 100, "visibility": ImageVisibility.PUBLIC})
         self.assertEqual(response.status_code, 200)
         glance_images = response.entity
 

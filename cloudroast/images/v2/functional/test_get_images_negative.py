@@ -29,5 +29,6 @@ class TestGetImagesNegative(ImagesFixture):
         2) Verify that the response code is 400
         """
 
-        response = self.images_client.list_images(sort_key='schema')
+        response = self.images_client.list_images(
+            filters={"sort_key": "schema"})
         self.assertEquals(response.status_code, 400)
