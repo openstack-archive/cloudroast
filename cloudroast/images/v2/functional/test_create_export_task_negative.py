@@ -20,6 +20,7 @@ from cafe.drivers.unittest.decorators import tags
 from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.images.common.constants import Messages
 from cloudcafe.images.common.types import TaskStatus, TaskTypes
+
 from cloudroast.images.fixtures import ObjectStorageIntegrationFixture
 
 
@@ -28,7 +29,7 @@ class TestCreateExportTaskNegative(ObjectStorageIntegrationFixture):
     @classmethod
     def setUpClass(cls):
         super(TestCreateExportTaskNegative, cls).setUpClass()
-        cls.image = cls.images_behavior.create_new_image()
+        cls.image = cls.images_behavior.create_image_via_task()
 
     @tags(type='negative', regression='true')
     def test_attempt_duplicate_export_task(self):

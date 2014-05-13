@@ -14,13 +14,28 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import unittest2 as unittest
+
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.images.common.types import ImageMemberStatus, TaskTypes
-from cloudroast.images.fixtures import ImagesFixture
+from cloudcafe.images.config import ImagesConfig
+
+from cloudroast.images.fixtures import ObjectStorageIntegrationFixture
+
+images_config = ImagesConfig()
+allow_post_images = images_config.allow_post_images
+allow_put_image_file = images_config.allow_put_image_file
+allow_get_image_file = images_config.allow_get_image_file
 
 
-class TestGetImageFile(ImagesFixture):
+class TestGetImageFile(ObjectStorageIntegrationFixture):
 
+    @unittest.skipUnless(allow_post_images or allow_put_image_file or
+                         allow_get_image_file,
+                         ('The allow_post_images, allow_put_image_file, or '
+                          'allow_get_image_file property is False, test can '
+                          'only be executed against endpoint with correct '
+                          'access'))
     @tags(type='positive', regression='true')
     def test_get_image_file(self):
         """
@@ -43,6 +58,12 @@ class TestGetImageFile(ImagesFixture):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.content, file_data)
 
+    @unittest.skipUnless(allow_post_images or allow_put_image_file or
+                         allow_get_image_file,
+                         ('The allow_post_images, allow_put_image_file, or '
+                          'allow_get_image_file property is False, test can '
+                          'only be executed against endpoint with correct '
+                          'access'))
     @tags(type='positive', regression='true')
     def test_get_image_file_as_a_member_of_the_image(self):
         """
@@ -55,11 +76,12 @@ class TestGetImageFile(ImagesFixture):
         5. Verify that alternative tenant belongs to image members list
         6. Get image file as alternative tenant
         7. Verify that the response code is 200
-        8. Verify that the response content is the same as image data
+        8. Verify that the response content is the same as file data
         """
 
         alt_tenant_id = self.alt_tenant_id
         file_data = self.test_file
+
         image = self.images_behavior.create_new_image()
         response = self.images_client.store_image_file(
             image_id=image.id_, file_data=file_data)
@@ -77,8 +99,12 @@ class TestGetImageFile(ImagesFixture):
 
         response = self.alt_images_client.get_image_file(image_id=image.id_)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.content, self.image_data)
+        self.assertEqual(response.content, file_data)
 
+    @unittest.skipUnless(allow_get_image_file,
+                         ('The allow_get_image_file property is False, test '
+                          'can only be executed against endpoint with correct '
+                          'access'))
     @tags(type='positive', regression='true')
     def test_verify_object_and_imported_exported_image_content(self):
         """
