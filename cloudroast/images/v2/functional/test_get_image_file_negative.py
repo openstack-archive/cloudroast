@@ -15,13 +15,29 @@ limitations under the License.
 """
 
 import cStringIO as StringIO
+import unittest2 as unittest
 
 from cafe.drivers.unittest.decorators import tags
+from cloudcafe.images.config import ImagesConfig
+
 from cloudroast.images.fixtures import ImagesFixture
+
+images_config = ImagesConfig()
+allow_post_images = images_config.allow_post_images
+allow_put_image_file = images_config.allow_put_image_file
+allow_get_image_file = images_config.allow_get_image_file
 
 
 class GetImageFileNegativeTest(ImagesFixture):
 
+    @classmethod
+    def setUpClass(cls):
+        super(GetImageFileNegativeTest, cls).setUpClass()
+        cls.image = cls.images_behavior.create_new_image()
+
+    @unittest.skipIf(allow_get_image_file is False,
+                     ('The allow_get_image_file property is False, test can '
+                      'only be executed against endpoint with correct access'))
     @tags(type='negative', regression='true')
     def test_get_image_file_using_blank_image_id(self):
         """
@@ -34,6 +50,9 @@ class GetImageFileNegativeTest(ImagesFixture):
         response = self.images_client.get_image_file(image_id="")
         self.assertEqual(response.status_code, 404)
 
+    @unittest.skipIf(allow_get_image_file is False,
+                     ('The allow_get_image_file property is False, test can '
+                      'only be executed against endpoint with correct access'))
     @tags(type='negative', regression='true')
     def test_get_image_file_using_invalid_image_id(self):
         """
@@ -46,6 +65,9 @@ class GetImageFileNegativeTest(ImagesFixture):
         response = self.images_client.get_image_file(image_id="invalid_id")
         self.assertEqual(response.status_code, 404)
 
+    @unittest.skipIf(allow_get_image_file is False,
+                     ('The allow_get_image_file property is False, test can '
+                      'only be executed against endpoint with correct access'))
     @tags(type='negative', regression='true')
     def test_get_image_file_for_non_existent_file(self):
         """
@@ -57,8 +79,14 @@ class GetImageFileNegativeTest(ImagesFixture):
         """
 
         response = self.images_client.get_image_file(image_id=self.image.id_)
-        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.status_code, 204)
 
+    @unittest.skipIf(allow_post_images is False or
+                     allow_put_image_file is False or
+                     allow_get_image_file is False,
+                     ('The allow_post_images, allow_put_image_file, or '
+                      'allow_get_image_file property is False, test can only '
+                      'be executed against endpoint with correct access'))
     @tags(type='negative', regression='true')
     def test_get_image_file_as_non_member_of_the_image(self):
         """

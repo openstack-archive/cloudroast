@@ -144,7 +144,7 @@ class TestTaskStates(ObjectStorageIntegrationFixture):
         6) Verify that a message property is not returned
         """
 
-        image = self.images_behavior.create_new_image()
+        image = self.images_behavior.create_image_via_task()
         input_ = {'image_uuid': image.id_,
                   'receiving_swift_container': self.export_to}
         expected_location = '{0}/{1}.vhd'.format(self.export_to, image.id_)
@@ -192,7 +192,7 @@ class TestTaskStates(ObjectStorageIntegrationFixture):
         """
 
         container_name = rand_name('container')
-        image = self.images_behavior.create_new_image(
+        image = self.images_behavior.create_image_via_task(
             import_from=self.import_from_bootable)
         input_ = {'image_uuid': image.id_,
                   'receiving_swift_container': container_name}

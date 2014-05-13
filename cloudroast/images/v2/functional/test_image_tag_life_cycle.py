@@ -14,11 +14,21 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import unittest2 as unittest
+
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.common.tools.datagen import rand_name
+from cloudcafe.images.config import ImagesConfig
+
 from cloudroast.images.fixtures import ImagesFixture
 
+images_config = ImagesConfig()
+allow_post_images = images_config.allow_post_images
 
+
+@unittest.skipIf(allow_post_images is False,
+                 ('The allow_post_images property is False, test can '
+                  'only be executed against endpoint with correct access'))
 class TestImageTagLifeCycle(ImagesFixture):
 
     @tags(type='positive', regression='true')

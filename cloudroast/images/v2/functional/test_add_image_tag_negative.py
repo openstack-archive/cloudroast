@@ -24,7 +24,7 @@ class TestAddImageTagNegative(ImagesFixture):
     @classmethod
     def setUpClass(cls):
         super(TestAddImageTagNegative, cls).setUpClass()
-        cls.image = cls.images_behavior.create_new_image()
+        cls.image = cls.images_behavior.create_image_via_task()
 
     @tags(type='negative', regression='true')
     def test_add_image_tag_using_invalid_image_id(self):
