@@ -19,9 +19,19 @@ import unittest2 as unittest
 
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.images.common.types import ImageStatus
+from cloudcafe.images.config import ImagesConfig
+
 from cloudroast.images.fixtures import ImagesFixture
 
+images_config = ImagesConfig()
+allow_post_images = images_config.allow_post_images
+allow_put_image_file = images_config.allow_put_image_file
 
+
+@unittest.skipIf(allow_put_image_file or allow_post_images,
+                 ('The allow_put_image_file or allow_post_images property is '
+                  'False, test can only be executed against endpoint with '
+                  'correct access'))
 class StoreImageFileNegativeTest(ImagesFixture):
 
     @classmethod

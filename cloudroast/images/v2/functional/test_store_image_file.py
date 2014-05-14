@@ -15,12 +15,23 @@ limitations under the License.
 """
 
 import cStringIO as StringIO
+import unittest2 as unittest
 
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.images.common.types import ImageStatus
+from cloudcafe.images.config import ImagesConfig
+
 from cloudroast.images.fixtures import ImagesFixture
 
+images_config = ImagesConfig()
+allow_post_images = images_config.allow_post_images
+allow_put_image_file = images_config.allow_put_image_file
 
+
+@unittest.skipUnless(allow_put_image_file or allow_post_images,
+                     ('The allow_put_image_file or allow_post_images property '
+                      'is False, test can only be executed against endpoint '
+                      'with correct access'))
 class TestStoreImageFile(ImagesFixture):
 
     @classmethod
@@ -44,6 +55,7 @@ class TestStoreImageFile(ImagesFixture):
         file_data = StringIO.StringIO(('*' * 1024))
 
         image = self.images.pop()
+        errors = []
 
         response = self.images_client.store_image_file(image.id_, file_data)
         self.assertEqual(response.status_code, 204)
@@ -51,8 +63,6 @@ class TestStoreImageFile(ImagesFixture):
         response = self.images_client.get_image(image.id_)
         self.assertEqual(response.status_code, 200)
         updated_image = response.entity
-
-        errors = self.images_behavior.validate_image(updated_image)
 
         if updated_image.checksum is None:
             errors.append(self.error_msg.format(
@@ -82,6 +92,7 @@ class TestStoreImageFile(ImagesFixture):
         larger_file_data = StringIO.StringIO("*" * 10000 * 1024)
 
         image = self.images.pop()
+        errors = []
 
         response = self.images_client.store_image_file(
             image_id=image.id_, file_data=larger_file_data)
@@ -90,8 +101,6 @@ class TestStoreImageFile(ImagesFixture):
         response = self.images_client.get_image(image_id=image.id_)
         self.assertEqual(response.status_code, 200)
         updated_image = response.entity
-
-        errors = self.images_behavior.validate_image(updated_image)
 
         if updated_image.checksum is None:
             errors.append(self.error_msg.format(
