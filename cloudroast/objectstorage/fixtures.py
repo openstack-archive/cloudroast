@@ -26,9 +26,10 @@ from cloudcafe.objectstorage.objectstorage_api.client \
     import ObjectStorageAPIClient
 from cloudcafe.objectstorage.objectstorage_api.config \
     import ObjectStorageAPIConfig
-from cloudcafe.identity.v2_0.tokens_api.client import TokenAPI_Client
 
 
+# TODO: Refactor the Auth composites to use the Identity auth composites
+# when not in SAIO mode.
 class AuthComposite(object):
     #Currently a classmethod only because of a limitiation of memoized
     @classmethod
@@ -36,6 +37,8 @@ class AuthComposite(object):
     def authenticate(cls, username=None, password=None):
         """ Should only be called from an instance of AuthComposite """
         if username and password:
+            from cloudcafe.identity.v2_0.tokens_api.client import \
+                TokenAPI_Client
             client = TokenAPI_Client(
                 UserAuthConfig().auth_endpoint,
                 serialize_format="json",
@@ -99,6 +102,7 @@ class ObjectStorageFixture(BaseTestFixture):
         def skipUnlessHasattr(obj, attr):
             if hasattr(obj, attr):
                 return lambda func: func
+
             return unittest.skip("{!r} doesn't have {!r}".format(obj, attr))
 
         http://docs.python.org/2/library/unittest.html
