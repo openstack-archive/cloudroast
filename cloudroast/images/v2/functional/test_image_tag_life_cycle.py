@@ -31,7 +31,7 @@ allow_post_images = images_config.allow_post_images
                       'only be executed against endpoint with correct access'))
 class TestImageTagLifeCycle(ImagesFixture):
 
-    @tags(type='positive', regression='true')
+    @tags(type='positive', regression='true', skipable='true')
     def test_image_tag_life_cycle(self):
         """
         @summary: Image tag life cycle

@@ -38,7 +38,7 @@ allow_post_images = images_config.allow_post_images
                       'only be executed against endpoint with correct access'))
 class TestImageLifeCycle(ImagesFixture):
 
-    @tags(type='positive', regression='true')
+    @tags(type='positive', regression='true', skipable='true')
     def test_image_life_cycle(self):
         """
         @summary: Image life cycle of create, list, get, update, and delete

@@ -14,8 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import unittest2 as unittest
-
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.images.common.types import ImageMemberStatus
 from cloudroast.images.fixtures import ImagesFixture
@@ -23,7 +21,6 @@ from cloudroast.images.fixtures import ImagesFixture
 
 class ForceUserToSeeMyImagesTest(ImagesFixture):
 
-    @unittest.skip('Bug, Redmine #4337')
     @tags(type='positive', regression='true')
     def test_force_a_user_to_see_my_images(self):
         """

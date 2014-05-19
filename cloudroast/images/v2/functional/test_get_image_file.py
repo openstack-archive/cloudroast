@@ -36,7 +36,7 @@ class TestGetImageFile(ObjectStorageIntegrationFixture):
                           'allow_get_image_file property is False, test can '
                           'only be executed against endpoint with correct '
                           'access'))
-    @tags(type='positive', regression='true')
+    @tags(type='positive', regression='true', skipable='true')
     def test_get_image_file(self):
         """
         @summary: Get image file
@@ -64,7 +64,7 @@ class TestGetImageFile(ObjectStorageIntegrationFixture):
                           'allow_get_image_file property is False, test can '
                           'only be executed against endpoint with correct '
                           'access'))
-    @tags(type='positive', regression='true')
+    @tags(type='positive', regression='true', skipable='true')
     def test_get_image_file_as_a_member_of_the_image(self):
         """
         @summary: Get image file as a member of the image
@@ -101,10 +101,8 @@ class TestGetImageFile(ObjectStorageIntegrationFixture):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.content, file_data)
 
-    @unittest.skipUnless(allow_get_image_file,
-                         ('The allow_get_image_file property is False, test '
-                          'can only be executed against endpoint with correct '
-                          'access'))
+    # TODO: Add skipUnless allow_post_images/allow_get_image_file after bug fix
+    @unittest.skip('Bug, Redmine #6506')
     @tags(type='positive', regression='true')
     def test_verify_object_and_imported_exported_image_content(self):
         """
@@ -133,16 +131,15 @@ class TestGetImageFile(ObjectStorageIntegrationFixture):
         self.assertEqual(response.status_code, 200)
         file_content = response.content
 
-        task = self.images_behavior.create_new_task()
-        image_id = task.result.image_id
+        image = self.images_behavior.create_image_via_task()
 
-        response = self.images_client.get_image_file(image_id)
+        response = self.images_client.get_image_file(image.id_)
         self.assertEqual(response.status_code, 200)
         image_content = response.content
 
         self.assertEqual(file_content, image_content)
 
-        input_ = {'image_uuid': image_id,
+        input_ = {'image_uuid': image.id_,
                   'receiving_swift_container': self.export_to}
 
         task = self.images_behavior.create_new_task(

@@ -24,6 +24,7 @@ from cloudcafe.images.config import ImagesConfig
 from cloudroast.images.fixtures import ImagesFixture
 
 images_config = ImagesConfig()
+allow_post_images = images_config.allow_post_images
 superuser = images_config.superuser
 
 
@@ -50,10 +51,10 @@ class TestDeleteImagePositive(ImagesFixture):
         response = self.alt_images_client.get_image(image.id_)
         self.assertEqual(response.status_code, 404)
 
-    @unittest.skipIf(superuser is False,
-                     ('The superuser property is False, test can only be '
-                      'executed for user with correct privileges'))
-    @tags(type='positive', regression='true')
+    @unittest.skipUnless(superuser,
+                         ('The superuser property is False, test can only be '
+                          'executed for user with correct privileges'))
+    @tags(type='positive', regression='true', skipable='true')
     def test_delete_image_that_is_public(self):
         """
         @summary: Delete image that is public
@@ -78,7 +79,11 @@ class TestDeleteImagePositive(ImagesFixture):
         self.assertListEqual(error_list, [])
         self.assertEqual(get_image.status, image.status)
 
-    @tags(type='positive', regression='true')
+    @unittest.skipUnless(allow_post_images,
+                        ('The allow_post_images property is False, test can '
+                         'only be executed against endpoint with correct '
+                         'access'))
+    @tags(type='positive', regression='true', skipable='true')
     def test_delete_image_with_binary_data(self):
         """
         @summary: Delete image with binary data

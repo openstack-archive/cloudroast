@@ -28,9 +28,12 @@ images_config = ImagesConfig()
 allow_post_images = images_config.allow_post_images
 
 
+@unittest.skipUnless(allow_post_images,
+                     ('The allow_post_images property is False, test can only '
+                      'be executed against endpoint with correct access'))
 class TestCreateImageNegative(ImagesFixture):
 
-    @tags(type='negative', regression='true')
+    @tags(type='negative', regression='true', skipable='true')
     def test_create_image_using_unacceptable_disk_format(self):
         """
         @summary: Create image using an unacceptable disk format
@@ -42,7 +45,7 @@ class TestCreateImageNegative(ImagesFixture):
         response = self.images_client.create_image(disk_format='unacceptable')
         self.assertEqual(response.status_code, 400)
 
-    @tags(type='negative', regression='true')
+    @tags(type='negative', regression='true', skipable='true')
     def test_create_image_using_unacceptable_container_format(self):
         """
         @summary: Create image using an unacceptable container format
@@ -55,11 +58,7 @@ class TestCreateImageNegative(ImagesFixture):
             container_format='unacceptable')
         self.assertEqual(response.status_code, 400)
 
-    @unittest.skipUnless(allow_post_images,
-                        ('The allow_post_images property is False, test can '
-                         'only be executed against endpoint with correct '
-                         'access'))
-    @tags(type='negative', regression='true')
+    @tags(type='negative', regression='true', skipable='true')
     def test_create_public_image(self):
         """
         @summary: Create a public image by setting the visibility property to

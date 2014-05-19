@@ -14,8 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import unittest2 as unittest
-
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.images.common.types import ImageMemberStatus
 from cloudroast.images.fixtures import ImagesFixture
@@ -23,7 +21,6 @@ from cloudroast.images.fixtures import ImagesFixture
 
 class RemoveAllSharedImagesFromUserListTest(ImagesFixture):
 
-    @unittest.skip('Bug, Redmine #4337')
     @tags(type='positive', regression='true')
     def test_remove_all_shared_images_from_user_list(self):
         """
