@@ -91,6 +91,17 @@ class ImagesMetadataTest(ComputeFixture):
         self.assertNotIn('user_key2', image_metadata)
 
     @tags(type='positive', net='no')
+    def test_update_image_metadata(self):
+        """Test user should be able to update the metadata of an image"""
+        meta = {'user_key6': 'meta6', 'user_key7': 'meta7'}
+        self.images_client.update_image_metadata(self.image_id, meta)
+
+        image_metadata = self.images_client.list_image_metadata(
+            self.image_id).entity
+        self.assertEqual(image_metadata.get('user_key6'), 'meta6')
+        self.assertEqual(image_metadata.get('user_key7'), 'meta7')
+
+    @tags(type='positive', net='no')
     def test_get_image_metadata_item(self):
         """The value for a specific metadata key should be returned"""
         meta_resp = self.images_client.get_image_metadata_item(
