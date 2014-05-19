@@ -13,8 +13,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-import unittest
-
 from cafe.drivers.unittest.decorators import memoized
 from cafe.drivers.unittest.fixtures import BaseTestFixture
 from cloudcafe.auth.config import UserAuthConfig
@@ -88,7 +86,7 @@ class ObjectStorageFixture(BaseTestFixture):
 
     @classmethod
     @memoized
-    def required_version(cls, required_version):
+    def required_version(cls, *expected_versions):
         """
         Test decorator to skip tests if the version of swift does not
         match the required version provided.  If unable to retrieve the
@@ -118,41 +116,50 @@ class ObjectStorageFixture(BaseTestFixture):
                  based on the results of the version comparison.
         @rtype: function
         """
-        auth_data = ObjectStorageAuthComposite()
-        objectstorage_api_config = ObjectStorageAPIConfig()
-        client = ObjectStorageAPIClient(auth_data.storage_url,
-                                        auth_data.auth_token)
-        behaviors = ObjectStorageAPI_Behaviors(
-            client=client, config=objectstorage_api_config)
 
-        swift_version = objectstorage_api_config.version
-        if not swift_version and objectstorage_api_config.use_swift_info:
-            info = behaviors.get_swift_info()
-            swift_version = info.get(
-                'swift', {'version': None}).get('version', None)
+        def decorator(func):
+            # TODO: This is not ideal, should change this to support
+            # multiple versions
+            expected_version = expected_versions[0]
+            auth_data = ObjectStorageAuthComposite()
+            objectstorage_api_config = ObjectStorageAPIConfig()
+            client = ObjectStorageAPIClient(auth_data.storage_url,
+                                            auth_data.auth_token)
+            behaviors = ObjectStorageAPI_Behaviors(
+                client=client, config=objectstorage_api_config)
 
-        if not swift_version:
-            return lambda func: func
+            swift_version = objectstorage_api_config.version
+            if not swift_version and objectstorage_api_config.use_swift_info:
+                info = behaviors.get_swift_info()
+                swift_version = info.get(
+                    'swift', {'version': None}).get('version', None)
 
-        if required_version.startswith('<'):
-            required_version = required_version.lstrip('<')
-            compare_func = lambda sv, tv: sv < tv
-            extra_message = ' less than'
-        elif required_version.startswith('>'):
-            required_version = required_version.lstrip('>')
-            compare_func = lambda sv, tv: sv > tv
-            extra_message = ' greater than'
-        else:
-            required_version = required_version.lstrip('=')
-            compare_func = lambda sv, tv: sv.startswith(tv)
-            extra_message = ''
+            if not swift_version:
+                return func
 
-        if compare_func(swift_version, required_version):
-            return lambda func: func
+            if expected_version.startswith('<'):
+                expected_version = expected_version.lstrip('<')
+                compare_func = lambda sv, tv: sv < tv
+                extra_message = ' less than'
+            elif expected_version.startswith('>'):
+                expected_version = expected_version.lstrip('>')
+                compare_func = lambda sv, tv: sv > tv
+                extra_message = ' greater than'
+            else:
+                expected_version = expected_version.lstrip('=')
+                compare_func = lambda sv, tv: sv.startswith(tv)
+                extra_message = ''
 
-        return unittest.skip(
-            'swift running version {0}, requires version{1}: {2}'.format(
-                swift_version, extra_message, required_version))
+            if compare_func(swift_version, expected_version):
+                func
+
+            setattr(func, '__unittest_skip__', True)
+            setattr(
+                func, '__unittest_skip_why__',
+                'swift running version {0}, requires version{1}: {2}'.format(
+                    swift_version, extra_message, expected_version))
+            return func
+        return decorator
 
     @classmethod
     @memoized
@@ -172,33 +179,40 @@ class ObjectStorageFixture(BaseTestFixture):
 
         http://docs.python.org/2/library/unittest.html
         """
-        auth_data = ObjectStorageAuthComposite()
-        objectstorage_api_config = ObjectStorageAPIConfig()
-        client = ObjectStorageAPIClient(auth_data.storage_url,
-                                        auth_data.auth_token)
-        behaviors = ObjectStorageAPI_Behaviors(
-            client=client, config=objectstorage_api_config)
 
-        features = behaviors.get_configured_features()
+        def decorator(func):
+            auth_data = ObjectStorageAuthComposite()
+            objectstorage_api_config = ObjectStorageAPIConfig()
+            client = ObjectStorageAPIClient(auth_data.storage_url,
+                                            auth_data.auth_token)
+            behaviors = ObjectStorageAPI_Behaviors(
+                client=client, config=objectstorage_api_config)
 
-        if features == objectstorage_api_config.ALL_FEATURES:
-            return lambda func: func
+            features = behaviors.get_configured_features()
 
-        if features == objectstorage_api_config.NO_FEATURES:
-            return unittest.skip('skipping all features')
+            if features == objectstorage_api_config.ALL_FEATURES:
+                return func
 
-        features = features.split()
-        missing_reqs = False
-        for req in required_features:
-            if req not in features:
-                missing_reqs = True
-                break
+            if features == objectstorage_api_config.NO_FEATURES:
+                setattr(func, '__unittest_skip__', True)
+                setattr(func, '__unittest_skip_why__', 'Skipping All Features')
 
-        if missing_reqs:
-            return unittest.skip(
-                'requires features: {0}'.format(', '.join(required_features)))
+            features = features.split()
+            missing_reqs = False
+            for req in required_features:
+                if req not in features:
+                    missing_reqs = True
+                    break
 
-        return lambda func: func
+            if missing_reqs:
+                setattr(func, '__unittest_skip__', True)
+                setattr(
+                    func, '__unittest_skip_why__',
+                    'requires features: {0}'.format(
+                        ', '.join(required_features)))
+
+            return func
+        return decorator
 
     @classmethod
     def setUpClass(cls):
