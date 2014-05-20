@@ -30,12 +30,8 @@ allow_get_image_file = images_config.allow_get_image_file
 
 class TestGetImageFile(ObjectStorageIntegrationFixture):
 
-    @unittest.skipUnless(allow_post_images or allow_put_image_file or
-                         allow_get_image_file,
-                         ('The allow_post_images, allow_put_image_file, or '
-                          'allow_get_image_file property is False, test can '
-                          'only be executed against endpoint with correct '
-                          'access'))
+    @unittest.skipUnless(allow_post_images and allow_put_image_file and
+                         allow_get_image_file, 'Endpoint has incorrect access')
     @tags(type='positive', regression='true')
     def test_get_image_file(self):
         """
@@ -58,12 +54,8 @@ class TestGetImageFile(ObjectStorageIntegrationFixture):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.content, file_data)
 
-    @unittest.skipUnless(allow_post_images or allow_put_image_file or
-                         allow_get_image_file,
-                         ('The allow_post_images, allow_put_image_file, or '
-                          'allow_get_image_file property is False, test can '
-                          'only be executed against endpoint with correct '
-                          'access'))
+    @unittest.skipUnless(allow_post_images and allow_put_image_file and
+                         allow_get_image_file, 'Endpoint has incorrect access')
     @tags(type='positive', regression='true')
     def test_get_image_file_as_a_member_of_the_image(self):
         """
@@ -101,10 +93,7 @@ class TestGetImageFile(ObjectStorageIntegrationFixture):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.content, file_data)
 
-    @unittest.skipUnless(allow_get_image_file,
-                         ('The allow_get_image_file property is False, test '
-                          'can only be executed against endpoint with correct '
-                          'access'))
+    @unittest.skipUnless(allow_get_image_file, 'Endpoint has incorrect access')
     @tags(type='positive', regression='true')
     def test_verify_object_and_imported_exported_image_content(self):
         """

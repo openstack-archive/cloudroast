@@ -33,12 +33,10 @@ images_config = ImagesConfig()
 allow_post_images = images_config.allow_post_images
 
 
-@unittest.skipUnless(allow_post_images,
-                     ('The allow_post_images property is False, test can '
-                      'only be executed against endpoint with correct access'))
+@unittest.skipUnless(allow_post_images, 'Endpoint has incorrect access')
 class TestImageLifeCycle(ImagesFixture):
 
-    @tags(type='positive', regression='true')
+    @tags(type='positive', regression='true', skipable='true')
     def test_image_life_cycle(self):
         """
         @summary: Image life cycle of create, list, get, update, and delete

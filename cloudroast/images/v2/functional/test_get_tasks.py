@@ -14,8 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import unittest2 as unittest
-
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.images.common.types import TaskTypes
 from cloudroast.images.fixtures import ImagesFixture
@@ -26,7 +24,7 @@ class TestGetTasks(ImagesFixture):
     @classmethod
     def setUpClass(cls):
         super(TestGetTasks, cls).setUpClass()
-        cls.tasks = cls.images_behavior.create_new_tasks(count=4)
+        cls.tasks = cls.images_behavior.create_new_tasks(count=2)
 
     @tags(type='smoke')
     def test_get_tasks(self):
@@ -55,7 +53,6 @@ class TestGetTasks(ImagesFixture):
 
         self.assertEqual(len(created_tasks), count)
 
-    @unittest.skip('Bug, Redmine #4727')
     @tags(type='positive', regression='true')
     def test_get_tasks_filter_type(self):
         """

@@ -35,11 +35,8 @@ class GetImageFileNegativeTest(ImagesFixture):
         super(GetImageFileNegativeTest, cls).setUpClass()
         cls.image = cls.images_behavior.create_new_image()
 
-    @unittest.skipUnless(allow_get_image_file,
-                         ('The allow_get_image_file property is False, test '
-                          'can only be executed against endpoint with correct '
-                          'access'))
-    @tags(type='negative', regression='true')
+    @unittest.skipUnless(allow_get_image_file, 'Endpoint has incorrect access')
+    @tags(type='negative', regression='true', skipable='true')
     def test_get_image_file_using_blank_image_id(self):
         """
         @summary: Get image file using blank image id
@@ -51,11 +48,8 @@ class GetImageFileNegativeTest(ImagesFixture):
         response = self.images_client.get_image_file(image_id="")
         self.assertEqual(response.status_code, 404)
 
-    @unittest.skipUnless(allow_get_image_file,
-                         ('The allow_get_image_file property is False, test '
-                          'can only be executed against endpoint with correct '
-                          'access'))
-    @tags(type='negative', regression='true')
+    @unittest.skipUnless(allow_get_image_file, 'Endpoint has incorrect access')
+    @tags(type='negative', regression='true', skipable='true')
     def test_get_image_file_using_invalid_image_id(self):
         """
         @summary: Get image file using invalid image id
@@ -67,11 +61,8 @@ class GetImageFileNegativeTest(ImagesFixture):
         response = self.images_client.get_image_file(image_id="invalid_id")
         self.assertEqual(response.status_code, 404)
 
-    @unittest.skipUnless(allow_get_image_file,
-                         ('The allow_get_image_file property is False, test '
-                          'can only be executed against endpoint with correct '
-                          'access'))
-    @tags(type='negative', regression='true')
+    @unittest.skipUnless(allow_get_image_file, 'Endpoint has incorrect access')
+    @tags(type='negative', regression='true', skipable='true')
     def test_get_image_file_for_non_existent_file(self):
         """
         @summary: Get image file for non existent file
@@ -84,13 +75,9 @@ class GetImageFileNegativeTest(ImagesFixture):
         response = self.images_client.get_image_file(image_id=self.image.id_)
         self.assertEqual(response.status_code, 204)
 
-    @unittest.skipUnless(allow_post_images or allow_put_image_file or
-                         allow_get_image_file,
-                         ('The allow_post_images, allow_put_image_file, or '
-                          'allow_get_image_file property is False, test can '
-                          'only be executed against endpoint with correct '
-                          'access'))
-    @tags(type='negative', regression='true')
+    @unittest.skipUnless(allow_post_images and allow_put_image_file and
+                         allow_get_image_file, 'Endpoint has incorrect access')
+    @tags(type='negative', regression='true', skipable='true')
     def test_get_image_file_as_non_member_of_the_image(self):
         """
         @summary: Get image file as a non member of the image

@@ -14,8 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import unittest2 as unittest
-
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.images.common.types import ImageMemberStatus, ImageVisibility
 from cloudroast.images.fixtures import ImagesFixture
@@ -23,7 +21,6 @@ from cloudroast.images.fixtures import ImagesFixture
 
 class ImageVisibilityLifeCycleTest(ImagesFixture):
 
-    @unittest.skip('Bug, Redmine #4337')
     @tags(type='positive', regression='true')
     def test_image_visibility_life_cycle(self):
         """

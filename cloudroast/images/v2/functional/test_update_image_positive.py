@@ -14,11 +14,17 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import unittest2 as unittest
+
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.images.common.types import ImageContainerFormat, ImageDiskFormat
+from cloudcafe.images.config import ImagesConfig
 
 from cloudroast.images.fixtures import ImagesFixture
+
+images_config = ImagesConfig()
+allow_post_images = images_config.allow_post_images
 
 
 class TestUpdateImagePositive(ImagesFixture):
@@ -102,7 +108,8 @@ class TestUpdateImagePositive(ImagesFixture):
             if prop == new_prop:
                 self.assertEqual(prop_val, updated_new_prop_value)
 
-    @tags(type='positive', regression='true')
+    @unittest.skipUnless(allow_post_images, 'Endpoint has incorrect access')
+    @tags(type='positive', regression='true', skipable='true')
     def test_update_image_with_data_of_another_image(self):
         """
         @summary: Update image with data of another image (update ignores
