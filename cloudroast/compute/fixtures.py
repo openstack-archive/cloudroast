@@ -256,10 +256,10 @@ class ComputeAdminFixture(ComputeFixture):
         cls.admin_hosts_client = HostsClient(**client_args)
         cls.admin_quotas_client = QuotasClient(**client_args)
         cls.admin_hypervisors_client = HypervisorsClient(**client_args)
-        cls.admin_server_behaviors = ServerBehaviors(cls.admin_servers_client,
-                                                     cls.servers_config,
-                                                     cls.images_config,
-                                                     cls.flavors_config)
+        cls.admin_server_behaviors = ServerBehaviors(
+            servers_client=cls.admin_servers_client,
+            images_client=cls.images_client, servers_config=cls.servers_config,
+            images_config=cls.images_config, flavors_config=cls.flavors_config)
         cls.admin_images_behaviors = ImageBehaviors(cls.admin_images_client,
                                                     cls.admin_servers_client,
                                                     cls.images_config)
