@@ -15,9 +15,9 @@ limitations under the License.
 """
 import json
 import math
-import md5
 from random import choice
 
+from hashlib import md5
 from cafe.common.unicode import UNICODE_BLOCKS, BLOCK_NAMES
 from cafe.drivers.unittest.datasets import DatasetList
 from cloudroast.objectstorage.fixtures import ObjectStorageAuthComposite
