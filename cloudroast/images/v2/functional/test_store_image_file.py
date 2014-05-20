@@ -28,10 +28,8 @@ allow_post_images = images_config.allow_post_images
 allow_put_image_file = images_config.allow_put_image_file
 
 
-@unittest.skipUnless(allow_put_image_file or allow_post_images,
-                     ('The allow_put_image_file or allow_post_images property '
-                      'is False, test can only be executed against endpoint '
-                      'with correct access'))
+@unittest.skipUnless(allow_put_image_file and allow_post_images,
+                     'Endpoint has incorrect access')
 class TestStoreImageFile(ImagesFixture):
 
     @classmethod
@@ -39,7 +37,7 @@ class TestStoreImageFile(ImagesFixture):
         super(TestStoreImageFile, cls).setUpClass()
         cls.images = cls.images_behavior.create_new_images(count=2)
 
-    @tags(type='positive', regression='true')
+    @tags(type='positive', regression='true', skipable='true')
     def test_store_image_file(self):
         """
         @summary: Store image file
@@ -76,7 +74,7 @@ class TestStoreImageFile(ImagesFixture):
 
         self.assertEqual(errors, [])
 
-    @tags(type='positive', regression='true')
+    @tags(type='positive', regression='true', skipable='true')
     def test_store_image_file_with_larger_file_size(self):
         """
         @summary: Store image file with larger file size

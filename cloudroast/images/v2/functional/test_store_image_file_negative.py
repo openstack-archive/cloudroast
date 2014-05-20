@@ -28,10 +28,8 @@ allow_post_images = images_config.allow_post_images
 allow_put_image_file = images_config.allow_put_image_file
 
 
-@unittest.skipIf(allow_put_image_file or allow_post_images,
-                 ('The allow_put_image_file or allow_post_images property is '
-                  'False, test can only be executed against endpoint with '
-                  'correct access'))
+@unittest.skipUnless(allow_put_image_file and allow_post_images,
+                     'Endpoint has incorrect access')
 class StoreImageFileNegativeTest(ImagesFixture):
 
     @classmethod
@@ -42,7 +40,7 @@ class StoreImageFileNegativeTest(ImagesFixture):
         cls.data_size = 1024
         cls.file_data = StringIO.StringIO("*" * cls.data_size)
 
-    @tags(type='negative', regression='true')
+    @tags(type='negative', regression='true', skipable='true')
     def test_store_image_file_with_invalid_content_type(self):
         """
         @summary: Store image file with invalid content type
@@ -57,7 +55,7 @@ class StoreImageFileNegativeTest(ImagesFixture):
             content_type="invalid_content_type")
         self.assertEqual(response.status_code, 415)
 
-    @tags(type='negative', regression='true')
+    @tags(type='negative', regression='true', skipable='true')
     def test_store_image_file_with_blank_image_id(self):
         """
         @summary: Store image file with blank image id
@@ -70,7 +68,7 @@ class StoreImageFileNegativeTest(ImagesFixture):
             image_id="", file_data=self.file_data)
         self.assertEqual(response.status_code, 404)
 
-    @tags(type='negative', regression='true')
+    @tags(type='negative', regression='true', skipable='true')
     def test_store_image_file_with_invalid_image_id(self):
         """
         @summary: Store image file with invalid image id
@@ -83,8 +81,7 @@ class StoreImageFileNegativeTest(ImagesFixture):
             image_id="invalid_id", file_data=self.file_data)
         self.assertEqual(response.status_code, 404)
 
-    @unittest.skip('Bug, Redmine #3556')
-    @tags(type='negative', regression='true')
+    @tags(type='negative', regression='true', skipable='true')
     def test_store_image_file_with_duplicate_data(self):
         """
         @summary: Store image file with duplicate data

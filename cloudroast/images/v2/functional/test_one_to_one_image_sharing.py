@@ -14,8 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import unittest2 as unittest
-
 from cloudcafe.images.common.types import ImageMemberStatus
 from cloudroast.images.fixtures import ImagesFixture
 from cafe.drivers.unittest.decorators import tags
@@ -23,7 +21,6 @@ from cafe.drivers.unittest.decorators import tags
 
 class OneToOneImageSharingTest(ImagesFixture):
 
-    @unittest.skip('Bug, Redmine #4337')
     @tags(type='positive', regression='true')
     def test_one_to_one_image_sharing(self):
         """
