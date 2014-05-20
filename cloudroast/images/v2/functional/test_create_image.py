@@ -32,10 +32,11 @@ allow_post_images = images_config.allow_post_images
 
 class TestCreateImage(ImagesFixture):
 
-    @unittest.skipIf(allow_post_images is False,
-                     ('The allow_post_images property is False, test can only '
-                      'be executed against endpoint with correct access'))
-    @tags(type='positive', regression='true')
+    @unittest.skipUnless(allow_post_images,
+                         ('The allow_post_images property is False, test can '
+                          'only be executed against endpoint with correct '
+                          'access'))
+    @tags(type='positive', regression='true', skipable='true')
     def test_create_image(self):
         """
         @summary: Create image
@@ -66,10 +67,11 @@ class TestCreateImage(ImagesFixture):
             errors.append(self.error_msg.format('tags', [], image.tags))
         self.assertListEqual(errors, [])
 
-    @unittest.skipIf(allow_post_images is False,
-                     ('The allow_post_images property is False, test can only '
-                      'be executed against endpoint with correct access'))
-    @tags(type='positive', regression='true')
+    @unittest.skipUnless(allow_post_images,
+                         ('The allow_post_images property is False, test can '
+                          'only be executed against endpoint with correct '
+                          'access'))
+    @tags(type='positive', regression='true', skipable='true')
     def test_create_image_using_optional_properties(self):
         """
         @summary: Create image using optional properties

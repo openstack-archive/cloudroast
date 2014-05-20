@@ -14,8 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import unittest2 as unittest
-
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.images.common.types import TaskStatus, TaskTypes
 from cloudroast.images.fixtures import ObjectStorageIntegrationFixture
@@ -23,7 +21,6 @@ from cloudroast.images.fixtures import ObjectStorageIntegrationFixture
 
 class TestImportExportLifeCycle(ObjectStorageIntegrationFixture):
 
-    @unittest.skip('Bug, Redmine #5105')
     @tags(type='positive', regression='true')
     def test_import_export_life_cycle(self):
         """

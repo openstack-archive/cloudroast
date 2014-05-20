@@ -39,7 +39,7 @@ class TestStoreImageFile(ImagesFixture):
         super(TestStoreImageFile, cls).setUpClass()
         cls.images = cls.images_behavior.create_new_images(count=2)
 
-    @tags(type='positive', regression='true')
+    @tags(type='positive', regression='true', skipable='true')
     def test_store_image_file(self):
         """
         @summary: Store image file
@@ -76,7 +76,7 @@ class TestStoreImageFile(ImagesFixture):
 
         self.assertEqual(errors, [])
 
-    @tags(type='positive', regression='true')
+    @tags(type='positive', regression='true', skipable='true')
     def test_store_image_file_with_larger_file_size(self):
         """
         @summary: Store image file with larger file size

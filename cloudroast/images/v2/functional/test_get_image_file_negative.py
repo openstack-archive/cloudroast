@@ -39,7 +39,7 @@ class GetImageFileNegativeTest(ImagesFixture):
                          ('The allow_get_image_file property is False, test '
                           'can only be executed against endpoint with correct '
                           'access'))
-    @tags(type='negative', regression='true')
+    @tags(type='negative', regression='true', skipable='true')
     def test_get_image_file_using_blank_image_id(self):
         """
         @summary: Get image file using blank image id
@@ -55,7 +55,7 @@ class GetImageFileNegativeTest(ImagesFixture):
                          ('The allow_get_image_file property is False, test '
                           'can only be executed against endpoint with correct '
                           'access'))
-    @tags(type='negative', regression='true')
+    @tags(type='negative', regression='true', skipable='true')
     def test_get_image_file_using_invalid_image_id(self):
         """
         @summary: Get image file using invalid image id
@@ -71,7 +71,7 @@ class GetImageFileNegativeTest(ImagesFixture):
                          ('The allow_get_image_file property is False, test '
                           'can only be executed against endpoint with correct '
                           'access'))
-    @tags(type='negative', regression='true')
+    @tags(type='negative', regression='true', skipable='true')
     def test_get_image_file_for_non_existent_file(self):
         """
         @summary: Get image file for non existent file
@@ -90,7 +90,7 @@ class GetImageFileNegativeTest(ImagesFixture):
                           'allow_get_image_file property is False, test can '
                           'only be executed against endpoint with correct '
                           'access'))
-    @tags(type='negative', regression='true')
+    @tags(type='negative', regression='true', skipable='true')
     def test_get_image_file_as_non_member_of_the_image(self):
         """
         @summary: Get image file as a non member of the image

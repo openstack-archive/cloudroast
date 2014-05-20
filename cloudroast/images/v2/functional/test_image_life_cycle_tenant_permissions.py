@@ -14,8 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import unittest2 as unittest
-
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.images.common.types import ImageDiskFormat, ImageMemberStatus
@@ -24,7 +22,6 @@ from cloudroast.images.fixtures import ImagesFixture
 
 class ImageLifeCycleTenantPermissionsTest(ImagesFixture):
 
-    @unittest.skip('Bug, Redmine #4337')
     @tags(type='positive', regression='true')
     def test_tenant_permissions_on_image_life_cycle(self):
         """
