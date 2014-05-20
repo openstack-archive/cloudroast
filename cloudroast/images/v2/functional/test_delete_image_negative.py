@@ -79,9 +79,7 @@ class TestDeleteImageNegative(ImagesFixture):
         """
 
         protected = True
-        response = self.images_client.create_image()
-        self.assertEqual(response.status_code, 201)
-        image = response.entity
+        image = self.images_behavior.create_image_via_task()
         response = self.images_client.update_image(
             image.id_, replace={'protected': protected})
         self.assertEqual(response.status_code, 200)

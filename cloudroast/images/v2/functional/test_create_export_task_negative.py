@@ -14,8 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import unittest2 as unittest
-
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.images.common.constants import Messages
@@ -82,7 +80,6 @@ class TestCreateExportTaskNegative(ObjectStorageIntegrationFixture):
                 exported_images.append(name)
         self.assertEqual(len(exported_images), 1)
 
-    @unittest.skip('Bug, Redmine #5105')
     @tags(type='negative', regression='true')
     def test_export_coalesced_snapshot(self):
         """
@@ -110,9 +107,9 @@ class TestCreateExportTaskNegative(ObjectStorageIntegrationFixture):
         disks = remote_client.get_all_disks()
         for disk in disks:
             mount_point = '/mnt/{name}'.format(name=rand_name('disk'))
-            self._mount_disk(remote_client=remote_client, disk=disk,
-                             mount_point=mount_point)
             test_directory = '{mount}/test'.format(mount=mount_point)
+            remote_client.create_directory(mount_point)
+            remote_client.mount_disk(disk, mount_point)
             remote_client.create_directory(test_directory)
 
         response = self.compute_image_behaviors.create_active_image(server.id)
@@ -138,7 +135,9 @@ class TestCreateExportTaskNegative(ObjectStorageIntegrationFixture):
             export_to=self.export_to, expect_success=True, files=files,
             image_id=snapshot.id)
         self.assertListEqual(errors, [])
-        self.assertEqual(len(file_names), 1)
+        exported_images = [name for name in file_names
+                           if name == '{0}.vhd'.format(snapshot.id)]
+        self.assertEqual(len(exported_images), 1)
 
     @tags(type='negative', regression='true')
     def test_export_task_with_container_does_not_exist(self):
