@@ -142,7 +142,7 @@ class ObjectStorageGenerator(object):
         extra_data = {}
         if data_op:
             (data, extra_data) = data_op(data, extra_data)
-        data_md5 = md5.new(data).hexdigest()
+        data_md5 = md5(data).hexdigest()
         data_etag = data_md5
 
         default_headers = {'Content-Length': str(len(data)),
@@ -217,8 +217,8 @@ class ObjectStorageGenerator(object):
 
         num_segments = int(math.ceil(data_size / float(segment_size)))
 
-        data_md5 = md5.new()
-        data_etag = md5.new()
+        data_md5 = md5()
+        data_etag = md5()
         extra_data = {'segments': []}
         for segment_id in [x for x in xrange(num_segments)]:
             segment_start = segment_id * segment_size
@@ -232,7 +232,7 @@ class ObjectStorageGenerator(object):
                 segment_data = ''.join([choice(data_pool) for x in xrange(
                     segment_size)])
 
-            segment_md5 = md5.new(segment_data).hexdigest()
+            segment_md5 = md5(segment_data).hexdigest()
             segment_extra_data = {'name': segment_name,
                                   'size': segment_size,
                                   'md5': segment_md5}
@@ -240,7 +240,7 @@ class ObjectStorageGenerator(object):
                 (segment_data, segment_extra_data) = data_op(
                     segment_data, segment_extra_data)
             extra_data['segments'].append(segment_extra_data)
-            segment_etag = md5.new(segment_data)
+            segment_etag = md5(segment_data)
             segment_etag = segment_etag.hexdigest()
             data_md5.update(segment_data)
             data_etag.update(segment_etag)
@@ -321,8 +321,8 @@ class ObjectStorageGenerator(object):
 
         manifest = []
 
-        data_md5 = md5.new()
-        data_etag = md5.new()
+        data_md5 = md5()
+        data_etag = md5()
         extra_data = {'segments': []}
         for segment_id in [x for x in xrange(num_segments)]:
             segment_start = segment_id * segment_size
@@ -337,7 +337,7 @@ class ObjectStorageGenerator(object):
             else:
                 segment_data = ''.join([choice(data_pool) for x in xrange(
                     segment_size)])
-            segment_md5 = md5.new(segment_data).hexdigest()
+            segment_md5 = md5(segment_data).hexdigest()
             segment_extra_data = {'name': segment_name,
                                   'size': segment_size,
                                   'md5': segment_md5}
@@ -345,7 +345,7 @@ class ObjectStorageGenerator(object):
                 (segment_data, segment_extra_data) = data_op(
                     segment_data, segment_extra_data)
             extra_data['segments'].append(segment_extra_data)
-            segment_etag = md5.new(segment_data)
+            segment_etag = md5(segment_data)
             segment_etag = segment_etag.hexdigest()
             data_md5.update(segment_data)
             data_etag.update(segment_etag)

@@ -26,7 +26,7 @@ CONTAINER_DESCRIPTOR = 'cors'
 class CORSTest(ObjectStorageFixture):
 
     @data_driven_test(ObjectDatasetList())
-    #@ObjectStorageFixture.required_features('tempurl')
+    @ObjectStorageFixture.required_features('tempurl')
     def ddtest_container_cors_with_tempurl(self, object_type, generate_object):
         """
         Scenario:
@@ -44,12 +44,6 @@ class CORSTest(ObjectStorageFixture):
             If strict_cors_mode == False and the Origin does not match:
                 The object should be returned with the CORS headers.
         """
-        # Temp fix till required_features decorator can be used with data
-        # driven tests.
-        features = self.behaviors.get_configured_features()
-        if 'tempurl' not in features and features != '__ALL__':
-            self.skipTest('tempurl not configured')
-
         expose_headers = ['Content-Length', 'Etag', 'X-Timestamp',
                           'X-Trans-Id']
         container_headers = {
@@ -237,7 +231,7 @@ class CORSTest(ObjectStorageFixture):
             self.assertTrue('access-control-allow-origin' in response.headers)
 
     @data_driven_test(ObjectDatasetList())
-    #@ObjectStorageFixture.required_features('tempurl')
+    @ObjectStorageFixture.required_features('tempurl', 'object-cors')
     def ddtest_object_cors_with_tempurl(self, object_type, generate_object):
         """
         Scenario:
@@ -255,12 +249,6 @@ class CORSTest(ObjectStorageFixture):
             If strict_cors_mode == False and the Origin does not match:
                 The object should be returned with the CORS headers.
         """
-        # Temp fix till required_features decorator can be used with data
-        # driven tests.
-        features = self.behaviors.get_configured_features()
-        if 'tempurl' not in features and features != '__ALL__':
-            self.skipTest('tempurl not configured')
-
         container_name = self.create_temp_container(
             descriptor=CONTAINER_DESCRIPTOR)
         object_name = 'object'
@@ -348,7 +336,7 @@ class CORSTest(ObjectStorageFixture):
                             'differing origin.')
 
     @data_driven_test(ObjectDatasetList())
-    #@ObjectStorageFixture.required_features('tempurl')
+    @ObjectStorageFixture.required_features('tempurl', 'object-cors')
     def ddtest_object_override_container_cors_with_tempurl(
             self, object_type, generate_object):
         """
@@ -367,12 +355,6 @@ class CORSTest(ObjectStorageFixture):
             If strict_cors_mode == False and the Origin does not match:
                 The object should be returned with the CORS headers.
         """
-        # Temp fix till required_features decorator can be used with data
-        # driven tests.
-        features = self.behaviors.get_configured_features()
-        if 'tempurl' not in features and features != '__ALL__':
-            self.skipTest('tempurl not configured')
-
         container_expose_headers = ['Content-Length', 'Etag']
         container_headers = {
             'X-Container-Meta-Access-Control-Allow-Origin':

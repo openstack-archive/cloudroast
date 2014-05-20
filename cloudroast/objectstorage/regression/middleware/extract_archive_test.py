@@ -95,7 +95,7 @@ class ExtractArchiveTest(ObjectStorageFixture):
         return archive_data
 
     @data_driven_test(DatasetList(archive_formats))
-    @ObjectStorageFixture.required_features('bulk')
+    @ObjectStorageFixture.required_features('bulk_upload')
     def ddtest_extract_archive_to_existing_container(self, archive_format):
         """
         Scenario: upload a archive with the extract-archive query string
@@ -190,7 +190,7 @@ class ExtractArchiveTest(ObjectStorageFixture):
                     received))
 
     @data_driven_test(DatasetList(archive_formats))
-    @ObjectStorageFixture.required_features('bulk')
+    @ObjectStorageFixture.required_features('bulk_upload')
     def ddtest_extract_archive_without_existing_container(
             self, archive_format):
         """
@@ -320,7 +320,7 @@ class ExtractArchiveTest(ObjectStorageFixture):
                         received))
 
     @data_driven_test(DatasetList(archive_formats))
-    @ObjectStorageFixture.required_features('bulk')
+    @ObjectStorageFixture.required_features('bulk_upload')
     def ddtest_object_creation_with_archive(self, archive_format):
         """
         Scenario: archive file is uploaded without the extract-archive query
