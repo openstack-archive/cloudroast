@@ -322,6 +322,7 @@ class OrdersAPI(OrdersFixture):
         self.assertEqual(secret.name, secret_id,
                          'Name did not match secret\'s UUID')
 
+    @skip_open_issue('launchpad', '1321394')
     @tags(type='positive')
     def test_create_order_with_long_expiration_timezone(self):
         """ Covers case of a timezone being added to the expiration.

@@ -253,6 +253,7 @@ class SecretsAPI(SecretsFixture):
         del_resp = self.behaviors.delete_secret(resp.id)
         self.assertEqual(del_resp.status_code, 200)
 
+    @skip_open_issue('launchpad', '1321394')
     @tags(type='positive')
     def test_create_secret_with_long_expiration_timezone(self):
         """ Covers case of a timezone being added to the expiration.
@@ -412,6 +413,7 @@ class SecretsAPI(SecretsFixture):
                          'Should have failed with 400')
 
     @skip_open_issue('launchpad', '1315498')
+    @skip_open_issue('launchpad', '1321502')
     @tags(type='negative')
     def test_putting_w_oversized_binary_data_no_utf8(self):
         """
@@ -681,7 +683,7 @@ class SecretsAPI(SecretsFixture):
                                           payload_content_encoding=encoding)
         self.assertEqual(get_resp.content, b64_payload)
 
-    @skip_open_issue('launchpad', '1246871')
+    @skip_open_issue('launchpad', '1321439')
     def test_message_from_create_secret_with_bad_content_type(self):
         """ will create a secret with an "invalid" content type
         (plain-text, rather than text/plain).  This will result in
@@ -745,6 +747,7 @@ class SecretsAPI(SecretsFixture):
 
 class SecretsPagingAPI(SecretsPagingFixture):
 
+    @skip_open_issue('launchpad', '1321497')
     @tags(type='positive')
     def test_find_a_single_secret_via_paging(self):
         """ Covers case where when you attempt to retrieve a list of secrets,
