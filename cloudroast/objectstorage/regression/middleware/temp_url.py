@@ -22,6 +22,7 @@ from cloudcafe.common.tools.check_dict import get_value
 
 BASE_CONTAINER_NAME = 'tempurl'
 CONTENT_TYPE_TEXT = 'text/plain; charset=UTF-8'
+TEMPURL_KEY_LIFE = 20
 
 
 class TempUrl(ObjectStorageFixture):
@@ -76,7 +77,7 @@ class TempUrl(ObjectStorageFixture):
             'PUT',
             container_name,
             self.object_name,
-            self.key_cache_time,
+            TEMPURL_KEY_LIFE,
             self.tempurl_key)
 
         self.assertIn(
@@ -139,7 +140,7 @@ class TempUrl(ObjectStorageFixture):
             'GET',
             container_name,
             self.object_name,
-            self.key_cache_time,
+            TEMPURL_KEY_LIFE,
             self.tempurl_key)
 
         self.assertIn(
@@ -159,6 +160,7 @@ class TempUrl(ObjectStorageFixture):
                   'temp_url_expires': tempurl_data['expires']}
 
         response = self.http.get(tempurl_data['target_url'], params=params)
+        self.assertTrue(response.ok, 'object should be retrieved over tempurl')
 
         expected_disposition = 'attachment; filename="{0}"'.format(
             self.object_name)
@@ -209,7 +211,7 @@ class TempUrl(ObjectStorageFixture):
             'GET',
             container_name,
             self.obj_name_containing_trailing_slash,
-            self.key_cache_time,
+            TEMPURL_KEY_LIFE,
             self.tempurl_key)
 
         self.assertIn(
@@ -279,7 +281,7 @@ class TempUrl(ObjectStorageFixture):
             'GET',
             container_name,
             self.obj_name_containing_slash,
-            self.key_cache_time,
+            TEMPURL_KEY_LIFE,
             self.tempurl_key)
 
         self.assertIn(
@@ -358,7 +360,7 @@ class TempUrl(ObjectStorageFixture):
             'GET',
             container_name,
             self.object_name,
-            self.key_cache_time,
+            TEMPURL_KEY_LIFE,
             self.tempurl_key)
 
         self.assertIn(
@@ -418,7 +420,7 @@ class TempUrl(ObjectStorageFixture):
             'GET',
             container_name,
             self.object_name,
-            self.key_cache_time,
+            TEMPURL_KEY_LIFE,
             self.tempurl_key)
 
         self.assertIn(
@@ -478,7 +480,7 @@ class TempUrl(ObjectStorageFixture):
             'GET',
             container_name,
             self.object_name,
-            self.key_cache_time,
+            TEMPURL_KEY_LIFE,
             self.tempurl_key)
 
         self.assertIn(
@@ -509,6 +511,8 @@ class TempUrl(ObjectStorageFixture):
             'content-disposition header should contain correct filename.')
 
     @ObjectStorageFixture.required_features('tempurl')
+    @skipUnless(get_value('tempurl-methods') == 'delete',
+                'tempurl must be configured to allow DELETE.')
     def test_tempurl_object_delete(self):
         container_name = self.create_temp_container(BASE_CONTAINER_NAME)
 
@@ -524,7 +528,7 @@ class TempUrl(ObjectStorageFixture):
             'DELETE',
             container_name,
             self.object_name,
-            self.key_cache_time,
+            TEMPURL_KEY_LIFE,
             self.tempurl_key)
 
         self.assertIn(
@@ -585,7 +589,7 @@ class TempUrl(ObjectStorageFixture):
             'GET',
             container_name,
             self.object_name,
-            self.key_cache_time,
+            TEMPURL_KEY_LIFE,
             foo_key)
 
         self.assertIn(
@@ -605,7 +609,7 @@ class TempUrl(ObjectStorageFixture):
             'GET',
             container_name,
             self.object_name,
-            self.key_cache_time,
+            TEMPURL_KEY_LIFE,
             bar_key)
 
         self.assertIn(
@@ -662,7 +666,7 @@ class TempUrl(ObjectStorageFixture):
             'GET',
             container_name,
             self.object_name,
-            self.key_cache_time,
+            TEMPURL_KEY_LIFE,
             self.tempurl_key)
 
         self.assertIn(
@@ -700,7 +704,7 @@ class TempUrl(ObjectStorageFixture):
             response.content, self.object_data,
             'object should contain correct data.')
 
-        time.sleep(int(self.key_cache_time) + 10)
+        time.sleep(int(TEMPURL_KEY_LIFE) + 10)
 
         response = self.http.get(tempurl_data['target_url'], params=params)
 

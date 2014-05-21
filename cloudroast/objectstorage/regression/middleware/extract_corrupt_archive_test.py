@@ -92,7 +92,7 @@ class ExtractCorruptArchiveTest(ObjectStorageFixture):
 
         return archive_data
 
-    @ObjectStorageFixture.required_features('bulk')
+    @ObjectStorageFixture.required_features('bulk_upload')
     def test_failure_reported_with_corrupt_tar_archive_bad_checksum(self):
         """
         Scenario: Verify behavior when a corrupt archive file is uploaded.
@@ -176,7 +176,7 @@ class ExtractCorruptArchiveTest(ObjectStorageFixture):
             msg=("response body 'Response Body' expected '{0}'"
                  " received {1}").format(expected, response.entity.body))
 
-    @ObjectStorageFixture.required_features('bulk')
+    @ObjectStorageFixture.required_features('bulk_upload')
     def test_failure_reported_with_corrupt_tar_archive_bad_type_flag(self):
         """
         Scenario: Verify behavior when a corrupt archive file is uploaded.
@@ -261,7 +261,7 @@ class ExtractCorruptArchiveTest(ObjectStorageFixture):
             msg=("response body 'Response Body' expected '{0}'"
                  " received {1}").format(expected, response.entity.body))
 
-    @ObjectStorageFixture.required_features('bulk')
+    @ObjectStorageFixture.required_features('bulk_upload')
     def test_failure_reported_with_corrupt_tar_archive_bad_mode(self):
         """
         Scenario: Verify behavior when a corrupt archive file is uploaded.
@@ -345,7 +345,7 @@ class ExtractCorruptArchiveTest(ObjectStorageFixture):
             msg=("response body 'Response Body' expected '{0}'"
                  " received {1}").format(expected, response.entity.body))
 
-    @ObjectStorageFixture.required_features('bulk')
+    @ObjectStorageFixture.required_features('bulk_upload')
     def test_failure_reported_with_corrupt_tar_gz_archive_bad_ID1(self):
         """
         Scenario: Verify behavior when a corrupt archive file is uploaded
@@ -429,7 +429,7 @@ class ExtractCorruptArchiveTest(ObjectStorageFixture):
             msg=("response body 'Response Body' expected '{0}'"
                  " received {1}").format(expected, response.entity.body))
 
-    @ObjectStorageFixture.required_features('bulk')
+    @ObjectStorageFixture.required_features('bulk_upload')
     def test_failure_reported_with_corrupt_tar_gz_archive_bad_ID2(self):
         """
         Scenario: Verify behavior when a corrupt archive file is uploaded
@@ -513,7 +513,7 @@ class ExtractCorruptArchiveTest(ObjectStorageFixture):
             msg=("response body 'Response Body' expected '{0}'"
                  " received {1}").format(expected, response.entity.body))
 
-    @ObjectStorageFixture.required_features('bulk')
+    @ObjectStorageFixture.required_features('bulk_upload')
     def test_failure_reported_with_corrupt_tar_gz_archive_bad_CM(self):
         """
         Scenario: Verify behavior when a corrupt archive file is uploaded
@@ -597,7 +597,7 @@ class ExtractCorruptArchiveTest(ObjectStorageFixture):
             msg=("response body 'Response Body' expected '{0}'"
                  " received {1}").format(expected, response.entity.body))
 
-    @ObjectStorageFixture.required_features('bulk')
+    @ObjectStorageFixture.required_features('bulk_upload')
     def test_failure_reported_with_corrupt_tar_gz_archive_bad_FLAG(self):
         """
         Scenario: Verify behavior when a corrupt archive file is uploaded
@@ -682,7 +682,7 @@ class ExtractCorruptArchiveTest(ObjectStorageFixture):
             msg=("response body 'Response Body' expected '{0}'"
                  " received {1}").format(expected, response.entity.body))
 
-    @ObjectStorageFixture.required_features('bulk')
+    @ObjectStorageFixture.required_features('bulk_upload')
     def test_failure_reported_with_corrupt_tar_bz2_archive_bad_signature(self):
         """
         Scenario: Verify behavior when a corrupt archive file is uploaded
@@ -766,7 +766,7 @@ class ExtractCorruptArchiveTest(ObjectStorageFixture):
             msg=("response body 'Response Body' expected '{0}'"
                  " received {1}").format(expected, response.entity.body))
 
-    @ObjectStorageFixture.required_features('bulk')
+    @ObjectStorageFixture.required_features('bulk_upload')
     def test_failure_reported_with_corrupt_tar_bz2_archive_bad_version(self):
         """
         Scenario: Verify behavior when a corrupt archive file is uploaded
@@ -850,7 +850,7 @@ class ExtractCorruptArchiveTest(ObjectStorageFixture):
             msg=("response body 'Response Body' expected '{0}'"
                  " received {1}").format(expected, response.entity.body))
 
-    @ObjectStorageFixture.required_features('bulk')
+    @ObjectStorageFixture.required_features('bulk_upload')
     def test_failure_reported_with_corrupt_tar_bz2_archive_bad_blocksize(self):
         """
         Scenario: Verify behavior when a corrupt archive file is uploaded

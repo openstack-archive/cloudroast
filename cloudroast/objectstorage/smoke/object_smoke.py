@@ -516,6 +516,7 @@ class ObjectSmokeTest(ObjectStorageFixture):
                     received))
 
     @data_driven_test(ObjectDatasetList())
+    @ObjectStorageFixture.required_features('object-cors')
     def ddtest_object_creation_with_access_control_allow_credentials(
             self, object_type, generate_object):
         container_name = self.create_temp_container(
@@ -559,6 +560,7 @@ class ObjectSmokeTest(ObjectStorageFixture):
                     received))
 
     @data_driven_test(ObjectDatasetList())
+    @ObjectStorageFixture.required_features('object-cors')
     def ddtest_object_creation_with_access_control_allow_methods(
             self, object_type, generate_object):
         container_name = self.create_temp_container(
@@ -603,6 +605,7 @@ class ObjectSmokeTest(ObjectStorageFixture):
                     received))
 
     @data_driven_test(ObjectDatasetList())
+    @ObjectStorageFixture.required_features('object-cors')
     def ddtest_object_creation_with_access_control_allow_origin(
             self, object_type, generate_object):
         container_name = self.create_temp_container(
@@ -646,6 +649,7 @@ class ObjectSmokeTest(ObjectStorageFixture):
                     received))
 
     @data_driven_test(ObjectDatasetList())
+    @ObjectStorageFixture.required_features('object-cors')
     def ddtest_object_creation_with_access_control_expose_headers(
             self, object_type, generate_object):
         container_name = self.create_temp_container(
@@ -689,6 +693,7 @@ class ObjectSmokeTest(ObjectStorageFixture):
                     received))
 
     @data_driven_test(ObjectDatasetList())
+    @ObjectStorageFixture.required_features('object-cors')
     def ddtest_object_creation_with_access_controle_max_age(
             self, object_type, generate_object):
         container_name = self.create_temp_container(
@@ -732,6 +737,7 @@ class ObjectSmokeTest(ObjectStorageFixture):
                     received))
 
     @data_driven_test(ObjectDatasetList())
+    @ObjectStorageFixture.required_features('object-cors')
     def ddtest_object_creation_with_access_control_request_headers(
             self, object_type, generate_object):
         container_name = self.create_temp_container(
@@ -775,6 +781,7 @@ class ObjectSmokeTest(ObjectStorageFixture):
                     received))
 
     @data_driven_test(ObjectDatasetList())
+    @ObjectStorageFixture.required_features('object-cors')
     def ddtest_object_creation_with_access_control_request_method(
             self, object_type, generate_object):
         container_name = self.create_temp_container(
@@ -818,12 +825,15 @@ class ObjectSmokeTest(ObjectStorageFixture):
                     received))
 
     @data_driven_test(ObjectDatasetList())
+    @ObjectStorageFixture.required_features('object-cors')
     def ddtest_object_retrieval_with_origin(
             self, object_type, generate_object):
         container_name = self.create_temp_container(
             descriptor=CONTAINER_DESCRIPTOR)
         object_name = self.default_obj_name
-        generate_object(container_name, object_name)
+        headers = {'access-control-allow-origin': 'http://example.com',
+                   'access-control-expose-headers': 'X-Trans-Id'}
+        generate_object(container_name, object_name, headers=headers)
 
         headers = {'Origin': 'http://example.com'}
         response = self.client.get_object_metadata(
@@ -1013,10 +1023,8 @@ class ObjectSmokeTest(ObjectStorageFixture):
             response.headers,
             msg="X-Delete-At header was set")
 
-    # TODO (hurricanerix): Fix decorator bug to allow decorating a data
-    # driven test with the required_features decorator.
-    #@ObjectStorageFixture.required_features('object_versioning')
     @data_driven_test(ObjectDatasetList())
+    @ObjectStorageFixture.required_features('object_versioning')
     def ddtest_versioned_container_creation_with_valid_data(
             self, object_type, generate_object):
         object_history_container_name = self.create_temp_container(
@@ -1041,7 +1049,7 @@ class ObjectSmokeTest(ObjectStorageFixture):
                 expected=expected,
                 received=str(received)))
 
-        #Create an object (version 1)
+        # Create an object (version 1)
         object_name = self.default_obj_name
         ver1_info = generate_object(container_name, object_name)
 
@@ -1058,7 +1066,7 @@ class ObjectSmokeTest(ObjectStorageFixture):
                 expected=expected,
                 received=str(received)))
 
-        #Update an object (version 2)
+        # Update an object (version 2)
         object_name = self.default_obj_name
         ver2_info = generate_object(container_name, object_name)
 

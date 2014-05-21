@@ -51,7 +51,7 @@ class ExtractInvalidArchiveTest(ObjectStorageFixture):
 
         return members
 
-    @ObjectStorageFixture.required_features('bulk')
+    @ObjectStorageFixture.required_features('bulk_upload')
     def test_failure_reported_with_invalid_tar_archive(self):
         """
         Scenario: Verify behavior when an invalid archive file is uploaded
@@ -142,7 +142,7 @@ class ExtractInvalidArchiveTest(ObjectStorageFixture):
             msg="container list expected: {0} objects."
             " received: {1} objects".format(expected, received))
 
-    @ObjectStorageFixture.required_features('bulk')
+    @ObjectStorageFixture.required_features('bulk_upload')
     def test_failure_reported_with_invalid_tar_gz_archive(self):
         """
         Scenario: Verify behavior when an invalid archive file is uploaded
@@ -233,7 +233,7 @@ class ExtractInvalidArchiveTest(ObjectStorageFixture):
             msg="container list expected: {0} objects."
             " received: {1} objects".format(expected, received))
 
-    @ObjectStorageFixture.required_features('bulk')
+    @ObjectStorageFixture.required_features('bulk_upload')
     def test_failure_reported_with_invalid_tar_bz2_archive(self):
         """
         Scenario: Verify behavior when an invalid archive file is uploaded
