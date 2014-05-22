@@ -14,8 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import cStringIO as StringIO
-
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.images.common.types import ImageStatus, ImageVisibility
@@ -28,8 +26,7 @@ class TestUpdateImageNegative(ImagesFixture):
     @classmethod
     def setUpClass(cls):
         super(TestUpdateImageNegative, cls).setUpClass()
-        cls.images = cls.images_behavior.create_images_via_task(count=4)
-        cls.empty_image = cls.images_behavior.create_new_image()
+        cls.images = cls.images_behavior.create_images_via_task(count=5)
 
     @tags(type='negative', regression='true')
     def test_update_image_replace_core_property(self):
@@ -132,24 +129,16 @@ class TestUpdateImageNegative(ImagesFixture):
         """
         @summary: Ensure location of active image cannot be updated
 
-        1) Using a previously created image, store an image file
-        2) Verify that the response code is 204
-        3) Get the stored image
-        4) Verify that the image is active
-        5) Update image location
-        6) Verify that the response code is 403
-        7) Get the image
-        8) Verify that image location has not changed
+        1) Using a previously created image, get the image
+        2) Verify that the image is active
+        3) Update image location
+        4) Verify that the response code is 403
+        5) Get the image
+        6) Verify that image location has not changed
         """
 
-        file_data = StringIO.StringIO("*" * 1024)
-
-        image = self.empty_image
+        image = self.images.pop()
         updated_location = "/v2/images/{0}/new_file".format(image.id_)
-
-        response = self.images_client.store_image_file(
-            image_id=image.id_, file_data=file_data)
-        self.assertEqual(response.status_code, 204)
 
         response = self.images_client.get_image(image_id=image.id_)
         self.assertEqual(response.status_code, 200)

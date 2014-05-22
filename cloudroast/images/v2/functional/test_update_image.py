@@ -26,7 +26,7 @@ class TestUpdateImage(ImagesFixture):
     @classmethod
     def setUpClass(cls):
         super(TestUpdateImage, cls).setUpClass()
-        cls.image = cls.images_behavior.create_new_image()
+        cls.image = cls.images_behavior.create_image_via_task()
 
     @tags(type='positive', regression='true')
     def test_update_image_replace_core_properties(self):
