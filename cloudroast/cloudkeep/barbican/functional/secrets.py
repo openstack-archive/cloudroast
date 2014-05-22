@@ -432,7 +432,7 @@ class SecretsAPI(SecretsFixture):
             payload_content_type='application/octet-stream',
             payload_content_encoding='base64',
             payload=str(data))
-        self.assertEqual(put_resp.status_code, 400,
+        self.assertEqual(put_resp.status_code, 413,
                          'Returned unexpected response code')
 
     @skip_open_issue('launchpad', '1315498')
