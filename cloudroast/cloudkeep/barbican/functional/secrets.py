@@ -697,8 +697,9 @@ class SecretsAPI(SecretsFixture):
 
         # first, ensure that the return code is 400
         self.assertEqual(create_resp.status_code, 400)
-        pattern = (r".*\"title\": \"Provided object does not match schema "
-                   "'Secret': (.*?) is not one of (.*?)\".*")
+        pattern = (
+            r".*\"description\": \"Provided object does not match schema "
+            "'Secret': (.*?) is not one of (.*?)\".*")
         regex_opts = re.DOTALL | re.MULTILINE
         result = re.match(pattern, create_resp.content, regex_opts)
 
