@@ -19,7 +19,6 @@ class GlanceStackTachDBTest(StackTachDBFixture):
             self.assertIsNotNone(element.id_)
             self.assertIsNotNone(element.uuid)
             self.assertIsNotNone(element.created_at)
-            self.assertIsNotNone(element.owner)
             self.assertIsNotNone(element.size)
             self.assertIsNotNone(element.last_raw)
 
