@@ -16,7 +16,8 @@ limitations under the License.
 
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.auth.provider import AuthProvider
-from cloudcafe.auth.config import ComputeAuthorizationConfig
+from cloudcafe.auth.config import ComputeAuthorizationConfig, UserAuthConfig
+from cloudcafe.compute.config import ComputeEndpointConfig
 from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.compute.common.types import NovaImageStatusTypes
 from cloudcafe.compute.common.types import NovaServerRebootTypes
@@ -51,20 +52,22 @@ class AuthorizationTests(ComputeFixture):
         cls.resources.add(cls.image_id, cls.images_client.delete_image)
 
         secondary_user = ComputeAuthorizationConfig()
-        access_data = AuthProvider.get_access_data(cls.endpoint_config,
-                                                   secondary_user)
+        compute_endpoint = ComputeEndpointConfig()
+        auth_endpoint_config = UserAuthConfig()
+        access_data = AuthProvider.get_access_data(
+            auth_endpoint_config, secondary_user)
 
         compute_service = access_data.get_service(
-            cls.compute_endpoint.compute_endpoint_name)
+            compute_endpoint.compute_endpoint_name)
         url = compute_service.get_endpoint(
-            cls.compute_endpoint.region).public_url
+            compute_endpoint.region).public_url
 
-        cls.flavors_client = FlavorsClient(url, access_data.token.id_,
-                                           'json', 'json')
-        cls.servers_client = ServersClient(url, access_data.token.id_,
-                                           'json', 'json')
-        cls.images_client = ImagesClient(url, access_data.token.id_,
-                                         'json', 'json')
+        cls.flavors_client = FlavorsClient(
+            url, access_data.token.id_, 'json', 'json')
+        cls.servers_client = ServersClient(
+            url, access_data.token.id_, 'json', 'json')
+        cls.images_client = ImagesClient(
+            url, access_data.token.id_, 'json', 'json')
         cls.flavors_client.add_exception_handler(ExceptionHandler())
 
     @tags(type='negative', net='no')

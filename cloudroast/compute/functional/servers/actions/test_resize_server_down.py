@@ -112,8 +112,8 @@ class ResizeServerDownConfirmTests(object):
 
         resize_action = filtered_actions[0]
         self.validate_instance_action(
-            resize_action, self.server.id, self.user_config.user_id,
-            self.user_config.project_id,
+            resize_action, self.server.id, self.compute.user.user_id,
+            self.compute.user.project_id,
             self.resize_resp.headers['x-compute-request-id'])
 
         # Verify the confirm resize action is listed
@@ -123,8 +123,8 @@ class ResizeServerDownConfirmTests(object):
 
         resize_action = filtered_actions[0]
         self.validate_instance_action(
-            resize_action, self.server.id, self.user_config.user_id,
-            self.user_config.project_id,
+            resize_action, self.server.id, self.compute.user.user_id,
+            self.compute.user.project_id,
             self.confirm_resize_resp.headers['x-compute-request-id'])
 
 
