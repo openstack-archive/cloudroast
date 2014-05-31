@@ -16,49 +16,13 @@ limitations under the License.
 
 import sys
 
-from cloudcafe.blockstorage.volumes_api.v2.client import VolumesClient
-from cloudcafe.blockstorage.config import BlockStorageConfig
-from cloudcafe.blockstorage.volumes_api.v2.behaviors import \
-    VolumesAPI_Behaviors
-from cloudcafe.blockstorage.volumes_api.common.config import VolumesAPIConfig
 from cafe.drivers.unittest.fixtures import BaseTestFixture
 from cloudcafe.common.resources import ResourcePool
 from cloudcafe.compute.config import ComputeEndpointConfig, \
-    ComputeAdminEndpointConfig, MarshallingConfig
+    MarshallingConfig
+from cloudcafe.compute.composites import ComputeComposite, \
+    ComputeAdminComposite, ComputeIntegrationComposite
 from cloudcafe.compute.common.exception_handler import ExceptionHandler
-from cloudcafe.compute.extensions.vnc_console_api.client\
-    import VncConsoleClient
-from cloudcafe.compute.extensions.console_output_api.client\
-    import ConsoleOutputClient
-from cloudcafe.compute.flavors_api.client import FlavorsClient
-from cloudcafe.compute.quotas_api.client import QuotasClient
-from cloudcafe.compute.servers_api.client import ServersClient
-from cloudcafe.compute.extensions.volumes_boot_api.client import \
-    VolumesBootClient
-from cloudcafe.compute.images_api.client import ImagesClient
-from cloudcafe.compute.hosts_api.client import HostsClient
-from cloudcafe.compute.hypervisors_api.client import HypervisorsClient
-from cloudcafe.compute.extensions.keypairs_api.client import KeypairsClient
-from cloudcafe.compute.extensions.security_groups_api.client import \
-    SecurityGroupsClient, SecurityGroupRulesClient
-from cloudcafe.compute.extensions.rescue_api.client import RescueClient
-from cloudcafe.compute.limits_api.client import LimitsClient
-from cloudcafe.compute.extensions.config_drive.behaviors import \
-    ConfigDriveBehaviors
-from cloudcafe.compute.extensions.config_drive.config import ConfigDriveConfig
-from cloudcafe.compute.extensions.config_drive.config import CloudInitConfig
-from cloudcafe.compute.servers_api.behaviors import ServerBehaviors
-from cloudcafe.compute.extensions.volumes_boot_api.behaviors import \
-    VolumeServerBehaviors
-from cloudcafe.compute.images_api.behaviors import ImageBehaviors
-from cloudcafe.auth.config import UserAuthConfig, UserConfig, \
-    ComputeAdminAuthConfig, ComputeAdminUserConfig
-from cloudcafe.auth.provider import AuthProvider
-from cloudcafe.compute.flavors_api.config import FlavorsConfig
-from cloudcafe.compute.images_api.config import ImagesConfig
-from cloudcafe.compute.servers_api.config import ServersConfig
-from cloudcafe.compute.volume_attachments_api.client \
-    import VolumeAttachmentsAPIClient
 
 
 class ComputeFixture(BaseTestFixture):
@@ -69,14 +33,18 @@ class ComputeFixture(BaseTestFixture):
     @classmethod
     def setUpClass(cls):
         super(ComputeFixture, cls).setUpClass()
-        cls.flavors_config = FlavorsConfig()
-        cls.images_config = ImagesConfig()
-        cls.servers_config = ServersConfig()
+        cls.compute = ComputeComposite()
+
+        # Configs
+        cls.flavors_config = cls.compute.flavors.config
+        cls.images_config = cls.compute.images.config
+        cls.servers_config = cls.compute.servers.config
         cls.compute_endpoint = ComputeEndpointConfig()
         cls.marshalling = MarshallingConfig()
-        cls.config_drive_config = ConfigDriveConfig()
-        cls.cloud_init_config = CloudInitConfig()
+        cls.config_drive_config = cls.compute.config_drive.config
+        cls.cloud_init_config = cls.compute.config_drive.cloud_init_config
 
+        # Common config values
         cls.flavor_ref = cls.flavors_config.primary_flavor
         cls.flavor_ref_alt = cls.flavors_config.secondary_flavor
         cls.image_ref = cls.images_config.primary_image
@@ -91,63 +59,24 @@ class ComputeFixture(BaseTestFixture):
         cls.file_injection_enabled = \
             cls.servers_config.personality_file_injection_enabled
 
-        cls.endpoint_config = UserAuthConfig()
-        cls.user_config = UserConfig()
-        cls.access_data = AuthProvider.get_access_data(cls.endpoint_config,
-                                                       cls.user_config)
-        # If authentication fails, halt
-        if cls.access_data is None:
-            cls.assertClassSetupFailure('Authentication failed.')
-
-        compute_service = cls.access_data.get_service(
-            cls.compute_endpoint.compute_endpoint_name)
-        url = compute_service.get_endpoint(
-            cls.compute_endpoint.region).public_url
-        # If a url override was provided, use that value instead
-        if cls.compute_endpoint.compute_endpoint_url:
-            url = '{0}/{1}'.format(cls.compute_endpoint.compute_endpoint_url,
-                                   cls.user_config.tenant_id)
-
-        client_args = {'url': url, 'auth_token': cls.access_data.token.id_,
-                       'serialize_format': cls.marshalling.serializer,
-                       'deserialize_format': cls.marshalling.deserializer}
-
-        cls.flavors_client = FlavorsClient(**client_args)
-        cls.servers_client = ServersClient(**client_args)
-        cls.boot_from_volume_client = VolumesBootClient(**client_args)
-        cls.images_client = ImagesClient(**client_args)
-        cls.keypairs_client = KeypairsClient(**client_args)
-        cls.security_groups_client = SecurityGroupsClient(**client_args)
-        cls.security_group_rule_client = SecurityGroupRulesClient(
-            **client_args)
-        cls.volume_attachments_client = VolumeAttachmentsAPIClient(
-            url=url, auth_token=cls.access_data.token.id_,
-            serialize_format=cls.marshalling.serializer,
-            deserialize_format=cls.marshalling.deserializer)
-        cls.rescue_client = RescueClient(**client_args)
-        cls.vnc_client = VncConsoleClient(**client_args)
-        cls.console_output_client = ConsoleOutputClient(**client_args)
-        cls.limits_client = LimitsClient(**client_args)
-        cls.server_behaviors = ServerBehaviors(
-            servers_client=cls.servers_client,
-            images_client=cls.images_client,
-            servers_config=cls.servers_config,
-            images_config=cls.images_config,
-            flavors_config=cls.flavors_config)
-        cls.volume_server_behaviors = VolumeServerBehaviors(
-            servers_client=cls.servers_client,
-            images_client=cls.images_client,
-            servers_config=cls.servers_config,
-            images_config=cls.images_config,
-            flavors_config=cls.flavors_config,
-            server_behaviors=cls.server_behaviors,
-            boot_from_volume_client=cls.boot_from_volume_client)
-        cls.image_behaviors = ImageBehaviors(cls.images_client,
-                                             cls.servers_client,
-                                             cls.images_config)
-        cls.config_drive_behaviors = ConfigDriveBehaviors(cls.servers_client,
-                                                          cls.servers_config,
-                                                          cls.server_behaviors)
+        # Clients
+        cls.flavors_client = cls.compute.flavors.client
+        cls.servers_client = cls.compute.servers.client
+        cls.boot_from_volume_client = cls.compute.boot_from_volume.client
+        cls.images_client = cls.compute.images.client
+        cls.keypairs_client = cls.compute.keypairs.client
+        cls.security_groups_client = cls.compute.security_groups.client
+        cls.security_group_rule_client = \
+            cls.compute.security_groups.rules_client
+        cls.volume_attachments_client = cls.compute.volume_attachments.client
+        cls.rescue_client = cls.compute.rescue.client
+        cls.vnc_client = cls.compute.vnc_console.client
+        cls.console_output_client = cls.compute.console_output.client
+        cls.limits_client = cls.compute.limits.client
+        cls.server_behaviors = cls.compute.servers.behaviors
+        cls.volume_server_behaviors = cls.compute.boot_from_volume.behaviors
+        cls.image_behaviors = cls.compute.images.behaviors
+        cls.config_drive_behaviors = cls.compute.config_drive.behaviors
         cls.flavors_client.add_exception_handler(ExceptionHandler())
         cls.resources = ResourcePool()
         cls.addClassCleanup(cls.resources.release)
@@ -233,35 +162,16 @@ class ComputeAdminFixture(ComputeFixture):
     @classmethod
     def setUpClass(cls):
         super(ComputeAdminFixture, cls).setUpClass()
+        cls.compute_admin = ComputeAdminComposite()
 
-        # Setup admin client
-        auth_config = ComputeAdminAuthConfig()
-        user_config = ComputeAdminUserConfig()
-        access_data = AuthProvider.get_access_data(auth_config,
-                                                   user_config)
-        admin_endpoint_config = ComputeAdminEndpointConfig()
-        compute_service = access_data.get_service(
-            admin_endpoint_config.compute_endpoint_name)
-        url = compute_service.get_endpoint(
-            admin_endpoint_config.region).public_url
-
-        client_args = {'url': url, 'auth_token': access_data.token.id_,
-                       'serialize_format': cls.marshalling.serializer,
-                       'deserialize_format': cls.marshalling.deserializer}
-
-        cls.admin_flavors_client = FlavorsClient(**client_args)
-        cls.admin_servers_client = ServersClient(**client_args)
-        cls.admin_images_client = ImagesClient(**client_args)
-        cls.admin_hosts_client = HostsClient(**client_args)
-        cls.admin_quotas_client = QuotasClient(**client_args)
-        cls.admin_hypervisors_client = HypervisorsClient(**client_args)
-        cls.admin_server_behaviors = ServerBehaviors(
-            servers_client=cls.admin_servers_client,
-            images_client=cls.images_client, servers_config=cls.servers_config,
-            images_config=cls.images_config, flavors_config=cls.flavors_config)
-        cls.admin_images_behaviors = ImageBehaviors(cls.admin_images_client,
-                                                    cls.admin_servers_client,
-                                                    cls.images_config)
+        cls.admin_flavors_client = cls.compute_admin.flavors.client
+        cls.admin_servers_client = cls.compute_admin.servers.client
+        cls.admin_images_client = cls.compute_admin.images.client
+        cls.admin_hosts_client = cls.compute_admin.hosts.client
+        cls.admin_quotas_client = cls.compute_admin.quotas.client
+        cls.admin_hypervisors_client = cls.compute_admin.hypervisors.client
+        cls.admin_server_behaviors = cls.compute_admin.servers.behaviors
+        cls.admin_images_behaviors = cls.compute_admin.images.behaviors
         cls.admin_servers_client.add_exception_handler(ExceptionHandler())
 
     @classmethod
@@ -276,24 +186,16 @@ class BlockstorageIntegrationFixture(ComputeFixture):
     @classmethod
     def setUpClass(cls):
         super(BlockstorageIntegrationFixture, cls).setUpClass()
+        cls.compute_integration = ComputeIntegrationComposite()
+        volumes = cls.compute_integration.volumes
 
-        block_config = BlockStorageConfig()
-        volumes_config = VolumesAPIConfig()
-        cls.poll_frequency = volumes_config.volume_status_poll_frequency
-        cls.volume_size = int(volumes_config.min_volume_size)
-        cls.volume_type = volumes_config.default_volume_type
-        cls.volume_delete_timeout = volumes_config.volume_delete_max_timeout
-        cls.volume_create_timeout = volumes_config.volume_create_max_timeout
-        block_service = cls.access_data.get_service(
-            block_config.identity_service_name)
-        block_url = block_service.get_endpoint(
-            block_config.region).public_url
-        cls.blockstorage_client = VolumesClient(
-            block_url, cls.access_data.token.id_,
-            cls.marshalling.serializer, cls.marshalling.deserializer)
-        cls.blockstorage_behavior = VolumesAPI_Behaviors(
-            volumes_api_client=cls.blockstorage_client,
-            volumes_api_config=volumes_config)
+        cls.poll_frequency = volumes.config.volume_status_poll_frequency
+        cls.volume_size = int(volumes.config.min_volume_size)
+        cls.volume_type = volumes.config.default_volume_type
+        cls.volume_delete_timeout = volumes.config.volume_delete_max_timeout
+        cls.volume_create_timeout = volumes.config.volume_create_max_timeout
+        cls.blockstorage_client = volumes.client
+        cls.blockstorage_behavior = volumes.behaviors
 
 
 class ServerFromImageFixture(ComputeFixture):
@@ -386,4 +288,3 @@ class ServerFromVolumeV2Fixture(BlockstorageIntegrationFixture):
         cls.server = cls.server_response.entity
         cls.resources.add(cls.server.id, cls.servers_client.delete_server)
         return cls.server
-
