@@ -42,11 +42,10 @@ class FlavorsTest(ComputeFixture):
         self.assertTrue(len(flavors) > 0)
         response = self.flavors_client.get_flavor_details(self.flavor_ref)
         flavor = response.entity
-        for each in flavors:
-            if flavor.id == each.id:
-                return
-        self.fail("The expected flavor: %s was not found in the flavor list."
-                  % flavor.id)
+        flavor_ids = [x.id for x in flavors]
+        self.assertIn(flavor.id, flavor_ids,
+                      "The expected flavor: %s was not found in "
+                      "the flavor list" % flavor.id)
 
     @tags(type='smoke', net='no')
     def test_list_flavors_with_detail(self):
