@@ -81,7 +81,7 @@ class ServersTest(ComputeFixture):
                          msg="AccessIPv4 address was not updated")
         self.assertEqual(accessIPv6, server.accessIPv6,
                          msg="AccessIPv6 address was not updated")
-        self.assertEqual(server.created, server.created,
+        self.assertEqual(server.created, updated_server.created,
                          msg="The server creation date was updated")
         self.assertNotEqual(
             server.updated, original_server.updated,
