@@ -21,11 +21,10 @@ from cloudcafe.blockstorage.config import BlockStorageConfig
 from cloudcafe.blockstorage.volumes_api.v2.behaviors import \
     VolumesAPI_Behaviors
 from cloudcafe.blockstorage.volumes_api.common.config import VolumesAPIConfig
-from cafe.drivers.unittest.datasets import DatasetList
 from cafe.drivers.unittest.fixtures import BaseTestFixture
 from cloudcafe.common.resources import ResourcePool
 from cloudcafe.compute.config import ComputeEndpointConfig, \
-    ComputeAdminEndpointConfig, MarshallingConfig, ComputeFuzzingConfig
+    ComputeAdminEndpointConfig, MarshallingConfig
 from cloudcafe.compute.common.exception_handler import ExceptionHandler
 from cloudcafe.compute.extensions.vnc_console_api.client\
     import VncConsoleClient
@@ -388,29 +387,3 @@ class ServerFromVolumeV2Fixture(BlockstorageIntegrationFixture):
         cls.resources.add(cls.server.id, cls.servers_client.delete_server)
         return cls.server
 
-
-class FlavorIdNegativeDataList(DatasetList):
-    def __init__(self):
-        super(FlavorIdNegativeDataList, self).__init__()
-        fuzz_config = ComputeFuzzingConfig()
-        with open(fuzz_config.input_fuzzing_file) as f:
-            for line in f:
-                self.append_new_dataset(line, {'flavor_id': line})
-
-
-class ImageIdNegativeDataList(DatasetList):
-    def __init__(self):
-        super(ImageIdNegativeDataList, self).__init__()
-        fuzz_config = ComputeFuzzingConfig()
-        with open(fuzz_config.input_fuzzing_file) as f:
-            for line in f:
-                self.append_new_dataset(line, {'image_id': line})
-
-
-class ServerIdNegativeDataList(DatasetList):
-    def __init__(self):
-        super(ServerIdNegativeDataList, self).__init__()
-        fuzz_config = ComputeFuzzingConfig()
-        with open(fuzz_config.input_fuzzing_file) as f:
-            for line in f:
-                self.append_new_dataset(line, {'server_id': line})
