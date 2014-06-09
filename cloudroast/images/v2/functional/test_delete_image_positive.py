@@ -14,7 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import cStringIO as StringIO
 import unittest2 as unittest
 
 from cafe.drivers.unittest.decorators import tags
@@ -95,10 +94,10 @@ class TestDeleteImagePositive(ImagesFixture):
         9) Verify that the response code is 404
         """
 
-        file_data = StringIO.StringIO(('*' * 1024))
+        data_size = len(self.test_file)
         image = self.images_behavior.create_new_image()
         response = self.images_client.store_image_file(
-            image_id=image.id_, file_data=file_data)
+            image.id_, self.test_file)
         self.assertEqual(response.status_code, 204)
 
         response = self.images_client.get_image(image_id=image.id_)
@@ -106,7 +105,7 @@ class TestDeleteImagePositive(ImagesFixture):
         active_image = response.entity
         self.assertIsNotNone(active_image.checksum)
         self.assertEqual(active_image.id_, image.id_)
-        self.assertEqual(active_image.size, 1024)
+        self.assertEqual(active_image.size, data_size)
         self.assertEqual(active_image.status, ImageStatus.ACTIVE)
 
         response = self.images_client.delete_image(image_id=active_image.id_)
