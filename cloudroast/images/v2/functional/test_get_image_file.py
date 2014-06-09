@@ -43,16 +43,15 @@ class TestGetImageFile(ObjectStorageIntegrationFixture):
         4) Verify that the image file contains the correct data
         """
 
-        file_data = self.test_file
-
         image = self.images_behavior.create_new_image()
 
-        response = self.images_client.store_image_file(image.id_, file_data)
+        response = self.images_client.store_image_file(
+            image.id_, self.test_file)
         self.assertEqual(response.status_code, 204)
 
         response = self.images_client.get_image_file(image.id_)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.content, file_data)
+        self.assertEqual(response.content, self.test_file)
 
     @unittest.skipUnless(allow_post_images and allow_put_image_file and
                          allow_get_image_file, 'Endpoint has incorrect access')
@@ -71,27 +70,24 @@ class TestGetImageFile(ObjectStorageIntegrationFixture):
         8. Verify that the response content is the same as file data
         """
 
-        alt_tenant_id = self.alt_tenant_id
-        file_data = self.test_file
-
         image = self.images_behavior.create_new_image()
         response = self.images_client.store_image_file(
-            image_id=image.id_, file_data=file_data)
+            image.id_, self.test_file)
         self.assertEqual(response.status_code, 204)
 
         response = self.images_client.add_member(
-            image_id=image.id_, member_id=alt_tenant_id)
+            image_id=image.id_, member_id=self.alt_tenant_id)
         self.assertEqual(response.status_code, 200)
         member = response.entity
-        self.assertEqual(member.member_id, alt_tenant_id)
+        self.assertEqual(member.member_id, self.alt_tenant_id)
         self.assertEqual(member.status, ImageMemberStatus.PENDING)
 
         members_ids = self.images_behavior.get_member_ids(image_id=image.id_)
-        self.assertIn(alt_tenant_id, members_ids)
+        self.assertIn(self.alt_tenant_id, members_ids)
 
         response = self.alt_images_client.get_image_file(image_id=image.id_)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.content, file_data)
+        self.assertEqual(response.content, self.test_file)
 
     # TODO: Add skipUnless allow_get_image_file after bug fix
     @unittest.skip('Bug, Redmine #6506')

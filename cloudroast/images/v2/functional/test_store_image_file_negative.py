@@ -14,7 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import cStringIO as StringIO
 import unittest2 as unittest
 
 from cafe.drivers.unittest.decorators import tags
@@ -37,8 +36,6 @@ class StoreImageFileNegativeTest(ImagesFixture):
         super(StoreImageFileNegativeTest, cls).setUpClass()
         cls.image = cls.images_behavior.create_new_image()
         cls.resources.add(cls.image.id_, cls.images_client.delete_image)
-        cls.data_size = 1024
-        cls.file_data = StringIO.StringIO("*" * cls.data_size)
 
     @tags(type='negative', regression='true', skipable='true')
     def test_store_image_file_with_invalid_content_type(self):
@@ -51,7 +48,7 @@ class StoreImageFileNegativeTest(ImagesFixture):
         """
 
         response = self.images_client.store_image_file(
-            image_id=self.image.id_, file_data=self.file_data,
+            self.image.id_, self.test_file,
             content_type="invalid_content_type")
         self.assertEqual(response.status_code, 415)
 
@@ -65,7 +62,7 @@ class StoreImageFileNegativeTest(ImagesFixture):
         """
 
         response = self.images_client.store_image_file(
-            image_id="", file_data=self.file_data)
+            image_id="", file_data=self.test_file)
         self.assertEqual(response.status_code, 404)
 
     @tags(type='negative', regression='true', skipable='true')
@@ -78,7 +75,7 @@ class StoreImageFileNegativeTest(ImagesFixture):
         """
 
         response = self.images_client.store_image_file(
-            image_id="invalid_id", file_data=self.file_data)
+            image_id="invalid_id", file_data=self.test_file)
         self.assertEqual(response.status_code, 404)
 
     @tags(type='negative', regression='true', skipable='true')
@@ -96,7 +93,7 @@ class StoreImageFileNegativeTest(ImagesFixture):
         """
 
         response = self.images_client.store_image_file(
-            self.image.id_, self.file_data)
+            self.image.id_, self.test_file)
         self.assertEqual(response.status_code, 204)
 
         response = self.images_client.get_image(image_id=self.image.id_)
@@ -104,9 +101,9 @@ class StoreImageFileNegativeTest(ImagesFixture):
         updated_image = response.entity
         self.assertEqual(updated_image.id_, self.image.id_)
         self.assertEqual(updated_image.status, ImageStatus.ACTIVE)
-        self.assertEqual(updated_image.size, self.data_size)
+        self.assertEqual(updated_image.size, len(self.test_file))
         self.assertIsNotNone(updated_image.checksum)
 
         response = self.images_client.store_image_file(
-            self.image.id_, self.file_data)
+            self.image.id_, self.test_file)
         self.assertEqual(response.status_code, 409)
