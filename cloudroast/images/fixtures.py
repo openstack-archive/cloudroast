@@ -14,7 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import cStringIO as StringIO
 import re
 
 from cafe.drivers.unittest.fixtures import BaseTestFixture
@@ -59,8 +58,6 @@ class ImagesFixture(BaseTestFixture):
         cls.resources = ResourcePool()
         cls.serialize_format = cls.marshalling.serializer
         cls.deserialize_format = cls.marshalling.deserializer
-        cls.image_data = '*' * 1024
-        cls.file_data = StringIO.StringIO(cls.image_data)
 
         cls.access_data = AuthProvider.get_access_data(cls.endpoint_config,
                                                        cls.user_config)
