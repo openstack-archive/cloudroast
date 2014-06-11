@@ -92,6 +92,7 @@ class FlavorsTest(ComputeFixture):
         """The list of flavors should start after the provided marker"""
         response = self.flavors_client.list_flavors()
         flavors = response.entity
+        self.assertGreater(len(flavors), 0, 'Flavors list is empty')
         flavor_marker = flavors[0]
 
         response = self.flavors_client.list_flavors(marker=flavor_marker.id)
@@ -105,6 +106,7 @@ class FlavorsTest(ComputeFixture):
         """The list of flavors should start from the provided marker"""
         response = self.flavors_client.list_flavors_with_detail()
         flavors = response.entity
+        self.assertGreater(len(flavors), 0, 'Flavors list is empty')
         flavor_marker = flavors[0]
 
         response = self.flavors_client.list_flavors_with_detail(
