@@ -37,6 +37,7 @@ class CreateServerBurnIn(ComputeFixture):
     def setUpClass(cls):
         super(CreateServerBurnIn, cls).setUpClass()
         name = rand_name("server")
+        networks = None
         if cls.servers_config.default_network:
             networks = [{'uuid': cls.servers_config.default_network}]
         cls.key = cls.keypairs_client.create_keypair(rand_name("key")).entity
