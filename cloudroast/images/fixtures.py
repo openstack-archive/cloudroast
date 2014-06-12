@@ -14,7 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import cStringIO as StringIO
 import re
 
 from cafe.drivers.unittest.fixtures import BaseTestFixture
@@ -59,8 +58,6 @@ class ImagesFixture(BaseTestFixture):
         cls.resources = ResourcePool()
         cls.serialize_format = cls.marshalling.serializer
         cls.deserialize_format = cls.marshalling.deserializer
-        cls.image_data = '*' * 1024
-        cls.file_data = StringIO.StringIO(cls.image_data)
 
         cls.access_data = AuthProvider.get_access_data(cls.endpoint_config,
                                                        cls.user_config)
@@ -119,21 +116,21 @@ class ImagesFixture(BaseTestFixture):
         cls.max_expires_at_delta = cls.images_config.max_expires_at_delta
         cls.max_updated_at_delta = cls.images_config.max_updated_at_delta
         cls.tenant_id = cls.access_data.token.tenant.id_
-        cls.test_file = open(cls.images_config.test_file).read().rstrip()
         cls.third_tenant_id = cls.third_access_data.token.tenant.id_
 
-        cls.image_schema_json = (
-            open(cls.images_config.image_schema_json).read().rstrip())
-        cls.images_schema_json = (
-            open(cls.images_config.images_schema_json).read().rstrip())
-        cls.image_member_schema_json = (
-            open(cls.images_config.image_member_schema_json).read().rstrip())
-        cls.image_members_schema_json = (
-            open(cls.images_config.image_members_schema_json).read().rstrip())
-        cls.task_schema_json = (
-            open(cls.images_config.task_schema_json).read().rstrip())
-        cls.tasks_schema_json = (
-            open(cls.images_config.tasks_schema_json).read().rstrip())
+        cls.test_file = cls.read_data_file(cls.images_config.test_file)
+        cls.image_schema_json = cls.read_data_file(
+            cls.images_config.image_schema_json)
+        cls.images_schema_json = cls.read_data_file(
+            cls.images_config.images_schema_json)
+        cls.image_member_schema_json = cls.read_data_file(
+            cls.images_config.image_member_schema_json)
+        cls.image_members_schema_json = cls.read_data_file(
+            cls.images_config.image_members_schema_json)
+        cls.task_schema_json = cls.read_data_file(
+            cls.images_config.task_schema_json)
+        cls.tasks_schema_json = cls.read_data_file(
+            cls.images_config.tasks_schema_json)
 
         cls.addClassCleanup(cls.resources.release)
         cls.addClassCleanup(cls.images_behavior.resources.release)
@@ -156,6 +153,17 @@ class ImagesFixture(BaseTestFixture):
                        'serialize_format': cls.serialize_format,
                        'deserialize_format': cls.deserialize_format}
         return ImagesClient(**client_args)
+
+    @staticmethod
+    def read_data_file(file_path):
+        """@summary: Returns data file given a valid data file path"""
+        try:
+            with open(file_path, "r") as DATA:
+                test_data = DATA.read().rstrip()
+        except IOError as file_error:
+            raise file_error
+
+        return test_data
 
 
 class ComputeIntegrationFixture(ImagesFixture):

@@ -14,7 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import cStringIO as StringIO
 import unittest2 as unittest
 
 from cafe.drivers.unittest.decorators import tags
@@ -50,12 +49,11 @@ class TestStoreImageFile(ImagesFixture):
         6) Verify that the image contains the correct updated properties
         """
 
-        file_data = StringIO.StringIO(('*' * 1024))
-
         image = self.images.pop()
         errors = []
 
-        response = self.images_client.store_image_file(image.id_, file_data)
+        response = self.images_client.store_image_file(
+            image.id_, self.test_file)
         self.assertEqual(response.status_code, 204)
 
         response = self.images_client.get_image(image.id_)
@@ -65,9 +63,9 @@ class TestStoreImageFile(ImagesFixture):
         if updated_image.checksum is None:
             errors.append(self.error_msg.format(
                 'checksum', 'not None', updated_image.checksum))
-        if updated_image.size != 1024:
+        if updated_image.size != len(self.test_file):
             errors.append(self.error_msg.format(
-                'size', 1024, updated_image.size))
+                'size', len(self.test_file), updated_image.size))
         if updated_image.status != ImageStatus.ACTIVE:
             errors.append(self.error_msg.format(
                 'status', ImageStatus.ACTIVE, updated_image.status))
@@ -87,7 +85,7 @@ class TestStoreImageFile(ImagesFixture):
         6) Verify that the image contains the correct updated properties
         """
 
-        larger_file_data = StringIO.StringIO("*" * 10000 * 1024)
+        larger_file_data = self.test_file * 10000
 
         image = self.images.pop()
         errors = []
@@ -103,9 +101,9 @@ class TestStoreImageFile(ImagesFixture):
         if updated_image.checksum is None:
             errors.append(self.error_msg.format(
                 'checksum', 'not None', updated_image.checksum))
-        if updated_image.size != 10000 * 1024:
+        if updated_image.size != len(larger_file_data):
             errors.append(self.error_msg.format(
-                'size', 10000 * 1024, updated_image.size))
+                'size', len(larger_file_data), updated_image.size))
         if updated_image.status != ImageStatus.ACTIVE:
             errors.append(self.error_msg.format(
                 'status', ImageStatus.ACTIVE, updated_image.status))

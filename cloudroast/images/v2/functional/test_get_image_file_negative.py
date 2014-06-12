@@ -14,7 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import cStringIO as StringIO
 import unittest2 as unittest
 
 from cafe.drivers.unittest.decorators import tags
@@ -89,10 +88,10 @@ class GetImageFileNegativeTest(ImagesFixture):
         5) Verify that the response code is 404
         """
 
-        file_data = StringIO.StringIO(('*' * 1024))
         image = self.images_behavior.create_new_image()
 
-        response = self.images_client.store_image_file(image.id_, file_data)
+        response = self.images_client.store_image_file(
+            image.id_, self.test_file)
         self.assertEqual(response.status_code, 204)
 
         response = self.alt_images_client.get_image_file(image_id=image.id_)
