@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 import base64
+import json
 import re
 import unittest2
 from datetime import datetime, timedelta
@@ -339,14 +340,18 @@ class SecretsAPI(SecretsFixture):
     @tags(type='negative')
     def test_creating_w_oversized_secret(self):
         """ Covers creating a secret with a secret that is larger than
-        the limit. Current size limit is 10k bytes. Beyond that,
-        it should return 413.
+        the max secret payload size. Should return a 413 if the secret
+        size is greater than the maximum allowed size.
         """
-        data = bytearray().zfill(10001)
+
+        data = bytearray().zfill(
+            self.cloudkeep.max_allowed_secret_in_bytes + 1)
 
         resps = self.behaviors.create_and_check_secret(payload=str(data))
         self.assertEqual(resps.create_resp.status_code, 413,
-                         'Should have failed with 413')
+                         'Create should have failed with 413')
+        self.assertEqual(resps.get_resp.status_code, 404,
+                         'Get should have failed with 404')
 
     @tags(type='negative')
     def test_getting_secret_that_doesnt_exist(self):
@@ -422,10 +427,12 @@ class SecretsAPI(SecretsFixture):
         """
         resp = self.behaviors.create_secret()
 
-        data = bytearray().zfill(15001)
+        data = bytearray().zfill(
+            self.cloudkeep.max_allowed_secret_in_bytes + 1)
 
-        # put a value in the data that does not have a UTF-8 code point.
-        data[500] = b'\xb0'
+        # put a value in the middle of the data that does not have a UTF-8
+        # code point.  Using // to be python3-friendly.
+        data[self.cloudkeep.max_allowed_secret_in_bytes // 2] = b'\xb0'
 
         put_resp = self.client.add_secret_payload(
             secret_id=resp.id,
@@ -470,10 +477,11 @@ class SecretsAPI(SecretsFixture):
 
     @tags(type='negative')
     def test_putting_w_oversized_data(self):
-        """ Covers case of putting secret data that is beyond size limit.
-        Current size limit is 10k bytes. Beyond that it should return 413.
+        """ Covers case of putting secret data that is larger than the maximum
+        secret size allowed by Barbican. Beyond that it should return 413.
         """
-        data = bytearray().zfill(10001)
+        data = bytearray().zfill(
+            self.cloudkeep.max_allowed_secret_in_bytes + 1)
         resp = self.behaviors.create_secret()
         put_resp = self.client.add_secret_payload(
             secret_id=resp.id,
@@ -600,10 +608,66 @@ class SecretsAPI(SecretsFixture):
         self.assertEqual(resp.status_code, 201,
                          'Returned unexpected response code')
 
+    def _calculate_available_size(self):
+        """Calculate the maximum size for an item within a secret when
+        testing maximum request and secret sizes.  We do this by creating a
+        JSON string matching the request and then finding out how much space
+        is left for inserting item values."""
+
+        my_dict = {'name': '', 'mode': '', 'algorithm': '',
+                   'payload': self.config.payload,
+                   'payload_content_type': self.config.payload_content_type,
+                   'payload_content_encoding':
+                   self.config.payload_content_encoding}
+
+        json_str = json.dumps(my_dict)
+
+        return self.cloudkeep.max_allowed_request_size_in_bytes - len(json_str)
+
+    @skip_open_issue('launchpad', '1330238')
+    @tags(type='negative')
+    def test_creating_secret_w_large_string_values_oversize_by_one(self):
+        """Covers case of creating secret with large String values such
+        that the total request is 1 byte larger than the maximum allowed.
+        We will use the large_string to populate the following fields:
+
+             1. name
+             2. algorithm
+             3. mode"""
+
+        # we are filling in 3 items, hence the division
+        available_size_per_item = self._calculate_available_size() // 3
+
+        large_string = str(bytearray().zfill(available_size_per_item))
+        one_byte_larger_string = str(bytearray().zfill(
+            available_size_per_item + 1))
+        resp = self.behaviors.create_secret(
+            payload_content_type=self.config.payload_content_type,
+            payload=self.config.payload,
+            payload_content_encoding=self.config.payload_content_encoding,
+            name=one_byte_larger_string,
+            algorithm=large_string,
+            mode=large_string)
+        self.assertEqual(resp.status_code, 413,
+                         'Returned unexpected response code')
+
     @tags(type='positive')
     def test_creating_secret_w_large_string_values(self):
-        """Covers case of creating secret with large String values."""
-        large_string = str(bytearray().zfill(10001))
+        """Covers case of creating secret with large String values such
+        that the total request size is the maximum size allowed.
+        We will use the large_string to populate the following fields:
+
+             1. name
+             2. algorithm
+             3. mode
+
+        We will make these fields sufficiently large such that we come up
+        against, but not over, the maximum overall request size."""
+
+        # we are filling in 3 items, hence the division
+        available_size_per_item = self._calculate_available_size() // 3
+
+        large_string = str(bytearray().zfill(available_size_per_item))
         resp = self.behaviors.create_secret(
             payload_content_type=self.config.payload_content_type,
             payload=self.config.payload,
@@ -616,9 +680,10 @@ class SecretsAPI(SecretsFixture):
 
     @tags(type='positive')
     def test_creating_secret_w_max_secret_size(self):
-        """Covers case of creating secret with the maximum value for
-        an encrypted secret. Current limit is 10k bytes."""
-        large_string = str(bytearray().zfill(10000))
+        """Covers case of creating secret whose payload is the maximum size
+        allowed by Barbican."""
+        large_string = str(bytearray().zfill(
+            self.cloudkeep.max_allowed_secret_in_bytes))
         resp = self.behaviors.create_secret(
             payload_content_type=self.config.payload_content_type,
             payload_content_encoding=self.config.payload_content_encoding,
