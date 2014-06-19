@@ -819,6 +819,19 @@ class SecretsAPI(SecretsFixture):
         resp = self.client.get_secret(create_resp.id)
         self.assertEqual(resp.status_code, 404)
 
+    @tags(type='positive')
+    def test_update_secret_with_high_range_unicode_character(self):
+        """Ensure a two step secret creation succeeds with Content-Type
+        application/octet-stream and a high range unicode character.
+        Launchpad bug #1315498
+        """
+        resp = self.behaviors.create_secret(name='beer')
+        beer_char = u'\U0001F37A'
+        payload_resp = self.client.add_secret_payload(
+            resp.id, 'application/octet-stream', beer_char.encode('utf-8'))
+
+        self.assertEqual(payload_resp.status_code, 200)
+
 
 class SecretsPagingAPI(SecretsPagingFixture):
 
