@@ -16,6 +16,7 @@ limitations under the License.
 from cloudcafe.cloudkeep.common.states import OrdersStates
 from cloudroast.cloudkeep.barbican.fixtures import OrdersFixture
 from cafe.drivers.unittest.decorators import tags
+from cafe.drivers.unittest.issue import skip_open_issue
 
 
 class OrdersAPI(OrdersFixture):
@@ -69,6 +70,7 @@ class OrdersAPI(OrdersFixture):
         self.assertTrue(order_status)
 
     @tags(type='positive')
+    @skip_open_issue('launchpad', '1311240')
     def test_delete_order(self):
         """Covers deleting an order."""
         # Create an order to delete
@@ -76,7 +78,7 @@ class OrdersAPI(OrdersFixture):
         self.assertEqual(resp.status_code, 202)
 
         del_resp = self.behaviors.delete_order(resp.id)
-        self.assertEqual(del_resp.status_code, 200)
+        self.assertEqual(del_resp.status_code, 204)
 
     @tags(type='positive')
     def test_get_orders(self):

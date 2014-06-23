@@ -18,6 +18,7 @@ from binascii import b2a_base64
 from cafe.drivers.unittest.decorators import tags
 from cloudroast.cloudkeep.barbican.rbac import RBACSecretRoles
 from cloudroast.cloudkeep.barbican.rbac import RBACOrderRoles
+from cafe.drivers.unittest.issue import skip_open_issue
 
 
 class RBACAdminRoleForSecretAPI(RBACSecretRoles):
@@ -62,12 +63,13 @@ class RBACAdminRoleForSecretAPI(RBACSecretRoles):
                          'Should fail with 400 since payload omitted')
 
     @tags(type='positive')
+    @skip_open_issue('launchpad', '1311240')
     def test_delete_secret_as_admin(self):
         resp = self.admin_fixture.behaviors.create_secret_from_config()
         self.assertEqual(resp.status_code, 201)
 
         resp = self.behaviors.delete_secret(resp.id)
-        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.status_code, 204)
 
     @tags(type='positive')
     def test_get_secret_list_as_admin(self):
@@ -117,13 +119,14 @@ class RBACAdminRoleForOrdersAPI(RBACOrderRoles):
         self.assertEqual(resp.status_code, 202)
 
     @tags(type='positive')
+    @skip_open_issue('launchpad', '1311240')
     def test_delete_order_as_admin(self):
         # Create an order to try to delete as audit user
         resp = self.behaviors.create_order_from_config()
         self.assertEqual(resp.status_code, 202)
 
         resp = self.behaviors.delete_order(order_id=resp.id)
-        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.status_code, 204)
 
     @tags(type='positive')
     def test_get_orders_as_admin(self):

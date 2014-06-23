@@ -242,6 +242,7 @@ class SecretsAPI(SecretsFixture):
         self.assertEqual(resp.status_code, 400)
 
     @tags(type='positive')
+    @skip_open_issue('launchpad', '1311240')
     def test_secret_with_payload_deletion(self):
         """ Covers case where the system fails to delete a secret if it
         contains a set "payload" field.
@@ -252,7 +253,7 @@ class SecretsAPI(SecretsFixture):
         self.assertEqual(resp.status_code, 201)
 
         del_resp = self.behaviors.delete_secret(resp.id)
-        self.assertEqual(del_resp.status_code, 200)
+        self.assertEqual(del_resp.status_code, 204)
 
     @skip_open_issue('launchpad', '1321394')
     @tags(type='positive')
@@ -449,7 +450,7 @@ class SecretsAPI(SecretsFixture):
         """
         resp = self.behaviors.create_secret()
 
-         # put a value in the data that does not have a UTF-8 code point.
+        # put a value in the data that does not have a UTF-8 code point.
         data = b'\xb0'
 
         put_resp = self.client.add_secret_payload(
@@ -874,7 +875,7 @@ class SecretsPagingAPI(SecretsPagingFixture):
         next_ref = sec_group1.next
         self.assertIsNotNone(next_ref)
 
-        #Next set of secrets
+        # Next set of secrets
         resp = self.client.get_secrets(ref=next_ref)
         sec_group2 = self._check_list_of_secrets(resp=resp, limit=15)
 
@@ -892,7 +893,7 @@ class SecretsPagingAPI(SecretsPagingFixture):
         previous_ref = sec_group1.previous
         self.assertIsNotNone(previous_ref)
 
-        #Previous set of secrets
+        # Previous set of secrets
         resp = self.client.get_secrets(ref=previous_ref)
         sec_group2 = self._check_list_of_secrets(resp=resp, limit=15)
 
