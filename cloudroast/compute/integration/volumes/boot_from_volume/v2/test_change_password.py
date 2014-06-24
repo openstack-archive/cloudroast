@@ -20,10 +20,11 @@ from cloudroast.compute.fixtures import ServerFromVolumeV2Fixture
 
 
 class ServerFromVolumeV2ChangePasswordTests(ServerFromVolumeV2Fixture,
-                                            ChangeServerPasswordTests):
+                                            ChangeServerPasswordTests,
+                                            ChangePasswordBaseFixture):
 
     @classmethod
     def setUpClass(cls):
         super(ServerFromVolumeV2ChangePasswordTests, cls).setUpClass()
         cls.create_server()
-        ChangePasswordBaseFixture.change_password(fixture=cls)
+        cls.change_password()
