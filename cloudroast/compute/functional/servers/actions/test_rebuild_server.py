@@ -219,8 +219,8 @@ class RebuildServerTests(object):
 
         rebuild_action = filtered_actions[0]
         self.validate_instance_action(
-            rebuild_action, self.server.id, self.user_config.user_id,
-            self.user_config.project_id,
+            rebuild_action, self.server.id, self.compute.user.user_id,
+            self.compute.user.project_id,
             self.rebuilt_server_response.headers['x-compute-request-id'])
 
     @tags(type='smoke', net='yes')

@@ -74,8 +74,8 @@ class ChangeServerPasswordTests(object):
 
         password_action = filtered_actions[0]
         self.validate_instance_action(
-            password_action, self.server.id, self.user_config.user_id,
-            self.user_config.project_id,
+            password_action, self.server.id, self.compute.user.user_id,
+            self.compute.user.project_id,
             self.resp.headers['x-compute-request-id'])
 
 
