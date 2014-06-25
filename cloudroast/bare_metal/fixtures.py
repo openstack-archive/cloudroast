@@ -15,14 +15,7 @@ limitations under the License.
 """
 
 from cafe.drivers.unittest.fixtures import BaseTestFixture
-from cloudcafe.bare_metal.config import (
-    MarshallingConfig, BareMetalEndpointConfig)
-from cloudcafe.auth.config import UserAuthConfig, UserConfig
-from cloudcafe.auth.provider import AuthProvider
-from cloudcafe.bare_metal.chassis.client import ChassisClient
-from cloudcafe.bare_metal.drivers.client import DriversClient
-from cloudcafe.bare_metal.nodes.client import NodesClient
-from cloudcafe.bare_metal.ports.client import PortsClient
+from cloudcafe.bare_metal.composites import BareMetalComposite
 from cloudcafe.common.resources import ResourcePool
 
 
@@ -31,35 +24,12 @@ class BareMetalFixture(BaseTestFixture):
     @classmethod
     def setUpClass(cls):
         super(BareMetalFixture, cls).setUpClass()
-        cls.marshalling = MarshallingConfig()
-        cls.bare_metal_endpoint = BareMetalEndpointConfig()
+        cls.bare_metal = BareMetalComposite()
 
-        cls.endpoint_config = UserAuthConfig()
-        cls.user_config = UserConfig()
-        cls.access_data = AuthProvider.get_access_data(cls.endpoint_config,
-                                                       cls.user_config)
-
-        # If authentication fails, halt
-        if cls.access_data is None:
-            cls.assertClassSetupFailure('Authentication failed.')
-
-        bare_metal_service = cls.access_data.get_service(
-            cls.bare_metal_endpoint.bare_metal_endpoint_name)
-        url = bare_metal_service.get_endpoint(
-            cls.bare_metal_endpoint.region).public_url
-
-        # If a url override was provided, use that value instead
-        if cls.bare_metal_endpoint.bare_metal_endpoint_url:
-            url = cls.bare_metal_endpoint.bare_metal_endpoint_url
-
-        client_args = {'url': url, 'auth_token': cls.access_data.token.id_,
-                       'serialize_format': cls.marshalling.serializer,
-                       'deserialize_format': cls.marshalling.deserializer}
-
-        cls.chassis_client = ChassisClient(**client_args)
-        cls.drivers_client = DriversClient(**client_args)
-        cls.nodes_client = NodesClient(**client_args)
-        cls.ports_client = PortsClient(**client_args)
+        cls.chassis_client = cls.bare_metal.chassis.client
+        cls.drivers_client = cls.bare_metal.drivers.client
+        cls.nodes_client = cls.bare_metal.nodes.client
+        cls.ports_client = cls.bare_metal.ports.client
 
         cls.resources = ResourcePool()
         cls.addClassCleanup(cls.resources.release)
