@@ -43,6 +43,7 @@ class ComputeFixture(BaseTestFixture):
         cls.marshalling = MarshallingConfig()
         cls.config_drive_config = cls.compute.config_drive.config
         cls.cloud_init_config = cls.compute.config_drive.cloud_init_config
+        cls.user_config = cls.compute.user
 
         # Common config values
         cls.flavor_ref = cls.flavors_config.primary_flavor
