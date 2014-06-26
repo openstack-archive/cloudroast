@@ -24,7 +24,7 @@ class GlanceStackTachTest(StackTachFixture):
         for element in response.entity:
             self.assertIsNotNone(element.event_name)
 
-    def test_get_host_names(self):
+    def wip_test_get_host_names(self):
         """
         @summary: Verify that Get Host Names returns 200 Success response
         """

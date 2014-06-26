@@ -3,7 +3,7 @@ from cloudroast.stacktach.fixtures import StackTachDBFixture
 
 class GlanceStackTachDBTest(StackTachDBFixture):
 
-    def test_list_images(self):
+    def wip_test_list_images(self):
         """
         @summary: Verify that list images returns 200 Success response
         """
@@ -22,7 +22,7 @@ class GlanceStackTachDBTest(StackTachDBFixture):
             self.assertIsNotNone(element.size)
             self.assertIsNotNone(element.last_raw)
 
-    def test_list_image_deletes(self):
+    def wip_test_list_image_deletes(self):
         """
         @summary: Verify that list ImageDeletes returns 200 Success response
         """
@@ -40,7 +40,7 @@ class GlanceStackTachDBTest(StackTachDBFixture):
             self.assertIsNotNone(element.uuid)
             self.assertIsNotNone(element.deleted_at)
 
-    def test_list_image_exists(self):
+    def wip_test_list_image_exists(self):
         """
         @summary: Verify that list ImageExists returns 200 Success response
         """

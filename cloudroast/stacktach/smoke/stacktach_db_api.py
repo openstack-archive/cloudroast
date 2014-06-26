@@ -357,7 +357,6 @@ class StackTachDBTest(StackTachDBFixture):
         self.assertIsNotNone(entity.audit_period_beginning)
         self.assertIsNotNone(entity.audit_period_ending)
         self.assertIsNotNone(entity.bandwidth_public_out)
-        self.assertIsNotNone(entity.usage)
 
     def verify_exists_entity_attribute_values(self, response_entity):
         """
