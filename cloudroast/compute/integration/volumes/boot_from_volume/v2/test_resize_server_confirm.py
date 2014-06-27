@@ -21,7 +21,8 @@ from cloudroast.compute.fixtures import ServerFromVolumeV2Fixture
 
 
 class ServerFromVolumeV2ResizeUpConfirmTests(ServerFromVolumeV2Fixture,
-                                             ResizeServerUpConfirmTests):
+                                             ResizeServerUpConfirmTests,
+                                             ResizeUpConfirmBaseFixture):
 
     @classmethod
     def setUpClass(cls):
@@ -30,4 +31,4 @@ class ServerFromVolumeV2ResizeUpConfirmTests(ServerFromVolumeV2Fixture,
         cls.resources.add(cls.key.name,
                           cls.keypairs_client.delete_keypair)
         cls.create_server(key_name=cls.key.name)
-        ResizeUpConfirmBaseFixture.resize_up_and_confirm(fixture=cls)
+        cls.resize_up_and_confirm()
