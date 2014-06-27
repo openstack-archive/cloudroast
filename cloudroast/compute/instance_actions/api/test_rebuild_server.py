@@ -121,18 +121,6 @@ class RebuildServerTests(object):
                 self.flavor.vcpus, server_actual_vcpus))
 
     @tags(type='smoke', net='yes')
-    def test_rebuilt_server_disk_size(self):
-        """Verify the size of the virtual disk after the server rebuild"""
-        remote_client = self.server_behaviors.get_remote_instance_client(
-            self.server, self.servers_config, password=self.password,
-            key=self.key.private_key)
-        disk_size = remote_client.get_disk_size(
-            self.servers_config.instance_disk_path)
-        self.assertEqual(disk_size, self.flavor.disk,
-                         msg="Expected disk to be {0} GB, was {1} GB".format(
-                             self.flavor.disk, disk_size))
-
-    @tags(type='smoke', net='yes')
     def test_rebuilt_server_ephemeral_disk(self):
         """
         Verify the size of the virtual disk matches the size
@@ -296,3 +284,15 @@ class ServerFromImageRebuildTests(ServerFromImageFixture,
         response = cls.flavors_client.get_flavor_details(cls.flavor_ref)
         cls.flavor = response.entity
         cls.rebuild_and_await()
+
+    @tags(type='smoke', net='yes')
+    def test_rebuilt_server_disk_size(self):
+        """Verify the size of the virtual disk after the server rebuild"""
+        remote_client = self.server_behaviors.get_remote_instance_client(
+            self.server, self.servers_config, password=self.password,
+            key=self.key.private_key)
+        disk_size = remote_client.get_disk_size(
+            self.servers_config.instance_disk_path)
+        self.assertEqual(disk_size, self.flavor.disk,
+                         msg="Expected disk to be {0} GB, was {1} GB".format(
+                             self.flavor.disk, disk_size))
