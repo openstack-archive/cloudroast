@@ -27,10 +27,10 @@ class RebootServerSoftTests(object):
     @tags(type='smoke', net='yes')
     def test_reboot_server_soft(self):
         """ The server should be signaled to reboot gracefully """
+        start = time.time()
         remote_instance = self.server_behaviors.get_remote_instance_client(
             self.server, config=self.servers_config, key=self.key.private_key)
         uptime_start = remote_instance.get_uptime()
-        start = time.time()
 
         self.server_behaviors.reboot_and_await(
             self.server.id, NovaServerRebootTypes.SOFT)
