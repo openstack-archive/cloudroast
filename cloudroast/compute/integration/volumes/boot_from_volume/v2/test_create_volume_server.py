@@ -33,9 +33,9 @@ class CreateVolumeServerTest(object):
         """Verify volume attachment works for servers from volume"""
         # Create Attach-able Volume
         self.volume = self.blockstorage_behavior.create_available_volume(
-            display_name='test-volume', size=self.volume_size,
+            size=self.volume_size,
             volume_type=self.volume_type,
-            timeout=self.volume_status_timeout)
+            timeout=self.volume_create_timeout)
         self.resources.add(self.volume.id_,
                            self.blockstorage_client.delete_volume)
         self.device = '/dev/xvdm'
@@ -45,7 +45,22 @@ class CreateVolumeServerTest(object):
         self.volume_attachments_client.attach_volume(
             self.server.id, self.volume.id_, device=self.device)
         self.blockstorage_behavior.wait_for_volume_status(
-            self.volume.id_, statuses.Volume.IN_USE)
+            self.volume.id_, statuses.Volume.IN_USE,
+            self.volume_create_timeout)
+
+    @tags(type='smoke', net='yes')
+    def test_volume_server_primary_disk(self):
+        """
+        Verify the size of the virtual disk matches the size
+        set by the volume size at creation time
+        """
+        remote_client = self.server_behaviors.get_remote_instance_client(
+            self.server, self.servers_config, key=self.key.private_key)
+        disk_size = remote_client.get_disk_size(
+            self.servers_config.instance_disk_path)
+        self.assertEqual(disk_size, self.volume_size,
+                         msg="Expected disk to be {0} GB, was {1} GB".format(
+                             self.volume_size, disk_size))
 
 
 class ServerFromVolumeV2CreateServerTests(ServerFromVolumeV2Fixture,
@@ -72,7 +87,7 @@ class ServerFromVolumeV2CreateServerTests(ServerFromVolumeV2Fixture,
                           cls.keypairs_client.delete_keypair)
         # Creating block device with snapshot data inside
         cls.block_data = cls.server_behaviors.create_block_device_mapping_v2(
-            boot_index=0, uuid=cls.image.entity.id,
+            boot_index=0, uuid=cls.image_ref,
             volume_size=cls.volume_size,
             source_type='image', destination_type='volume',
             delete_on_termination=True)
