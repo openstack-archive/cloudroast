@@ -27,10 +27,10 @@ class RebootServerHardTests(object):
     @tags(type='smoke', net='yes')
     def test_reboot_server_hard(self):
         """ The server should be power cycled """
+        start = time.time()
         remote_instance = self.server_behaviors.get_remote_instance_client(
             self.server, config=self.servers_config, key=self.key.private_key)
         uptime_start = remote_instance.get_uptime()
-        start = time.time()
 
         self.server_behaviors.reboot_and_await(
             self.server.id, NovaServerRebootTypes.HARD)
