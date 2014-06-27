@@ -109,20 +109,6 @@ class CreateServerTest(object):
                 self.flavor.vcpus, server_actual_vcpus))
 
     @tags(type='smoke', net='yes')
-    def test_created_server_primary_disk(self):
-        """
-        Verify the size of the virtual disk matches the size
-        set by the flavor
-        """
-        remote_client = self.server_behaviors.get_remote_instance_client(
-            self.server, self.servers_config, key=self.key.private_key)
-        disk_size = remote_client.get_disk_size(
-            self.servers_config.instance_disk_path)
-        self.assertEqual(disk_size, self.flavor.disk,
-                         msg="Expected disk to be {0} GB, was {1} GB".format(
-                             self.flavor.disk, disk_size))
-
-    @tags(type='smoke', net='yes')
     def test_created_server_ephemeral_disk(self):
         """
         Verify the size of the ephemeral disk matches the size
@@ -310,3 +296,17 @@ class ServerFromImageCreateServerTests(ServerFromImageFixture,
         self.assertEqual(self.image_ref, self.server.image.id,
                          msg=message.format('image id', self.image_ref,
                                             self.server.image.id))
+
+    @tags(type='smoke', net='yes')
+    def test_created_server_primary_disk(self):
+        """
+        Verify the size of the virtual disk matches the size
+        set by the flavor
+        """
+        remote_client = self.server_behaviors.get_remote_instance_client(
+            self.server, self.servers_config, key=self.key.private_key)
+        disk_size = remote_client.get_disk_size(
+            self.servers_config.instance_disk_path)
+        self.assertEqual(disk_size, self.flavor.disk,
+                         msg="Expected disk to be {0} GB, was {1} GB".format(
+                             self.flavor.disk, disk_size))

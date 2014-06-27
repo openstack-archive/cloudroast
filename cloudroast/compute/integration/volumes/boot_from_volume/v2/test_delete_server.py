@@ -31,7 +31,7 @@ class DeleteVolumeServersTest(object):
     def test_volume_deleted_after_server_deletion_by_default(self):
         """Verify the volume is deleted automatically after server deletion"""
         with self.assertRaises(ItemNotFound):
-            self.volumes.client.delete_volume(self.volume_id)
+            self.blockstorage_behavior.client.delete_volume(self.volume[0].volume_id)
 
     @tags(type='smoke', net='no')
     def test_volume_not_deleted_after_server_deletion(self):
@@ -39,26 +39,36 @@ class DeleteVolumeServersTest(object):
         delete_on_termination is set to False"""
         # Creating block device with snapshot data inside
         block_data = self.server_behaviors.create_block_device_mapping_v2(
-            boot_index=0, uuid=self.image.entity.id,
+            boot_index=0, uuid=self.image_ref,
             volume_size=self.volume_size,
-            source_type='snapshot', destination_type='volume',
+            source_type='image', destination_type='volume',
             delete_on_termination=False)
         # Creating Instance from Volume V2
         server_response = self.boot_from_volume_client.create_server(
             block_device_mapping_v2=block_data,
             flavor_ref=self.flavors_config.primary_flavor,
             name=rand_name("server"))
+        server = server_response.entity
         # Verify the server reaches active status
-        server = self.server_behaviors.wait_for_server_status(
-            server_response.entity.id, NovaServerStatusTypes.ACTIVE)
+        self.server_behaviors.wait_for_server_status(
+            server.id, NovaServerStatusTypes.ACTIVE)
+        # Get the Volume Information
+        volumes = self.volume_attachments_client.get_server_volume_attachments(
+            server.id).entity
+        # Verify only one volume is present on a volume server
+        self.assertEquals(
+            len(volumes), 1,
+            msg="More then 1 volume has been found")
         # Delete the Instance
         self.servers_client.delete_server(server.id)
         self.server_behaviors.wait_for_server_to_be_deleted(server.id)
         # Verify the Volume is preserved
-        volume_resp = self.client.get_volume_info(self.volume_id)
-        self.assertEqual(volume_resp.status_code, 202)
+        volume_resp = self.blockstorage_behavior.client.get_volume_info(
+            volumes[0].volume_id)
+        self.assertEqual(volume_resp.status_code, 200)
         # Clean the Volume
-        result = self.volumes.behaviors.delete_volume_confirmed(self.volume_id)
+        result = self.blockstorage_behavior.client.delete_volume(
+            volumes[0].volume_id)
         self.assertTrue(result)
 
 
@@ -71,4 +81,6 @@ class ServerFromVolumeV2DeleteServerTests(ServerFromVolumeV2Fixture,
         super(ServerFromVolumeV2DeleteServerTests, cls).setUpClass()
         cls.create_server()
         cls.resp = cls.servers_client.delete_server(cls.server.id)
+        cls.volume = cls.volume_attachments_client.get_server_volume_attachments(
+            cls.server.id).entity
         cls.server_behaviors.wait_for_server_to_be_deleted(cls.server.id)

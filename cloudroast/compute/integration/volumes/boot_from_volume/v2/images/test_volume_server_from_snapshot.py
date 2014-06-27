@@ -29,10 +29,10 @@ class CreateVolumeServerfromSnapshotTest(ServerFromVolumeV2Fixture):
         super(CreateVolumeServerfromSnapshotTest, cls).setUpClass()
         cls.server = cls.server_behaviors.create_active_server().entity
         cls.image = cls.image_behaviors.create_active_image(cls.server.id)
-        # Create Sample Volume for Snapshot
+        # Create Sample Volume
         cls.volume = cls.blockstorage_behavior.create_available_volume(
             size=cls.volume_size, volume_type=cls.volume_type,
-            image_ref=cls.image_ref)
+            image_ref=cls.image_ref, timeout=cls.volume_create_timeout)
         # Creating Snapshot
         cls.snapshot = cls.blockstorage_behavior.create_available_snapshot(
             volume_id=cls.volume.id_)
