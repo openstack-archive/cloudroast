@@ -15,13 +15,12 @@ limitations under the License.
 """
 
 from unittest2.suite import TestSuite
-
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.blockstorage.composites import VolumesAutoComposite
 from cloudcafe.blockstorage.volumes_api.v1.models import statuses
 
-from cloudroast.compute.admin.servers.test_server_live_migration import \
+from cloudroast.compute.instance_actions.admin_api.test_server_live_migration import \
     LiveMigratationServerTests
 
 

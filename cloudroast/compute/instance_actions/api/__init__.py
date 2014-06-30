@@ -13,16 +13,3 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-
-from cloudroast.compute.fixtures import ServerFromVolumeV2Fixture
-from cloudroast.compute.instance_actions.api.test_vnc_console import \
-    ServerVncConsoleTests
-
-
-class ServerFromVolumeV2VncConsoleTests(ServerFromVolumeV2Fixture,
-                                        ServerVncConsoleTests):
-
-    @classmethod
-    def setUpClass(cls):
-        super(ServerFromVolumeV2VncConsoleTests, cls).setUpClass()
-        cls.create_server()

@@ -15,13 +15,12 @@ limitations under the License.
 """
 
 from cafe.drivers.unittest.decorators import tags
-
 from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.compute.common.exceptions import ItemNotFound
 from cloudcafe.compute.common.types import NovaServerStatusTypes
 
 from cloudroast.compute.fixtures import ServerFromVolumeV2Fixture
-from cloudroast.compute.functional.servers.test_delete_server import \
+from cloudroast.compute.instance_actions.api.test_delete_server import \
     DeleteServersTest
 
 

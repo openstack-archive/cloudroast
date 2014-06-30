@@ -22,7 +22,7 @@ from cloudcafe.compute.common.types import NovaServerStatusTypes
 from cloudcafe.blockstorage.volumes_api.v1.models import statuses
 
 from cloudroast.compute.fixtures import ServerFromVolumeV2Fixture
-from cloudroast.compute.functional.servers.test_create_server import \
+from cloudroast.compute.instance_actions.api.test_create_server import \
     CreateServerTest
 
 

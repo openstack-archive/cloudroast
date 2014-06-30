@@ -15,7 +15,8 @@ limitations under the License.
 """
 
 from cloudcafe.common.tools.datagen import rand_name
-from cloudroast.compute.functional.servers.actions.test_reboot_server_hard \
+
+from cloudroast.compute.instance_actions.api.test_reboot_server_hard \
     import RebootServerHardTests
 from cloudroast.compute.fixtures import ServerFromVolumeV2Fixture
 

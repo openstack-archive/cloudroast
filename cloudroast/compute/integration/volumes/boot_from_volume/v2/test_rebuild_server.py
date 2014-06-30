@@ -15,7 +15,8 @@ limitations under the License.
 """
 
 from cloudcafe.common.tools.datagen import rand_name
-from cloudroast.compute.functional.servers.actions.test_rebuild_server \
+
+from cloudroast.compute.instance_actions.api.test_rebuild_server \
     import RebuildServerTests, RebuildBaseFixture
 from cloudroast.compute.fixtures import ServerFromVolumeV2Fixture
 
