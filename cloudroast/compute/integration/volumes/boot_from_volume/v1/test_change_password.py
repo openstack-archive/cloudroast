@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from cloudroast.compute.functional.servers.actions.test_change_password \
+from cloudroast.compute.instance_actions.api.test_change_password \
     import ChangeServerPasswordTests, ChangePasswordBaseFixture
 from cloudroast.compute.fixtures import ServerFromVolumeV1Fixture
 

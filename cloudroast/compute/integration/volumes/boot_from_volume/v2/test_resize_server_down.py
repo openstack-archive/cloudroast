@@ -16,7 +16,7 @@ limitations under the License.
 
 from cloudcafe.common.tools.datagen import rand_name
 
-from cloudroast.compute.functional.servers.actions.test_resize_server_down \
+from cloudroast.compute.instance_actions.api.test_resize_server_down \
     import ResizeServerDownConfirmTests, ResizeDownConfirmBaseFixture
 from cloudroast.compute.fixtures import ServerFromVolumeV2Fixture
 

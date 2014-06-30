@@ -16,7 +16,8 @@ limitations under the License.
 
 from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.compute.common.types import NovaImageStatusTypes
-from cloudroast.compute.functional.images.test_create_image \
+
+from cloudroast.compute.instance_actions.api.test_create_image \
     import CreateImageTest
 from cloudroast.compute.fixtures import ServerFromVolumeV2Fixture
 
