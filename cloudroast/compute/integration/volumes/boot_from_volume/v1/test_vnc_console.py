@@ -15,7 +15,7 @@ limitations under the License.
 """
 
 from cloudroast.compute.fixtures import ServerFromVolumeV1Fixture
-from cloudroast.compute.functional.servers.actions.test_vnc_console import \
+from cloudroast.compute.instance_actions.api.test_vnc_console import \
     ServerVncConsoleTests
 
 
