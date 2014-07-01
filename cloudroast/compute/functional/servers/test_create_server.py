@@ -251,6 +251,7 @@ class CreateServerTest(object):
             self.server, self.servers_config, key=self.key.private_key)
         xen_meta = remote_client.get_xen_user_metadata()
         for key, value in self.metadata.iteritems():
+            self.assertIn(key, xen_meta)
             self.assertEqual(xen_meta[key], value)
 
     @tags(type='smoke', net='yes')
