@@ -31,6 +31,8 @@ from cloudcafe.cloudkeep.config import (MarshallingConfig, CloudKeepConfig,
                                         CloudKeepOrdersConfig,
                                         CloudKeepAuthConfig)
 from cloudcafe.common.tools import randomstring
+from cafe.resources.github.issue_tracker import GitHubTracker
+from cafe.resources.launchpad.issue_tracker import LaunchpadTracker
 
 
 class BarbicanFixture(BaseTestFixture):
@@ -57,6 +59,19 @@ class BarbicanFixture(BaseTestFixture):
         duplicates = [entity for entity in group1 if entity in group2]
         self.assertEqual(len(duplicates), 0,
                          'Lists of entities did not return unique entities')
+
+    def _skip_on_issue(self, tracker_name, issue):
+        """ Designed to be used for data_driven_tests"""
+
+        # TODO(jmv): Push this into the skip_on_issue plugin in OpenCAFE.
+        tracker = None
+        if tracker_name.lower() == 'github':
+            tracker = GitHubTracker
+        elif tracker_name.lower() == 'launchpad':
+            tracker = LaunchpadTracker
+
+        if tracker and tracker.is_bug_open(issue):
+            self.skipTest('{0} Issue #{1}'.format(tracker_name, issue))
 
 
 class AuthenticationFixture(BarbicanFixture):

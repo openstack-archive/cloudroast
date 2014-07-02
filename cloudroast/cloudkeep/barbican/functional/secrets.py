@@ -111,6 +111,9 @@ class DataDriveSecretsAPI(SecretsFixture):
     @tags(type='positive')
     def ddtest_creating_secret_w_mode(self, mode=None):
         """Covers cases of creating a secret with various modes."""
+        if len(mode) >= 10001:
+            self._skip_on_issue('launchpad', '1335327')
+
         resps = self.behaviors.create_and_check_secret(mode=mode)
         self.assertEqual(resps.create_resp.status_code, 201,
                          'Creation failed with unexpected response code')
@@ -655,6 +658,7 @@ class SecretsAPI(SecretsFixture):
                          'Returned unexpected response code')
 
     @tags(type='positive')
+    @skip_open_issue('launchpad', '1335327')
     def test_creating_secret_w_large_string_values(self):
         """Covers case of creating secret with large String values such
         that the total request size is the maximum size allowed.
