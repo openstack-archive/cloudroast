@@ -353,6 +353,17 @@ class SecretsAPI(SecretsFixture):
                          'Create should have failed with 413')
 
     @tags(type='negative')
+    def test_creating_w_invalid_content_type(self):
+        """ Covers case of putting secret information with an
+        invalid content type. Should return 400.
+        - Reported in Barbican Launchpad Bug #1208601
+        """
+        resp = self.behaviors.create_secret(headers=
+                                            {'Content-Type': 'crypto/boom'})
+        self.assertEqual(resp.status_code, 415,
+                         'Should have failed with 415')
+
+    @tags(type='negative')
     def test_getting_secret_that_doesnt_exist(self):
         """Covers getting a nonexistent secret."""
         resp = self.client.get_secret('not_a_uuid')
@@ -379,16 +390,17 @@ class SecretsAPI(SecretsFixture):
     @tags(type='negative')
     def test_putting_w_invalid_content_type(self):
         """ Covers case of putting secret information with an
-        invalid content type. Should return 400.
+        invalid content type. Should return 415.
         - Reported in Barbican Launchpad Bug #1208601
+        - Updated in Barbican blueprint barbican-enforce-content-type
         """
         resp = self.behaviors.create_secret()
         put_resp = self.client.add_secret_payload(
             secret_id=resp.id,
             payload_content_type='crypto/boom',
             payload='testing putting with invalid mime type')
-        self.assertEqual(put_resp.status_code, 400,
-                         'Should have failed with 400')
+        self.assertEqual(put_resp.status_code, 415,
+                         'Should have failed with 415')
 
     @tags(type='negative')
     def test_putting_secret_w_data_already(self):

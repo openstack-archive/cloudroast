@@ -260,6 +260,15 @@ class OrdersAPI(OrdersFixture):
         self.assertEqual(resp.status_code, 400, 'Should have failed with 400')
 
     @tags(type='negative')
+    def test_create_order_w_invalid_content_type(self):
+        """
+        Covers creating order with invalid content-type header.
+        """
+        resp = self.behaviors.create_order_overriding_cfg(
+            headers={'Content-Type': 'crypto/boom'})
+        self.assertEqual(resp.status_code, 415, 'Should have failed with 415')
+
+    @tags(type='negative')
     def test_create_order_w_null_entries(self):
         """Covers creating order with all null entries. Should return a 400."""
         resp = self.behaviors.create_order()
