@@ -25,6 +25,7 @@ from cloudcafe.identity.v2_0.tokens_api.config import TokenAPI_Config
 
 
 class DBaaSFixture(BaseTestFixture):
+
     """
     @summary: Fixture for any DBaaS tests..
 
@@ -57,7 +58,7 @@ class DBaaSFixture(BaseTestFixture):
             identity_config.tenant_name)
         dbaas_service = access_data.get_service(identity_config.endpoint)
         cls.auth_url = "{0}/v2.0/tokens".format(identity_config.endpoint)
-        #check for role
+        # check for role
         rp_admin_user = cls.dbaas_config.rp_admin_user
         creator_user = cls.dbaas_config.creator_user
         observer_user = cls.dbaas_config.observer_user
@@ -74,92 +75,82 @@ class DBaaSFixture(BaseTestFixture):
                 cls.dbaas_config.mgmt_host,
                 mgmt_tenant_id)
 
-            cls.mgmt_client = \
-                DBaaSAPIClient(username,
-                               cls.host_url,
-                               api_key,
-                               None,
-                               mgmt_tenant_id,
-                               auth_url=mgmt_auth_url,
-                               service_url=mgmt_service_url,
-                               auth_strategy=mgmt_auth_strategy,
-                               insecure=True,
-                               serialize_format=
-                               identity_config.serialize_format,
-                               deserialize_format=
-                               identity_config.deserialize_format)
+            cls.mgmt_client = DBaaSAPIClient(
+                username,
+                cls.host_url,
+                api_key,
+                None,
+                mgmt_tenant_id,
+                auth_url=mgmt_auth_url,
+                service_url=mgmt_service_url,
+                auth_strategy=mgmt_auth_strategy,
+                insecure=True,
+                serialize_format=identity_config.serialize_format,
+                deserialize_format=identity_config.deserialize_format)
 
         if creator_user:
             username = cls.dbaas_config.creator_user
             api_key = cls.dbaas_config.creator_pw
-            cls.creator_client = \
-                DBaaSAPIClient(username,
-                               cls.host_url,
-                               api_key,
-                               None,
-                               cls.tenant_id,
-                               auth_url=cls.auth_url,
-                               service_url=cls.service_url,
-                               auth_strategy="keystone",
-                               insecure=True,
-                               serialize_format=
-                               identity_config.serialize_format,
-                               deserialize_format=
-                               identity_config.deserialize_format)
+            cls.creator_client = DBaaSAPIClient(
+                username,
+                cls.host_url,
+                api_key,
+                None,
+                cls.tenant_id,
+                auth_url=cls.auth_url,
+                service_url=cls.service_url,
+                auth_strategy="keystone",
+                insecure=True,
+                serialize_format=identity_config.serialize_format,
+                deserialize_format=identity_config.deserialize_format)
 
         if rp_admin_user:
             username = cls.dbaas_config.rp_admin_user
             api_key = cls.dbaas_config.rp_admin_pw
-            cls.admin_client = \
-                DBaaSAPIClient(username,
-                               cls.host_url,
-                               api_key,
-                               None,
-                               cls.tenant_id,
-                               auth_url=cls.auth_url,
-                               service_url=cls.service_url,
-                               auth_strategy="keystone",
-                               insecure=True,
-                               serialize_format=
-                               identity_config.serialize_format,
-                               deserialize_format=
-                               identity_config.deserialize_format)
+            cls.admin_client = DBaaSAPIClient(
+                username,
+                cls.host_url,
+                api_key,
+                None,
+                cls.tenant_id,
+                auth_url=cls.auth_url,
+                service_url=cls.service_url,
+                auth_strategy="keystone",
+                insecure=True,
+                serialize_format=identity_config.serialize_format,
+                deserialize_format=identity_config.deserialize_format)
 
         if observer_user:
             username = cls.dbaas_config.observer_user
             api_key = cls.dbaas_config.observer_pw
-            cls.observer_client = \
-                DBaaSAPIClient(username,
-                               cls.host_url,
-                               api_key,
-                               None,
-                               cls.tenant_id,
-                               auth_url=cls.auth_url,
-                               service_url=cls.service_url,
-                               auth_strategy="keystone",
-                               insecure=True,
-                               serialize_format=
-                               identity_config.serialize_format,
-                               deserialize_format=
-                               identity_config.deserialize_format)
+            cls.observer_client = DBaaSAPIClient(
+                username,
+                cls.host_url,
+                api_key,
+                None,
+                cls.tenant_id,
+                auth_url=cls.auth_url,
+                service_url=cls.service_url,
+                auth_strategy="keystone",
+                insecure=True,
+                serialize_format=identity_config.serialize_format,
+                deserialize_format=identity_config.deserialize_format)
 
-        #default
+        # default
         username = identity_config.username
         api_key = identity_config.password
-        cls.client = \
-            DBaaSAPIClient(username,
-                           cls.host_url,
-                           api_key,
-                           None,
-                           cls.tenant_id,
-                           auth_url=cls.auth_url,
-                           service_url=cls.service_url,
-                           auth_strategy="keystone",
-                           insecure=True,
-                           serialize_format=
-                           identity_config.serialize_format,
-                           deserialize_format=
-                           identity_config.deserialize_format)
+        cls.client = DBaaSAPIClient(
+            username,
+            cls.host_url,
+            api_key,
+            None,
+            cls.tenant_id,
+            auth_url=cls.auth_url,
+            service_url=cls.service_url,
+            auth_strategy="keystone",
+            insecure=True,
+            serialize_format=identity_config.serialize_format,
+            deserialize_format=identity_config.deserialize_format)
 
     @classmethod
     def tearDownClass(cls):

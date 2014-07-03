@@ -29,7 +29,7 @@ from cloudcafe.objectstorage.objectstorage_api.config \
 # TODO: Refactor the Auth composites to use the Identity auth composites
 # when not in SAIO mode.
 class AuthComposite(object):
-    #Currently a classmethod only because of a limitiation of memoized
+    # Currently a classmethod only because of a limitiation of memoized
     @classmethod
     @memoized
     def authenticate(cls, username=None, password=None):

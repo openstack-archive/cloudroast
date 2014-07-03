@@ -75,7 +75,7 @@ class TestCreateInstances(DBaaSFixture):
         Tearing down: Deleting the instance if in active state
 
         """
-        #Delete the instance ID created for test if active
+        # Delete the instance ID created for test if active
         dbaas = cls.dbaas
         for instance_id in cls.all_instances:
             if instance_id is not None:
@@ -119,12 +119,12 @@ class TestCreateInstances(DBaaSFixture):
                          'ACTIVE',
                          "Instance fell into state: %s" % status)
 
-        #Get the instance and check instance attribs:
+        # Get the instance and check instance attribs:
         # such as the flavor / volume size
         instance = self.dbaas.instances.get(instance)
         self._check_instance_attribs(instance, FLAVOR, VOLUME, NAME)
 
-        #try to find our instance in the list
+        # try to find our instance in the list
         self.assertTrue(self.behavior.found_resource(self.dbaas,
                                                      instanceId=instance.id),
                         "Did not find our instance id: %s in the list."
@@ -135,7 +135,6 @@ class TestCreateInstances(DBaaSFixture):
         Creating a small instance (1G)
 
         """
-        #print (self.instance_id)
         NAME = "qe-small-instance"
         FLAVOR = 2
         VOLUME = 40
@@ -157,12 +156,12 @@ class TestCreateInstances(DBaaSFixture):
                          'ACTIVE',
                          "Instance fell into state: %s" % status)
 
-        #Get the instance and check instance attribs:
+        # Get the instance and check instance attribs:
         # such as the flavor / volume size
         instance = self.dbaas.instances.get(instance)
         self._check_instance_attribs(instance, FLAVOR, VOLUME, NAME)
 
-        #try to find our instance in the list
+        # try to find our instance in the list
         self.assertTrue(self.behavior.found_resource(self.dbaas,
                                                      instanceId=instance.id),
                         "Did not find our instance id: %s in the list."
@@ -194,12 +193,12 @@ class TestCreateInstances(DBaaSFixture):
                          'ACTIVE',
                          "Instance fell into state: %s" % status)
 
-        #Get the instance and check instance attribs:
+        # Get the instance and check instance attribs:
         # such as the flavor / volume size
         instance = self.dbaas.instances.get(instance)
         self._check_instance_attribs(instance, FLAVOR, VOLUME, NAME)
 
-        #try to find our instance in the list
+        # try to find our instance in the list
         self.assertTrue(self.behavior.found_resource(self.dbaas,
                                                      instanceId=instance.id),
                         "Did not find our instance id: %s in the list."
@@ -232,12 +231,12 @@ class TestCreateInstances(DBaaSFixture):
                          'ACTIVE',
                          "Instance fell into state: %s" % status)
 
-        #Get the instance and check instance attribs:
-        #such as the flavor / volume size
+        # Get the instance and check instance attribs:
+        # such as the flavor / volume size
         instance = self.dbaas.instances.get(instance)
         self._check_instance_attribs(instance, FLAVOR, VOLUME, NAME)
 
-        #try to find our instance in the list
+        # try to find our instance in the list
         self.assertTrue(self.behavior.found_resource(self.dbaas,
                                                      instanceId=instance.id),
                         "Did not find our instance id: %s in the list."
@@ -269,12 +268,12 @@ class TestCreateInstances(DBaaSFixture):
                          'ACTIVE',
                          "Instance fell into state: %s" % status)
 
-        #Get the instance and check instance attribs:
-        #such as the flavor / volume size
+        # Get the instance and check instance attribs:
+        # such as the flavor / volume size
         instance = self.dbaas.instances.get(instance)
         self._check_instance_attribs(instance, FLAVOR, VOLUME, NAME)
 
-        #try to find our instance in the list
+        # try to find our instance in the list
         self.assertTrue(self.behavior.found_resource(
             self.dbaas,
             instanceId=instance.id),
@@ -306,12 +305,12 @@ class TestCreateInstances(DBaaSFixture):
                          'ACTIVE',
                          "Instance fell into state: %s" % status)
 
-        #Get the instance and check instance attribs:
-        #such as the flavor / volume size
+        # Get the instance and check instance attribs:
+        # such as the flavor / volume size
         instance = self.dbaas.instances.get(instance)
         self._check_instance_attribs(instance, FLAVOR, VOLUME, NAME)
 
-        #try to find our instance in the list
+        # try to find our instance in the list
         self.assertTrue(self.behavior.found_resource(
             self.dbaas,
             instanceId=instance.id),
@@ -351,12 +350,12 @@ class TestCreateInstances(DBaaSFixture):
                          'ACTIVE',
                          "Instance fell into state: %s" % status)
 
-        #Get the instance and check instance attribs:
-        #such as the flavor / volume size
+        # Get the instance and check instance attribs:
+        # such as the flavor / volume size
         instance = self.dbaas.instances.get(instance)
         self._check_instance_attribs(instance, FLAVOR, VOLUME, NAME)
 
-        #try to find our instance in the list
+        # try to find our instance in the list
         self.assertTrue(self.behavior.found_resource(
             self.dbaas,
             instanceId=instance.id),
@@ -398,12 +397,12 @@ class TestCreateInstances(DBaaSFixture):
                          'ACTIVE',
                          "Instance fell into state: %s" % status)
 
-        #Get the instance and check instance attribs:
-        #such as the flavor / volume size
+        # Get the instance and check instance attribs:
+        # such as the flavor / volume size
         instance = self.dbaas.instances.get(instance)
         self._check_instance_attribs(instance, FLAVOR, VOLUME, NAME)
 
-        #try to find our instance in the list
+        # try to find our instance in the list
         self.assertTrue(
             self.behavior.found_resource(self.dbaas, instanceId=instance.id),
             "Did not find our instance id: %s in the list." % instance.id)
@@ -431,12 +430,12 @@ class TestCreateInstances(DBaaSFixture):
                          'ACTIVE',
                          "Instance fell into state: %s" % status)
 
-        #Get the instance and check instance attribs:
-        #such as the flavor / volume size
+        # Get the instance and check instance attribs:
+        # such as the flavor / volume size
         instance = self.dbaas.instances.get(instance)
         self._check_instance_attribs(instance, FLAVOR, VOLUME, NAME)
 
-        #try to find our instance in the list
+        # try to find our instance in the list
         self.assertTrue(
             self.behavior.found_resource(self.dbaas, instanceId=instance.id),
             "Did not find our instance id: %s in the list." % instance.id)
@@ -475,7 +474,7 @@ class test_resize_instances(DBaaSFixture):
                         "name": "dbuser1",
                         "password": "password"}])
         httpCode = cls.behavior.get_last_response_code(test_resize_instances
-        .dbaas)
+                                                       .dbaas)
         if httpCode != '200':
             raise Exception("Create instance failed with code %s" % httpCode)
         test_resize_instances.instance_id = instance.id
@@ -492,7 +491,7 @@ class test_resize_instances(DBaaSFixture):
         """
         instance_id = test_resize_instances.instance_id
         dbaas = test_resize_instances.dbaas
-        #Delete the instance ID created for test if active
+        # Delete the instance ID created for test if active
         if instance_id is not None:
             status = cls.behavior.get_instance_status(dbaas,
                                                       instanceId=instance_id)
@@ -526,7 +525,7 @@ class test_resize_instances(DBaaSFixture):
                         "Unexpected flavor size for resize: %s"
                         % newFlavorSize)
 
-        #Resize back to tiny
+        # Resize back to tiny
         if self.behavior.is_instance_active(self.dbaas,
                                             instanceId=self.instance_id):
             self.dbaas.instances.resize_instance(self.instance_id,
@@ -567,7 +566,7 @@ class test_resize_instances(DBaaSFixture):
                         "Unexpected flavor size for resize: %s"
                         % newFlavorSize)
 
-        #Resize back to tiny
+        # Resize back to tiny
         if self.behavior.is_instance_active(self.dbaas,
                                             instanceId=self.instance_id):
             self.dbaas.instances.resize_instance(self.instance_id,
@@ -609,7 +608,7 @@ class test_resize_instances(DBaaSFixture):
                         "Unexpected flavor size for resize: %s"
                         % newFlavorSize)
 
-        #Resize back to tiny
+        # Resize back to tiny
         if self.behavior.is_instance_active(self.dbaas,
                                             instanceId=self.instance_id):
             self.dbaas.instances.resize_instance(self.instance_id,
@@ -651,7 +650,7 @@ class test_resize_instances(DBaaSFixture):
                         "Unexpected flavor size for resize: %s"
                         % newFlavorSize)
 
-        #Resize back to tiny
+        # Resize back to tiny
         if self.behavior.is_instance_active(self.dbaas,
                                             instanceId=self.instance_id):
             self.dbaas.instances.resize_instance(self.instance_id,
@@ -703,7 +702,6 @@ class test_resize_volume_instances(DBaaSFixture):
         if httpCode != '200':
             raise Exception("Create instance failed with code %s" % httpCode)
         test_resize_volume_instances.instance_id = instance.id
-        #status = instance.status
         status, elapsed_time = cls.behavior.wait_for_active(
             test_resize_volume_instances.dbaas,
             instanceId=test_resize_volume_instances.instance_id)
@@ -717,7 +715,7 @@ class test_resize_volume_instances(DBaaSFixture):
         """
         instance_id = test_resize_volume_instances.instance_id
         dbaas = test_resize_volume_instances.dbaas
-        #Delete the instance ID created for test if active
+        # Delete the instance ID created for test if active
         if instance_id is not None:
             status = cls.behavior.get_instance_status(dbaas,
                                                       instanceId=instance_id)

@@ -25,6 +25,7 @@ from cloudroast.images.fixtures import ImagesFixture
 
 
 class ImagesV1Fixture(ImagesFixture):
+
     @classmethod
     def setUpClass(cls):
         super(ImagesV1Fixture, cls).setUpClass()
@@ -43,4 +44,5 @@ class ImagesV1Fixture(ImagesFixture):
         cls.api_client = ImagesV1Client(images_endpoint, access_data.token.id_,
                                         'json', 'json')
         cls.behaviors = ImagesV1Behaviors(cls.api_client, cls.config)
-        cls.tenant_ids = TenantsBehaviors(cls.tenants_client).get_all_tenant_ids()
+        cls.tenant_ids = TenantsBehaviors(
+            cls.tenants_client).get_all_tenant_ids()

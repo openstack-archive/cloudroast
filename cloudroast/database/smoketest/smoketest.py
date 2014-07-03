@@ -16,8 +16,6 @@ limitations under the License.
 
 import unittest
 from test_repo.database.fixtures import DBaaSFixture
-#from test_repo.database import dbaas_util as testutil
-
 
 
 class SmokeTest(DBaaSFixture):
@@ -61,7 +59,6 @@ class SmokeTest(DBaaSFixture):
                 raise Exception(
                     "Create instance failed with code %s" % httpCode)
             cls.instance_id = instance.id
-            #status = instance.status
             cls.behavior.wait_for_active(cls.dbaas,
                                          instanceId=cls.instance_id)
             if cls.stability_mode:
@@ -81,7 +78,7 @@ class SmokeTest(DBaaSFixture):
         Tearing down: Deleting the instance if in active state
 
         """
-        #Delete the instance ID created for test if active
+        # Delete the instance ID created for test if active
         status = cls.behavior.get_instance_status(cls.dbaas,
                                                   cls.instance_id)
         if cls.behavior.is_instance_active(cls.dbaas, instanceStatus=status):
@@ -102,7 +99,7 @@ class SmokeTest(DBaaSFixture):
         if self.behavior.is_instance_active(
                 self.dbaas,
                 instanceStatus=instance_status) is False:
-            #start a new instance and set the global instance ID
+            # start a new instance and set the global instance ID
             NAME = "qe-smoke"
             FLAVOR = 4
             VOLUME = 1
@@ -257,7 +254,7 @@ class SmokeTest(DBaaSFixture):
                                  16384: "16GB Instance"}
         try:
             flavorList = self.dbaas.flavors.list()
-            #create dict of actual flavors to compare against
+            # create dict of actual flavors to compare against
             actualFlavorRamName = {}
             self.assertIsNotNone(flavorList, "Error: no flavors returned")
             for flavor in flavorList:
@@ -331,7 +328,7 @@ class SmokeTest(DBaaSFixture):
             self.behavior.wait_for_active(self.dbaas,
                                           instanceId=self.instance_id)
 
-            #get the new flavorId
+            # get the new flavorId
             flavorId = self.dbaas.instances.get(self.instance_id).flavor["id"]
             self.assertEqual(str(next_flavor), flavorId,
                              "Error: Flavors do not match: %s != %s"
@@ -347,7 +344,7 @@ class SmokeTest(DBaaSFixture):
             self.behavior.wait_for_active(self.dbaas,
                                           instanceId=self.instance_id)
 
-            #get the new flavorId
+            # get the new flavorId
             flavorId = self.dbaas.instances.get(self.instance_id).flavor["id"]
             self.assertEqual(str(final_flavor), flavorId,
                              "Error: Flavors do not match: %s != %s"
@@ -412,7 +409,7 @@ class SmokeTest(DBaaSFixture):
             self.behavior.wait_for_active(self.dbaas,
                                           instanceId=self.instance_id)
 
-            #Get the new volume size
+            # Get the new volume size
             volume_size = self.dbaas.instances.get(self.instance_id).volume[
                 "size"]
             self.assertEqual(resize_vol, volume_size,

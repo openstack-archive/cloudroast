@@ -83,7 +83,7 @@ class ServerMetadataTest(ComputeFixture):
         self.assertEqual(metadata.get('meta_key_1'), 'alt3')
         self.assertEqual(metadata.get('meta_key_2'), 'meta_value_2')
 
-        #Verify the values have been updated to the proper values
+        # Verify the values have been updated to the proper values
         actual_metadata_response = self.servers_client.list_server_metadata(
             self.server.id)
         actual_metadata = actual_metadata_response.entity

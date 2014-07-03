@@ -42,7 +42,6 @@ class test_hosts(DBaaSFixture):
         if httpCode != '200':
             raise Exception("Create instance failed with code %s" % httpCode)
         cls.instance_id = instance.id
-        #status = instance.status
         cls.behavior.wait_for_active(test_hosts.mgmt_dbaas,
                                      instanceId=test_hosts.instance_id)
 
@@ -60,7 +59,7 @@ class test_hosts(DBaaSFixture):
 
         """
 
-        #Delete the instance ID created for test if active
+        # Delete the instance ID created for test if active
         if test_hosts.instance_id is not None:
             status = cls.behavior.get_instance_status(
                 test_hosts.mgmt_dbaas,

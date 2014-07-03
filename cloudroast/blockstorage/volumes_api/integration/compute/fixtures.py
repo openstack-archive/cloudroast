@@ -93,5 +93,5 @@ class VolumesImagesIntegrationFixture(ComputeIntegrationTestFixture):
             'true', volume.bootable, "Volume built from image was not marked "
             "as bootable")
 
-            # TODO: Add volume metadata tests to match against image metadata
-            # TODO: Add image tests to verify image was correctly built
+        # TODO: Add volume metadata tests to match against image metadata
+        # TODO: Add image tests to verify image was correctly built

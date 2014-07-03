@@ -52,7 +52,7 @@ class TestUsers(DBaaSFixture):
 
         """
 
-        #Delete the instance ID created for test if active
+        # Delete the instance ID created for test if active
         if cls.instance_id is not None:
             status = cls.behavior.get_instance_status(
                 cls.dbaas,
@@ -77,12 +77,12 @@ class TestUsers(DBaaSFixture):
             self.dbaas,
             instanceId=self.instance_id) == 'ACTIVE',
             "Instance is not in Active statue")
-        #Get the instance and check instance attribs:
-        #such as the flavor / volume size
-        #TODO: need to verify this list later...
+        # Get the instance and check instance attribs:
+        # such as the flavor / volume size
+        # TODO: need to verify this list later...
         _users = self.dbaas.users.list(
             self.dbaas.instances.get(self.instance_id))
-        #try to find our instance in the list
+        # try to find our instance in the list
         self.assertTrue(self.behavior.found_resource(
             self.dbaas,
             instanceId=self.instance_id,
@@ -121,12 +121,12 @@ class TestUsers(DBaaSFixture):
                 self.dbaas,
                 instanceId=self.instance_id) == 'ACTIVE',
             "Instance is not in Active statue")
-        #Get the instance and check user dbs
+        # Get the instance and check user dbs
         _users = self.dbaas.users.list(
             self.dbaas.instances.get(self.instance_id))
         for _user in _users:
             self.assertEqual(_user.databases, _databases)
-            #try to find our user in the list
+            # try to find our user in the list
         self.assertTrue(self.behavior.found_resource(
             self.dbaas,
             instanceId=self.instance_id,
@@ -169,12 +169,12 @@ class TestUsers(DBaaSFixture):
             self.dbaas,
             instanceId=self.instance_id) == 'ACTIVE',
             "Instance is not in Active statue")
-        #Get the instance and check user dbs
+        # Get the instance and check user dbs
         _user_list = self.dbaas.users.list(
             self.dbaas.instances.get(self.instance_id))
         for _user in _user_list:
             self.assertEqual(_user.databases, _databases)
-            #try to find our user in the list
+            # try to find our user in the list
             self.assertTrue(self.behavior.found_resource(
                 self.dbaas,
                 instanceId=self.instance_id,
@@ -250,12 +250,12 @@ class TestUsers(DBaaSFixture):
 
         self.behavior.wait_for_active(self.dbaas, instanceId=self.instance_id)
 
-        #Validate access to the databases just created
+        # Validate access to the databases just created
         for _test_user in _test_users:
             _username = _test_user['name']
             _db_access_list = self.dbaas.users.list_access(self.instance_id,
                                                            _username)
-            #create a dict to compare with
+            # create a dict to compare with
             _db_actual_list = []
             for db_list in _db_access_list:
                 _db_actual = {'name': db_list.name}
@@ -264,7 +264,7 @@ class TestUsers(DBaaSFixture):
                              "Expected %s | Actual %s"
                              % (_databases, _db_actual_list))
 
-        #Revoke access to the dbs
+        # Revoke access to the dbs
         db_count = 2
         for _test_user in _test_users:
             _username = _test_user['name']
@@ -286,7 +286,7 @@ class TestUsers(DBaaSFixture):
                 self.assertNotEqual(_databases, _db_actual_list,
                                     "Expected %s | Actual %s"
                                     % (_databases, _db_actual_list))
-                #Grant access to the dbs
+                # Grant access to the dbs
         db_count = 0
         for _test_user in _test_users:
             _username = _test_user['name']

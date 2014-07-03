@@ -15,7 +15,7 @@ limitations under the License.
 """
 from datetime import datetime, timedelta
 from json import loads as json_to_dict
-from sys import maxint
+from sys import maxsize
 import unittest2
 
 from cafe.drivers.unittest.datasets import DatasetList
@@ -29,6 +29,7 @@ from cloudroast.cloudkeep.barbican.fixtures import (
 
 
 class OrderBitLengthDataSet(BitLengthDataSetNegative):
+
     def __init__(self):
         super(OrderBitLengthDataSet, self).__init__()
         self.append_new_dataset('null', {'bit_length': None})
@@ -37,6 +38,7 @@ class OrderBitLengthDataSet(BitLengthDataSetNegative):
 
 
 class OrderContentTypeEncodingDataSet(DatasetList):
+
     def __init__(self):
         large_string = str(bytearray().zfill(10001))
 
@@ -70,6 +72,7 @@ class OrderContentTypeEncodingDataSet(DatasetList):
 
 
 class OrderPayloadDataSet(PayloadDataSetNegative):
+
     def __init__(self):
         super(OrderPayloadDataSet, self).__init__()
         large_string = str(bytearray().zfill(10001))
@@ -546,7 +549,7 @@ class OrdersPagingAPI(OrdersPagingFixture):
         next_ref = ord_group1.next
         self.assertIsNotNone(next_ref)
 
-        #Next set of orders
+        # Next set of orders
         resp = self.orders_client.get_orders(ref=next_ref)
         ord_group2 = self._check_list_of_orders(resp=resp, limit=15)
 
@@ -564,7 +567,7 @@ class OrdersPagingAPI(OrdersPagingFixture):
         prev_ref = ord_group1.previous
         self.assertIsNotNone(prev_ref)
 
-        #Previous set of orders
+        # Previous set of orders
         resp = self.orders_client.get_orders(ref=prev_ref)
         ord_group2 = self._check_list_of_orders(resp=resp, limit=15)
 

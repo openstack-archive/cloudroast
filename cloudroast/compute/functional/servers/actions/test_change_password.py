@@ -29,7 +29,7 @@ hypervisor = compute_config.hypervisor.lower()
 @unittest.skipIf(
     hypervisor in [ComputeHypervisors.KVM, ComputeHypervisors.QEMU,
                    ComputeHypervisors.IRONIC, ComputeHypervisors.LXC_LIBVIRT],
-                   'Change password not supported in current configuration.')
+    'Change password not supported in current configuration.')
 class ChangeServerPasswordTests(object):
 
     @tags(type='smoke', net='no')

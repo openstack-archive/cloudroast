@@ -82,7 +82,7 @@ class RBACTest(DBaaSFixture):
         Tearing down: Deleting the instance if in active state
 
         """
-        #Delete the instance ID created for test if active
+        # Delete the instance ID created for test if active
         status = cls.behavior.get_instance_status(cls.dbaas_creator,
                                                   cls.creator_instance_id)
         if cls.behavior.is_instance_active(cls.dbaas_creator,
@@ -215,7 +215,6 @@ class RBACTest(DBaaSFixture):
                             '200',
                             "Expected http code: %s | Actual http code: %s "
                             % ('200', httpCode))
-            #print(flavorList)
             actualFlavorRamName = {}
             self.assertIsNotNone(flavorList, "Error: no flavors returned")
             for flavor in flavorList:
@@ -258,7 +257,7 @@ class RBACTest(DBaaSFixture):
                             "| Actual http code: %s "
                             % ('200', httpCode))
 
-            #Enable root
+            # Enable root
             user_name, user_password = self.dbaas_admin.root.create(
                 self.admin_instance_id)
             httpCode = self.behavior.get_last_response_code(self.dbaas_admin)
@@ -291,13 +290,13 @@ class RBACTest(DBaaSFixture):
             self.behavior.wait_for_active(self.dbaas_admin,
                                           instanceId=self.admin_instance_id)
 
-            #get the new flavorId
+            # get the new flavorId
             flavorId = self.dbaas_admin.instances.get(
                 self.admin_instance_id).flavor["id"]
             self.assertEqual(str(next_flavor), flavorId,
                              "Error: Flavors do not match: %s != %s"
                              % (next_flavor, flavorId))
-            #resize again
+            # resize again
             self.dbaas_admin.instances.resize_instance(self.admin_instance_id,
                                                        final_flavor)
             status = self.behavior.get_instance_status(self.dbaas_admin,
@@ -308,13 +307,13 @@ class RBACTest(DBaaSFixture):
             self.behavior.wait_for_active(self.dbaas_admin,
                                           instanceId=self.admin_instance_id)
 
-            #get the new flavorId
+            # get the new flavorId
             flavorId = self.dbaas_admin.instances.get(
                 self.admin_instance_id).flavor["id"]
             self.assertEqual(str(final_flavor), flavorId,
                              "Error: Flavors do not match: %s != %s"
                              % (final_flavor, flavorId))
-            #restart instance
+            # restart instance
             self.dbaas_admin.instances.restart(self.admin_instance_id)
             httpCode = self.behavior.get_last_response_code(self.dbaas_admin)
             self.assertTrue(httpCode == '202',
@@ -330,7 +329,7 @@ class RBACTest(DBaaSFixture):
 
             self.behavior.wait_for_active(self.dbaas_admin,
                                           instanceId=self.admin_instance_id)
-            #resize instance volume
+            # resize instance volume
             self.dbaas_admin.instances.resize_volume(self.admin_instance_id,
                                                      resize_vol)
             httpCode = self.behavior.get_last_response_code(self.dbaas_admin)
@@ -347,7 +346,7 @@ class RBACTest(DBaaSFixture):
             self.behavior.wait_for_active(self.dbaas_admin,
                                           instanceId=self.admin_instance_id)
 
-            #Get the new volume size
+            # Get the new volume size
             volume_size = self.dbaas_admin.instances.get(
                 self.admin_instance_id).volume["size"]
             self.assertEqual(resize_vol, volume_size,
@@ -493,7 +492,6 @@ class RBACTest(DBaaSFixture):
                             "DB Flavor List: Expected http code: %s "
                             "| Actual http code: %s "
                             % ('200', httpCode))
-            #print(flavorList)
             actualFlavorRamName = {}
             self.assertIsNotNone(flavorList, "Error: no flavors returned")
             for flavor in flavorList:
@@ -536,7 +534,7 @@ class RBACTest(DBaaSFixture):
                             % ('200', httpCode))
 
             try:
-                #Enable root
+                # Enable root
                 self.dbaas_creator.root.create(self.creator_instance_id)
                 raise Exception
             except Exception as e:
@@ -554,7 +552,7 @@ class RBACTest(DBaaSFixture):
                             % ('200', httpCode))
 
             try:
-            # resize instance
+                # resize instance
                 self.dbaas_creator.instances.resize_instance(
                     self.creator_instance_id,
                     next_flavor)
@@ -568,7 +566,7 @@ class RBACTest(DBaaSFixture):
                                 % ('405', httpCode))
             try:
 
-                #restart instance
+                # restart instance
                 self.dbaas_creator.instances.restart(self.creator_instance_id)
                 raise Exception
             except Exception as e:
@@ -580,7 +578,7 @@ class RBACTest(DBaaSFixture):
                                 % ('405', httpCode))
 
             try:
-                #resize instance volume
+                # resize instance volume
                 self.dbaas_creator.instances.resize_volume(
                     self.creator_instance_id,
                     resize_vol)
@@ -593,7 +591,7 @@ class RBACTest(DBaaSFixture):
                                 "| Actual http code: %s "
                                 % ('405', httpCode))
 
-            #Delete an instance
+            # Delete an instance
             try:
                 self.dbaas_creator.instances.get(
                     self.creator_instance_id).delete()
@@ -770,7 +768,7 @@ class RBACTest(DBaaSFixture):
             self.fail(e)
 
         try:
-            #Enable root
+            # Enable root
             self.dbaas_observer.root.create(self.creator_instance_id)
             raise Exception
         except Exception as e:
@@ -824,7 +822,7 @@ class RBACTest(DBaaSFixture):
                             % ('405', httpCode))
         try:
 
-            #restart instance
+            # restart instance
             self.dbaas_observer.instances.restart(self.creator_instance_id)
             raise Exception
         except Exception as e:
@@ -836,7 +834,7 @@ class RBACTest(DBaaSFixture):
                             % ('405', httpCode))
 
         try:
-            #resize instance volume
+            # resize instance volume
             self.dbaas_observer.instances.resize_volume(
                 self.creator_instance_id,
                 resize_vol)
@@ -848,7 +846,7 @@ class RBACTest(DBaaSFixture):
                             "Resize Volume: Expected http code: %s "
                             "| Actual http code: %s "
                             % ('405', httpCode))
-            #Delete an instance
+            # Delete an instance
         try:
             self.dbaas_observer.instances.get(
                 self.creator_instance_id).delete()
@@ -877,7 +875,7 @@ class RBACTest(DBaaSFixture):
                             "DB Flavor List: Expected http code: %s "
                             "| Actual http code: %s "
                             % ('200', httpCode))
-            #print(flavorList)
+            # print(flavorList)
             actualFlavorRamName = {}
             self.assertIsNotNone(flavorList, "Error: no flavors returned")
             for flavor in flavorList:
