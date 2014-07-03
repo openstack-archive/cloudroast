@@ -32,7 +32,7 @@ if sys.argv[-1] == 'publish':
 requires = open('pip-requires').readlines()
 
 
-#Post-install engine configuration
+# Post-install engine configuration
 def _post_install(dir):
     print('\n'.join(["\t\t   (----) (----)--)",
                      "\t\t    (--(----)  (----) --)",
@@ -45,7 +45,7 @@ def _post_install(dir):
                      "\t\t= A CloudCAFE Test Repository ="]))
 
 
-#cmdclass hook allows setup to make post install call
+# cmdclass hook allows setup to make post install call
 class install(_install):
     def run(self):
         _install.run(self)

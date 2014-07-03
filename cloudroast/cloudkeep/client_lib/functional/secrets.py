@@ -31,6 +31,7 @@ from cloudroast.cloudkeep.client_lib.fixtures import (SecretsFixture,
 
 
 class BlankNameDataset(DatasetList):
+
     def __init__(self):
         self.append_new_dataset('null', {'name': None})
         self.append_new_dataset('empty', {'name': ''})
@@ -41,6 +42,7 @@ class ValidNameDataset(BlankNameDataset):
 
 
 class InvalidNameDataset(DatasetList):
+
     def __init__(self):
         self.append_new_dataset('numeric_positive', {'name': 80})
         self.append_new_dataset('numeric_zero', {'name': 0})
@@ -48,12 +50,14 @@ class InvalidNameDataset(DatasetList):
 
 
 class ValidAlgorithmDataset(DatasetList):
+
     def __init__(self):
         self.append_new_dataset('unknown', {'algorithm': 'unknown'})
         self.append_new_dataset('aes', {'algorithm': 'aes'})
 
 
 class InvalidAlgorithmDataset(DatasetList):
+
     def __init__(self):
         self.append_new_dataset('numeric_positive', {'algorithm': 80})
         self.append_new_dataset('numeric_zero', {'algorithm': 0})
@@ -61,12 +65,14 @@ class InvalidAlgorithmDataset(DatasetList):
 
 
 class ValidModeDataset(DatasetList):
+
     def __init__(self):
         self.append_new_dataset('unknown', {'mode': 'unknown'})
         self.append_new_dataset('cbc', {'mode': 'cbc'})
 
 
 class InvalidModeDataset(DatasetList):
+
     def __init__(self):
         self.append_new_dataset('numeric_positive', {'mode': 80})
         self.append_new_dataset('numeric_zero', {'mode': 0})
@@ -74,6 +80,7 @@ class InvalidModeDataset(DatasetList):
 
 
 class InvalidPayloadDataset(DatasetList):
+
     def __init__(self):
         large_data = bytearray().zfill(10001)
         large_data = large_data.decode("utf-8")
@@ -82,14 +89,16 @@ class InvalidPayloadDataset(DatasetList):
 
 
 class InvalidBitLengthDataset(DatasetList):
+
     def __init__(self):
         self.append_new_dataset('array', {'bit_len': ['boom']})
         self.append_new_dataset('str', {'bit_len': 'b'})
-        #self.append_new_dataset('dict', {'bit_len': {}}) # Fails
+        # self.append_new_dataset('dict', {'bit_len': {}}) # Fails
         self.append_new_dataset('negative', {'bit_len': -1})
 
 
 class InvalidContentTypeDataset(DatasetList):
+
     def __init__(self):
         self.append_new_dataset(
             'text_plane', {'content_type': 'text/plane'})

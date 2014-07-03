@@ -40,11 +40,11 @@ class test_accounts(DBaaSFixture):
             name=NAME,
             flavor_id=FLAVOR,
             volume={"size": VOLUME})
-        httpCode = cls.behavior.get_last_response_code(test_accounts.mgmt_dbaas)
+        httpCode = cls.behavior.get_last_response_code(
+            test_accounts.mgmt_dbaas)
         if httpCode != '200':
             raise Exception("Create instance failed with code %s" % httpCode)
         cls.instance_id = instance.id
-        #status = instance.status
         cls.behavior.wait_for_active(test_accounts.mgmt_dbaas,
                                      instanceId=test_accounts.instance_id)
 
@@ -63,7 +63,7 @@ class test_accounts(DBaaSFixture):
 
         """
 
-        #Delete the instance ID created for test if active
+        # Delete the instance ID created for test if active
         if test_accounts.instance_id is not None:
             status = cls.behavior.get_instance_status(
                 test_accounts.mgmt_dbaas,

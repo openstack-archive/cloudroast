@@ -56,7 +56,7 @@ class ResizeServerUpConfirmTests(object):
         self.assertEqual(server_actual_vcpus, self.resized_flavor.vcpus,
                          msg="Expected number of vcpus"
                          " to be {0}, was {1}.".format(
-                            self.resized_flavor.vcpus, server_actual_vcpus))
+                             self.resized_flavor.vcpus, server_actual_vcpus))
 
     @tags(type='smoke', net='yes')
     def test_resized_server_disk_size(self):

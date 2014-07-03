@@ -26,6 +26,7 @@ from cloudcafe.compute.common.exception_handler import ExceptionHandler
 
 
 class ComputeFixture(BaseTestFixture):
+
     """
     @summary: Base fixture for compute tests
     """
@@ -156,6 +157,7 @@ class ComputeFixture(BaseTestFixture):
 
 
 class ComputeAdminFixture(ComputeFixture):
+
     """
     @summary: Base fixture for compute tests
     """
@@ -274,7 +276,7 @@ class ServerFromVolumeV2Fixture(BlockstorageIntegrationFixture):
             the server domain object
         @rtype: Request Response Object
         """
-        #Creating block device used for server creation
+        # Creating block device used for server creation
         cls.block_device_matrix = [{
             "boot_index": 0,
             "uuid": cls.image_ref,
