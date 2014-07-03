@@ -26,6 +26,7 @@ from cloudcafe.compute.common.exception_handler import ExceptionHandler
 
 
 class ComputeFixture(BaseTestFixture):
+
     """
     @summary: Base fixture for compute tests
     """
@@ -124,7 +125,7 @@ class ComputeFixture(BaseTestFixture):
 
     def _verify_ephemeral_disk_size(self, disks, flavor,
                                     split_ephemeral_disk_enabled=False,
-                                    ephemeral_disk_max_size=sys.maxint):
+                                    ephemeral_disk_max_size=sys.maxsize):
 
         ephemeral_disk_size = flavor.ephemeral_disk
 
@@ -156,6 +157,7 @@ class ComputeFixture(BaseTestFixture):
 
 
 class ComputeAdminFixture(ComputeFixture):
+
     """
     @summary: Base fixture for compute tests
     """
@@ -274,7 +276,7 @@ class ServerFromVolumeV2Fixture(BlockstorageIntegrationFixture):
             the server domain object
         @rtype: Request Response Object
         """
-        #Creating block device used for server creation
+        # Creating block device used for server creation
         cls.block_device_matrix = [{
             "boot_index": 0,
             "uuid": cls.image_ref,

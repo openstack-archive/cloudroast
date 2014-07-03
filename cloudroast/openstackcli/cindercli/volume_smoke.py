@@ -13,7 +13,7 @@ class CinderCLI_VolumeSmoke(CinderTestFixture):
         name = self.random_volume_name()
         size = self.cinder.api.config.min_volume_size
         resp = self.cinder.cli.client.create_volume(
-            size=size, volume_type=volume_type_id,display_name=name)
+            size=size, volume_type=volume_type_id, display_name=name)
 
         self.assertIsNotNone(
             resp.entity, 'Could not parse cinder create response')

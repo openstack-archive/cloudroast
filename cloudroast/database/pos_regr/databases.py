@@ -40,7 +40,6 @@ class TestDatabases(DBaaSFixture):
         if httpCode != '200':
             raise Exception("Create instance failed with code %s" % httpCode)
         cls.instance_id = instance.id
-        #status = instance.status
         status, elapsed_time = cls.behavior.wait_for_active(
             cls.dbaas,
             instanceId=cls.instance_id)
@@ -53,7 +52,7 @@ class TestDatabases(DBaaSFixture):
 
         """
 
-        #Delete the instance ID created for test if active
+        # Delete the instance ID created for test if active
         if cls.instance_id is not None:
             status = cls.behavior.get_instance_status(
                 cls.dbaas,
@@ -81,14 +80,14 @@ class TestDatabases(DBaaSFixture):
             instanceId=self.instance_id) == 'ACTIVE',
             "Instance is not in Active statue")
 
-        #Get the instance and check instance attribs:
+        # Get the instance and check instance attribs:
         # such as the flavor / volume size
         _databases = self.dbaas.databases.list(
             self.dbaas.instances.get(self.instance_id))
         self.assertTrue(len(_databases) == 1,
                         "Expected 1 database: Got: %s " % len(_databases))
 
-        #try to find our instance in the list
+        # try to find our instance in the list
         self.assertTrue(self.behavior.found_resource(
             self.dbaas,
             instanceId=self.instance_id,
@@ -125,14 +124,14 @@ class TestDatabases(DBaaSFixture):
             instanceId=self.instance_id) == 'ACTIVE',
             "Instance is not in Active statue")
 
-        #Get the instance and check instance attribs:
+        # Get the instance and check instance attribs:
         # such as the flavor / volume size
         _databases = self.dbaas.databases.list(
             self.dbaas.instances.get(self.instance_id))
         self.assertTrue(len(_databases) == 3,
                         "Expected 3 dbs: Got: %s " % len(_databases))
 
-        #try to find our instance in the list
+        # try to find our instance in the list
         self.assertTrue(self.behavior.found_resource(
             self.dbaas,
             instanceId=self.instance_id,

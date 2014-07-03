@@ -27,7 +27,7 @@ class SecretsAPI(SecretsFixture):
         resps = self.cl_behaviors.create_and_check_secret()
         get_response = resps.get_resp
 
-         # Check to see if we received a string with http
+        # Check to see if we received a string with http
         self.assertIn('http', resps.entity)
         self.assertEqual(get_response.status_code, 200)
 

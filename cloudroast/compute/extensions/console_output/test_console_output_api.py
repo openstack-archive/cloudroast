@@ -29,8 +29,8 @@ class ConsoleOutputTests(ComputeFixture):
             server.id, expected_console_output_length).entity
         self.assertIsNotNone(console)
 
-        #Retry getting console output, as the server might take some
-        #time to boot up and then log to output stream.
+        # Retry getting console output, as the server might take some
+        # time to boot up and then log to output stream.
         start = int(time.time())
         while console.output in ["0", None]:
             console = self.console_output_client.get_console_output(

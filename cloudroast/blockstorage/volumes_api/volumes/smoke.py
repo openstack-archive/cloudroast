@@ -30,7 +30,7 @@ class VolumeActions(VolumesTestFixture):
     def ddtest_create_minimum_size_default_volume(
             self, volume_type_name, volume_type_id):
 
-        #Setup
+        # Setup
         size = self.volumes.config.min_volume_size
         name = self.random_volume_name()
         description = "{0}".format(self.__class__.__name__)
@@ -50,7 +50,7 @@ class VolumeActions(VolumesTestFixture):
         self.addCleanup(
             self.volumes.behaviors.delete_volume_confirmed, volume.id_)
 
-        #Test
+        # Test
         self.assertEqual(volume.name, name)
         self.assertEqual(volume.description, description)
         self.assertEqual(str(volume.size), str(size))
@@ -80,7 +80,7 @@ class VolumeActions(VolumesTestFixture):
         self.assertResponseIsDeserialized(resp)
         volume_info = resp.entity
 
-        #Test
+        # Test
         self.assertEquals(volume.name, volume_info.name)
         self.assertEquals(
             volume.description, volume_info.description)
@@ -127,7 +127,7 @@ class VolumeActions(VolumesTestFixture):
             '{0}'.format(volume.id_))
         volume_info = expected_volumes[0]
 
-        #Test
+        # Test
         self.assertEquals(volume.name, volume_info.name)
         self.assertEquals(
             volume.description, volume_info.description)
