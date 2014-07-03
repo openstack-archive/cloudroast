@@ -16,6 +16,7 @@ limitations under the License.
 from datetime import datetime, timedelta
 from json import loads as json_to_dict
 from sys import maxint
+import unittest
 import unittest2
 
 from cafe.drivers.unittest.datasets import DatasetList
