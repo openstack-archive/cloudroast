@@ -83,7 +83,7 @@ class SecretsAPI(SecretsFixture):
             secret_id=resp.id,
             payload_content_type=self.config.payload_content_type,
             payload='testing_update_secret')
-        self.assertEqual(update_resp.status_code, 200)
+        self.assertEqual(update_resp.status_code, 204)
 
         # Get/Check Updated
         sec_resp = self.client.get_secret(

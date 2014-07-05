@@ -472,7 +472,7 @@ class SecretsAPI(SecretsFixture):
             payload_content_type='application/octet-stream',
             payload_content_encoding='base64',
             payload=str(data))
-        self.assertEqual(put_resp.status_code, 200,
+        self.assertEqual(put_resp.status_code, 204,
                          'Returned unexpected response code')
 
     @tags(type='negative')
@@ -845,7 +845,7 @@ class SecretsAPI(SecretsFixture):
         payload_resp = self.client.add_secret_payload(
             resp.id, 'application/octet-stream', beer_char.encode('utf-8'))
 
-        self.assertEqual(payload_resp.status_code, 200)
+        self.assertEqual(payload_resp.status_code, 204)
 
 
 class SecretsPagingAPI(SecretsPagingFixture):
