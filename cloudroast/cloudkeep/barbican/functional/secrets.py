@@ -16,6 +16,7 @@ limitations under the License.
 import base64
 import json
 import re
+import unittest
 import unittest2
 from datetime import datetime, timedelta
 from sys import maxint
