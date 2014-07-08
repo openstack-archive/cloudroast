@@ -277,23 +277,6 @@ class OrdersPagingFixture(OrdersFixture):
         super(OrdersPagingFixture, cls).tearDownClass()
 
 
-class BitLengthDataSetPositive(DatasetList):
-    def __init__(self):
-        self.append_new_dataset('192', {'bit_length': 192})
-        self.append_new_dataset('128', {'bit_length': 128})
-        self.append_new_dataset('256', {'bit_length': 256})
-
-
-class BitLengthDataSetNegative(DatasetList):
-    def __init__(self):
-        large_string = str(bytearray().zfill(10001))
-
-        self.append_new_dataset('invalid', {'bit_length': 'not-an-int'})
-        self.append_new_dataset('negative', {'bit_length': -1})
-        self.append_new_dataset('empty', {'bit_length': ''})
-        self.append_new_dataset('large_string', {'bit_length': large_string})
-
-
 class ModeDataSetPositive(DatasetList):
     def __init__(self):
         large_string = str(bytearray().zfill(10001))

@@ -23,24 +23,39 @@ from sys import maxint
 from time import sleep, strftime
 
 from cloudroast.cloudkeep.barbican.fixtures import (
-    SecretsFixture, SecretsPagingFixture, BitLengthDataSetPositive,
-    BitLengthDataSetNegative, NameDataSetPositive, PayloadDataSetNegative,
-    ContentTypeEncodingDataSetNegative, ContentTypeEncodingDataSetTextPositive,
+    SecretsFixture, SecretsPagingFixture, NameDataSetPositive,
+    PayloadDataSetNegative, ContentTypeEncodingDataSetNegative,
+    ContentTypeEncodingDataSetTextPositive,
     ContentTypeEncodingDataSetBase64Positive, ModeDataSetPositive,
     ModeDataSetNegative)
+from cafe.drivers.unittest.datasets import DatasetList
 from cafe.drivers.unittest.issue import skip_open_issue
 from cafe.drivers.unittest.decorators import (tags, data_driven_test,
                                               DataDrivenFixture)
 
 
-class SecretBitLengthDataSetPositive(BitLengthDataSetPositive):
+class SecretBitLengthDataSetPositive(DatasetList):
     def __init__(self):
+        self.append_new_dataset('one', {'bit_length': 1})
+        self.append_new_dataset('seven', {'bit_length': 7})
+        self.append_new_dataset('eight', {'bit_length': 8})
+        self.append_new_dataset('fifteen', {'bit_length': 15})
+        self.append_new_dataset('sixteen', {'bit_length': 16})
         self.append_new_dataset('512', {'bit_length': 512})
         self.append_new_dataset('large_int', {'bit_length': maxint})
 
 
-class SecretBitLengthDataSetNegative(BitLengthDataSetNegative):
-    pass
+class SecretBitLengthDataSetNegative(DatasetList):
+    def __init__(self):
+        large_string = str(bytearray().zfill(10001))
+
+        self.append_new_dataset('invalid', {'bit_length': 'not-an-int'})
+        self.append_new_dataset('empty', {'bit_length': ''})
+        self.append_new_dataset('blank', {'bit_length': ' '})
+        self.append_new_dataset('large_string', {'bit_length': large_string})
+        self.append_new_dataset('negative_maxint', {'bit_length': -maxint - 1})
+        self.append_new_dataset('negative_one', {'bit_length': -1})
+        self.append_new_dataset('zero', {'bit_length': 0})
 
 
 class SecretModeDataSetPositive(ModeDataSetPositive):
@@ -85,7 +100,7 @@ class SecretContentTypeDataSetBase64Positive\
 @DataDrivenFixture
 class DataDriveSecretsAPI(SecretsFixture):
 
-    @data_driven_test(dataset_source=BitLengthDataSetPositive())
+    @data_driven_test(dataset_source=SecretBitLengthDataSetPositive())
     @tags(type='positive')
     def ddtest_creating_secret_w_bit_length(self, bit_length=None):
         """Covers cases of creating a secret with various bit lengths."""
@@ -99,7 +114,7 @@ class DataDriveSecretsAPI(SecretsFixture):
         self.assertIs(type(secret.bit_length), int)
         self.assertEqual(secret.bit_length, bit_length)
 
-    @data_driven_test(dataset_source=BitLengthDataSetNegative())
+    @data_driven_test(dataset_source=SecretBitLengthDataSetNegative())
     @tags(type='negative')
     def ddtest_negative_creating_secret_w_bit_length(self, bit_length=None):
         """Covers cases of creating a secret with invalid bit lengths.
@@ -341,6 +356,29 @@ class SecretsAPI(SecretsFixture):
         get_resp = self.client.get_secret(secret_id=c_resp.id)
         self.assertEqual(get_resp.entity.name, c_resp.id,
                          'Name doesn\'t match UUID of secret')
+
+    @tags(type='positive')
+    def test_creating_w_none_as_bit_length(self):
+        """ When a test is created with None for the bit length attribute, the
+         system should successfully return the secret reference URI.
+        """
+        resp = self.behaviors.create_secret(bit_length=None)
+        self.assertEqual(resp.status_code, 201,
+                         'Unexpected return code from secret create with '
+                         'None bit length')
+
+    @tags(type='positive')
+    def test_creating_w_none_as_bit_length_no_default(self):
+        """ When a test is created with None for the bit length attribute, the
+         system should successfully return the secret reference URI.
+        """
+        resp = self.behaviors.create_secret(bit_length=None)
+        get_resp = self.client.get_secret(resp.id)
+        self.assertEqual(get_resp.status_code, 200,
+                         'Unexpected return code getting secret with '
+                         'None bit length')
+        self.assertEqual(get_resp.entity.bit_length, None,
+                         'Bit length in secret should be None')
 
     @tags(type='negative')
     def test_creating_w_oversized_secret(self):
