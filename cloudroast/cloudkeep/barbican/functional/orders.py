@@ -24,17 +24,33 @@ from cafe.drivers.unittest.issue import skip_open_issue
 from cafe.drivers.unittest.decorators import (tags, data_driven_test,
                                               DataDrivenFixture)
 from cloudroast.cloudkeep.barbican.fixtures import (
-    OrdersFixture, OrdersPagingFixture, BitLengthDataSetNegative,
-    NameDataSetPositive, PayloadDataSetNegative,
-    BitLengthDataSetPositive)
+    OrdersFixture, OrdersPagingFixture,
+    NameDataSetPositive, PayloadDataSetNegative)
 
 
-class OrderBitLengthDataSet(BitLengthDataSetNegative):
+class OrderBitLengthDataSetNegative(DatasetList):
     def __init__(self):
-        super(OrderBitLengthDataSet, self).__init__()
-        self.append_new_dataset('null', {'bit_length': None})
+        self.append_new_dataset('none', {'bit_length': None})
         self.append_new_dataset('empty', {'bit_length': ''})
+        self.append_new_dataset('blank', {'bit_length': ' '})
+        self.append_new_dataset('negative_maxint', {'bit_length': -maxint - 1})
+        self.append_new_dataset('negative_seven', {'bit_length': -7})
+        self.append_new_dataset('negative_one', {'bit_length': -1})
+        self.append_new_dataset('zero', {'bit_length': 0})
+        self.append_new_dataset('one', {'bit_length': 1})
+        self.append_new_dataset('seven', {'bit_length': 7})
+        self.append_new_dataset('129', {'bit_length': 129})
         self.append_new_dataset('large_int', {'bit_length': maxint})
+
+
+class OrderBitLengthDataSetPositive(DatasetList):
+    def __init__(self):
+        self.append_new_dataset('8', {'bit_length': 8})
+        self.append_new_dataset('64', {'bit_length': 64})
+        self.append_new_dataset('128', {'bit_length': 128})
+        self.append_new_dataset('192', {'bit_length': 192})
+        self.append_new_dataset('256', {'bit_length': 256})
+        self.append_new_dataset('16M_plus_256', {'bit_length': 16777472})
 
 
 class OrderContentTypeEncodingDataSet(DatasetList):
@@ -82,11 +98,15 @@ class OrderPayloadDataSet(PayloadDataSetNegative):
 @DataDrivenFixture
 class DataDriveSecretsAPI(OrdersFixture):
 
-    @data_driven_test(dataset_source=OrderBitLengthDataSet())
+    @data_driven_test(dataset_source=OrderBitLengthDataSetNegative())
     @tags(type='negative')
     def ddtest_negative_create_order_w_bit_length(self, bit_length=None):
         """Covers creating orders with invalid bit lengths. Should return
         400."""
+
+        if bit_length is None:
+            self._skip_on_issue('launchpad', '1338725')
+
         resp = self.behaviors.create_order(
             name=self.config.name,
             payload_content_type=self.config.payload_content_type,
@@ -96,7 +116,7 @@ class DataDriveSecretsAPI(OrdersFixture):
         self.assertEqual(resp.status_code, 400,
                          'Creation should have failed with 400')
 
-    @data_driven_test(dataset_source=BitLengthDataSetPositive())
+    @data_driven_test(dataset_source=OrderBitLengthDataSetPositive())
     @tags(type='positive')
     def ddtest_create_order_w_bit_length(self, bit_length=None):
         """Covers creating orders with various bit lengths."""
