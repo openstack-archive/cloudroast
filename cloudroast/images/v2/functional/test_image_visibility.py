@@ -16,10 +16,16 @@ limitations under the License.
 
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.images.common.types import ImageMemberStatus, ImageVisibility
+
 from cloudroast.images.fixtures import ImagesFixture
 
 
 class TestImageVisibility(ImagesFixture):
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestImageVisibility, cls).setUpClass()
+        cls.images = cls.images_behavior.create_images_via_task(count=3)
 
     @tags(type='positive', regression='true')
     def test_image_visibility_of_images_available_to_user(self):
@@ -47,8 +53,7 @@ class TestImageVisibility(ImagesFixture):
         """
 
         member_id = self.alt_tenant_id
-
-        image = self.images_behavior.create_image_via_task()
+        image = self.images.pop()
 
         response = self.images_client.add_member(image.id_, member_id)
         self.assertEqual(response.status_code, 200)
@@ -79,3 +84,80 @@ class TestImageVisibility(ImagesFixture):
             visibility=ImageVisibility.SHARED,
             member_status=ImageMemberStatus.ALL)
         self.assertIn(image, images)
+
+    @tags(type='positive', regression='true')
+    def test_image_visibility_of_images_owned_by_particular_user(self):
+        """
+         @summary: Image visibility of images owned by a particular user
+
+         1) Using two previously created images (image_one and image_two),
+         verify that alternative tenant cannot access either of them
+         2) List all images as alternative tenant
+         3) Verify that the returned list of images does not contain image_one
+         or image_two
+         4) List images using owner filter (owner = tenant) as alternative
+         tenant
+         5) Verify that the returned list of images does not contain image_one
+         or image_two
+         6) Add alternative tenant as a member of image_two (share image_two
+         with alternative tenant)
+         7) Verify that alternative tenant can now access image_two
+         8) Update alternative tenant membership status to 'Accepted' for
+         image_two
+         9) List all images as alternative tenant again
+         10) Verify that the returned list of images now contains image_two,
+         but not image_one
+         11) List images using owner filter (owner = tenant) as alternative
+         tenant
+         12) Verify that the returned list of images now contains image_two,
+         but not image_one
+        """
+
+        tenant_id = self.tenant_id
+        alt_tenant_id = self.alt_tenant_id
+        image_one = self.images.pop()
+        image_two = self.images.pop()
+
+        response = self.alt_images_client.get_image(image_id=image_one.id_)
+        self.assertEqual(response.status_code, 404)
+
+        response = self.alt_images_client.get_image(image_id=image_two.id_)
+        self.assertEqual(response.status_code, 404)
+
+        images = self.alt_images_behavior.list_images_pagination()
+        self.assertNotIn(image_one, images)
+        self.assertNotIn(image_two, images)
+
+        images = self.alt_images_behavior.list_images_pagination(
+            owner=tenant_id)
+        self.assertNotIn(image_one, images)
+        self.assertNotIn(image_two, images)
+
+        response = self.images_client.add_member(
+            image_id=image_two.id_, member_id=alt_tenant_id)
+        self.assertEqual(response.status_code, 200)
+        member = response.entity
+        self.assertEqual(member.member_id, alt_tenant_id)
+        self.assertEqual(member.status, ImageMemberStatus.PENDING)
+
+        response = self.alt_images_client.get_image(image_id=image_two.id_)
+        self.assertEqual(response.status_code, 200)
+        image = response.entity
+        self.assertEqual(image, image_two)
+
+        response = self.alt_images_client.update_member(
+            image_id=image_two.id_, member_id=alt_tenant_id,
+            status=ImageMemberStatus.ACCEPTED)
+        self.assertEqual(response.status_code, 200)
+        member = response.entity
+        self.assertEqual(member.member_id, alt_tenant_id)
+        self.assertEqual(member.status, ImageMemberStatus.ACCEPTED)
+
+        images = self.alt_images_behavior.list_images_pagination()
+        self.assertNotIn(image_one, images)
+        self.assertIn(image_two, images)
+
+        images = self.alt_images_behavior.list_images_pagination(
+            owner=tenant_id)
+        self.assertNotIn(image_one, images)
+        self.assertIn(image_two, images)
