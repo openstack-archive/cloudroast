@@ -140,6 +140,19 @@ class TestGetImagesSort(ImagesFixture):
         self._verify_list_order(sort_key='updated_at')
 
     @tags(type='positive', regression='true')
+    def test_get_images_using_owner_sort_key(self):
+        """
+        @summary: Get images sorted by the owner property
+
+        1) Given three previously created images, get images passing in owner
+        as the sort key and the primary tenant as owner
+        2) Verify that the list is not empty
+        3) Verify the list is sorted by owner
+        """
+
+        self._verify_list_order(sort_key='owner')
+
+    @tags(type='positive', regression='true')
     def test_get_images_using_sort_dir_asc(self):
         """
         @summary: Get images sorted by the name property in ascending order

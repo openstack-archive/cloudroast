@@ -16,6 +16,7 @@ limitations under the License.
 
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.images.common.types import ImageType
+
 from cloudroast.images.fixtures import ObjectStorageIntegrationFixture
 
 
@@ -47,6 +48,33 @@ class TestGetImage(ObjectStorageIntegrationFixture):
         if get_image.min_disk != self.images_config.min_disk:
             errors.append(self.error_msg.format(
                 'min_disk', self.images_config.min_disk, get_image.min_disk))
+        self.assertEqual(errors, [])
+
+    @tags(type='positive', regression='true')
+    def test_get_image_after_successful_import(self):
+        """
+        @summary: Get image after successful import
+
+        1) Create import task
+        2) From the successful import task, get image
+        3) Verify that the response code is 200
+        4) Verify that the response contains the correct properties
+        """
+
+        task = self.images_behavior.create_new_task()
+        image_id = task.result.image_id
+
+        response = self.images_client.get_image(image_id)
+        self.assertEqual(response.status_code, 200)
+        image = response.entity
+
+        errors = self.images_behavior.validate_image(image)
+        if image.image_type != ImageType.IMPORT:
+            errors.append(self.error_msg.format(
+                'image_type', ImageType.IMPORT, image.image_type))
+        if image.min_disk != self.images_config.min_disk:
+            errors.append(self.error_msg.format(
+                'min_disk', self.images_config.min_disk, image.min_disk))
         self.assertEqual(errors, [])
 
     @tags(type='positive', regression='true')
@@ -141,5 +169,8 @@ class TestGetImage(ObjectStorageIntegrationFixture):
         if image.visibility != get_image.visibility:
             errors.append(self.error_msg.format(
                 'visibility', image.visibility, get_image.visibility))
+        if image.owner != get_image.owner:
+            errors.append(self.error_msg.format(
+                'owner', image.owner, get_image.owner))
 
         return errors

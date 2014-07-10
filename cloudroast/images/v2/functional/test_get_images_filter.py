@@ -111,6 +111,22 @@ class TestGetImagesFilter(ImagesFixture):
 
         self._verify_expected_images(attribute='visibility')
 
+    @tags(type='positive', regression='true')
+    def test_get_images_using_owner_filter(self):
+        """
+        @summary: Get images filtering by the owner property
+
+        1) Given two previously created images, get images by passing in the
+        owner property as a filter
+        2) Verify that the list is not empty
+        3) Verify that the first image is in the returned list
+        4) Verify that the second image is in the returned list
+        5) Verify that each image returned contains the owner specified as
+        the filter
+        """
+
+        self._verify_expected_images(attribute='owner')
+
     @unittest.skip('Bug, Redmine #3724')
     @tags(type='positive', regression='true')
     def test_get_images_using_size_min_filter(self):
@@ -215,6 +231,33 @@ class TestGetImagesFilter(ImagesFixture):
         for image in images:
             self.assertEqual(image.name, self.image.name)
             self.assertEqual(image.disk_format, self.alt_image.disk_format)
+
+    @unittest.skip('Bug, Redmine #7477')
+    @tags(type='positive', regression='true')
+    def test_get_images_using_additional_property_filter(self):
+        """
+        @summary: Get images filtering by an additional property
+
+        1) Given two previously created images, get images by passing in an
+        additional property as a filter
+        2) Verify that the list is not empty
+        3) Verify that the first image is in the returned list
+        4) Verify that the second image is in the returned list
+        5) Verify that each image returned contains at least the additional
+        property specified as the filter
+        """
+
+        add_prop = self.images_config.additional_property
+        add_prop_value = self.images_config.additional_property_value
+
+        api_args = {add_prop: add_prop_value}
+        images = self.images_behavior.list_images_pagination(**api_args)
+        self.assertNotEqual(len(images), 0)
+        self.assertIn(self.image, images)
+        self.assertIn(self.alt_image, images)
+        for image in images:
+            self.assertEqual(
+                image.additional_properties.get(add_prop), add_prop_value)
 
     def _verify_expected_images(self, attribute, operation='=='):
         """
