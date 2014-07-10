@@ -14,10 +14,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from cloudcafe.auth.config import UserAuthConfig
+# TODO: TenantsAPI_Client and TenantsBehaviors have been deprecated
+#from cloudcafe.auth.config import UserAuthConfig
 from cloudcafe.auth.provider import AuthProvider
-from cloudcafe.identity.v2_0.tenants_api.client import TenantsAPI_Client
-from cloudcafe.identity.v2_0.tenants_api.behaviors import TenantsBehaviors
+#from cloudcafe.identity.v2_0.tenants_api.client import TenantsAPI_Client
+#from cloudcafe.identity.v2_0.tenants_api.behaviors import TenantsBehaviors
 from cloudcafe.images.v1.client import ImagesClient as ImagesV1Client
 from cloudcafe.images.v1.behaviors import ImagesV1Behaviors
 
@@ -35,12 +36,15 @@ class ImagesV1Fixture(ImagesFixture):
         cls.remote_image = cls.config.remote_image
         cls.http_image = cls.config.http_image
 
-        cls.tenants_client = TenantsAPI_Client(
-            UserAuthConfig().auth_endpoint,
-            access_data.token.id_,
-            'json', 'json')
+        # TODO: TenantsAPI_Client has been deprecated
+#         cls.tenants_client = TenantsAPI_Client(
+#             UserAuthConfig().auth_endpoint,
+#             access_data.token.id_,
+#             'json', 'json')
 
         cls.api_client = ImagesV1Client(images_endpoint, access_data.token.id_,
                                         'json', 'json')
         cls.behaviors = ImagesV1Behaviors(cls.api_client, cls.config)
-        cls.tenant_ids = TenantsBehaviors(cls.tenants_client).get_all_tenant_ids()
+        # TODO: TenantsBehaviors has been deprecated
+#         cls.tenant_ids = TenantsBehaviors(
+#             cls.tenants_client).get_all_tenant_ids()
