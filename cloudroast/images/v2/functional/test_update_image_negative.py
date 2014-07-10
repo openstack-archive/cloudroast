@@ -1,5 +1,5 @@
 """
-Copyright 2013 Rackspace
+Copyright 2014 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,9 +14,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import unittest
+
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.common.tools.datagen import rand_name
-from cloudcafe.images.common.types import ImageStatus, ImageVisibility
+from cloudcafe.images.common.types import (
+    ImageContainerFormat, ImageDiskFormat, ImageStatus, ImageVisibility)
 
 from cloudroast.images.fixtures import ImagesFixture
 
@@ -26,7 +29,7 @@ class TestUpdateImageNegative(ImagesFixture):
     @classmethod
     def setUpClass(cls):
         super(TestUpdateImageNegative, cls).setUpClass()
-        cls.images = cls.images_behavior.create_images_via_task(count=5)
+        cls.images = cls.images_behavior.create_images_via_task(count=6)
 
     @tags(type='negative', regression='true')
     def test_update_image_replace_core_property(self):
@@ -125,9 +128,9 @@ class TestUpdateImageNegative(ImagesFixture):
         self._validate_update_image_fails('invalid')
 
     @tags(type='negative', regression='true')
-    def test_ensure_location_of_active_image_cannot_be_updated(self):
+    def test_verify_location_of_active_image_cannot_be_updated(self):
         """
-        @summary: Ensure location of active image cannot be updated
+        @summary: Verify location of active image cannot be updated
 
         1) Using a previously created image, get the image
         2) Verify that the image is active
@@ -153,6 +156,42 @@ class TestUpdateImageNegative(ImagesFixture):
         self.assertEqual(response.status_code, 200)
         updated_image = response.entity
         self.assertEqual(updated_image.file_, image.file_)
+
+    @unittest.skip('Bug, Redmine #7467')
+    @tags(type='negative', regression='true')
+    def test_verify_format_of_active_image_cannot_be_updated(self):
+        """
+        @summary: Verify container format and disk format of active image
+        cannot be updated
+
+        1) Using a previously created image, update image replacing container
+        format
+        2) Verify that the response code is 403
+        3) Verify that the image container format has not been updated
+        4) Update image replacing disk format
+        5) Verify that the response code is 403
+        6) Verify that the image disk format has not been updated
+        """
+
+        image = self.images.pop()
+        response = self.images_client.update_image(
+            image.id_, replace={'container_format': ImageContainerFormat.AKI})
+        self.assertEqual(response.status_code, 403)
+
+        response = self.images_client.get_image(image.id_)
+        self.assertEqual(response.status_code, 200)
+        get_image = response.entity
+        self.assertNotEqual(
+            get_image.container_format, ImageContainerFormat.AKI)
+
+        response = self.images_client.update_image(
+            image.id_, replace={'disk_format': ImageDiskFormat.ISO})
+        self.assertEqual(response.status_code, 403)
+
+        response = self.images_client.get_image(image.id_)
+        self.assertEqual(response.status_code, 200)
+        get_image = response.entity
+        self.assertNotEqual(get_image.disk_format, ImageDiskFormat.ISO)
 
     @tags(type='negative', regression='true')
     def test_verify_update_image_setting_visibility_public_not_allowed(self):
