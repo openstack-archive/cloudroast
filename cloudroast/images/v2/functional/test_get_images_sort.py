@@ -1,5 +1,5 @@
 """
-Copyright 2013 Rackspace
+Copyright 2014 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import unittest2 as unittest
+import unittest
 
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.common.tools.datagen import rand_name
@@ -138,6 +138,19 @@ class TestGetImagesSort(ImagesFixture):
         """
 
         self._verify_list_order(sort_key='updated_at')
+
+    @tags(type='positive', regression='true')
+    def test_get_images_using_owner_sort_key(self):
+        """
+        @summary: Get images sorted by the owner property
+
+        1) Given three previously created images, get images passing in owner
+        as the sort key and the primary tenant as owner
+        2) Verify that the list is not empty
+        3) Verify the list is sorted by owner
+        """
+
+        self._verify_list_order(sort_key='owner')
 
     @tags(type='positive', regression='true')
     def test_get_images_using_sort_dir_asc(self):
