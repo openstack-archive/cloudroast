@@ -78,20 +78,24 @@ class CreateServerTest(object):
             if ip_addresses.get('v4'):
                 self.assertIsNotNone(
                     network.ipv4,
-                    msg='Expected {name} network to have an IPv4 address.')
+                    msg='Expected {name} network to have an IPv4 address.'
+                    .format(name=name))
             else:
                 self.assertIsNone(
                     network.ipv4,
-                    msg='Expected {name} network to not have an IPv4 address.')
+                    msg='Expected {name} network to not have an IPv4 address.'
+                    .format(name=name))
 
             if ip_addresses.get('v6'):
                 self.assertIsNotNone(
                     network.ipv6,
-                    msg='Expected {name} network to have an IPv6 address.')
+                    msg='Expected {name} network to have an IPv6 address.'
+                    .format(name=name))
             else:
                 self.assertIsNone(
                     network.ipv6,
-                    msg='Expected {name} network to not have an IPv6 address.')
+                    msg='Expected {name} network to not have an IPv6 address.'
+                    .format(name=name))
 
     @tags(type='smoke', net='yes')
     def test_created_server_vcpus(self):
