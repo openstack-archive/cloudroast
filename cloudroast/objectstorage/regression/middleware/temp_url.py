@@ -16,7 +16,7 @@ limitations under the License.
 import time
 
 from unittest import skipUnless
-from cafe.engine.clients.rest import BaseRestClient
+from cafe.engine.http.client import HTTPClient
 from cloudroast.objectstorage.fixtures import ObjectStorageFixture
 from cloudcafe.common.tools.check_dict import get_value
 
@@ -38,7 +38,7 @@ class TempUrl(ObjectStorageFixture):
         super(TempUrl, cls).setUpClass()
         cls.key_cache_time = (
             cls.objectstorage_api_config.tempurl_key_cache_time)
-        cls.http = BaseRestClient()
+        cls.http = HTTPClient()
         cls.tempurl_key = cls.behaviors.VALID_TEMPURL_KEY
         cls.object_name = cls.behaviors.VALID_OBJECT_NAME
         cls.obj_name_containing_trailing_slash = \

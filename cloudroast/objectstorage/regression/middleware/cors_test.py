@@ -15,7 +15,7 @@ limitations under the License.
 """
 from cafe.drivers.unittest.decorators import (
     DataDrivenFixture, data_driven_test)
-from cafe.engine.http.client import BaseHTTPClient
+from cafe.engine.http.client import HTTPClient
 from cloudroast.objectstorage.fixtures import ObjectStorageFixture
 from cloudroast.objectstorage.generators import ObjectDatasetList
 
@@ -62,7 +62,7 @@ class CORSTest(ObjectStorageFixture):
         tempurl_info = self.client.create_temp_url(
             'GET', container_name, object_name, 900, tempurl_key)
 
-        dumb_client = BaseHTTPClient()
+        dumb_client = HTTPClient()
 
         # Requests with no Origin should not return CORS headers.
         response = dumb_client.request(
@@ -165,12 +165,13 @@ class CORSTest(ObjectStorageFixture):
         # Requests with no Origin should not return CORS headers.
         formpost_info = self.client.create_formpost(
             container_name, files, key=tempurl_key)
-        dumb_client = BaseHTTPClient()
+        dumb_client = HTTPClient()
         headers = formpost_info.get('headers')
-        response = dumb_client.post(formpost_info.get('target_url'),
-                                    headers=headers,
-                                    data=formpost_info.get('body'),
-                                    allow_redirects=False)
+        response = dumb_client.post(
+            formpost_info.get('target_url'),
+            headers=headers,
+            data=formpost_info.get('body'),
+            requestslib_kwargs={'allow_redirects': False})
         self.assertTrue(303, response.status_code)
         self.assertTrue('location' in response.headers)
         self.assertTrue('access-control-expose-headers' not in
@@ -180,13 +181,14 @@ class CORSTest(ObjectStorageFixture):
         # Requests with Origin which does match, should return CORS headers.
         formpost_info = self.client.create_formpost(
             container_name, files, key=tempurl_key)
-        dumb_client = BaseHTTPClient()
+        dumb_client = HTTPClient()
         headers = formpost_info.get('headers')
         headers['Origin'] = 'http://example.com'
-        response = dumb_client.post(formpost_info.get('target_url'),
-                                    headers=headers,
-                                    data=formpost_info.get('body'),
-                                    allow_redirects=False)
+        response = dumb_client.post(
+            formpost_info.get('target_url'),
+            headers=headers,
+            data=formpost_info.get('body'),
+            requestslib_kwargs={'allow_redirects': False})
         self.assertTrue(303, response.status_code)
         self.assertTrue('access-control-expose-headers' in response.headers)
         self.assertTrue('location' in response.headers)
@@ -198,13 +200,14 @@ class CORSTest(ObjectStorageFixture):
             # CORS headers.
             formpost_info = self.client.create_formpost(
                 container_name, files, key=tempurl_key)
-            dumb_client = BaseHTTPClient()
+            dumb_client = HTTPClient()
             headers = formpost_info.get('headers')
             headers['Origin'] = 'http://foo.com'
-            response = dumb_client.post(formpost_info.get('target_url'),
-                                        headers=headers,
-                                        data=formpost_info.get('body'),
-                                        allow_redirects=False)
+            response = dumb_client.post(
+                formpost_info.get('target_url'),
+                headers=headers,
+                data=formpost_info.get('body'),
+                requestslib_kwargs={'allow_redirects': False})
             self.assertTrue(303, response.status_code)
             self.assertTrue('access-control-expose-headers' not in
                             response.headers)
@@ -217,13 +220,14 @@ class CORSTest(ObjectStorageFixture):
             # CORS headers.
             formpost_info = self.client.create_formpost(
                 container_name, files, key=tempurl_key)
-            dumb_client = BaseHTTPClient()
+            dumb_client = HTTPClient()
             headers = formpost_info.get('headers')
             headers['Origin'] = 'http://foo.com'
-            response = dumb_client.post(formpost_info.get('target_url'),
-                                        headers=headers,
-                                        data=formpost_info.get('body'),
-                                        allow_redirects=False)
+            response = dumb_client.post(
+                formpost_info.get('target_url'),
+                headers=headers,
+                data=formpost_info.get('body'),
+                requestslib_kwargs={'allow_redirects': False})
             self.assertTrue(303, response.status_code)
             self.assertTrue('access-control-expose-headers' in
                             response.headers)
@@ -266,7 +270,7 @@ class CORSTest(ObjectStorageFixture):
         tempurl_info = self.client.create_temp_url(
             'GET', container_name, object_name, 900, tempurl_key)
 
-        dumb_client = BaseHTTPClient()
+        dumb_client = HTTPClient()
 
         # Requests with no Origin should not return CORS headers.
         response = dumb_client.request(
@@ -378,7 +382,7 @@ class CORSTest(ObjectStorageFixture):
         tempurl_info = self.client.create_temp_url(
             'GET', container_name, object_name, 900, tempurl_key)
 
-        dumb_client = BaseHTTPClient()
+        dumb_client = HTTPClient()
 
         # Requests with no Origin should not return CORS headers.
         response = dumb_client.request(
