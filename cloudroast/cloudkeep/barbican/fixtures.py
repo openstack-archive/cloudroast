@@ -28,6 +28,9 @@ from cloudcafe.cloudkeep.barbican.orders.client import OrdersClient
 from cloudcafe.cloudkeep.barbican.secrets.behaviors import SecretsBehaviors
 from cloudcafe.cloudkeep.barbican.secrets.client import SecretsClient
 from cloudcafe.cloudkeep.barbican.version.client import VersionClient
+from cloudcafe.cloudkeep.barbican.containers.client import ContainerClient
+from cloudcafe.cloudkeep.barbican.containers.behaviors import (
+    ContainerBehaviors)
 from cloudcafe.cloudkeep.config import (MarshallingConfig, CloudKeepConfig,
                                         CloudKeepSecretsConfig,
                                         CloudKeepOrdersConfig,
@@ -275,6 +278,34 @@ class OrdersPagingFixture(OrdersFixture):
     def tearDownClass(cls):
         cls.behaviors.delete_all_created_orders_and_secrets()
         super(OrdersPagingFixture, cls).tearDownClass()
+
+
+class ContainerFixture(OrdersFixture):
+    @classmethod
+    def setUpClass(cls, keystone_config=None):
+        super(ContainerFixture, cls).setUpClass(keystone_config)
+        cls.secret_behaviors = SecretsBehaviors(
+            client=cls.secrets_client, config=CloudKeepSecretsConfig())
+
+        # Moving the inherited behaviors.
+        cls.order_behaviors = cls.behaviors
+
+        cls.container_client = ContainerClient(
+            url=cls.cloudkeep.base_url,
+            api_version=cls.cloudkeep.api_version,
+            tenant_id=cls.tenant_id or cls.cloudkeep.tenant_id,
+            token=cls.token,
+            serialize_format=cls.marshalling.serializer,
+            deserialize_format=cls.marshalling.deserializer)
+
+        cls.behaviors = ContainerBehaviors(
+            client=cls.container_client)
+
+    def tearDown(self):
+        self.order_behaviors.delete_all_created_orders_and_secrets()
+        self.behaviors.delete_all_created_containers()
+
+# ---------------- DATASETS -------------
 
 
 class ModeDataSetPositive(DatasetList):
