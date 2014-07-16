@@ -96,10 +96,10 @@ class TempUrl(ObjectStorageFixture):
         headers = {'Content-Length': self.content_length,
                    'Content-Type': CONTENT_TYPE_TEXT,
                    'X-Object-Meta-Foo': 'bar'}
-        params = {'temp_url_sig': tempurl_data['signature'],
-                  'temp_url_expires': tempurl_data['expires']}
+        params = {'temp_url_sig': tempurl_data.get('signature'),
+                  'temp_url_expires': tempurl_data.get('expires')}
         response = self.http.put(
-            tempurl_data['target_url'],
+            tempurl_data.get('target_url'),
             params=params,
             headers=headers,
             data=self.object_data)
@@ -156,15 +156,81 @@ class TempUrl(ObjectStorageFixture):
             tempurl_data.keys(),
             msg='expires was not in the created tempurl')
 
-        params = {'temp_url_sig': tempurl_data['signature'],
-                  'temp_url_expires': tempurl_data['expires']}
+        params = {'temp_url_sig': tempurl_data.get('signature'),
+                  'temp_url_expires': tempurl_data.get('expires')}
 
-        response = self.http.get(tempurl_data['target_url'], params=params)
+        response = self.http.get(tempurl_data.get('target_url'), params=params)
+
         self.assertTrue(response.ok, 'object should be retrieved over tempurl')
 
-        expected_disposition = 'attachment; filename="{0}"'.format(
-            self.object_name)
-        recieved_disposition = response.headers['content-disposition']
+        substring1 = 'attachment; filename="{0}";'.format(self.object_name)
+        substring2 = "filename*=UTF-8''{0}".format(self.object_name)
+        expected_disposition = '{0} {1}'.format(substring1, substring2)
+        recieved_disposition = response.headers.get('content-disposition')
+
+        self.assertIn(
+            'content-disposition',
+            response.headers,
+            msg='content-disposition was not found in response headers')
+        self.assertEqual(
+            expected_disposition,
+            recieved_disposition,
+            msg='expected {0} recieved {1}'.format(
+                expected_disposition,
+                recieved_disposition))
+        self.assertEqual(
+            response.content,
+            self.object_data,
+            'object should contain correct data.')
+
+    @ObjectStorageFixture.required_features('tempurl')
+    def test_object_retrieval_via_tempurl_content_disposition_inline(self):
+        """
+        Scenario:
+            Create a 'GET' TempURL for an existing object.  Perform a HTTP GET
+            to the TempURL.
+
+        Expected Results:
+            The object should be returned containing the correct data.
+        """
+        container_name = self.create_temp_container(BASE_CONTAINER_NAME)
+
+        attachment_hdr = 'INLINE; FILENAME= "{0}"'.format(self.object_name)
+
+        self.client.create_object(
+            container_name,
+            self.object_name,
+            headers={'content-disposition': attachment_hdr},
+            data=self.object_data)
+
+        tempurl_data = self.client.create_temp_url(
+            'GET',
+            container_name,
+            self.object_name,
+            TEMPURL_KEY_LIFE,
+            self.tempurl_key)
+
+        self.assertIn(
+            'target_url',
+            tempurl_data.keys(),
+            msg='target_url was not in the created tempurl')
+        self.assertIn(
+            'signature',
+            tempurl_data.keys(),
+            msg='signature was not in the created tempurl')
+        self.assertIn(
+            'expires',
+            tempurl_data.keys(),
+            msg='expires was not in the created tempurl')
+
+        params = {'temp_url_sig': tempurl_data.get('signature'),
+                  'temp_url_expires': tempurl_data.get('expires')}
+
+        response = self.http.get(tempurl_data.get('target_url'), params=params)
+        self.assertTrue(response.ok, 'object should be retrieved over tempurl')
+
+        expected_disposition = attachment_hdr
+        recieved_disposition = response.headers.get('content-disposition')
 
         self.assertIn(
             'content-disposition',
@@ -227,28 +293,121 @@ class TempUrl(ObjectStorageFixture):
             data.keys(),
             msg='expires was not in the created tempurl')
 
-        params = {'temp_url_sig': data['signature'],
-                  'temp_url_expires': data['expires']}
-        tempurl_get_response = self.http.get(data['target_url'], params=params)
+        params = {'temp_url_sig': data.get('signature'),
+                  'temp_url_expires': data.get('expires')}
+        tempurl_get_response = self.http.get(
+            data.get('target_url'), params=params)
 
         expected_filename = \
             self.obj_name_containing_trailing_slash.split('/')[0]
 
-        recieved_filename = None
+        substring1 = 'attachment; filename="{0}";'.format(expected_filename)
+        substring2 = "filename*=UTF-8''{0}".format(expected_filename)
+        expected_disposition = '{0} {1}'.format(substring1, substring2)
+        recieved_disposition = tempurl_get_response.headers.get(
+            'content-disposition')
 
-        try:
-            split_tokens = \
-                tempurl_get_response.headers['content-disposition'].split('=')
-            recieved_filename = split_tokens[1].strip('"')
-        except Exception:
-            pass
-
+        self.assertIn(
+            'content-disposition',
+            tempurl_get_response.headers,
+            msg='content-disposition was not found in response headers')
         self.assertEqual(
-            expected_filename,
-            recieved_filename,
-            msg="expected filename {0} recieved filename {1}".format(
-                expected_filename,
-                recieved_filename))
+            expected_disposition,
+            recieved_disposition,
+            msg='expected {0} recieved {1}'.format(
+                expected_disposition,
+                recieved_disposition))
+        self.assertEqual(
+            tempurl_get_response.content,
+            self.object_data,
+            'object should contain correct data.')
+
+    @ObjectStorageFixture.required_features('tempurl')
+    def test_tempurl_content_disposition_header_filename_with_trailing_slash(
+            self):
+        """
+        Scenario:
+            Create a 'GET' TempURL for an object where the object name ends
+            with a '/'.
+
+        Expected Results:
+            content disposition should return as expressly set
+        """
+        container_name = self.create_temp_container('temp_url')
+
+        content_disposition = 'Attachment; filename={0}'.format(
+            self.obj_name_containing_trailing_slash)
+
+        headers = {'Content-Length': self.content_length,
+                   'Content-Type': CONTENT_TYPE_TEXT,
+                   'Content-Disposition': content_disposition}
+        self.client.create_object(
+            container_name,
+            self.obj_name_containing_trailing_slash,
+            headers=headers,
+            data=self.object_data)
+
+        headers = {'X-Account-Meta-Temp-URL-Key': self.tempurl_key}
+        set_key_response = self.client.set_temp_url_key(headers=headers)
+
+        self.assertTrue(set_key_response.ok, msg="tempurl key was not set")
+
+        data = self.client.create_temp_url(
+            'GET',
+            container_name,
+            self.obj_name_containing_trailing_slash,
+            TEMPURL_KEY_LIFE,
+            self.tempurl_key)
+
+        self.assertIn(
+            'target_url',
+            data.keys(),
+            msg='target_url was not in the created tempurl')
+        self.assertIn(
+            'signature',
+            data.keys(),
+            msg='signature was not in the created tempurl')
+        self.assertIn(
+            'expires',
+            data.keys(),
+            msg='expires was not in the created tempurl')
+
+        params = {'temp_url_sig': data.get('signature'),
+                  'temp_url_expires': data.get('expires')}
+        tempurl_get_response = self.http.get(
+            data.get('target_url'), params=params)
+
+        self.assertIn(
+            'target_url',
+            data.keys(),
+            msg='target_url was not in the created tempurl')
+        self.assertIn(
+            'signature',
+            data.keys(),
+            msg='signature was not in the created tempurl')
+        self.assertIn(
+            'expires',
+            data.keys(),
+            msg='expires was not in the created tempurl')
+
+        expected_disposition = content_disposition
+        recieved_disposition = tempurl_get_response.headers.get(
+            'content-disposition')
+
+        self.assertIn(
+            'content-disposition',
+            tempurl_get_response.headers,
+            msg='content-disposition was not found in response headers')
+        self.assertEqual(
+            expected_disposition,
+            recieved_disposition,
+            msg='expected {0} recieved {1}'.format(
+                expected_disposition,
+                recieved_disposition))
+        self.assertEqual(
+            tempurl_get_response.content,
+            self.object_data,
+            'object should contain correct data.')
 
     @ObjectStorageFixture.required_features('tempurl')
     def test_tempurl_content_disposition_filename_containing_slash(self):
@@ -297,9 +456,10 @@ class TempUrl(ObjectStorageFixture):
             data.keys(),
             msg='expires was not in the created tempurl')
 
-        params = {'temp_url_sig': data['signature'],
-                  'temp_url_expires': data['expires']}
-        tempurl_get_response = self.http.get(data['target_url'], params=params)
+        params = {'temp_url_sig': data.get('signature'),
+                  'temp_url_expires': data.get('expires')}
+        tempurl_get_response = self.http.get(
+            data.get('target_url'), params=params)
 
         self.assertIn(
             'target_url',
@@ -314,26 +474,119 @@ class TempUrl(ObjectStorageFixture):
             data.keys(),
             msg='expires was not in the created tempurl')
 
-        expected_filename = self.obj_name_containing_slash.split('/')[1]
+        expected_filename = \
+            expected_filename = self.obj_name_containing_slash.split('/')[1]
 
-        recieved_filename = None
+        substring1 = 'attachment; filename="{0}";'.format(expected_filename)
+        substring2 = "filename*=UTF-8''{0}".format(expected_filename)
+        expected_disposition = '{0} {1}'.format(substring1, substring2)
+        recieved_disposition = tempurl_get_response.headers.get(
+            'content-disposition')
 
-        try:
-            split_tokens = \
-                tempurl_get_response.headers['content-disposition'].split('=')
-            recieved_filename = split_tokens[1].strip('"')
-        except Exception:
-            pass
-
+        self.assertIn(
+            'content-disposition',
+            tempurl_get_response.headers,
+            msg='content-disposition was not found in response headers')
         self.assertEqual(
-            expected_filename,
-            recieved_filename,
-            msg="expected filename {0} recieved filename {1}".format(
-                expected_filename,
-                recieved_filename))
+            expected_disposition,
+            recieved_disposition,
+            msg='expected {0} recieved {1}'.format(
+                expected_disposition,
+                recieved_disposition))
+        self.assertEqual(
+            tempurl_get_response.content,
+            self.object_data,
+            'object should contain correct data.')
 
     @ObjectStorageFixture.required_features('tempurl')
-    def test_object_retrieval_with_filename_override(self):
+    def test_tempurl_content_disposition_header_filename_containing_slash(
+            self):
+        """
+        Scenario:
+            Create a 'GET' TempURL for an object where the object name
+            contains a '/'.
+
+        Expected Results:
+            content disposition should return as expressly set
+        """
+        container_name = self.create_temp_container('temp_url')
+
+        content_disposition = 'Attachment; filename={0}'.format(
+            self.obj_name_containing_slash)
+
+        headers = {'Content-Length': self.content_length,
+                   'Content-Type': CONTENT_TYPE_TEXT,
+                   'Content-Disposition': content_disposition}
+        self.client.create_object(
+            container_name,
+            self.obj_name_containing_slash,
+            headers=headers,
+            data=self.object_data)
+
+        headers = {'X-Account-Meta-Temp-URL-Key': self.tempurl_key}
+        set_key_response = self.client.set_temp_url_key(headers=headers)
+
+        self.assertTrue(set_key_response.ok, msg="tempurl key was not set")
+
+        data = self.client.create_temp_url(
+            'GET',
+            container_name,
+            self.obj_name_containing_slash,
+            TEMPURL_KEY_LIFE,
+            self.tempurl_key)
+
+        self.assertIn(
+            'target_url',
+            data.keys(),
+            msg='target_url was not in the created tempurl')
+        self.assertIn(
+            'signature',
+            data.keys(),
+            msg='signature was not in the created tempurl')
+        self.assertIn(
+            'expires',
+            data.keys(),
+            msg='expires was not in the created tempurl')
+
+        params = {'temp_url_sig': data.get('signature'),
+                  'temp_url_expires': data.get('expires')}
+        tempurl_get_response = self.http.get(
+            data.get('target_url'), params=params)
+
+        self.assertIn(
+            'target_url',
+            data.keys(),
+            msg='target_url was not in the created tempurl')
+        self.assertIn(
+            'signature',
+            data.keys(),
+            msg='signature was not in the created tempurl')
+        self.assertIn(
+            'expires',
+            data.keys(),
+            msg='expires was not in the created tempurl')
+
+        expected_disposition = content_disposition
+        recieved_disposition = tempurl_get_response.headers.get(
+            'content-disposition')
+
+        self.assertIn(
+            'content-disposition',
+            tempurl_get_response.headers,
+            msg='content-disposition was not found in response headers')
+        self.assertEqual(
+            expected_disposition,
+            recieved_disposition,
+            msg='expected {0} recieved {1}'.format(
+                expected_disposition,
+                recieved_disposition))
+        self.assertEqual(
+            tempurl_get_response.content,
+            self.object_data,
+            'object should contain correct data.')
+
+    @ObjectStorageFixture.required_features('tempurl')
+    def test_object_retrieval_with_filename_override_param(self):
         """
         Scenario:
             Create a 'GET' TempURL.  Download the object using the TempURL,
@@ -376,22 +629,33 @@ class TempUrl(ObjectStorageFixture):
             tempurl_data.keys(),
             msg='expires was not in the created tempurl')
 
-        params = {'temp_url_sig': tempurl_data['signature'],
-                  'temp_url_expires': tempurl_data['expires'],
+        params = {'temp_url_sig': tempurl_data.get('signature'),
+                  'temp_url_expires': tempurl_data.get('expires'),
                   'filename': object_name_override}
-        response = self.http.get(tempurl_data['target_url'], params=params)
+        response = self.http.get(tempurl_data.get('target_url'), params=params)
+
+        substring1 = 'attachment; filename="{0}";'.format(object_name_override)
+        substring2 = "filename*=UTF-8''{0}".format(object_name_override)
+        expected_disposition = '{0} {1}'.format(substring1, substring2)
+        recieved_disposition = response.headers.get('content-disposition')
 
         self.assertIn(
             'content-disposition',
             response.headers,
-            'response should contain "content-disposition" header.')
+            msg='content-disposition was not found in response headers')
         self.assertEqual(
-            'attachment; filename="{0}"'.format(object_name_override),
-            response.headers['content-disposition'],
-            'content-disposition header should contain correct filename.')
+            expected_disposition,
+            recieved_disposition,
+            msg='expected {0} recieved {1}'.format(
+                expected_disposition,
+                recieved_disposition))
+        self.assertEqual(
+            response.content,
+            self.object_data,
+            'object should contain correct data.')
 
     @ObjectStorageFixture.required_features('tempurl')
-    def test_filename_override_containing_trailing_slash(self):
+    def test_filename_override_param_containing_trailing_slash(self):
         """
         Scenario:
             Create a 'GET' TempURL.  Download the object using the TempURL,
@@ -436,22 +700,33 @@ class TempUrl(ObjectStorageFixture):
             tempurl_data.keys(),
             msg='expires was not in the created tempurl')
 
-        params = {'temp_url_sig': tempurl_data['signature'],
-                  'temp_url_expires': tempurl_data['expires'],
+        params = {'temp_url_sig': tempurl_data.get('signature'),
+                  'temp_url_expires': tempurl_data.get('expires'),
                   'filename': object_name_override}
-        response = self.http.get(tempurl_data['target_url'], params=params)
+        response = self.http.get(tempurl_data.get('target_url'), params=params)
+
+        substring1 = 'attachment; filename="{0}";'.format(object_name_override)
+        substring2 = "filename*=UTF-8''{0}".format(object_name_override)
+        expected_disposition = '{0} {1}'.format(substring1, substring2)
+        recieved_disposition = response.headers.get('content-disposition')
 
         self.assertIn(
             'content-disposition',
             response.headers,
-            'response should contain "content-disposition" header.')
+            msg='content-disposition was not found in response headers')
         self.assertEqual(
-            'attachment; filename="{0}"'.format(object_name_override),
-            response.headers['content-disposition'],
-            'content-disposition header should contain correct filename.')
+            expected_disposition,
+            recieved_disposition,
+            msg='expected {0} recieved {1}'.format(
+                expected_disposition,
+                recieved_disposition))
+        self.assertEqual(
+            response.content,
+            self.object_data,
+            'object should contain correct data.')
 
     @ObjectStorageFixture.required_features('tempurl')
-    def test_filename_override_containing_slash(self):
+    def test_filename_override_param_containing_slash(self):
         """
         Scenario:
             Create a 'GET' TempURL.  Download the object using the TempURL,
@@ -496,19 +771,30 @@ class TempUrl(ObjectStorageFixture):
             tempurl_data.keys(),
             msg='expires was not in the created tempurl')
 
-        params = {'temp_url_sig': tempurl_data['signature'],
-                  'temp_url_expires': tempurl_data['expires'],
+        params = {'temp_url_sig': tempurl_data.get('signature'),
+                  'temp_url_expires': tempurl_data.get('expires'),
                   'filename': object_name_override}
-        response = self.http.get(tempurl_data['target_url'], params=params)
+        response = self.http.get(tempurl_data.get('target_url'), params=params)
+
+        substring1 = 'attachment; filename="{0}";'.format(object_name_override)
+        substring2 = "filename*=UTF-8''{0}".format(object_name_override)
+        expected_disposition = '{0} {1}'.format(substring1, substring2)
+        recieved_disposition = response.headers.get('content-disposition')
 
         self.assertIn(
             'content-disposition',
             response.headers,
-            'response should contain "content-disposition" header.')
+            msg='content-disposition was not found in response headers')
         self.assertEqual(
-            'attachment; filename="{0}"'.format(object_name_override),
-            response.headers['content-disposition'],
-            'content-disposition header should contain correct filename.')
+            expected_disposition,
+            recieved_disposition,
+            msg='expected {0} recieved {1}'.format(
+                expected_disposition,
+                recieved_disposition))
+        self.assertEqual(
+            response.content,
+            self.object_data,
+            'object should contain correct data.')
 
     @ObjectStorageFixture.required_features('tempurl')
     @skipUnless(get_value('tempurl-methods') == 'delete',
@@ -544,10 +830,10 @@ class TempUrl(ObjectStorageFixture):
             tempurl_data.keys(),
             msg='expires was not in the created tempurl')
 
-        params = {'temp_url_sig': tempurl_data['signature'],
-                  'temp_url_expires': tempurl_data['expires']}
+        params = {'temp_url_sig': tempurl_data.get('signature'),
+                  'temp_url_expires': tempurl_data.get('expires')}
         delete_response = self.http.delete(
-            tempurl_data['target_url'],
+            tempurl_data.get('target_url'),
             params=params)
 
         self.assertEqual(delete_response.status_code, 204)
@@ -625,20 +911,20 @@ class TempUrl(ObjectStorageFixture):
             bar_data.keys(),
             msg='expires was not in the created tempurl')
 
-        params = {'temp_url_sig': foo_data['signature'],
-                  'temp_url_expires': foo_data['expires']}
+        params = {'temp_url_sig': foo_data.get('signature'),
+                  'temp_url_expires': foo_data.get('expires')}
         foo_get_response = self.http.get(
-            foo_data['target_url'], params=params)
+            foo_data.get('target_url'), params=params)
 
         self.assertEqual(
             self.object_data,
             foo_get_response.content,
             msg='object data was changed')
 
-        params = {'temp_url_sig': bar_data['signature'],
-                  'temp_url_expires': bar_data['expires']}
+        params = {'temp_url_sig': bar_data.get('signature'),
+                  'temp_url_expires': bar_data.get('expires')}
         bar_get_response = self.http.get(
-            bar_data['target_url'], params=params)
+            bar_data.get('target_url'), params=params)
 
         self.assertEqual(
             self.object_data,
@@ -682,13 +968,20 @@ class TempUrl(ObjectStorageFixture):
             tempurl_data.keys(),
             msg='expires was not in the created tempurl')
 
-        params = {'temp_url_sig': tempurl_data['signature'],
-                  'temp_url_expires': tempurl_data['expires']}
-        response = self.http.get(tempurl_data['target_url'], params=params)
+        params = {'temp_url_sig': tempurl_data.get('signature'),
+                  'temp_url_expires': tempurl_data.get('expires')}
+        response = self.http.get(tempurl_data.get('target_url'), params=params)
 
         expected_disposition = 'attachment; filename="{0}"'.format(
             self.object_name)
-        recieved_disposition = response.headers['content-disposition']
+        recieved_disposition = response.headers.get('content-disposition')
+
+        self.assertTrue(response.ok, 'object should be retrieved over tempurl')
+
+        substring1 = 'attachment; filename="{0}";'.format(self.object_name)
+        substring2 = "filename*=UTF-8''{0}".format(self.object_name)
+        expected_disposition = '{0} {1}'.format(substring1, substring2)
+        recieved_disposition = response.headers.get('content-disposition')
 
         self.assertIn(
             'content-disposition',
@@ -701,12 +994,13 @@ class TempUrl(ObjectStorageFixture):
                 expected_disposition,
                 recieved_disposition))
         self.assertEqual(
-            response.content, self.object_data,
+            response.content,
+            self.object_data,
             'object should contain correct data.')
 
-        time.sleep(int(TEMPURL_KEY_LIFE) + 10)
+        time.sleep(int(TEMPURL_KEY_LIFE) + 20)
 
-        response = self.http.get(tempurl_data['target_url'], params=params)
+        response = self.http.get(tempurl_data.get('target_url'), params=params)
 
         self.assertEqual(
             response.status_code,
