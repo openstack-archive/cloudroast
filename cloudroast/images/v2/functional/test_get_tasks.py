@@ -1,5 +1,5 @@
 """
-Copyright 2013 Rackspace
+Copyright 2014 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@ limitations under the License.
 
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.images.common.types import TaskTypes
+
 from cloudroast.images.fixtures import ImagesFixture
 
 
@@ -47,7 +48,7 @@ class TestGetTasks(ImagesFixture):
         self.assertNotEqual(len(get_tasks), 0)
 
         for task in get_tasks:
-            self.assertEqual(task.owner, self.tenant_id)
+            self._validate_listed_task(task)
             if (task.id_ == first_task.id_ or task.id_ == second_task.id_):
                 created_tasks.append(task)
 
@@ -73,3 +74,21 @@ class TestGetTasks(ImagesFixture):
         for task in get_tasks:
             self.assertEqual(task.owner, self.tenant_id)
             self.assertEqual(task.type_, TaskTypes.IMPORT)
+
+    def _validate_listed_task(self, task):
+        """
+        @summary: Validate that the listed task does not contain certain
+        properties and that the owner is correct
+        """
+
+        errors = []
+
+        if task.input_ is not None:
+            errors.append(self.error_msg.format('input', 'None', task.input_))
+        if task.result is not None:
+            errors.append(self.error_msg.format('result', 'None', task.result))
+        if task.owner != self.tenant_id:
+            errors.append(self.error_msg.format(
+                'owner', self.tenant_id, task.owner))
+
+        self.assertListEqual(errors, [])
