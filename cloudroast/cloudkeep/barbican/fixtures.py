@@ -23,6 +23,7 @@ from cafe.drivers.unittest.datasets import DatasetList
 from cafe.drivers.unittest.fixtures import BaseTestFixture
 from cafe.resources.github.issue_tracker import GitHubTracker
 from cafe.resources.launchpad.issue_tracker import LaunchpadTracker
+from cloudcafe.cloudkeep.barbican.containers.models.container import SecretRef
 from cloudcafe.cloudkeep.barbican.orders.behaviors import OrdersBehavior
 from cloudcafe.cloudkeep.barbican.orders.client import OrdersClient
 from cloudcafe.cloudkeep.barbican.secrets.behaviors import SecretsBehaviors
@@ -300,6 +301,41 @@ class ContainerFixture(OrdersFixture):
 
         cls.behaviors = ContainerBehaviors(
             client=cls.container_client)
+
+    def _create_n_secrets(self, n):
+        """Create a number of secrets, and return a list secret ref urls."""
+        result = []
+        for i in xrange(n):
+            secret_resp = self.secret_behaviors.create_secret_from_config()
+            result.append(secret_resp.ref)
+        return result
+
+    def _create_container_with_secret(self, name="test_container",
+                                      secret_name="test_ref"):
+        """Create a secret and a generic container with that secret inside.
+        Return the responses from the secret and the container as a tuple."""
+        secret_resp = self.secret_behaviors.create_secret_from_config()
+        secret_refs = [SecretRef(name=secret_name, ref=secret_resp.ref)]
+        container_resp = self.behaviors.create_container(name, "generic",
+                                                         secret_refs)
+        return (secret_resp, container_resp)
+
+    def _check_list_of_containers(self, resp, limit):
+        """Checks that the response from getting list of containers
+        returns a 200 status code and the correct number of containers.
+        Also returns the list of containers from the response.
+        """
+        self.assertEqual(resp.status_code, 200,
+                         'Returned unexpected response code')
+        container_group = resp.entity
+        self.assertEqual(len(container_group.containers), limit,
+                         'Returned wrong number of containers')
+        return container_group
+
+    def _check_container_create_response(self, resp):
+        """Check for a 201 response code and a non-empty secret ref url."""
+        self.assertEqual(resp.status_code, 201)
+        self.assertGreater(len(resp.entity.reference), 0)
 
     def tearDown(self):
         self.order_behaviors.delete_all_created_orders_and_secrets()
