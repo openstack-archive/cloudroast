@@ -301,6 +301,18 @@ class ContainerFixture(OrdersFixture):
         cls.behaviors = ContainerBehaviors(
             client=cls.container_client)
 
+    def _check_list_of_containers(self, resp, limit):
+        """Checks that the response from getting list of containers
+        returns a 200 status code and the correct number of containers.
+        Also returns the list of containers from the response.
+        """
+        self.assertEqual(resp.status_code, 200,
+                         'Returned unexpected response code')
+        container_group = resp.entity
+        self.assertEqual(len(container_group.containers), limit,
+                         'Returned wrong number of containers')
+        return container_group
+
     def tearDown(self):
         self.order_behaviors.delete_all_created_orders_and_secrets()
         self.behaviors.delete_all_created_containers()
