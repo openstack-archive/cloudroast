@@ -15,8 +15,7 @@ limitations under the License.
 """
 from cafe.drivers.unittest.decorators import memoized
 from cafe.drivers.unittest.fixtures import BaseTestFixture
-from cloudcafe.auth.config import UserAuthConfig
-from cloudcafe.auth.provider import AuthProvider
+from cloudcafe.auth.provider import MemoizedAuthServiceComposite
 from cloudcafe.objectstorage.config import ObjectStorageConfig
 from cloudcafe.objectstorage.objectstorage_api.behaviors \
     import ObjectStorageAPI_Behaviors
@@ -24,33 +23,6 @@ from cloudcafe.objectstorage.objectstorage_api.client \
     import ObjectStorageAPIClient
 from cloudcafe.objectstorage.objectstorage_api.config \
     import ObjectStorageAPIConfig
-
-
-# TODO: Refactor the Auth composites to use the Identity auth composites
-# when not in SAIO mode.
-class AuthComposite(object):
-    #Currently a classmethod only because of a limitiation of memoized
-    @classmethod
-    @memoized
-    def authenticate(cls, username=None, password=None):
-        """ Should only be called from an instance of AuthComposite """
-        if username and password:
-            from cloudcafe.identity.v2_0.tokens_api.client import \
-                TokenAPI_Client
-            client = TokenAPI_Client(
-                UserAuthConfig().auth_endpoint,
-                serialize_format="json",
-                deserialize_format="json")
-            access_data = client.authenticate(
-                username=username,
-                password=password).entity
-        else:
-            access_data = AuthProvider.get_access_data()
-
-        if access_data is None:
-            raise AssertionError('Authentication failed in setup')
-
-        return access_data
 
 
 class ObjectStorageAuthComposite(object):
@@ -61,22 +33,17 @@ class ObjectStorageAuthComposite(object):
     def __init__(self, username=None, password=None):
         self.storage_url = None
         self.auth_token = None
-
-        self._access_data = AuthComposite.authenticate(
-            username,
-            password)
-        self.endpoint_config = UserAuthConfig()
         self.objectstorage_config = ObjectStorageConfig()
+        self.auth = MemoizedAuthServiceComposite(
+            self.objectstorage_config.identity_service_name,
+            self.objectstorage_config.region)
 
-        if self.endpoint_config.strategy.lower() == 'saio_tempauth':
-            self.storage_url = self._access_data.storage_url
-            self.auth_token = self._access_data.auth_token
+        if self.auth.auth_strategy == 'saio_tempauth':
+            self.storage_url = self.auth.access_data.storage_url
+            self.auth_token = self.auth.access_data.auth_token
         else:
-            service = self._access_data.get_service(
-                self.objectstorage_config.identity_service_name)
-            endpoint = service.get_endpoint(self.objectstorage_config.region)
-            self.storage_url = endpoint.public_url
-            self.auth_token = self._access_data.token.id_
+            self.storage_url = self.auth.public_url
+            self.auth_token = self.auth.token_id
 
 
 class ObjectStorageFixture(BaseTestFixture):
