@@ -87,6 +87,13 @@ class ComputeFixture(BaseTestFixture):
         super(ComputeFixture, cls).tearDownClass()
         cls.flavors_client.delete_exception_handler(ExceptionHandler())
 
+    def tearDown(self):
+        if self._resultForDoCleanups.failures:
+            self.resources.resources = []
+        if self._resultForDoCleanups.errors:
+            self.resources.resources = []
+        super(ComputeFixture, self).tearDownClass()
+
     @classmethod
     def parse_image_id(cls, image_response):
         """
