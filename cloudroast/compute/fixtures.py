@@ -59,6 +59,8 @@ class ComputeFixture(BaseTestFixture):
         cls.expected_networks = cls.servers_config.expected_networks
         cls.file_injection_enabled = \
             cls.servers_config.personality_file_injection_enabled
+        cls.save_failed_and_errored_test_servers =\
+            cls.servers_config.save_failed_test_servers
 
         # Clients
         cls.flavors_client = cls.compute.flavors.client
@@ -86,6 +88,14 @@ class ComputeFixture(BaseTestFixture):
     def tearDownClass(cls):
         super(ComputeFixture, cls).tearDownClass()
         cls.flavors_client.delete_exception_handler(ExceptionHandler())
+
+    def tearDown(self):
+        if self.save_failed_and_errored_test_servers:
+            if self._resultForDoCleanups.failures:
+                self.resources.resources = []
+            if self._resultForDoCleanups.errors:
+                self.resources.resources = []
+        super(ComputeFixture, self).tearDownClass()
 
     @classmethod
     def parse_image_id(cls, image_response):
