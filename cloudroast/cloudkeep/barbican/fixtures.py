@@ -299,7 +299,29 @@ class ContainerFixture(OrdersFixture):
             deserialize_format=cls.marshalling.deserializer)
 
         cls.behaviors = ContainerBehaviors(
-            client=cls.container_client)
+            client=cls.container_client,
+            secret_behaviors=cls.secret_behaviors)
+
+    def _check_list_of_containers(self, resp, limit):
+        """Checks that the response from getting a list of containers
+        returns a 200 status code and the correct number of containers.
+        Also returns the list of containers from the response.
+
+        :param resp: The response from listing containers
+        :param limit: The limit for a paginated list
+        :return: The list of containers from the response
+        """
+        container_group = resp.entity
+        self.assertEqual(resp.status_code, 200,
+                         'Returned unexpected response code')
+        self.assertEqual(len(container_group.containers), limit,
+                         'Returned wrong number of containers')
+        return container_group
+
+    def _check_container_create_response(self, resp):
+        """Check for a 201 response code and a non-empty secret ref url."""
+        self.assertEqual(resp.status_code, 201)
+        self.assertGreater(len(resp.entity.reference), 0)
 
     def tearDown(self):
         self.order_behaviors.delete_all_created_orders_and_secrets()
