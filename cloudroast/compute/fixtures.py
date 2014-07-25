@@ -211,19 +211,21 @@ class BlockstorageIntegrationFixture(ComputeFixture):
 class ServerFromImageFixture(ComputeFixture):
 
     @classmethod
-    def create_server(cls, flavor_ref=None, key_name=None):
+    def create_server(cls, flavor_ref=None, key_name=None, image_ref=None):
         """
         @summary:Creates a server from image and waits for active status
         @param flavor_ref: The flavor used to build the server.
         @type key_name: String
         @param key_name: Generated key for the instance
+        @type image_ref: String
+        @param image_ref: Image id used to build an instance
         @type flavor_ref: String
         @return: Response Object containing response code and
             the server domain object
         @rtype: Request Response Object
         """
         cls.server_response = cls.server_behaviors.create_active_server(
-            flavor_ref=flavor_ref, key_name=key_name)
+            flavor_ref=flavor_ref, key_name=key_name, image_ref=image_ref)
         cls.server = cls.server_response.entity
         cls.resources.add(cls.server.id, cls.servers_client.delete_server)
         return cls.server
