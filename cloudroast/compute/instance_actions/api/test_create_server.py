@@ -270,6 +270,7 @@ class ServerFromImageCreateServerTests(ServerFromImageFixture,
         cls.metadata = {'meta_key_1': 'meta_value_1',
                         'meta_key_2': 'meta_value_2'}
         networks = None
+        files = None
         if cls.servers_config.default_network:
             networks = [{'uuid': cls.servers_config.default_network}]
         cls.file_contents = 'This is a test file.'
@@ -280,6 +281,11 @@ class ServerFromImageCreateServerTests(ServerFromImageFixture,
                 [cls.servers_config.default_file_path, 'test.txt'])
             files = [{'path': cls.file_path, 'contents': base64.b64encode(
                 cls.file_contents)}]
+        default_files = cls.server_behaviors.get_default_injected_files()
+        if files and default_files:
+            files += default_files
+        else:
+            files = files or default_files
         cls.key = cls.keypairs_client.create_keypair(rand_name("key")).entity
         cls.resources.add(cls.key.name,
                           cls.keypairs_client.delete_keypair)
