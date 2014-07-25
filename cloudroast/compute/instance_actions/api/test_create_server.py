@@ -280,6 +280,8 @@ class ServerFromImageCreateServerTests(ServerFromImageFixture,
                 [cls.servers_config.default_file_path, 'test.txt'])
             files = [{'path': cls.file_path, 'contents': base64.b64encode(
                 cls.file_contents)}]
+        default_files = cls.server_behaviors.get_default_injected_files()
+        files += default_files
         cls.key = cls.keypairs_client.create_keypair(rand_name("key")).entity
         cls.resources.add(cls.key.name,
                           cls.keypairs_client.delete_keypair)
