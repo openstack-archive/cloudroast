@@ -255,14 +255,13 @@ class RebuildBaseFixture(object):
         # Rebuild and wait for server to return to active state
         self.metadata = {'key': 'value'}
         self.name = rand_name('testserver')
-
-        personality = None
+        personality = self.server_behaviors.get_default_injected_files()
         if self.file_injection_enabled:
             separator = self.images_config.primary_image_path_separator
             self.file_path = separator.join(
                 [self.servers_config.default_file_path, 'rebuild.txt'])
             self.file_contents = 'Test server rebuild.'
-            personality = [{'path': self.file_path,
+            personality += [{'path': self.file_path,
                             'contents': base64.b64encode(self.file_contents)}]
         self.password = 'R3builds3ver'
 
