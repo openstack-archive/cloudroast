@@ -118,13 +118,14 @@ class ConfigDriveFilesTest(ComputeFixture):
         self.assertEqual(self.flavor.name, ec_meta.instance_type,
                          msg=message.format('flavor name', self.flavor.name,
                                             ec_meta.instance_type))
-        self.assertIsNotNone(ec_meta.kernel_id is not None,
-                             msg="kernel_id was not set in the response")
-        self.assertIsNotNone(ec_meta.local_hostname is not None,
+        # RM7957
+        #self.assertIsNotNone(ec_meta.kernel_id,
+        #                     msg="kernel_id was not set in the response")
+        self.assertIsNotNone(ec_meta.local_hostname,
                              msg="local_hostname was not set in the response")
-#        RM2399
-#        self.assertIsNotNone(ec_meta.local_ipv4,
-#                        msg="local_ipv4 was not set in the response")
+        # RM2399
+        #self.assertIsNotNone(ec_meta.local_ipv4,
+        #                msg="local_ipv4 was not set in the response")
         self.assertIsNotNone(ec_meta.placement,
                              msg="placement was not set in the response")
         self.assertIsNotNone(ec_meta.public_hostname,
@@ -137,8 +138,9 @@ class ConfigDriveFilesTest(ComputeFixture):
                          msg=message.format('key do not match',
                                             self.key.public_key,
                                             ec_meta.public_keys))
-        self.assertIsNotNone(ec_meta.ramdisk_id,
-                             msg="ramdisk_id was not set in the response")
+        # RM7957
+        #self.assertIsNotNone(ec_meta.ramdisk_id,
+        #                     msg="ramdisk_id was not set in the response")
         self.assertIsNotNone(ec_meta.reservation_id,
                              msg="reservation_id was not set in the response")
         self.assertIsNotNone(ec_meta.security_groups,
