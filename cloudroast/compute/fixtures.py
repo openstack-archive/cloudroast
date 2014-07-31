@@ -23,6 +23,8 @@ from cloudcafe.compute.config import ComputeEndpointConfig, \
 from cloudcafe.compute.composites import ComputeComposite, \
     ComputeAdminComposite, ComputeIntegrationComposite
 from cloudcafe.compute.common.exception_handler import ExceptionHandler
+from cloudcafe.compute.common.clients.ping import PingClient
+from cloudcafe.compute.common.exceptions import ServerUnreachable
 
 
 class ComputeFixture(BaseTestFixture):
@@ -131,6 +133,23 @@ class ComputeFixture(BaseTestFixture):
                                              action.request_id,
                                              request_id))
         self.assertIsNone(action.message)
+
+    @classmethod
+    def verify_server_reachable(cls, ip=None):
+        """
+        @summary: Verify server connectivity with a basic ping check.
+        @param ip: IP address to ping.
+                   Defaults to SSH IPv4 address if no IP is provided
+        @type ip: string
+        """
+
+        if not ip:
+            ip = cls.server.addresses.get_by_name(
+                cls.servers_config.network_for_ssh).ipv4
+        if not PingClient.ping(ip):
+            raise ServerUnreachable(
+                "Server {id} was not pingable at {ip}".format(
+                    id=cls.server.id, ip=ip))
 
     def _verify_ephemeral_disk_size(self, disks, flavor,
                                     split_ephemeral_disk_enabled=False,
