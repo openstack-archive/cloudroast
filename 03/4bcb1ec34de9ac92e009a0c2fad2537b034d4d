@@ -1,0 +1,9 @@
+Verified+2: Jenkins
+Code-Review+2: jose-idar <jose.idar@rackspace.com>
+Workflow+1: jose-idar <jose.idar@rackspace.com>
+Code-Review+1: Levi Blackstone <levi.blackstone@rackspace.com>
+Submitted-by: Jenkins
+Submitted-at: Thu, 31 Jul 2014 19:26:22 +0000
+Reviewed-on: https://review.openstack.org/111031
+Project: stackforge/cloudroast
+Branch: refs/heads/master
