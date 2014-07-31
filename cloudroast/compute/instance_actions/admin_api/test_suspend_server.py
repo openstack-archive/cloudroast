@@ -17,6 +17,7 @@ limitations under the License.
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.compute.common.types import NovaServerStatusTypes \
     as ServerStates
+from cloudcafe.compute.common.clients.ping import PingClient
 
 from cloudroast.compute.fixtures import ComputeAdminFixture
 
@@ -33,9 +34,29 @@ class SuspendServerTests(ComputeAdminFixture):
     def test_suspend_resume_server(self):
         """Verify that a server can be suspended and then resumed"""
 
-        self.admin_servers_client.suspend_server(self.server.id)
+        # Verify initial connectivity
+        ip = self.servers_config.network_for_ssh
+        self.assertTrue(
+            PingClient.ping(ip),
+            msg="Server {0} was not pingable".format(self.server.id))
+
+        response = self.admin_servers_client.suspend_server(self.server.id)
+        self.assertEqual(response.status_code, 202)
+
         self.admin_server_behaviors.wait_for_server_status(
             self.server.id, ServerStates.SUSPENDED)
-        self.admin_servers_client.resume_server(self.server.id)
+
+        PingClient.ping_until_unreachable(ip, timeout=60, interval_time=5)
+
+        response = self.admin_servers_client.resume_server(self.server.id)
+        self.assertEqual(response.status_code, 202)
+
         self.admin_server_behaviors.wait_for_server_status(
             self.server.id, ServerStates.ACTIVE)
+
+        PingClient.ping_until_reachable(ip, timeout=60, interval_time=5)
+
+        self.assertTrue(self.server_behaviors.get_remote_instance_client(
+            self.server, self.servers_config, key=self.key.private_key),
+            "Unable to connect to active server {0} after suspending "
+            "and resuming".format(self.server.id))
