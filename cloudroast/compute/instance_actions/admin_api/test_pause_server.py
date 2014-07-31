@@ -17,6 +17,7 @@ limitations under the License.
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.compute.common.types import NovaServerStatusTypes \
     as ServerStates
+from cloudcafe.compute.common.clients.ping import PingClient
 
 from cloudroast.compute.fixtures import ComputeAdminFixture
 
@@ -33,9 +34,31 @@ class PauseServerTests(ComputeAdminFixture):
     def test_pause_unpause_server(self):
         """Verify that a server can be paused and then unpaused successfully"""
 
-        self.admin_servers_client.pause_server(self.server.id)
+        # Verify initial connectivity
+        ip = self.server.addresses.get_by_name(
+            self.servers_config.network_for_ssh).ipv4
+        self.assertTrue(
+            PingClient.ping(ip),
+            msg="Server {id} was not pingable at {ip}".format(
+                id=self.server.id, ip=ip))
+
+        response = self.admin_servers_client.pause_server(self.server.id)
+        self.assertEqual(response.status_code, 202)
+
         self.admin_server_behaviors.wait_for_server_status(
             self.server.id, ServerStates.PAUSED)
-        self.admin_servers_client.unpause_server(self.server.id)
+
+        PingClient.ping_until_unreachable(ip, timeout=60, interval_time=5)
+
+        response = self.admin_servers_client.unpause_server(self.server.id)
+        self.assertEqual(response.status_code, 202)
+
         self.admin_server_behaviors.wait_for_server_status(
             self.server.id, ServerStates.ACTIVE)
+
+        PingClient.ping_until_reachable(ip, timeout=60, interval_time=5)
+
+        self.assertTrue(self.server_behaviors.get_remote_instance_client(
+            self.server, self.servers_config),
+            "Unable to connect to active server {0} after unpausing".format(
+                self.server.id))
