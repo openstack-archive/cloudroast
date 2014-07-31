@@ -55,7 +55,7 @@ class LiveMigratationServerTests(ComputeAdminFixture):
         for disk in disks:
             self._format_disk(remote_client=remote_client, disk=disk,
                               disk_format=self.disk_format_type)
-            mount_point = '/mnt/{name}'.format(name=rand_name('disk'))
+            mount_point = remote_client.generate_mountpoint()
             self._mount_disk(remote_client=remote_client, disk=disk,
                              mount_point=mount_point)
             test_directory = '{mount}/test'.format(mount=mount_point)
