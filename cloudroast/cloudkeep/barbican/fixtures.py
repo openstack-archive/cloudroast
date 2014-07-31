@@ -323,6 +323,17 @@ class ContainerFixture(OrdersFixture):
         self.assertEqual(resp.status_code, 201)
         self.assertGreater(len(resp.entity.reference), 0)
 
+    def _check_container_get_resp(self, get_resp, ref, name, type,
+                                  num_secrets=None):
+        """Verify the get_resp has status code 200, and that the ref, name, and
+        type in the response match the given arguments."""
+        self.assertEqual(get_resp.status_code, 200)
+        self.assertEqual(get_resp.entity.container_ref, ref)
+        self.assertEqual(get_resp.entity.name, name)
+        self.assertEqual(get_resp.entity.container_type, type)
+        if num_secrets is not None:
+            self.assertEqual(len(get_resp.entity.secret_refs), num_secrets)
+
     def tearDown(self):
         self.order_behaviors.delete_all_created_orders_and_secrets()
         self.behaviors.delete_all_created_containers()
