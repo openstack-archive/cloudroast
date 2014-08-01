@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+from cafe.drivers.unittest.decorators import tags
 from cloudcafe.compute.common.exceptions import ActionInProgress, BadRequest
 from cloudcafe.compute.common.types import NovaServerRebootTypes
 from cloudroast.compute.fixtures import ComputeAdminFixture
@@ -33,24 +34,39 @@ class LockServerTests(ComputeAdminFixture):
         super(LockServerTests, cls).tearDownClass()
         cls.admin_servers_client.unlock_server(cls.server.id)
 
+    @tags(type='smoke', net='no')
     def test_cannot_delete_locked_server(self):
+        """Verify that a locked server cannot be deleted"""
+
         with self.assertRaises(ActionInProgress):
             self.servers_client.delete_server(self.server.id)
 
+    @tags(type='smoke', net='no')
     def test_cannot_change_password_of_locked_server(self):
+        """Verify that the password of a locked server cannot be changed"""
+
         with self.assertRaises(BadRequest):
             self.servers_client.change_password(self.server.id,
                                                 '123abcABC!!')
 
+    @tags(type='smoke', net='no')
     def test_cannot_reboot_locked_server(self):
+        """Verify that a locked server cannot be rebooted"""
+
         with self.assertRaises(ActionInProgress):
             self.servers_client.reboot(self.server.id,
                                        NovaServerRebootTypes.SOFT)
 
+    @tags(type='smoke', net='no')
     def test_cannot_rebuild_locked_server(self):
+        """Verify that a locked server cannot be rebuilt"""
+
         with self.assertRaises(ActionInProgress):
             self.servers_client.rebuild(self.server.id, self.image_ref)
 
+    @tags(type='smoke', net='no')
     def test_cannot_resize_locked_server(self):
+        """Verify that a locked server cannot be resized"""
+
         with self.assertRaises(ActionInProgress):
             self.servers_client.resize(self.server.id, self.flavor_ref)

@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+from cafe.drivers.unittest.decorators import tags
 from cloudcafe.compute.common.types import NovaServerStatusTypes \
     as ServerStates
 from cloudroast.compute.fixtures import ComputeAdminFixture
@@ -27,7 +28,9 @@ class ResetServerStateTests(ComputeAdminFixture):
         cls.server = cls.server_behaviors.create_active_server().entity
         cls.resources.add(cls.server.id, cls.servers_client.delete_server)
 
+    @tags(type='smoke', net='no')
     def test_set_server_state(self):
+        """Verify that the state of a server can be set manually"""
 
         # Set the active server into error status.
         # reset_state requires the state to be in lowercase
