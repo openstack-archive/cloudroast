@@ -267,11 +267,16 @@ class RebuildBaseFixture(object):
                                  'contents': base64.b64encode(
                                      self.file_contents)}])
         self.password = 'R3builds3ver'
+        security_groups = None
+        if self.security_groups_config.default_security_group:
+            security_groups = [
+                {"name": self.security_groups_config.default_security_group}]
 
         self.rebuilt_server_response = self.servers_client.rebuild(
             self.server.id, self.image_ref_alt, name=self.name,
             metadata=self.metadata, personality=personality,
-            admin_pass=self.password, key_name=self.key.name)
+            admin_pass=self.password, key_name=self.key.name,
+            security_groups=security_groups)
         self.server_behaviors.wait_for_server_status(
             self.server.id, NovaServerStatusTypes.ACTIVE)
 

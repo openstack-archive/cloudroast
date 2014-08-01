@@ -270,9 +270,15 @@ class ServerFromImageCreateServerTests(ServerFromImageFixture,
         cls.metadata = {'meta_key_1': 'meta_value_1',
                         'meta_key_2': 'meta_value_2'}
         networks = None
-        files = None
         if cls.servers_config.default_network:
             networks = [{'uuid': cls.servers_config.default_network}]
+
+        security_groups = None
+        if cls.security_groups_config.default_security_group:
+            security_groups = [
+                {"name": cls.security_groups_config.default_security_group}]
+
+        files = None
         cls.file_contents = 'This is a test file.'
         if cls.file_injection_enabled:
             cls.file_contents = 'This is a test file.'
@@ -291,7 +297,8 @@ class ServerFromImageCreateServerTests(ServerFromImageFixture,
                           cls.keypairs_client.delete_keypair)
         cls.create_resp = cls.servers_client.create_server(
             cls.name, cls.image_ref, cls.flavor_ref, metadata=cls.metadata,
-            personality=files, key_name=cls.key.name, networks=networks)
+            personality=files, key_name=cls.key.name, networks=networks,
+            security_groups=security_groups)
         created_server = cls.create_resp.entity
         cls.resources.add(created_server.id,
                           cls.servers_client.delete_server)
