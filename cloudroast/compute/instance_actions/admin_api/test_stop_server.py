@@ -14,8 +14,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+from cafe.drivers.unittest.decorators import tags
 from cloudcafe.compute.common.types import NovaServerStatusTypes \
     as ServerStates
+
 from cloudroast.compute.fixtures import ComputeAdminFixture
 
 
@@ -27,7 +29,10 @@ class StopServerTests(ComputeAdminFixture):
         cls.server = cls.server_behaviors.create_active_server().entity
         cls.resources.add(cls.server.id, cls.servers_client.delete_server)
 
+    @tags(type='smoke', net='no')
     def test_stop_start_server(self):
+        """Verify that a server can be stopped and then started"""
+
         self.admin_servers_client.stop_server(self.server.id)
         self.admin_server_behaviors.wait_for_server_status(
             self.server.id, ServerStates.SHUTOFF)

@@ -18,8 +18,9 @@ from unittest2.suite import TestSuite
 
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.compute.common.types import NovaServerStatusTypes
-from cloudroast.compute.fixtures import ComputeAdminFixture
 from cloudcafe.common.tools.datagen import rand_name
+
+from cloudroast.compute.fixtures import ComputeAdminFixture
 
 
 def load_tests(loader, standard_tests, pattern):
