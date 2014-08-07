@@ -160,7 +160,7 @@ class CreateServerTest(object):
              or lower_limit <= server_ram_size),
             msg='Unexpected ram size.'
                 'Expected ram size : %s, Actual ram size : %s'.format(
-                self.flavor.ram, server_ram_size))
+                    self.flavor.ram, server_ram_size))
 
     @tags(type='smoke', net='yes')
     def test_created_server_hostname(self):
@@ -279,7 +279,6 @@ class ServerFromImageCreateServerTests(ServerFromImageFixture,
                 {"name": cls.security_groups_config.default_security_group}]
 
         files = None
-        cls.file_contents = 'This is a test file.'
         if cls.file_injection_enabled:
             cls.file_contents = 'This is a test file.'
             separator = cls.images_config.primary_image_path_separator
