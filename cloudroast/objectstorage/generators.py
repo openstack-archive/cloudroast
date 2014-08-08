@@ -20,11 +20,7 @@ from random import choice
 from hashlib import md5
 from cafe.common.unicode import UNICODE_BLOCKS, BLOCK_NAMES
 from cafe.drivers.unittest.datasets import DatasetList
-from cloudroast.objectstorage.fixtures import ObjectStorageAuthComposite
-from cloudcafe.objectstorage.objectstorage_api.behaviors \
-    import ObjectStorageAPI_Behaviors
-from cloudcafe.objectstorage.objectstorage_api.client \
-    import ObjectStorageAPIClient
+from cloudcafe.objectstorage.composites import ObjectStorageComposite
 from cloudcafe.objectstorage.objectstorage_api.config \
     import ObjectStorageAPIConfig
 
@@ -41,11 +37,11 @@ class ObjectDatasetList(DatasetList):
     """
 
     def __init__(self, exclude=None):
-        api_config = ObjectStorageAPIConfig()
-        auth_data = ObjectStorageAuthComposite()
-        client = ObjectStorageAPIClient(
-            auth_data.storage_url, auth_data.auth_token)
-        behaviors = ObjectStorageAPI_Behaviors(client, api_config)
+        auth_composite = ObjectStorageComposite()
+
+        api_config = auth_composite.config
+        client = auth_composite.client
+        behaviors = auth_composite.behaviors
         features = behaviors.get_configured_features()
 
         if features == api_config.ALL_FEATURES:
