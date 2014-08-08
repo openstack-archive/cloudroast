@@ -15,35 +15,7 @@ limitations under the License.
 """
 from cafe.drivers.unittest.decorators import memoized
 from cafe.drivers.unittest.fixtures import BaseTestFixture
-from cloudcafe.auth.provider import MemoizedAuthServiceComposite
-from cloudcafe.objectstorage.config import ObjectStorageConfig
-from cloudcafe.objectstorage.objectstorage_api.behaviors \
-    import ObjectStorageAPI_Behaviors
-from cloudcafe.objectstorage.objectstorage_api.client \
-    import ObjectStorageAPIClient
-from cloudcafe.objectstorage.objectstorage_api.config \
-    import ObjectStorageAPIConfig
-
-
-class ObjectStorageAuthComposite(object):
-    """
-    Handles authing and retrieving the storage_url and auth_token.
-    """
-
-    def __init__(self, username=None, password=None):
-        self.storage_url = None
-        self.auth_token = None
-        self.objectstorage_config = ObjectStorageConfig()
-        self.auth = MemoizedAuthServiceComposite(
-            self.objectstorage_config.identity_service_name,
-            self.objectstorage_config.region)
-
-        if self.auth.auth_strategy == 'saio_tempauth':
-            self.storage_url = self.auth.access_data.storage_url
-            self.auth_token = self.auth.access_data.auth_token
-        else:
-            self.storage_url = self.auth.public_url
-            self.auth_token = self.auth.token_id
+from cloudcafe.objectstorage.composites import ObjectStorageComposite
 
 
 class ObjectStorageFixture(BaseTestFixture):
@@ -88,12 +60,8 @@ class ObjectStorageFixture(BaseTestFixture):
             # TODO: This is not ideal, should change this to support
             # multiple versions
             required_version = required_versions[0]
-            auth_data = ObjectStorageAuthComposite()
-            objectstorage_api_config = ObjectStorageAPIConfig()
-            client = ObjectStorageAPIClient(auth_data.storage_url,
-                                            auth_data.auth_token)
-            behaviors = ObjectStorageAPI_Behaviors(
-                client=client, config=objectstorage_api_config)
+            objectstorage_api_config = ObjectStorageComposite().config
+            behaviors = ObjectStorageComposite().behaviors
 
             swift_version = objectstorage_api_config.version
             if not swift_version and objectstorage_api_config.use_swift_info:
@@ -148,12 +116,8 @@ class ObjectStorageFixture(BaseTestFixture):
         """
 
         def decorator(func):
-            auth_data = ObjectStorageAuthComposite()
-            objectstorage_api_config = ObjectStorageAPIConfig()
-            client = ObjectStorageAPIClient(auth_data.storage_url,
-                                            auth_data.auth_token)
-            behaviors = ObjectStorageAPI_Behaviors(
-                client=client, config=objectstorage_api_config)
+            objectstorage_api_config = ObjectStorageComposite().config
+            behaviors = ObjectStorageComposite().behaviors
 
             features = behaviors.get_configured_features()
 
@@ -184,15 +148,16 @@ class ObjectStorageFixture(BaseTestFixture):
     @classmethod
     def setUpClass(cls):
         super(ObjectStorageFixture, cls).setUpClass()
-        cls.auth_data = ObjectStorageAuthComposite()
-        cls.objectstorage_api_config = ObjectStorageAPIConfig()
-        cls.storage_url = cls.auth_data.storage_url
-        cls.auth_token = cls.auth_data.auth_token
+        object_storage_api = ObjectStorageComposite()
+
+        cls.auth_data = object_storage_api.auth_info
+        cls.objectstorage_api_config = object_storage_api.config
+        cls.storage_url = object_storage_api.storage_url
+        cls.auth_token = object_storage_api.auth_token
         cls.base_container_name = (
             cls.objectstorage_api_config.base_container_name)
-        cls.client = ObjectStorageAPIClient(cls.storage_url, cls.auth_token)
-        cls.behaviors = ObjectStorageAPI_Behaviors(
-            client=cls.client, config=cls.objectstorage_api_config)
+        cls.client = object_storage_api.client
+        cls.behaviors = object_storage_api.behaviors
 
     def create_temp_container(self, descriptor='', headers=None):
         """
