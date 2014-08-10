@@ -72,6 +72,7 @@ class SecretsAPI(SecretsFixture):
         self.assertIn(self.config.payload, b2a_base64(sec_resp.content))
 
     @tags(type='positive')
+    @skip_open_issue('launchpad', '1350988')
     def test_updating_a_secret(self):
         """Covers giving a secret data."""
         # Create

@@ -35,6 +35,7 @@ class RBACAdminRoleForSecretAPI(RBACSecretRoles):
         self.assertEqual(resp.status_code, 201)
 
     @tags(type='positive')
+    @skip_open_issue('launchpad', '1350988')
     def test_update_secret_as_admin(self):
         # Create
         resp = self.admin_fixture.behaviors.create_secret()
