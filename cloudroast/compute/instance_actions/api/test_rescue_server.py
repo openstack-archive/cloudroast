@@ -53,12 +53,17 @@ class ServerRescueTests(object):
         rescue_server = rescue_server_response.entity
         rescue_server.admin_pass = changed_password
 
-        # Verify if original disks plus rescue disk are attached
-        remote_client = self.server_behaviors.get_remote_instance_client(
-            rescue_server, self.servers_config,
-            key=self.key.private_key)
-        disks = remote_client.get_all_disks()
-        self.assertEqual(len(disks.keys()), original_num_disks + 1)
+        # We cannot access rescued Windows servers, so skip
+        # this portion of the validation in that case.
+        image = self.images_client.get_image(self.server.image.id).entity
+        if image.metadata.get('os_type', '').lower() != 'windows':
+
+            # Verify if original disks plus rescue disk are attached
+            remote_client = self.server_behaviors.get_remote_instance_client(
+                rescue_server, self.servers_config,
+                key=self.key.private_key)
+            disks = remote_client.get_all_disks()
+            self.assertEqual(len(disks.keys()), original_num_disks + 1)
 
         # Exit rescue mode
         unrescue_response = self.rescue_client.unrescue(self.server.id)
