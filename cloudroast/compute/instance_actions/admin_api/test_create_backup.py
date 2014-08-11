@@ -14,12 +14,15 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import unittest
+
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.compute.common.types import BackupTypes
 
 from cloudroast.compute.fixtures import ComputeAdminFixture
 
 
+@unittest.skip("Feature not available.")
 class CreateBackupTests(ComputeAdminFixture):
 
     @classmethod
