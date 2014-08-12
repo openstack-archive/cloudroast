@@ -22,6 +22,7 @@ from cloudroast.compute.fixtures import ServerFromVolumeV1Fixture
 
 
 class ServerFromVolumeV1RebuildTests(ServerFromVolumeV1Fixture,
+                                     RebuildBaseFixture,
                                      RebuildServerTests):
 
     @classmethod
@@ -33,4 +34,4 @@ class ServerFromVolumeV1RebuildTests(ServerFromVolumeV1Fixture,
         cls.create_server(key_name=cls.key.name)
         response = cls.flavors_client.get_flavor_details(cls.flavor_ref)
         cls.flavor = response.entity
-        RebuildBaseFixture.rebuild_and_await(fixture=cls)
+        cls.rebuild_and_await()
