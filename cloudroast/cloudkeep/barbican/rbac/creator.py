@@ -16,6 +16,7 @@ limitations under the License.
 from binascii import b2a_base64
 
 from cafe.drivers.unittest.decorators import tags
+from cafe.drivers.unittest.issue import skip_open_issue
 from cloudroast.cloudkeep.barbican.rbac import RBACSecretRoles
 from cloudroast.cloudkeep.barbican.rbac import RBACOrderRoles
 
@@ -34,6 +35,7 @@ class RBACCreatorRoleForSecretAPI(RBACSecretRoles):
         self.assertEqual(resp.status_code, 201)
 
     @tags(type='positive')
+    @skip_open_issue('launchpad', '1350988')
     def test_update_secret_as_creator(self):
         # Create
         resp = self.admin_fixture.behaviors.create_secret()

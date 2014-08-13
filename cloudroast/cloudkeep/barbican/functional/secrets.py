@@ -497,6 +497,7 @@ class SecretsAPI(SecretsFixture):
                          'Returned unexpected response code')
 
     @skip_open_issue('launchpad', '1315498')
+    @skip_open_issue('launchpad', '1354567')
     @tags(type='positive')
     def test_putting_w_valid_binary_data_no_utf8(self):
         """
@@ -877,6 +878,7 @@ class SecretsAPI(SecretsFixture):
         self.assertEqual(resp.status_code, 404)
 
     @tags(type='positive')
+    @skip_open_issue('launchpad', '1350988')
     def test_update_secret_with_high_range_unicode_character(self):
         """Ensure a two step secret creation succeeds with Content-Type
         application/octet-stream and a high range unicode character.
