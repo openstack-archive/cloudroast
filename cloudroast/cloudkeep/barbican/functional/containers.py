@@ -13,9 +13,11 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
+
 from cafe.drivers.unittest.datasets import DatasetList
 from cafe.drivers.unittest.decorators import (tags, data_driven_test,
                                               DataDrivenFixture)
+from cafe.drivers.unittest.issue import skip_open_issue
 from cloudcafe.cloudkeep.barbican.containers.models.container import SecretRef
 
 from cloudroast.cloudkeep.barbican.fixtures import (
@@ -144,9 +146,9 @@ class ContainersAPI(ContainerFixture):
         self.assertEqual(secret_ref.name, None)
 
     @tags(type='negative')
+    @skip_open_issue('launchpad', '1327438')
     def test_create_container_w_duplicate_secret_refs(self):
         """Covers creating a container with a duplicated secret ref."""
-        self._skip_on_issue('launchpad', '1327438')
 
         secret_resp = self.secret_behaviors.create_secret_from_config()
         secret_refs = [SecretRef(name='1', ref=secret_resp.ref),
@@ -154,10 +156,8 @@ class ContainersAPI(ContainerFixture):
 
         container_resp = self.behaviors.create_container(
             'name', 'generic', secret_refs)
-        self._check_container_create_response(container_resp)
 
-        get_resp = self.container_client.get_container(container_resp.ref)
-        self.assertEqual(get_resp.status_code, 400)
+        self.assertEqual(container_resp.status_code, 400)
 
     @tags(type='positive')
     def test_create_rsa_container_w_no_passphrase(self):
