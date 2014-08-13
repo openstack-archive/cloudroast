@@ -35,7 +35,7 @@ class EmptyOrNullNamesDataSetPositive(DatasetList):
     UUID for the name in the response.
     """
     def __init__(self):
-        self.append_new_dataset('null', {'name': None})
+        self.append_new_dataset('none', {'name': None})
         self.append_new_dataset('empty', {'name': ''})
         self.append_new_dataset('space', {'name': ' '})
 
@@ -113,6 +113,9 @@ class DataDrivenContainersAPI(ContainerFixture):
         """Covers creating a generic container with an empty or null name. The
         returned container should have its UUID as its name.
         """
+        if name is None:
+            self._skip_on_issue('launchpad', '1354767')
+
         container_resp = self.behaviors.create_container(name, 'generic', [])
         self._check_container_create_response(container_resp)
 
