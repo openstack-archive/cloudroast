@@ -91,6 +91,7 @@ class ComputeFixture(BaseTestFixture):
         cls.flavors_client.delete_exception_handler(ExceptionHandler())
 
     def tearDown(self):
+        super(ComputeFixture, self).tearDown()
         if self.keep_resources_on_failure:
             if (self._resultForDoCleanups.failures or
                     self._resultForDoCleanups.errors):
