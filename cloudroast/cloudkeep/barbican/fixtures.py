@@ -290,7 +290,6 @@ class ContainerFixture(OrdersFixture):
         cls.container_client = ContainerClient(
             url=cls.cloudkeep.base_url,
             api_version=cls.cloudkeep.api_version,
-            tenant_id=cls.tenant_id or cls.cloudkeep.tenant_id,
             token=cls.token,
             serialize_format=cls.marshalling.serializer,
             deserialize_format=cls.marshalling.deserializer)
