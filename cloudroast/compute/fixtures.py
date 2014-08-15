@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import time
 import sys
 
 from cafe.drivers.unittest.fixtures import BaseTestFixture
@@ -245,12 +246,20 @@ class ServerFromVolumeV1Fixture(BlockstorageIntegrationFixture):
         @rtype: Request Response Object
         """
         # Creating a volume for the block device mapping
-        cls.volume = cls.blockstorage_behavior.create_available_volume(
-            size=cls.volume_size,
-            volume_type=cls.volume_type,
-            image_ref=cls.image_ref)
-        cls.resources.add(cls.volume.id_,
-                          cls.blockstorage_client.delete_volume)
+        failures = []
+        attempts = cls.servers_config.resource_build_attempts
+        for attempt in range(attempts):
+            try:
+                cls.volume = cls.blockstorage_behavior.create_available_volume(
+                    size=cls.volume_size,
+                    volume_type=cls.volume_type,
+                    image_ref=cls.image_ref)
+            except (Exception) as ex:
+                if '507' in ex.message:
+                    time.sleep(150)
+                    failures.append(ex.message)
+                else: 
+                    failures.append(ex.message)
         # Creating block device mapping used for server creation
         cls.block_device_mapping_matrix = [{
             "volume_id": cls.volume.id_,
