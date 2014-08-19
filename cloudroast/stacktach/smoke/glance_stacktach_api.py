@@ -90,7 +90,7 @@ class GlanceStackTachTest(StackTachFixture):
 
     def test_get_image_events_report_no_escaped_json(self):
         """
-        @summary: Verify that the "nova usage audit" does not contain
+        @summary: Verify that the "glance usage audit" does not contain
             double encoded json
         """
         report_id = (self.stacktach_behavior

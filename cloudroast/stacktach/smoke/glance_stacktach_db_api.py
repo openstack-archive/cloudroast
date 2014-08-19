@@ -60,7 +60,6 @@ class GlanceStackTachDBTest(StackTachDBFixture):
             self.assertIsNotNone(element.audit_period_ending)
             self.assertIsNotNone(element.status)
             self.assertIsNotNone(element.raw)
-            self.assertIsNotNone(element.usage)
             self.assertIsNotNone(element.send_status)
             self.assertIsNotNone(element.owner)
             self.assertIsNotNone(element.size)
