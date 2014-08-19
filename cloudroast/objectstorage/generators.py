@@ -235,13 +235,18 @@ class ObjectStorageGenerator(object):
             if data_op:
                 (segment_data, segment_extra_data) = data_op(
                     segment_data, segment_extra_data)
-            extra_data['segments'].append(segment_extra_data)
+
             segment_etag = md5(segment_data)
             segment_etag = segment_etag.hexdigest()
             data_md5.update(segment_data)
             data_etag.update(segment_etag)
-            self.client.create_object(
-                container_name, segment_name, data=segment_data)
+
+            segment_response = self.client.create_object(
+                container_name,
+                segment_name,
+                data=segment_data)
+            segment_extra_data['response'] = segment_response
+            extra_data['segments'].append(segment_extra_data)
 
         default_headers = {'X-Object-Manifest': '{0}/segment.{1}'.format(
             container_name, object_name)}
@@ -254,7 +259,9 @@ class ObjectStorageGenerator(object):
             all_headers[key] = value
 
         response = self.client.create_object(
-            container_name, object_name, headers=all_headers)
+            container_name,
+            object_name,
+            headers=all_headers)
 
         return {'md5': data_md5.hexdigest(),
                 'etag': data_etag.hexdigest(),
@@ -340,20 +347,26 @@ class ObjectStorageGenerator(object):
             if data_op:
                 (segment_data, segment_extra_data) = data_op(
                     segment_data, segment_extra_data)
-            extra_data['segments'].append(segment_extra_data)
+
             segment_etag = md5(segment_data)
             segment_etag = segment_etag.hexdigest()
             data_md5.update(segment_data)
             data_etag.update(segment_etag)
 
-            self.client.create_object(
-                container_name, segment_name, data=segment_data)
+            segment_response = self.client.create_object(
+                container_name,
+                segment_name,
+                data=segment_data)
+            segment_extra_data['response'] = segment_response
+            extra_data['segments'].append(segment_extra_data)
 
             manifest.append({'path': segment_path, 'etag': segment_etag,
                              'size_bytes': segment_size})
 
         response = self.client.create_object(
-            container_name, object_name, data=json.dumps(manifest),
+            container_name,
+            object_name,
+            data=json.dumps(manifest),
             params={'multipart-manifest': 'put'}, headers=headers)
 
         return {'md5': data_md5.hexdigest(),
