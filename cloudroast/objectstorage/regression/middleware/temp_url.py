@@ -23,6 +23,8 @@ from cloudcafe.common.tools.check_dict import get_value
 BASE_CONTAINER_NAME = 'tempurl'
 CONTENT_TYPE_TEXT = 'text/plain; charset=UTF-8'
 TEMPURL_KEY_LIFE = 20
+EXPECTED_DISPOSITION = ("attachment; filename=\"{filename}\";"
+                        " filename*=UTF-8\'\'{filename}")
 
 
 class TempUrl(ObjectStorageFixture):
@@ -163,9 +165,8 @@ class TempUrl(ObjectStorageFixture):
 
         self.assertTrue(response.ok, 'object should be retrieved over tempurl')
 
-        substring1 = 'attachment; filename="{0}";'.format(self.object_name)
-        substring2 = "filename*=UTF-8''{0}".format(self.object_name)
-        expected_disposition = '{0} {1}'.format(substring1, substring2)
+        expected_disposition = EXPECTED_DISPOSITION.format(
+            filename=self.object_name)
         recieved_disposition = response.headers.get('content-disposition')
 
         self.assertIn(
@@ -301,9 +302,8 @@ class TempUrl(ObjectStorageFixture):
         expected_filename = \
             self.obj_name_containing_trailing_slash.split('/')[0]
 
-        substring1 = 'attachment; filename="{0}";'.format(expected_filename)
-        substring2 = "filename*=UTF-8''{0}".format(expected_filename)
-        expected_disposition = '{0} {1}'.format(substring1, substring2)
+        expected_disposition = EXPECTED_DISPOSITION.format(
+            filename=expected_filename)
         recieved_disposition = tempurl_get_response.headers.get(
             'content-disposition')
 
@@ -477,9 +477,8 @@ class TempUrl(ObjectStorageFixture):
         expected_filename = \
             expected_filename = self.obj_name_containing_slash.split('/')[1]
 
-        substring1 = 'attachment; filename="{0}";'.format(expected_filename)
-        substring2 = "filename*=UTF-8''{0}".format(expected_filename)
-        expected_disposition = '{0} {1}'.format(substring1, substring2)
+        expected_disposition = EXPECTED_DISPOSITION.format(
+            filename=expected_filename)
         recieved_disposition = tempurl_get_response.headers.get(
             'content-disposition')
 
@@ -634,9 +633,8 @@ class TempUrl(ObjectStorageFixture):
                   'filename': object_name_override}
         response = self.http.get(tempurl_data.get('target_url'), params=params)
 
-        substring1 = 'attachment; filename="{0}";'.format(object_name_override)
-        substring2 = "filename*=UTF-8''{0}".format(object_name_override)
-        expected_disposition = '{0} {1}'.format(substring1, substring2)
+        expected_disposition = EXPECTED_DISPOSITION.format(
+            filename=object_name_override)
         recieved_disposition = response.headers.get('content-disposition')
 
         self.assertIn(
@@ -705,9 +703,8 @@ class TempUrl(ObjectStorageFixture):
                   'filename': object_name_override}
         response = self.http.get(tempurl_data.get('target_url'), params=params)
 
-        substring1 = 'attachment; filename="{0}";'.format(object_name_override)
-        substring2 = "filename*=UTF-8''{0}".format(object_name_override)
-        expected_disposition = '{0} {1}'.format(substring1, substring2)
+        expected_disposition = EXPECTED_DISPOSITION.format(
+            filename=object_name_override)
         recieved_disposition = response.headers.get('content-disposition')
 
         self.assertIn(
@@ -776,9 +773,8 @@ class TempUrl(ObjectStorageFixture):
                   'filename': object_name_override}
         response = self.http.get(tempurl_data.get('target_url'), params=params)
 
-        substring1 = 'attachment; filename="{0}";'.format(object_name_override)
-        substring2 = "filename*=UTF-8''{0}".format(object_name_override)
-        expected_disposition = '{0} {1}'.format(substring1, substring2)
+        expected_disposition = EXPECTED_DISPOSITION.format(
+            filename=object_name_override)
         recieved_disposition = response.headers.get('content-disposition')
 
         self.assertIn(
@@ -978,9 +974,8 @@ class TempUrl(ObjectStorageFixture):
 
         self.assertTrue(response.ok, 'object should be retrieved over tempurl')
 
-        substring1 = 'attachment; filename="{0}";'.format(self.object_name)
-        substring2 = "filename*=UTF-8''{0}".format(self.object_name)
-        expected_disposition = '{0} {1}'.format(substring1, substring2)
+        expected_disposition = EXPECTED_DISPOSITION.format(
+            filename=self.object_name)
         recieved_disposition = response.headers.get('content-disposition')
 
         self.assertIn(
@@ -998,7 +993,7 @@ class TempUrl(ObjectStorageFixture):
             self.object_data,
             'object should contain correct data.')
 
-        time.sleep(int(TEMPURL_KEY_LIFE) + 20)
+        time.sleep(int(TEMPURL_KEY_LIFE) + 60)
 
         response = self.http.get(tempurl_data.get('target_url'), params=params)
 
