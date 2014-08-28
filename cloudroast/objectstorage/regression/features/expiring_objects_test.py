@@ -59,7 +59,7 @@ class ExpiringObjectTest(ObjectStorageFixture):
         self.assertEqual(response.status_code, 404)
 
     @data_driven_test(ObjectDatasetList())
-    def ddtest_object_creation_with_delete_after(
+    def ddtest_object_creation_with_x_delete_after(
             self, object_type, generate_object):
         container_name = self.create_temp_container(
             descriptor=CONTAINER_DESCRIPTOR)
@@ -80,7 +80,7 @@ class ExpiringObjectTest(ObjectStorageFixture):
         self.assertEqual(response.status_code, 404)
 
     @data_driven_test(ObjectDatasetList())
-    def ddtest_object_creation_with_delete_after_with_container_unicode(
+    def ddtest_object_creation_with_x_delete_after_with_unicode_container_name(
             self, object_type, generate_object):
         """
         Scenario:
@@ -135,7 +135,7 @@ class ExpiringObjectTest(ObjectStorageFixture):
                 received=str(received)))
 
     @data_driven_test(ObjectDatasetList())
-    def ddtest_object_creation_with_delete_at_with_container_unicode(
+    def ddtest_object_creation_with_x_delete_at_with_unicode_container_name(
             self, object_type, generate_object):
         """
         Scenario:
