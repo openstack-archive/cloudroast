@@ -17,6 +17,7 @@ limitations under the License.
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.compute.common.types import NovaServerStatusTypes \
     as ServerStates
+from cloudcafe.compute.common.clients.ping import PingClient
 
 from cloudroast.compute.fixtures import ComputeAdminFixture
 
@@ -29,13 +30,33 @@ class StopServerTests(ComputeAdminFixture):
         cls.server = cls.server_behaviors.create_active_server().entity
         cls.resources.add(cls.server.id, cls.servers_client.delete_server)
 
+        cls.ping_ip = cls.server.addresses.get_by_name(
+            cls.servers_config.network_for_ssh).ipv4
+        cls.verify_server_reachable(cls.ping_ip)
+
     @tags(type='smoke', net='no')
     def test_stop_start_server(self):
         """Verify that a server can be stopped and then started"""
 
-        self.admin_servers_client.stop_server(self.server.id)
+        response = self.admin_servers_client.stop_server(self.server.id)
+        self.assertEqual(response.status_code, 202)
+
         self.admin_server_behaviors.wait_for_server_status(
             self.server.id, ServerStates.SHUTOFF)
-        self.admin_servers_client.start_server(self.server.id)
+
+        PingClient.ping_until_unreachable(
+            self.ping_ip, timeout=60, interval_time=5)
+
+        response = self.admin_servers_client.start_server(self.server.id)
+        self.assertEqual(response.status_code, 202)
+
         self.admin_server_behaviors.wait_for_server_status(
             self.server.id, ServerStates.ACTIVE)
+
+        PingClient.ping_until_reachable(
+            self.ping_ip, timeout=60, interval_time=5)
+
+        self.assertTrue(self.server_behaviors.get_remote_instance_client(
+            self.server, self.servers_config),
+            "Unable to connect to active server {0} after stopping "
+            "and starting".format(self.server.id))
