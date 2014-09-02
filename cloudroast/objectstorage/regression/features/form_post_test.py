@@ -35,6 +35,7 @@ class FormPostTest(ObjectStorageFixture):
         cls.object_data = cls.behaviors.VALID_OBJECT_DATA
         cls.content_length = str(len(cls.behaviors.VALID_OBJECT_DATA))
         cls.http_client = HTTPClient()
+        cls.redirect_url = "http://example.com/form_post_test"
 
     @ObjectStorageFixture.required_features('formpost')
     def test_object_formpost_redirect(self):
@@ -44,8 +45,9 @@ class FormPostTest(ObjectStorageFixture):
             URL in the form.
 
         Expected Results:
-            Should return a 303 and the redirect URL should be set as a
-            location in the response header.
+            1.Should return a 303 and the redirect URL should be set as a
+              location in the response header.
+            2.Redirect should not occur over HTTPS
         """
         container_name = self.create_temp_container(
             descriptor=CONTAINER_DESCRIPTOR)
@@ -55,7 +57,7 @@ class FormPostTest(ObjectStorageFixture):
         formpost_info = self.client.create_formpost(
             container_name,
             files,
-            redirect="http://example.com/form_post_test",
+            redirect=self.redirect_url,
             max_file_size=104857600,
             max_file_count=1,
             key=self.tempurl_key)
@@ -81,6 +83,13 @@ class FormPostTest(ObjectStorageFixture):
         self.assertTrue('location' in formpost_response.headers,
                         msg="Could not find a redirect location in the "
                             "headers: {0}".format(formpost_response.headers))
+
+        self.assertFalse(formpost_response.headers.get('location').startswith(
+                         'https'),
+                         msg="FormPOST should have been redirected to {0} "
+                             "but went to {1} over HTTPS".format(
+                             self.redirect_url,
+                             formpost_response.headers.get('location')))
 
     @ObjectStorageFixture.required_features('formpost')
     def test_object_formpost_no_redirect(self):
@@ -150,7 +159,7 @@ class FormPostTest(ObjectStorageFixture):
         formpost_info = self.client.create_formpost(
             container_name,
             files,
-            redirect="http://example.com/form_post_test",
+            redirect=self.redirect_url,
             max_file_size=104857600,
             max_file_count=1,
             x_delete_at=delete_at,
@@ -214,7 +223,7 @@ class FormPostTest(ObjectStorageFixture):
         formpost_info = self.client.create_formpost(
             container_name,
             files,
-            redirect="http://example.com/form_post_test",
+            redirect=self.redirect_url,
             max_file_size=104857600,
             max_file_count=1,
             x_delete_after=delete_after,
