@@ -14,6 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import unittest
+
 from cloudcafe.common.tools.datagen import rand_name
 
 from cloudroast.compute.instance_actions.api.test_resize_server_revert \
@@ -21,6 +23,7 @@ from cloudroast.compute.instance_actions.api.test_resize_server_revert \
 from cloudroast.compute.fixtures import ServerFromVolumeV2Fixture
 
 
+@unittest.skip('Resize not enabled for boot from volume')
 class ServerFromVolumeV2ResizeRevertTests(ServerFromVolumeV2Fixture,
                                           ResizeServerUpRevertTests,
                                           ResizeUpRevertBaseFixture):
