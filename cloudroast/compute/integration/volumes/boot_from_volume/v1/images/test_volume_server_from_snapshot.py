@@ -44,6 +44,12 @@ class CreateVolumeServerfromSnapshotTest(ServerFromVolumeV1Fixture):
         cls.volume = cls.blockstorage_behavior.create_available_volume(
             size=cls.volume_size, volume_type=cls.volume_type,
             image_ref=cls.image.id, timeout=cls.volume_create_timeout)
+        
+        # Create Volume from the Snapshot CBS Scenario
+        cls.snap_volume = cls.blockstorage_behavior.create_available_volume(
+            size=cls.volume_size, volume_type=cls.volume_type,
+            snapshot_id=cls.snapshot.id_,
+            timeout=cls.volume_create_timeout)
 
         # Clean-up
         cls.resources.add(cls.server.id, cls.servers_client.delete_server)
@@ -51,6 +57,8 @@ class CreateVolumeServerfromSnapshotTest(ServerFromVolumeV1Fixture):
         cls.resources.add(cls.volume.id_,
                           cls.blockstorage_client.delete_volume)
         cls.resources.add(cls.volume_sec.id_,
+                          cls.blockstorage_client.delete_volume)
+        cls.resources.add(cls.snap_volume.id_,
                           cls.blockstorage_client.delete_volume)
         cls.addClassCleanup(
             cls.blockstorage_behavior.delete_snapshot_confirmed,
@@ -83,7 +91,7 @@ class CreateVolumeServerfromSnapshotTest(ServerFromVolumeV1Fixture):
         """Verify the creation of volume server from volume snapshot"""
         # Creating block device with snapshot data inside
         self.block_data = self.server_behaviors.create_block_device_mapping_v1(
-            volume_id=self.snapshot.id_,
+            volume_id=self.snap_volume.id_,
             device_name=self.images_config.primary_image_default_device,
             size=self.volume_size,
             type='snap',
