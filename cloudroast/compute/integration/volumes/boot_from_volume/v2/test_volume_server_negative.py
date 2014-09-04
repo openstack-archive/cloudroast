@@ -14,6 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import unittest
+
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.compute.common.exceptions import BadRequest
@@ -23,6 +25,7 @@ from cloudroast.compute.fixtures import ServerFromVolumeV2Fixture
 
 class CreateVolumeServerNegativeTest(ServerFromVolumeV2Fixture):
 
+    @unittest.skip('Bug, Redmine #8734')
     @tags(type='smoke', net='no')
     def test_delete_on_terminate_invalid(self):
         """Verify delete on termination set to invalid throws bad request"""
@@ -55,6 +58,7 @@ class CreateVolumeServerNegativeTest(ServerFromVolumeV2Fixture):
                 flavor_ref=self.flavors_config.primary_flavor,
                 name=rand_name("server"))
 
+    @unittest.skip('Bug, Redmine #8734')
     @tags(type='smoke', net='no')
     def test_boot_from_concurent_sources_with_image_ref_invalid(self):
         """Verify default behaviour is booting from image when image_ref is

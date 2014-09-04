@@ -14,9 +14,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import unittest
+
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.common.tools.datagen import rand_name
-from cloudcafe.compute.common.types import NovaServerStatusTypes
 from cloudcafe.compute.common.types import SourceTypes, DestinationTypes
 
 from cloudroast.compute.fixtures import ServerFromVolumeV2Fixture
@@ -28,12 +29,13 @@ class CreateVolumeServerfromSnapshotTest(ServerFromVolumeV2Fixture):
     def setUpClass(cls):
         super(CreateVolumeServerfromSnapshotTest, cls).setUpClass()
         cls.server = cls.server_behaviors.create_active_server().entity
+        # Creating glance image from the server for image snapshot scenario
         cls.image = cls.image_behaviors.create_active_image(cls.server.id)
-        # Create Sample Volume
+        # Create Sample Volume for volume snapshot scenario
         cls.volume = cls.blockstorage_behavior.create_available_volume(
             size=cls.volume_size, volume_type=cls.volume_type,
             image_ref=cls.image_ref, timeout=cls.volume_create_timeout)
-        # Creating Snapshot
+        # Creating Snapshot for volume snapshot scenario
         cls.snapshot = cls.blockstorage_behavior.create_available_snapshot(
             volume_id=cls.volume.id_)
         # Clean-up
@@ -57,17 +59,15 @@ class CreateVolumeServerfromSnapshotTest(ServerFromVolumeV2Fixture):
             destination_type=DestinationTypes.VOLUME,
             delete_on_termination=True)
         # Creating Instance from Volume V2
-        self.server_response = self.boot_from_volume_client.create_server(
-            block_device_mapping_v2=self.block_data,
+        self.server_response = self.volume_server_behaviors.create_active_server(
+            block_device=self.block_data,
             flavor_ref=self.flavors_config.primary_flavor,
             name=rand_name("server"))
         # Verify response code is correct
-        self.assertEqual(self.server_response.status_code, 202)
+        self.assertEqual(self.server_response.status_code, 200)
         # Verify the server reaches active status
-        wait_response = self.server_behaviors.wait_for_server_status(
-            self.server_response.entity.id, NovaServerStatusTypes.ACTIVE)
-        self.volume_server = wait_response.entity
 
+    @unittest.skip('Bug, Redmine #8834')
     @tags(type='smoke', net='no')
     def test_create_volume_server_from_volume_snapshot(self):
         """Verify the creation of volume server from volume snapshot"""
@@ -80,12 +80,9 @@ class CreateVolumeServerfromSnapshotTest(ServerFromVolumeV2Fixture):
             destination_type=DestinationTypes.VOLUME,
             delete_on_termination=True)
         # Creating Instance from Volume V2
-        self.server_response = self.boot_from_volume_client.create_server(
-            block_device_mapping_v2=self.block_data,
+        self.server_response = self.volume_server_behaviors.create_active_server(
+            block_device=self.block_data,
             flavor_ref=self.flavors_config.primary_flavor,
             name=rand_name("server"))
         # Verify response code is correct
-        self.assertEqual(self.server_response.status_code, 202)
-        # Verify the server reaches active status
-        self.server_behaviors.wait_for_server_status(
-            self.server_response.entity.id, NovaServerStatusTypes.ACTIVE)
+        self.assertEqual(self.server_response.status_code, 200)

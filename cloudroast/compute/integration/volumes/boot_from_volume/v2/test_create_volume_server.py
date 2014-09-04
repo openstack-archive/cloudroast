@@ -18,7 +18,6 @@ import base64
 
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.common.tools.datagen import rand_name
-from cloudcafe.compute.common.types import NovaServerStatusTypes
 from cloudcafe.blockstorage.volumes_api.v1.models import statuses
 
 from cloudroast.compute.fixtures import ServerFromVolumeV2Fixture
@@ -95,16 +94,12 @@ class ServerFromVolumeV2CreateServerTests(ServerFromVolumeV2Fixture,
             source_type='image', destination_type='volume',
             delete_on_termination=True)
         # Creating Instance from Volume V2
-        cls.create_resp = cls.boot_from_volume_client.create_server(
+        cls.create_resp = cls.volume_server_behaviors.create_active_server(
             name=cls.name, flavor_ref=cls.flavors_config.primary_flavor,
             metadata=cls.metadata, personality=files, key_name=cls.key.name,
-            networks=networks, block_device_mapping_v2=cls.block_data)
-        created_server = cls.create_resp.entity
-        cls.resources.add(created_server.id,
+            networks=networks, block_device=cls.block_data)
+        cls.server = cls.create_resp.entity
+        cls.resources.add(cls.server.id,
                           cls.servers_client.delete_server)
-        wait_response = cls.server_behaviors.wait_for_server_status(
-            created_server.id, NovaServerStatusTypes.ACTIVE)
-        wait_response.entity.admin_pass = created_server.admin_pass
         cls.flavor = cls.flavors_client.get_flavor_details(
             cls.flavor_ref).entity
-        cls.server = wait_response.entity
