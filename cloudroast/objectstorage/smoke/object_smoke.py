@@ -36,6 +36,11 @@ class ObjectSmokeTest(ObjectStorageFixture):
         super(ObjectSmokeTest, cls).setUpClass()
         cls.default_obj_name = cls.behaviors.VALID_OBJECT_NAME
 
+    @staticmethod
+    def generate_chunk_data():
+        for i in range(10):
+            yield "Test chunk %s\r\n" % i
+
     @data_driven_test(ObjectDatasetList())
     def ddtest_object_retrieval_with_valid_object_name(
             self, object_type, generate_object):
@@ -1405,3 +1410,50 @@ class ObjectSmokeTest(ObjectStorageFixture):
             received,
             msg='object created should have content type: {0}'
                 ' recieved: {1}'.format(expected, received))
+
+    def test_object_creation_via_chunked_transfer(self):
+        """
+        Scenario:
+            Create an object using chunked transfer encoding.
+
+        Expected Results:
+            Return a 201 status code and a single object should
+            be created.
+        """
+        container_name = self.create_temp_container(
+            descriptor=CONTAINER_DESCRIPTOR)
+
+        headers = {"Transfer-Encoding": "chunked"}
+
+        create_response = self.client.create_object(
+            container_name,
+            self.default_obj_name,
+            headers=headers,
+            data=self.generate_chunk_data())
+
+        method = 'Object creation via chunked transfer'
+        expected = 201
+        received = create_response.status_code
+
+        self.assertEqual(
+            expected,
+            received,
+            msg=STATUS_CODE_MSG.format(
+                method=method,
+                expected=expected,
+                received=str(received)))
+
+        object_response = self.client.get_object(container_name,
+                                                 self.default_obj_name)
+
+        method = 'Object retrieval'
+        expected = 200
+        received = object_response.status_code
+
+        self.assertEqual(
+            expected,
+            received,
+            msg=STATUS_CODE_MSG.format(
+                method=method,
+                expected=expected,
+                received=str(received)))
