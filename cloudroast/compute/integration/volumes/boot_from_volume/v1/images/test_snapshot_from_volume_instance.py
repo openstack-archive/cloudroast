@@ -14,16 +14,14 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+from cafe.drivers.unittest.decorators import tags
 from cloudcafe.common.tools.datagen import rand_name
-from cloudcafe.compute.common.types import NovaImageStatusTypes
+from cloudcafe.compute.common.exceptions import Forbidden
 
-from cloudroast.compute.instance_actions.api.test_create_image \
-    import CreateImageTest
 from cloudroast.compute.fixtures import ServerFromVolumeV1Fixture
 
 
-class ServerFromVolumeV1CreateImageTests(ServerFromVolumeV1Fixture,
-                                         CreateImageTest):
+class ServerFromVolumeV1CreateImageTests(ServerFromVolumeV1Fixture):
 
     @classmethod
     def setUpClass(cls):
@@ -32,11 +30,10 @@ class ServerFromVolumeV1CreateImageTests(ServerFromVolumeV1Fixture,
         cls.image_name = rand_name('image')
         cls.metadata = {'user_key1': 'value1',
                         'user_key2': 'value2'}
-        # Creating glance snapshot
-        cls.image_response = cls.servers_client.create_image(
-            cls.server_id, cls.image_name, metadata=cls.metadata)
-        cls.image_id = cls.parse_image_id(cls.image_response)
-        cls.resources.add(cls.image_id, cls.images_client.delete_image)
-        cls.image_behaviors.wait_for_image_status(
-            cls.image_id, NovaImageStatusTypes.ACTIVE)
-        cls.image = cls.images_client.get_image(cls.image_id).entity
+
+    @tags(type='smoke', net='no')
+    def test_verify_create_glance_snapshot_is_disabled(self):
+        """Verify a user can not take glance snapshot on BFV instance"""
+        with self.assertRaises(Forbidden):
+            self.servers_client.create_image(
+                self.server.id, self.image_name, metadata=self.metadata)
