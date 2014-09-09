@@ -1,5 +1,5 @@
 """
-Copyright 2013 Rackspace
+Copyright 2014 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ from cafe.drivers.unittest.decorators import tags
 from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.images.common.constants import Messages
 from cloudcafe.images.common.types import TaskStatus, TaskTypes
+
 from cloudroast.images.fixtures import ObjectStorageIntegrationFixture
 
 
@@ -60,9 +61,9 @@ class TestTaskStates(ObjectStorageIntegrationFixture):
             errors.append(self.error_msg.format(
                 'image_id', 'not None',
                 self.id_regex.match(task.result.image_id)))
-        if task.message != 'None':
+        if task.message != '':
             errors.append(self.error_msg.format(
-                'message', 'None', task.message))
+                'message', '', task.message))
 
         self.assertListEqual(errors, [])
 
@@ -166,9 +167,9 @@ class TestTaskStates(ObjectStorageIntegrationFixture):
             errors.append(self.error_msg.format(
                 'export_location', expected_location,
                 task.result.export_location))
-        if task.message != 'None':
+        if task.message != '':
             errors.append(self.error_msg.format(
-                'message', 'None', task.message))
+                'message', '', task.message))
 
         self.assertListEqual(errors, [])
 

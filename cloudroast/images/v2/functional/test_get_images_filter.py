@@ -18,6 +18,7 @@ import unittest
 
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.common.tools.datagen import rand_name
+
 from cloudroast.images.fixtures import ImagesFixture
 
 
@@ -232,7 +233,6 @@ class TestGetImagesFilter(ImagesFixture):
             self.assertEqual(image.name, self.image.name)
             self.assertEqual(image.disk_format, self.alt_image.disk_format)
 
-    @unittest.skip('Bug, Redmine #7477')
     @tags(type='positive', regression='true')
     def test_get_images_using_additional_property_filter(self):
         """
