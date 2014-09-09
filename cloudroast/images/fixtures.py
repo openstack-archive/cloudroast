@@ -1,5 +1,5 @@
 """
-Copyright 2013 Rackspace
+Copyright 2014 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -70,6 +70,7 @@ class ImagesFixture(BaseTestFixture):
         # If authentication fails, fail immediately
         if cls.alt_access_data is None:
             cls.assertClassSetupFailure('Authentication failed')
+
         cls.third_access_data = AuthProvider.get_access_data(
             cls.endpoint_config, cls.third_user_config)
         # If authentication fails, fail immediately
@@ -96,14 +97,12 @@ class ImagesFixture(BaseTestFixture):
         cls.third_images_client = cls.generate_images_client(
             cls.third_access_data)
 
-        cls.images_behavior = ImagesBehaviors(
-            images_client=cls.images_client, images_config=cls.images_config)
-        cls.alt_images_behavior = ImagesBehaviors(
-            images_client=cls.alt_images_client,
-            images_config=cls.images_config)
-        cls.third_images_behavior = ImagesBehaviors(
-            images_client=cls.third_images_client,
-            images_config=cls.images_config)
+        cls.images_behavior = cls.generate_images_behavior(
+            cls.images_client, cls.images_config)
+        cls.alt_images_behavior = cls.generate_images_behavior(
+            cls.alt_images_client, cls.images_config)
+        cls.third_images_behavior = cls.generate_images_behavior(
+            cls.third_images_client, cls.images_config)
 
         cls.alt_tenant_id = cls.alt_access_data.token.tenant.id_
         cls.error_msg = Messages.ERROR_MSG
@@ -117,6 +116,7 @@ class ImagesFixture(BaseTestFixture):
         cls.max_updated_at_delta = cls.images_config.max_updated_at_delta
         cls.tenant_id = cls.access_data.token.tenant.id_
         cls.third_tenant_id = cls.third_access_data.token.tenant.id_
+        cls.full_access_tenant_id = cls.access_data.token.tenant.id_
 
         cls.test_file = cls.read_data_file(cls.images_config.test_file)
         cls.image_schema_json = cls.read_data_file(
@@ -153,6 +153,16 @@ class ImagesFixture(BaseTestFixture):
                        'serialize_format': cls.serialize_format,
                        'deserialize_format': cls.deserialize_format}
         return ImagesClient(**client_args)
+
+    @staticmethod
+    def generate_images_behavior(images_client, images_config):
+        """
+        @summary: Returns new images behavior for requested images_client
+        and images_config
+        """
+
+        return ImagesBehaviors(
+            images_client=images_client, images_config=images_config)
 
     @staticmethod
     def read_data_file(file_path):
