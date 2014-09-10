@@ -1,5 +1,5 @@
 """
-Copyright 2013 Rackspace
+Copyright 2014 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -70,6 +70,7 @@ class ImagesFixture(BaseTestFixture):
         # If authentication fails, fail immediately
         if cls.alt_access_data is None:
             cls.assertClassSetupFailure('Authentication failed')
+
         cls.third_access_data = AuthProvider.get_access_data(
             cls.endpoint_config, cls.third_user_config)
         # If authentication fails, fail immediately
@@ -117,6 +118,7 @@ class ImagesFixture(BaseTestFixture):
         cls.max_updated_at_delta = cls.images_config.max_updated_at_delta
         cls.tenant_id = cls.access_data.token.tenant.id_
         cls.third_tenant_id = cls.third_access_data.token.tenant.id_
+        cls.full_access_tenant_id = cls.access_data.token.tenant.id_
 
         cls.test_file = cls.read_data_file(cls.images_config.test_file)
         cls.image_schema_json = cls.read_data_file(
