@@ -1,5 +1,5 @@
 """
-Copyright 2013 Rackspace
+Copyright 2014 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,11 +14,17 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import unittest
+
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.images.common.types import ImageContainerFormat, ImageDiskFormat
+from cloudcafe.images.config import ImagesConfig
 
 from cloudroast.images.fixtures import ImagesFixture
+
+images_config = ImagesConfig()
+allow_post_images = images_config.allow_post_images
 
 
 class TestUpdateImage(ImagesFixture):
@@ -26,9 +32,10 @@ class TestUpdateImage(ImagesFixture):
     @classmethod
     def setUpClass(cls):
         super(TestUpdateImage, cls).setUpClass()
-        cls.image = cls.images_behavior.create_image_via_task()
+        cls.image = cls.images_behavior.create_new_image()
 
-    @tags(type='positive', regression='true')
+    @unittest.skipUnless(allow_post_images, 'Endpoint has incorrect access')
+    @tags(type='positive', regression='true', skipable='true')
     def test_update_image_replace_core_properties(self):
         """
         @summary: Replace values of core properties
