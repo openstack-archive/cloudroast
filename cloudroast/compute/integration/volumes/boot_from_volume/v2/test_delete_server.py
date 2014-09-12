@@ -43,14 +43,11 @@ class DeleteVolumeServersTest(object):
             source_type='image', destination_type='volume',
             delete_on_termination=False)
         # Creating Instance from Volume V2
-        server_response = self.boot_from_volume_client.create_server(
-            block_device_mapping_v2=block_data,
+        server_response = self.volume_server_behaviors.create_active_server(
+            block_device=block_data,
             flavor_ref=self.flavors_config.primary_flavor,
             name=rand_name("server"))
         server = server_response.entity
-        # Verify the server reaches active status
-        self.server_behaviors.wait_for_server_status(
-            server.id, NovaServerStatusTypes.ACTIVE)
         # Get the Volume Information
         volumes = self.volume_attachments_client.get_server_volume_attachments(
             server.id).entity
