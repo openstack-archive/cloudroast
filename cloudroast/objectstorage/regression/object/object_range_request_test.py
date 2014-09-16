@@ -18,7 +18,7 @@ from cafe.drivers.unittest.decorators import (
 from cloudroast.objectstorage.generators import ObjectDatasetList
 from cloudroast.objectstorage.fixtures import ObjectStorageFixture
 
-CONTAINER_NAME = 'object_regression'
+CONTAINER_NAME = 'object_range_request_test_container'
 CONTENT_MSG = 'expected {0} in the content body. recieved {1}'
 CONTENT_TYPE_MSG = 'expected content_type {0} recieved {1}'
 MULTIPART = "multipart/byteranges;boundary="
