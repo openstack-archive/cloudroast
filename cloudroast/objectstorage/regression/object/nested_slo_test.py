@@ -24,13 +24,27 @@ STATUS_CODE_MSG = ('{method} expected status code {expected}'
 
 
 class NestedSLOTest(ObjectStorageFixture):
-    @classmethod
-    def setUpClass(cls):
-        super(NestedSLOTest, cls).setUpClass()
-        cls.default_obj_name = cls.behaviors.VALID_OBJECT_NAME
-        cls.nested_obj_name = "nested_slo"
-        cls.generator = ObjectStorageGenerator(cls.client)
-        cls.nested_object_count = 5
+
+    def setUp(self):
+        super(NestedSLOTest, self).setUp()
+
+        self.default_obj_name = self.behaviors.VALID_OBJECT_NAME
+        self.nested_obj_name = "nested_slo"
+        self.generator = ObjectStorageGenerator(self.client)
+        self.nested_object_count = 5
+        self.min_segment_size = \
+            self.objectstorage_api_config.min_slo_segment_size
+
+        self.container_name = self.create_temp_container(
+            descriptor=CONTAINER_DESCRIPTOR)
+
+    def generate_data(self):
+        data = ""
+
+        while len(data) < (self.min_segment_size * 3.5):
+            data += "The is a sentence that will create segments."
+
+        return data
 
     def test_nested_slo_creation_same_container(self):
         """
@@ -45,15 +59,13 @@ class NestedSLOTest(ObjectStorageFixture):
         manifest = []
         nested_slo_size = 0
 
-        container_name = self.create_temp_container(
-            descriptor=CONTAINER_DESCRIPTOR)
-
         for i in range(self.nested_object_count):
             slo = self.generator.generate_static_large_object(
-                container_name, "{0}_{1}".format(self.default_obj_name, i))
+                self.container_name, "{0}_{1}".format(self.default_obj_name,
+                                                      i))
 
             manifest.append(
-                {'path': "/{0}/{1}_{2}".format(container_name,
+                {'path': "/{0}/{1}_{2}".format(self.container_name,
                                                self.default_obj_name,
                                                i),
                  'etag': slo.get("etag"),
@@ -61,13 +73,13 @@ class NestedSLOTest(ObjectStorageFixture):
             nested_slo_size += slo.get("size")
 
         self.client.create_object(
-            container_name,
+            self.container_name,
             self.nested_obj_name,
             data=json.dumps(manifest),
             params={'multipart-manifest': 'put'})
 
         object_response = self.client.get_object(
-            container_name, self.nested_obj_name)
+            self.container_name, self.nested_obj_name)
 
         method = 'Nested Static Large Object Retrieval'
         expected = 200
@@ -102,9 +114,6 @@ class NestedSLOTest(ObjectStorageFixture):
         manifest = []
         nested_slo_size = 0
 
-        container_name = self.create_temp_container(
-            descriptor=CONTAINER_DESCRIPTOR)
-
         for i in range(self.nested_object_count):
             loop_container_name = self.create_temp_container(
                 descriptor=CONTAINER_DESCRIPTOR)
@@ -122,12 +131,13 @@ class NestedSLOTest(ObjectStorageFixture):
             nested_slo_size += slo.get("size")
 
         self.client.create_object(
-            container_name,
+            self.container_name,
             "nested_slo",
             data=json.dumps(manifest),
             params={'multipart-manifest': 'put'})
 
-        object_response = self.client.get_object(container_name, "nested_slo")
+        object_response = self.client.get_object(self.container_name,
+                                                 "nested_slo")
 
         method = 'Nested Static Large Object Retrieval'
         expected = 200
@@ -148,3 +158,62 @@ class NestedSLOTest(ObjectStorageFixture):
                 "sizes {1}".format(nested_slo_size,
                                    object_response.headers.get(
                                        "content-length")))
+
+    def test_nested_slo_range_request(self):
+        """
+        Scenario:
+            Try to execute range requests on the seams of a nested SLO.
+
+        Expected Results:
+            Object retrieval should return a 200 and the sumation of all
+            the segment sizes should equal the retrieved object length.
+        """
+        manifest = []
+        slo_seams = []
+        segment_count = 0
+
+        for i in range(self.nested_object_count):
+
+            slo = self.generator.generate_static_large_object(
+                self.container_name,
+                "{0}_{1}".format(self.default_obj_name, i),
+                data=self.generate_data())
+
+            for x in range(slo.get("size") / self.min_segment_size):
+                segment_count += 1
+                slo_seams.append("{0}-{1}".format(
+                    (self.min_segment_size * segment_count)-2,
+                    (self.min_segment_size * segment_count)+2))
+
+            manifest.append(
+                {'path': "/{0}/{1}_{2}".format(self.container_name,
+                                               self.default_obj_name,
+                                               i),
+                 'etag': slo.get("etag"),
+                 'size_bytes': slo.get("size")})
+
+        self.client.create_object(
+            self.container_name,
+            self.nested_obj_name,
+            data=json.dumps(manifest),
+            params={'multipart-manifest': 'put'})
+
+        method = 'Nested Static Large Object Range Request'
+        expected = 206
+
+        for seam in slo_seams:
+            headers = {'Range': 'bytes={0}'.format(seam)}
+            range_response = self.client.get_object(
+                self.container_name,
+                self.nested_obj_name,
+                headers=headers)
+
+            received = range_response.status_code
+
+            self.assertEqual(
+                expected,
+                received,
+                msg=STATUS_CODE_MSG.format(
+                    method=method,
+                    expected=expected,
+                    received=str(received)))
