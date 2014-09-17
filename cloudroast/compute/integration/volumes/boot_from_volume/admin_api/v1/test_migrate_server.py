@@ -16,11 +16,13 @@ limitations under the License.
 
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.compute.common.types import NovaServerStatusTypes
-from cloudroast.compute.fixtures import ServerFromImageFixture
 from cloudcafe.compute.composites import ComputeAdminComposite
+from cloudroast.compute.fixtures import ServerFromVolumeV1Fixture
+from cloudroast.compute.instance_actions.admin_api.test_migrate_server import \
+    MigrateServerTest
 
 
-class MigrateServerTest(object):
+class MigrateVolumeServerTest(object):
 
     @tags(type='smoke', net='no')
     def test_migrate_server(self):
@@ -47,12 +49,12 @@ class MigrateServerTest(object):
                     host_after=server_after_migrate.host))
 
 
-class ServerFromImageMigrateTests(ServerFromImageFixture,
-                                  MigrateServerTest):
+class ServerFromVolumeV1MigrateTests(ServerFromVolumeV1Fixture,
+                                     MigrateServerTest):
 
     @classmethod
     def setUpClass(cls):
-        super(ServerFromImageMigrateTests, cls).setUpClass()
+        super(ServerFromVolumeV1MigrateTests, cls).setUpClass()
         cls.compute_admin = ComputeAdminComposite()
         cls.admin_servers_client = cls.compute_admin.servers.client
         cls.admin_server_behaviors = cls.compute_admin.servers.behaviors
