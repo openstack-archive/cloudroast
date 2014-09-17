@@ -16,25 +16,44 @@ limitations under the License.
 
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.compute.common.types import NovaServerStatusTypes
+from cloudroast.compute.fixtures import ServerFromImageFixture
+from cloudcafe.compute.composites import ComputeAdminComposite
 
-from cloudroast.compute.fixtures import ComputeAdminFixture
 
-
-class MigrateServerTests(ComputeAdminFixture):
-
-    @classmethod
-    def setUpClass(cls):
-        super(MigrateServerTests, cls).setUpClass()
-        cls.server = cls.server_behaviors.create_active_server().entity
-        cls.resources.add(cls.server.id, cls.servers_client.delete_server)
+class MigrateServerTest(object):
 
     @tags(type='smoke', net='no')
     def test_migrate_server(self):
         """Verify that a server can be migrated successfully"""
 
+        # Get Admin Server details before migrate
+        server_before_migrate = self.admin_servers_client.get_server(
+            self.server.id).entity
+
+        # Migrate and wait for ACTIVE status
         self.admin_servers_client.migrate_server(self.server.id)
         self.admin_server_behaviors.wait_for_server_status(
             self.server.id, NovaServerStatusTypes.VERIFY_RESIZE)
         self.admin_servers_client.confirm_resize(self.server.id)
-        self.admin_server_behaviors.wait_for_server_status(
-            self.server.id, NovaServerStatusTypes.ACTIVE)
+        server_after_migrate = self.admin_server_behaviors.wait_for_server_status(
+            self.server.id, NovaServerStatusTypes.ACTIVE).entity
+
+        # Check that compute node is changed
+        self.assertNotEqual(
+            server_before_migrate.host, server_after_migrate.host,
+            msg="Host is not changed after migration, source host is {host_before} "
+                "destination host is {host_after}".format(
+                    host_before=server_before_migrate.host,
+                    host_after=server_after_migrate.host))
+
+
+class ServerFromImageMigrateTests(ServerFromImageFixture,
+                                  MigrateServerTest):
+
+    @classmethod
+    def setUpClass(cls):
+        super(ServerFromImageMigrateTests, cls).setUpClass()
+        cls.compute_admin = ComputeAdminComposite()
+        cls.admin_servers_client = cls.compute_admin.servers.client
+        cls.admin_server_behaviors = cls.compute_admin.servers.behaviors
+        cls.create_server()
