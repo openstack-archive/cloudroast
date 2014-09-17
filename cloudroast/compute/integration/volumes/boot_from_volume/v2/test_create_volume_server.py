@@ -61,6 +61,22 @@ class CreateVolumeServerTest(object):
                          msg="Expected disk to be {0} GB, was {1} GB".format(
                              self.volume_size, disk_size))
 
+    @tags(type='smoke', net='yes')
+    def test_default_volume_name_and_type(self):
+        """
+        Verify the name of the volume is default='System disk for %(uuid)s'
+        set by nova and default type of the volume
+        """
+        self.assertTrue(self.boot_volume_info.name is not None,
+                        msg="Volume name is set")
+        self.assertIn(self.server.id, self.boot_volume_info.name,
+                      msg="Server {uuid} was not found in volume {name}".format(
+                          uuid=self.server.id, name=self.boot_volume_info.name))
+        self.assertEqual(self.boot_volume_info.volume_type, 'SSD',
+                         msg="Expected volume to be SSD"
+                             "but actual type was {type}".format(
+                                 type=self.boot_volume_info.volume_type))
+
 
 class ServerFromVolumeV2CreateServerTests(ServerFromVolumeV2Fixture,
                                           CreateServerTest,
@@ -103,3 +119,7 @@ class ServerFromVolumeV2CreateServerTests(ServerFromVolumeV2Fixture,
                           cls.servers_client.delete_server)
         cls.flavor = cls.flavors_client.get_flavor_details(
             cls.flavor_ref).entity
+        volumes = cls.volume_attachments_client.get_server_volume_attachments(
+            cls.server.id).entity
+        cls.boot_volume_info = cls.blockstorage_behavior.client.get_volume_info(
+            volumes[0].volume_id).entity
