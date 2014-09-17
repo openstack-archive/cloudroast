@@ -14,16 +14,14 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from cloudcafe.common.tools.datagen import rand_name
+from cafe.drivers.unittest.decorators import tags
 
-from cloudroast.compute.instance_actions.api.test_rebuild_server \
-    import RebuildServerTests, RebuildBaseFixture
+from cloudcafe.common.tools.datagen import rand_name
+from cloudcafe.compute.common.exceptions import Forbidden
 from cloudroast.compute.fixtures import ServerFromVolumeV1Fixture
 
 
-class ServerFromVolumeV1RebuildTests(ServerFromVolumeV1Fixture,
-                                     RebuildBaseFixture,
-                                     RebuildServerTests):
+class ServerFromVolumeV1RebuildTests(ServerFromVolumeV1Fixture):
 
     @classmethod
     def setUpClass(cls):
@@ -32,6 +30,9 @@ class ServerFromVolumeV1RebuildTests(ServerFromVolumeV1Fixture,
         cls.resources.add(cls.key.name,
                           cls.keypairs_client.delete_keypair)
         cls.create_server(key_name=cls.key.name)
-        response = cls.flavors_client.get_flavor_details(cls.flavor_ref)
-        cls.flavor = response.entity
-        cls.rebuild_and_await()
+
+    @tags(type='smoke', net='no')
+    def test_verify_rebuild_is_disabled(self):
+        """Verify a user can not rebuild on BFV instance V1"""
+        with self.assertRaises(Forbidden):
+            self.servers_client.rebuild(self.server.id, self.image_ref_alt)

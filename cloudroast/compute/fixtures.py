@@ -221,7 +221,7 @@ class BlockstorageIntegrationFixture(ComputeFixture):
         volumes = cls.compute_integration.volumes
 
         cls.poll_frequency = volumes.config.volume_status_poll_frequency
-        cls.volume_size = int(volumes.config.min_volume_size)
+        cls.volume_size = int(volumes.config.min_volume_from_image_size)
         cls.volume_type = volumes.config.default_volume_type
         cls.volume_delete_timeout = volumes.config.volume_delete_max_timeout
         cls.volume_create_timeout = volumes.config.volume_create_max_timeout
