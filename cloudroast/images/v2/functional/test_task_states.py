@@ -106,14 +106,13 @@ class TestTaskStates(ObjectStorageIntegrationFixture):
                   'import_from': import_from,
                   'import_from_format': self.import_from_format}
 
-        task_creation_time_in_sec = calendar.timegm(time.gmtime())
-        task = self.images_behavior.create_task_with_transitions(
-            input_, task_type=TaskTypes.IMPORT)
         response = self.object_storage_client.delete_object(
             container_name=container_name, object_name=object_name)
         self.assertEqual(response.status_code, 204)
-        task = self.images_behavior.wait_for_task_status(
-            task.id_, TaskStatus.FAILURE)
+        task_creation_time_in_sec = calendar.timegm(time.gmtime())
+        task = self.images_behavior.create_task_with_transitions_failure(
+            input_, task_type=TaskTypes.IMPORT,
+            final_status=TaskStatus.FAILURE)
 
         expires_at_delta = self.images_behavior.get_creation_delta(
             task_creation_time_in_sec, task.expires_at)
@@ -201,14 +200,13 @@ class TestTaskStates(ObjectStorageIntegrationFixture):
         self.object_storage_behaviors.create_container(
             container_name=container_name)
 
-        task_creation_time_in_sec = calendar.timegm(time.gmtime())
-        task = self.images_behavior.create_task_with_transitions(
-            input_, task_type=TaskTypes.EXPORT)
         response = self.object_storage_client.delete_container(
             container_name=container_name)
         self.assertEqual(response.status_code, 204)
-        task = self.images_behavior.wait_for_task_status(
-            task.id_, TaskStatus.FAILURE)
+        task_creation_time_in_sec = calendar.timegm(time.gmtime())
+        task = self.images_behavior.create_task_with_transitions_failure(
+            input_, task_type=TaskTypes.EXPORT,
+            final_status=TaskStatus.FAILURE)
 
         expires_at_delta = self.images_behavior.get_creation_delta(
             task_creation_time_in_sec, task.expires_at)
