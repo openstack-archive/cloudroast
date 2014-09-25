@@ -123,7 +123,7 @@ class NetworkingComputeFixture(NetworkingFixture):
 
     @classmethod
     def setUpClass(cls):
-        super(NetworkingFixture, cls).setUpClass()
+        super(NetworkingComputeFixture, cls).setUpClass()
         cls.compute = ComputeComposite()
 
         # sub-composites
