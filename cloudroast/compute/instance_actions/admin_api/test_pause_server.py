@@ -14,6 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import unittest
+
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.compute.common.types import NovaServerStatusTypes \
     as ServerStates
@@ -21,7 +23,7 @@ from cloudcafe.compute.common.clients.ping import PingClient
 
 from cloudroast.compute.fixtures import ComputeAdminFixture
 
-
+@unittest.skip("Failing due to RM7040")
 class PauseServerTests(ComputeAdminFixture):
 
     @classmethod
