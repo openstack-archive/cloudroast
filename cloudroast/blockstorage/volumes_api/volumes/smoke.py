@@ -14,24 +14,30 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from cafe.drivers.unittest.decorators import (
-    data_driven_test, DataDrivenFixture)
+from cafe.drivers.unittest.decorators import data_driven_test
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.blockstorage.volumes_api.common.models import statuses
-from cloudroast.blockstorage.volumes_api.fixtures import VolumesTestFixture
-from cloudroast.blockstorage.volumes_api.datasets import VolumesDatasets
+from cloudroast.blockstorage.volumes_api.fixtures import \
+    DataDrivenVolumesTestFixture
+from cloudcafe.blockstorage.datasets import BlockstorageDatasets
+from cafe.drivers.unittest.decorators import DataDrivenFixture
+
+
+volume_types_dataset = BlockstorageDatasets.volume_types()
 
 
 @DataDrivenFixture
-class VolumeActions(VolumesTestFixture):
+class VolumeActions(DataDrivenVolumesTestFixture):
 
-    @data_driven_test(VolumesDatasets.volume_types())
+    @data_driven_test(volume_types_dataset)
     @tags('volumes', 'smoke')
     def ddtest_create_minimum_size_default_volume(
             self, volume_type_name, volume_type_id):
+        """Verify that a volume of minimum size can be created"""
 
-        #Setup
-        size = self.volumes.config.min_volume_size
+        # Setup
+        size = self.volumes.behaviors.get_configured_volume_type_property(
+            "min_size", id_=volume_type_id, name=volume_type_name)
         name = self.random_volume_name()
         description = "{0}".format(self.__class__.__name__)
         metadata = {"metadata_key_one": "metadata_value_one"}
@@ -50,7 +56,8 @@ class VolumeActions(VolumesTestFixture):
         self.addCleanup(
             self.volumes.behaviors.delete_volume_confirmed, volume.id_)
 
-        #Test
+        # TODO: Replace these seperate assertions with a call to
+        #       assertVolumeAttributesAreEqual
         self.assertEqual(volume.name, name)
         self.assertEqual(volume.description, description)
         self.assertEqual(str(volume.size), str(size))
@@ -58,11 +65,15 @@ class VolumeActions(VolumesTestFixture):
         self.assertIsNotNone(volume.created_at)
         self.assertIsNotNone(volume.status)
         self.assertIsNone(volume.snapshot_id)
+
+        # TODO: Replace this assertion with a call to
+        #       assertVolumeCreateSuceeded
         self.assertIn(
             volume.status.lower(),
             [statuses.Volume.AVAILABLE.lower(),
              statuses.Volume.CREATING.lower()])
 
+        # Verify that metadata is set as expected
         for key in metadata.iterkeys():
             self.assertIn(key, volume.metadata)
             self.assertEqual(metadata[key], volume.metadata[key])
@@ -70,9 +81,64 @@ class VolumeActions(VolumesTestFixture):
         if availability_zone:
             self.assertEqual(volume.availability_zone, availability_zone)
 
-    @data_driven_test(VolumesDatasets.volume_types())
+    @data_driven_test(volume_types_dataset)
+    @tags('volumes', 'smoke')
+    def ddtest_update_volume_info_via_body(
+            self, volume_type_name, volume_type_id):
+        """Verify that a volume's name and description can be updated after
+        creation
+        """
+
+        # Setup
+        volume = self.new_volume(vol_type=volume_type_id)
+        volume_info = self.volumes.behaviors.get_volume_info(volume.id_)
+        self.assertVolumeAttributesAreEqual(volume, volume_info)
+
+        # Update volume info
+        new_name = "NewUpdatedVolumeName"
+        new_description = "NewUpdatedVolumeDescription"
+
+        resp = self.volumes.client.update_volume(
+            volume.id_, name=new_name, description=new_description)
+        updated_volume = resp.entity
+
+        updated_volume_info = self.volumes.behaviors.get_volume_info(
+            updated_volume.id_)
+
+        # Test Update Volume Response
+        self.assertEqual(
+            updated_volume.name, new_name,
+            'New name was not found in update volume response')
+        self.assertEqual(
+            updated_volume.description, new_description,
+            'New description was not found in update volume response')
+
+        # Test get-info response on updated volume
+        self.assertEqual(
+            updated_volume_info.name, new_name,
+            'New name was not found in update volume get-info response')
+        self.assertEqual(
+            updated_volume_info.description, new_description,
+            'New description was not found in update volume get-info response')
+
+        # Test that all other attributes are untouched
+        similar_attributes = [
+            'size', 'availability_zone', 'attachments', 'created_at',
+            'status', 'snapshot_id', 'volume_type']
+        self.assertVolumeAttributesAreEqual(
+            volume_info, updated_volume,
+            attr_list=similar_attributes,
+            msg="Unmodified updated volume info did not match original volume "
+            "info")
+
+    @data_driven_test(volume_types_dataset)
     @tags('volumes', 'smoke')
     def ddtest_get_volume_info(self, volume_type_name, volume_type_id):
+        """Verify that the API can return detailed information on a single
+        volume
+        """
+
+        # Setup
         volume = self.new_volume(vol_type=volume_type_id)
         resp = self.volumes.client.get_volume_info(volume.id_)
         self.assertExactResponseStatus(
@@ -80,24 +146,18 @@ class VolumeActions(VolumesTestFixture):
         self.assertResponseIsDeserialized(resp)
         volume_info = resp.entity
 
-        #Test
-        self.assertEquals(volume.name, volume_info.name)
-        self.assertEquals(
-            volume.description, volume_info.description)
-        self.assertEquals(str(volume.size), str(volume_info.size))
-        self.assertEquals(volume.metadata, volume_info.metadata)
-        self.assertEquals(
-            volume.availability_zone, volume_info.availability_zone)
-        self.assertEquals(volume.attachments, volume_info.attachments)
-        self.assertEquals(volume.created_at, volume_info.created_at)
-        self.assertEquals(volume.status, volume_info.status)
-        self.assertIsNone(volume.snapshot_id, volume_info.snapshot_id)
-        self.assertEquals(volume.volume_type, volume_info.volume_type)
+        # Test
+        self.assertVolumeAttributesAreEqual(volume, volume_info)
 
-    @data_driven_test(VolumesDatasets.volume_types())
+    @data_driven_test(volume_types_dataset)
     @tags('volumes', 'smoke')
     def ddtest_list_volumes(self, volume_type_name, volume_type_id):
+        """Verify that the API can return a list of all volumes"""
+
+        # Setup
         volume = self.new_volume(vol_type=volume_type_id)
+
+        # Test
         resp = self.volumes.client.list_all_volumes()
         self.assertExactResponseStatus(
             resp, 200, msg='Get volume list call failed')
@@ -110,9 +170,14 @@ class VolumeActions(VolumesTestFixture):
             'No volumes where found in the volume list with an id == '
             '{0}'.format(volume.id_))
 
-    @data_driven_test(VolumesDatasets.volume_types())
+    @data_driven_test(volume_types_dataset)
     @tags('volumes', 'smoke')
     def ddtest_list_volume_details(self, volume_type_name, volume_type_id):
+        """Verify that the API can return a list detailed information for
+        all volumes
+        """
+
+        # Setup
         volume = self.new_volume(vol_type=volume_type_id)
         resp = self.volumes.client.list_all_volumes_info()
         self.assertExactResponseStatus(
@@ -127,23 +192,17 @@ class VolumeActions(VolumesTestFixture):
             '{0}'.format(volume.id_))
         volume_info = expected_volumes[0]
 
-        #Test
-        self.assertEquals(volume.name, volume_info.name)
-        self.assertEquals(
-            volume.description, volume_info.description)
-        self.assertEquals(str(volume.size), str(volume_info.size))
-        self.assertEquals(volume.metadata, volume_info.metadata)
-        self.assertEquals(
-            volume.availability_zone, volume_info.availability_zone)
-        self.assertEquals(volume.attachments, volume_info.attachments)
-        self.assertEquals(volume.created_at, volume_info.created_at)
-        self.assertEquals(volume.status, volume_info.status)
-        self.assertIsNone(volume.snapshot_id, volume_info.snapshot_id)
-        self.assertEquals(volume.volume_type, volume_info.volume_type)
+        # Test
+        self.assertVolumeAttributesAreEqual(volume, volume_info)
 
-    @data_driven_test(VolumesDatasets.volume_types())
+    @data_driven_test(volume_types_dataset)
     @tags('volumes', 'smoke')
     def ddtest_delete_volume(self, volume_type_name, volume_type_id):
+        """Verify that a volume can be deleted"""
+
+        # Setup
         volume = self.new_volume(vol_type=volume_type_id)
+
+        # Test
         result = self.volumes.behaviors.delete_volume_confirmed(volume.id_)
         self.assertTrue(result)
