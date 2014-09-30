@@ -24,6 +24,14 @@ from cloudroast.blockstorage.volumes_api.fixtures import \
     DataDrivenVolumesTestFixture
 
 
+complete_volume_types = BlockstorageDatasets.volume_types()
+complete_volume_types.apply_test_tags('snapshots-exhaustive-volume-types')
+default_volume_type = BlockstorageDatasets.default_volume_type()
+default_volume_type.apply_test_tags('snapshots-default-volume-type')
+complete_volume_types.merge_dataset_tags(default_volume_type)
+
+
+
 class SnapshotRestoreDataset(BlockstorageDatasets):
 
     @classmethod
@@ -60,8 +68,7 @@ class SnapshotRestoreDataset(BlockstorageDatasets):
 @DataDrivenFixture
 class SnapshotActions(DataDrivenVolumesTestFixture):
 
-    @data_driven_test(BlockstorageDatasets.volume_types())
-    @tags('snapshots', 'smoke')
+    @data_driven_test(complete_volume_types)
     def ddtest_verify_snapshot_status_progression(
             self, volume_type_name, volume_type_id):
         """Verify snapshot passes through all expected states after create"""
@@ -82,37 +89,9 @@ class SnapshotActions(DataDrivenVolumesTestFixture):
             [statuses.Snapshot.AVAILABLE, statuses.Snapshot.CREATING])
         self.assertEquals(snapshot.size, volume.size)
 
-    @data_driven_test(BlockstorageDatasets.volume_types())
-    @tags('snapshots', 'smoke')
-    def ddtest_create_minimum_size_volume_snapshot(
+    @data_driven_test(complete_volume_types)
+    def ddtest_verify_snapshot_restore_to_same_volume_type(
             self, volume_type_name, volume_type_id):
-        """Create a snapshot of a minimum-sized volume"""
-
-        volume = self.new_volume(vol_type=volume_type_id)
-        snapshot_name = self.random_snapshot_name()
-        snapshot_description = "this is a snapshot description."
-        resp = self.volumes.client.create_snapshot(
-            volume.id_, display_name=snapshot_name,
-            display_description=snapshot_description, force_create=True)
-        self.assertExactResponseStatus(
-            resp, 200, msg='Volume Snapshot create failed')
-        self.assertResponseIsDeserialized(resp)
-        snapshot = resp.entity
-        self.addCleanup(
-            self.volumes.behaviors.delete_snapshot_confirmed, snapshot.id_)
-
-        self.assertEquals(snapshot.volume_id, volume.id_)
-        self.assertEquals(snapshot.display_name, snapshot_name)
-        self.assertEquals(
-            snapshot.display_description, snapshot_description)
-        self.assertIn(
-            snapshot.status,
-            [statuses.Snapshot.AVAILABLE, statuses.Snapshot.CREATING])
-        self.assertEquals(snapshot.size, volume.size)
-
-    @data_driven_test(BlockstorageDatasets.volume_types())
-    @tags('snapshots', 'smoke')
-    def ddtest_restore_snapshot(self, volume_type_name, volume_type_id):
         """Verify that a snapshot can be restored to a volume of the
         same type as the snapshot's parent volume
         """
@@ -144,7 +123,6 @@ class SnapshotActions(DataDrivenVolumesTestFixture):
 
     @data_driven_test(
         SnapshotRestoreDataset.volume_types_with_restore_control())
-    @tags('snapshots', 'smoke')
     def ddtest_verify_snapshot_restore_to_different_volume_type(
             self, volume_type_name, volume_type_id,
             restore_to_different_type_enabled):
@@ -208,8 +186,7 @@ class SnapshotActions(DataDrivenVolumesTestFixture):
             original_volume, restored_volume,
             attr_list=comparable_attributes_list)
 
-    @data_driven_test(BlockstorageDatasets.volume_types())
-    @tags('snapshots', 'smoke')
+    @data_driven_test(complete_volume_types)
     def ddtest_list_snapshots(
             self, volume_type_name, volume_type_id):
         """Verify that the api can list snapshots"""
@@ -227,8 +204,7 @@ class SnapshotActions(DataDrivenVolumesTestFixture):
         self.assertIn(snapshot.name, [s.name for s in snapshot_list])
         self.assertIn(snapshot.id_, [s.id_ for s in snapshot_list])
 
-    @data_driven_test(BlockstorageDatasets.volume_types())
-    @tags('snapshots', 'smoke')
+    @data_driven_test(complete_volume_types)
     def ddtest_list_snapshots_detailed(
             self, volume_type_name, volume_type_id):
         """Verify that the api can list snapshot details"""
@@ -246,8 +222,7 @@ class SnapshotActions(DataDrivenVolumesTestFixture):
         self.assertIn(snapshot.name, [s.name for s in snapshot_list])
         self.assertIn(snapshot.id_, [s.id_ for s in snapshot_list])
 
-    @data_driven_test(BlockstorageDatasets.volume_types())
-    @tags('snapshots', 'smoke')
+    @data_driven_test(complete_volume_types)
     def ddtest_get_snapshot_info(
             self, volume_type_name, volume_type_id):
         """Verify that the api return details on a single snapshot"""

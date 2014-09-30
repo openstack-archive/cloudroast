@@ -15,26 +15,12 @@ limitations under the License.
 """
 from cafe.drivers.unittest.decorators import (
     data_driven_test, DataDrivenFixture)
-from cloudcafe.blockstorage.datasets import ComputeIntegrationDatasets
+from cloudcafe.blockstorage.datasets import (
+    BlockstorageDatasets, ComputeIntegrationDatasets)
 from cloudcafe.common.tools.datagen import random_string
 
 from cloudroast.blockstorage.volumes_api.integration.compute.fixtures \
     import VolumesImagesIntegrationFixture
-
-
-# TODO: Move this into a method in the VolumesDataset class
-# Get the volume type model for the configured default volume type
-volume_type_list = ComputeIntegrationDatasets._get_volume_types()
-configured_default_volume_type = \
-    ComputeIntegrationDatasets._volumes.config.default_volume_type
-default_volume_type = None
-for vtype in volume_type_list:
-    if (vtype.id_ == configured_default_volume_type
-            or vtype.name == configured_default_volume_type):
-        default_volume_type = vtype
-        break
-if default_volume_type is None:
-    raise Exception("Unable to get configured default volume type")
 
 
 # Create tagged Image dataset
@@ -101,19 +87,22 @@ class BootFromVolumeIntegrationTests(VolumesImagesIntegrationFixture):
 
     @data_driven_test(images_by_flavor_complete_dataset)
     def ddtest_create_bootable_volume_from_a_snapshot_of_a_server(
-            self, image, flavor, volume_type=default_volume_type):
+            self, image, flavor,
+            volume_type=BlockstorageDatasets.default_volume_type_model()):
         self.create_bootable_volume_from_server_snapshot(
             image, flavor, volume_type)
 
     @data_driven_test(images_by_flavor_complete_dataset)
     def ddtest_create_bootable_volume_from_last_of_3_snapshots_of_a_server(
-            self, image, flavor, volume_type=default_volume_type):
+            self, image, flavor,
+            volume_type=BlockstorageDatasets.default_volume_type_model()):
         self.create_bootable_volume_from_third_snapshot_of_server_test(
             image, flavor, volume_type)
 
     @data_driven_test(images_by_flavor_complete_dataset)
     def ddtest_verify_data_on_custom_snapshot_after_copy_to_volume(
-            self, image, flavor, volume_type=default_volume_type):
+            self, image, flavor,
+            volume_type=BlockstorageDatasets.default_volume_type_model()):
         """This test currently only works for Linux images"""
 
         # Create a server
