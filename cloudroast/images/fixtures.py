@@ -20,6 +20,7 @@ from cafe.drivers.unittest.fixtures import BaseTestFixture
 from cloudcafe.auth.config import UserAuthConfig, UserConfig
 from cloudcafe.auth.provider import AuthProvider
 from cloudcafe.common.resources import ResourcePool
+from cloudcafe.compute.common.exception_handler import ExceptionHandler
 from cloudcafe.compute.config import ComputeEndpointConfig
 from cloudcafe.compute.flavors_api.config import FlavorsConfig
 from cloudcafe.compute.images_api.behaviors import (
@@ -139,6 +140,10 @@ class ImagesFixture(BaseTestFixture):
         cls.addClassCleanup(cls.alt_images_behavior.resources.release)
         cls.addClassCleanup(cls.third_images_behavior.resources.release)
 
+        cls.images_client.add_exception_handler(ExceptionHandler())
+        cls.alt_images_client.add_exception_handler(ExceptionHandler())
+        cls.third_images_client.add_exception_handler(ExceptionHandler())
+
     @classmethod
     def tearDownClass(cls):
         super(ImagesFixture, cls).tearDownClass()
@@ -146,6 +151,9 @@ class ImagesFixture(BaseTestFixture):
         cls.images_behavior.resources.release()
         cls.alt_images_behavior.resources.release()
         cls.third_images_behavior.resources.release()
+        cls.images_client.delete_exception_handler(ExceptionHandler())
+        cls.alt_images_client.delete_exception_handler(ExceptionHandler())
+        cls.third_images_client.delete_exception_handler(ExceptionHandler())
 
     @classmethod
     def generate_images_client(cls, auth_data):
