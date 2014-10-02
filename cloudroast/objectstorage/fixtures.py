@@ -18,6 +18,17 @@ from cafe.drivers.unittest.fixtures import BaseTestFixture
 from cloudcafe.objectstorage.composites import ObjectStorageComposite
 
 
+class ObjectStorageUser(object):
+    def __init__(self, name, id_, password):
+        self.name = name
+        self.id_ = id_
+        self.token = None
+        self.storage_url = None
+        self.objstorage_client = None
+        self.objstorage_behaviors = None
+        self.roles = []
+
+
 class ObjectStorageFixture(BaseTestFixture):
     """
     @summary: Base fixture for objectstorage tests
