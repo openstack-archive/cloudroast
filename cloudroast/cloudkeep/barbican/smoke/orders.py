@@ -46,7 +46,7 @@ class OrdersAPI(OrdersFixture):
         self.assertEqual(ord_resp.status_code, 200)
         self.assertEqual(ord_resp.entity.status, OrdersStates.ACTIVE)
 
-        metadata = ord_resp.entity.secret
+        metadata = ord_resp.entity.meta
         self.assertEqual(metadata.name, self.config.name)
         self.assertEqual(metadata.mode, self.config.mode)
         self.assertEqual(metadata.algorithm, self.config.algorithm)

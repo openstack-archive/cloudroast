@@ -53,7 +53,7 @@ class OrderBitLengthDataSetPositive(DatasetList):
         self.append_new_dataset('16M_plus_256', {'bit_length': 16777472})
 
 
-class OrderContentTypeEncodingDataSet(DatasetList):
+class OrderContentTypeDataSet(DatasetList):
     def __init__(self):
         large_string = str(bytearray().zfill(10001))
 
@@ -126,24 +126,25 @@ class DataDriveSecretsAPI(OrdersFixture):
                          'Creation failed with unexpected response code')
 
         self.assertEqual(resps.get_resp.status_code, 200)
-        secret = resps.get_resp.entity.secret
+        secret = resps.get_resp.entity.meta
         self.assertIs(type(secret.bit_length), int)
         self.assertEqual(secret.bit_length, bit_length)
 
-    @data_driven_test(dataset_source=OrderContentTypeEncodingDataSet())
+    @data_driven_test(dataset_source=OrderContentTypeDataSet())
     @tags(type='negative')
-    def ddtest_create_order_w_type_encoding(self, payload_content_type=None,
-                                            payload_content_encoding=None):
-        """Covers creating orders with invalid content types and content
-        encodings. Should return 400."""
+    def ddtest_create_order_w_payload_content_type(
+            self, payload_content_type=None):
+        """Covers creating orders with invalid content types
+
+        Should return 400.
+        """
         resp = self.behaviors.create_order(
             name=self.config.name,
             payload_content_type=payload_content_type,
             algorithm=self.config.algorithm,
             mode=self.config.mode,
             bit_length=self.config.bit_length)
-        self.assertEqual(resp.status_code, 400,
-                         'Creation should have failed with 400')
+        self.assertEqual(resp.status_code, 400)
 
     @data_driven_test(dataset_source=NameDataSetPositive())
     @tags(type='positive')
@@ -157,7 +158,7 @@ class DataDriveSecretsAPI(OrdersFixture):
             bit_length=self.config.bit_length)
         self.assertEqual(resps.status_code, 202,
                          'Creation failed with unexpected response code')
-        secret = resps.get_resp.entity.secret
+        secret = resps.get_resp.entity.meta
         self.assertEqual(secret.name, name, 'Secret name is not correct')
 
     @data_driven_test(dataset_source=OrderPayloadDataSet())
@@ -187,7 +188,7 @@ class OrdersAPI(OrdersFixture):
         self.assertEqual(resp.status_code, 202)
 
         order = self.orders_client.get_order(resp.id).entity
-        exp = datetime.strptime(order.secret.expiration,
+        exp = datetime.strptime(order.meta.expiration,
                                 '%Y-%m-%dT%H:%M:%S.%f')
         self.assertEqual(exp, one_day_ahead + timedelta(hours=offset),
                          'Response didn\'t return the expected time')
@@ -308,6 +309,7 @@ class OrdersAPI(OrdersFixture):
         self.assertEqual(resp.status_code, 400,
                          'Creation should have failed with 400')
 
+    @skip_open_issue('launchpad', '1376490')
     @tags(type='positive')
     def test_create_order_w_empty_checking_name(self):
         """ When an order is created with an empty name attribute, the
@@ -326,10 +328,11 @@ class OrdersAPI(OrdersFixture):
         get_resp = self.orders_client.get_order(resp.id)
         order = get_resp.entity
         secret_id = order.get_secret_id()
-        secret = get_resp.entity.secret
+        secret = get_resp.entity.meta
         self.assertEqual(secret.name, secret_id,
                          'Name did not match secret\'s UUID')
 
+    @skip_open_issue('launchpad', '1376490')
     @tags(type='positive')
     def test_create_order_wout_name_checking_name(self):
         """ When an order is created with a null name attribute, the
@@ -349,7 +352,7 @@ class OrdersAPI(OrdersFixture):
         get_resp = self.orders_client.get_order(resp.id)
         order = get_resp.entity
         secret_id = order.get_secret_id()
-        secret = get_resp.entity.secret
+        secret = get_resp.entity.meta
         self.assertEqual(secret.name, secret_id,
                          'Name did not match secret\'s UUID')
 
@@ -391,7 +394,7 @@ class OrdersAPI(OrdersFixture):
         self.assertEqual(resp.status_code, 202,
                          'Creation failed with unexpected response code')
         order = resp.get_resp.entity
-        order_metadata = order.secret
+        order_metadata = order.meta
         secret_ref = order.secret_href
         secret_resp = self.secrets_client.get_secret(ref=secret_ref)
         secret_metadata = secret_resp.entity
@@ -444,17 +447,7 @@ class OrdersAPI(OrdersFixture):
         self.assertEqual(config_get_resp.status_code, 200,
                          'Returned unexpected response code')
 
-    @tags(type='negative')
-    def test_update_order(self):
-        """Covers case of putting to an order. Should return 405."""
-        resp = self.behaviors.create_order_from_config()
-        put_resp = self.orders_client.update_order(
-            order_id=resp.id,
-            payload_content_type=self.config.payload_content_type,
-            data='test-update-order')
-        self.assertEqual(put_resp.status_code, 405,
-                         'Should have failed with 405')
-
+    @skip_open_issue('launchpad', 1376902)
     @tags(type='negative')
     def test_create_order_wout_algorithm(self):
         """Covers case where order is created without an algorithm.
@@ -468,6 +461,7 @@ class OrdersAPI(OrdersFixture):
             bit_length=self.config.bit_length)
         self.assertEqual(resp.status_code, 400, 'Should have failed with 400')
 
+    @skip_open_issue('launchpad', 1376902)
     @tags(type='negative')
     def test_create_order_wout_mode(self):
         """Covers case where order is created without a cypher type.
@@ -514,11 +508,11 @@ class OrdersAPI(OrdersFixture):
         resp = self.behaviors.create_order_overriding_cfg(mode=400)
         self.assertEqual(resp.status_code, 400, 'Should have failed with 400')
 
-    @skip_open_issue('launchpad', '1269594')
     @tags(type='negative')
     def test_empty_error_message_on_invalid_order_creation(self):
+        """Related Launchpad issue: 1269594"""
         resp = self.behaviors.create_order_overriding_cfg(
-            payload_content_type='text/plain')
+            payload_content_encoding='blarg!')
         create_resp = resp.create_resp
 
         # Make sure we actually get a message back
