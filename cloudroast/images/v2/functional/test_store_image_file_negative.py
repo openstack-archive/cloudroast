@@ -1,5 +1,5 @@
 """
-Copyright 2013 Rackspace
+Copyright 2014 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import unittest2 as unittest
+import unittest
 
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.images.common.types import ImageStatus
@@ -63,7 +63,7 @@ class StoreImageFileNegativeTest(ImagesFixture):
 
         response = self.images_client.store_image_file(
             image_id="", file_data=self.test_file)
-        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.status_code, 400)
 
     @tags(type='negative', regression='true', skipable='true')
     def test_store_image_file_with_invalid_image_id(self):
