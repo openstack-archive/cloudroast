@@ -61,14 +61,13 @@ class SecretBitLengthDataSetNegative(DatasetList):
 class SecretModeDataSetPositive(ModeDataSetPositive):
     def __init__(self):
         super(SecretModeDataSetPositive, self).__init__()
-        large_string = str(bytearray().zfill(10001))
-        self.append_new_dataset('large_string', {'mode': large_string})
         self.append_new_dataset('unknown-positive', {'mode': 'unknown'})
 
-
 class SecretModeDataSetNegative(ModeDataSetNegative):
-    pass
-
+    def __init__(self):
+        super(SecretModeDataSetNegative, self).__init__()
+        large_string = str(bytearray().zfill(10001))
+        self.append_new_dataset('large_string', {'mode': large_string})
 
 class SecretContentTypeDataSetNegative(ContentTypeEncodingDataSetNegative):
     def __init__(self):
@@ -678,72 +677,6 @@ class SecretsAPI(SecretsFixture):
         json_str = json.dumps(my_dict)
 
         return self.cloudkeep.max_allowed_request_size_in_bytes - len(json_str)
-
-    @skip_open_issue('launchpad', '1330238')
-    @tags(type='negative')
-    def test_creating_secret_w_large_string_values_oversize_by_one(self):
-        """Covers case of creating secret with large string values such
-        that the total request is 1 byte larger than the maximum allowed.
-        We will use large strings to populate the following fields:
-
-             1. name
-             2. algorithm
-             3. mode"""
-
-        available_size = self._calculate_available_size()
-        available_size_per_item = available_size // 3
-        rest_of_available_size = available_size % 3
-
-        large_string = str(bytearray().zfill(available_size_per_item))
-
-        # this string will make the entire payload 1 byte larger than the max
-        a_larger_string = str(bytearray().zfill(
-            available_size_per_item + rest_of_available_size + 1))
-
-        resp = self.behaviors.create_secret(
-            payload_content_type=self.config.payload_content_type,
-            payload=self.config.payload,
-            payload_content_encoding=self.config.payload_content_encoding,
-            name=a_larger_string,
-            algorithm=large_string,
-            mode=large_string)
-        self.assertEqual(resp.status_code, 413,
-                         'Returned unexpected response code')
-
-    @tags(type='positive')
-    @skip_open_issue('launchpad', '1335327')
-    def test_creating_secret_w_large_string_values(self):
-        """Covers case of creating secret with large String values such
-        that the total request size is the maximum size allowed.
-        We will use the large_string to populate the following fields:
-
-             1. name
-             2. algorithm
-             3. mode
-
-        We will make these fields sufficiently large such that we come up
-        against, but not over, the maximum overall request size."""
-
-        available_size = self._calculate_available_size()
-        available_size_per_item = available_size // 3
-        rest_of_available_size = available_size % 3
-
-        large_string = str(bytearray().zfill(available_size_per_item))
-
-        # use this string for one field to ensure that the total payload
-        # is the maximum length
-        a_larger_string = str(bytearray().zfill(
-            available_size_per_item + rest_of_available_size))
-
-        resp = self.behaviors.create_secret(
-            payload_content_type=self.config.payload_content_type,
-            payload=self.config.payload,
-            payload_content_encoding=self.config.payload_content_encoding,
-            name=large_string,
-            algorithm=large_string,
-            mode=a_larger_string)
-        self.assertEqual(resp.status_code, 201,
-                         'Returned unexpected response code')
 
     @tags(type='positive')
     def test_creating_secret_w_max_secret_size(self):
