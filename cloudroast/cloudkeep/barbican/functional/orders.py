@@ -53,38 +53,46 @@ class OrderBitLengthDataSetPositive(DatasetList):
         self.append_new_dataset('16M_plus_256', {'bit_length': 16777472})
 
 
-class OrderContentTypeDataSet(DatasetList):
+class OrderContentTypeDataSetPositive(DatasetList):
     def __init__(self):
-        large_string = str(bytearray().zfill(10001))
-
         self.append_new_dataset(
             'empty_type',
             {'payload_content_type': ''})
+
+        self.append_new_dataset(
+            'invalid_content_type',
+            {'payload_content_type': 'invalid'})
+
         self.append_new_dataset(
             'null_type',
             {'payload_content_type': None})
+
+        self.append_new_dataset(
+            'text',
+            {'payload_content_type': 'text'})
+
+        self.append_new_dataset(
+            'text_plain',
+            {'payload_content_type': 'text/plain'})
+
+        self.append_new_dataset(
+            'text_plain_space_charset_utf88',
+            {'payload_content_type': 'text/plain; charset=utf-8'})
+
+        self.append_new_dataset(
+            'text_slash_with_no_subtype',
+            {'payload_content_type': 'text/'})
+
+class OrderContentTypeDataSetNegative(DatasetList):
+    def __init__(self):
+        large_string = str(bytearray().zfill(10001))
+
         self.append_new_dataset(
             'large_string_type',
             {'payload_content_type': large_string})
         self.append_new_dataset(
             'int_type',
             {'payload_content_type': 123})
-        self.append_new_dataset(
-            'text_plain',
-            {'payload_content_type': 'text/plain'})
-        self.append_new_dataset(
-            'text',
-            {'payload_content_type': 'text'})
-        self.append_new_dataset(
-            'text_slash_with_no_subtype',
-            {'payload_content_type': 'text/'})
-        self.append_new_dataset(
-            'text_plain_space_charset_utf88',
-            {'payload_content_type': 'text/plain; charset=utf-88'})
-        self.append_new_dataset(
-            'invalid_content_type',
-            {'payload_content_type': 'invalid'})
-
 
 class OrderPayloadDataSet(PayloadDataSetNegative):
     def __init__(self):
@@ -130,9 +138,9 @@ class DataDriveSecretsAPI(OrdersFixture):
         self.assertIs(type(secret.bit_length), int)
         self.assertEqual(secret.bit_length, bit_length)
 
-    @data_driven_test(dataset_source=OrderContentTypeDataSet())
+    @data_driven_test(dataset_source=OrderContentTypeDataSetNegative())
     @tags(type='negative')
-    def ddtest_create_order_w_payload_content_type(
+    def ddtest_create_order_w_invalid_payload_content_type(
             self, payload_content_type=None):
         """Covers creating orders with invalid content types
 
@@ -145,6 +153,22 @@ class DataDriveSecretsAPI(OrdersFixture):
             mode=self.config.mode,
             bit_length=self.config.bit_length)
         self.assertEqual(resp.status_code, 400)
+
+    @data_driven_test(dataset_source=OrderContentTypeDataSetPositive())
+    @tags(type='positive')
+    def ddtest_create_order_w_valid_payload_content_type(
+            self, payload_content_type=None):
+        """Covers creating orders with valid content types
+
+        Should return 202.
+        """
+        resp = self.behaviors.create_order(
+            name=self.config.name,
+            payload_content_type=payload_content_type,
+            algorithm=self.config.algorithm,
+            mode=self.config.mode,
+            bit_length=self.config.bit_length)
+        self.assertEqual(resp.status_code, 202)
 
     @data_driven_test(dataset_source=NameDataSetPositive())
     @tags(type='positive')
@@ -232,20 +256,6 @@ class OrdersAPI(OrdersFixture):
             mode=self.config.mode)
         self.assertEqual(resp.status_code, 202,
                          'Returned unexpected response code')
-
-    @tags(type='negative')
-    def test_create_order_with_text_plain(self):
-        """ An order shouldn't be able to be created with a content-type
-        of text/plain.
-        """
-        resps = self.behaviors.create_and_check_order(
-            payload_content_type="text/plain",
-            name=self.config.name,
-            algorithm=self.config.algorithm,
-            bit_length=self.config.bit_length,
-            mode=self.config.mode)
-
-        self.assertEqual(resps.create_resp.status_code, 400)
 
     @tags(type='negative')
     def test_get_order_that_doesnt_exist(self):

@@ -94,6 +94,7 @@ class SecretsAPI(SecretsFixture):
         self.assertIn('testing_update_secret', sec_resp.content)
 
     @tags(type='positive')
+    @skip_open_issue('launchpad', '1377330')
     @skip_open_issue('launchpad', '1311240')
     def test_deleting_a_secret(self):
         """Covers deleting a secret."""
