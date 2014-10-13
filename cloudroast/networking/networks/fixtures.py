@@ -14,10 +14,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import netaddr
+
 from cafe.drivers.unittest.fixtures import BaseTestFixture
 from cloudcafe.common.resources import ResourcePool
 from cloudcafe.compute.composites import ComputeComposite
 from cloudcafe.networking.networks.composites import NetworkingComposite
+from cloudcafe.networking.networks.config import NetworkingSecondUserConfig
 
 
 class NetworkingFixture(BaseTestFixture):
@@ -102,6 +105,123 @@ class NetworkingFixture(BaseTestFixture):
             cls.networks.behaviors.clean_networks(
                 networks_list=cls.delete_networks)
 
+    def assertNegativeResponse(self, resp, status_code, msg, delete_list=None,
+                               entity=None):
+        """
+        @summary: negative test response assertion
+        @param resp: networking response
+        @type resp: common.behaviors.NetworkingResponse
+        @param status_code: expected status code
+        @type status_code: int
+        @param delete list: networks, subnets or ports delete list
+        @type delete_list: list
+        @param msg: negative action performed
+        @type msg: string
+        @param entity: if entity should be None it should not be set
+        @type entity: None or expected entity
+        """
+        # Just in case there is a resource that should be deleted
+        if (delete_list is not None and resp.response.entity
+            and hasattr(resp.response.entity, 'id')):
+            delete_list.append(resp.response.entity.id)
+        message = ('{msg}: unexpected HTTP response {resp_status} instead of '
+                   'the expected {status}'.format(
+                    msg=msg, resp_status=resp.response.status_code,
+                    status=status_code))
+        self.assertEqual(resp.response.status_code, status_code, message)
+        self.assertTrue(resp.failures, 'Missing expected failures')
+
+        # Expected entity assertion for negative testing
+        entity_msg = 'Unexpected entity: {0}'.format(resp.response.entity)
+        if entity:
+            self.assertEqual(resp.response.entity, entity, entity_msg)
+        elif entity is None:
+            self.assertIsNone(resp.response.entity, entity_msg)
+        else:
+            self.assertFalse(resp.response.entity, entity_msg)
+
+    def assertNetworkResponse(self, expected_network, network):
+        """
+        @summary: compares two network entity objects
+        """
+        self.fixture_log.info('asserting Network response ...')
+        print network
+        msg = 'Expected {0} instead of {1}'
+        self.assertEqual(
+            expected_network.status, network.status,
+            msg.format(expected_network.status, network.status))
+        self.assertEqual(
+            expected_network.subnets, network.subnets,
+            msg.format(expected_network.subnets, network.subnets))
+        self.assertEqual(
+            expected_network.name, network.name,
+            msg.format(expected_network.name, network.name))
+        self.assertEqual(
+            expected_network.admin_state_up, network.admin_state_up,
+            msg.format(expected_network.admin_state_up,
+                       network.admin_state_up))
+        self.assertEqual(
+            expected_network.tenant_id, network.tenant_id,
+            msg.format(expected_network.tenant_id, network.tenant_id))
+        self.assertEqual(
+            expected_network.shared, network.shared,
+            msg.format(expected_network.shared, network.shared))
+
+        self.assertTrue(network.id, 'Missing Network ID')
+
+        if self.config.check_response_attrs:
+            msg = 'Unexpected Network response attributes: {0}'.format(
+                network.kwargs)
+            self.assertFalse(network.kwargs, msg)
+
+    def assertSubnetResponse(self, expected_subnet, subnet):
+        """
+        @summary: compares two network entity objects
+        """
+        self.fixture_log.info('asserting Subnet response ...')
+        print expected_subnet
+        print subnet
+        msg = 'Expected {0} instead of {1}'
+        self.assertEqual(
+            expected_subnet.name, subnet.name,
+            msg.format(expected_subnet.name, subnet.name))
+        self.assertEqual(
+            expected_subnet.enable_dhcp, subnet.enable_dhcp,
+            msg.format(expected_subnet.enable_dhcp, subnet.enable_dhcp))
+        self.assertEqual(
+            expected_subnet.network_id, subnet.network_id,
+            msg.format(expected_subnet.network_id, subnet.network_id))
+        self.assertEqual(
+            expected_subnet.tenant_id, subnet.tenant_id,
+            msg.format(expected_subnet.tenant_id, subnet.tenant_id))
+        self.assertEqual(
+            expected_subnet.dns_nameservers, subnet.dns_nameservers,
+            msg.format(expected_subnet.dns_nameservers,
+                       subnet.dns_nameservers))
+        self.assertEqual(
+            expected_subnet.allocation_pools, subnet.allocation_pools,
+            msg.format(expected_subnet.allocation_pools,
+                       subnet.allocation_pools))
+        self.assertEqual(
+            expected_subnet.gateway_ip, subnet.gateway_ip,
+            msg.format(expected_subnet.gateway_ip, subnet.gateway_ip))
+        self.assertEqual(
+            expected_subnet.ip_version, subnet.ip_version,
+            msg.format(expected_subnet.ip_version, subnet.ip_version))
+        self.assertEqual(
+            expected_subnet.host_routes, subnet.host_routes,
+            msg.format(expected_subnet.host_routes, subnet.host_routes))
+        self.assertEqual(
+            expected_subnet.cidr, subnet.cidr,
+            msg.format(expected_subnet.cidr, subnet.cidr))
+
+        self.assertTrue(subnet.id, 'Missing Subnet ID')
+
+        if self.config.check_response_attrs:
+            msg = 'Unexpected Subnet response attributes: {0}'.format(
+                subnet.kwargs)
+            self.assertFalse(subnet.kwargs, msg)
+
 
 class NetworkingAPIFixture(NetworkingFixture):
     """
@@ -111,6 +231,9 @@ class NetworkingAPIFixture(NetworkingFixture):
     @classmethod
     def setUpClass(cls):
         super(NetworkingAPIFixture, cls).setUpClass()
+
+        # Getting second user data for negative testing
+        cls.alt_user = NetworkingSecondUserConfig()
 
         # Using the networkingCleanup method
         cls.addClassCleanup(cls.networkingCleanUp)
