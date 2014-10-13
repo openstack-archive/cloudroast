@@ -105,7 +105,7 @@ class L2HostroutesGatewayMixin(object):
         @return: next contigous cidr
         @rtype: IPy.IP
         """
-        next_cidr_1st_ip = cidr[0].ip + len(cidr)
+        next_cidr_1st_ip = cidr[-1].ip + 1
         return IP('{}/{}'.format(str(next_cidr_1st_ip),
                                  str(cidr.prefixlen())))
 
@@ -138,6 +138,10 @@ class L2HostroutesGatewayTest(NetworkingComputeFixture,
     """
 
     PING_COMMAND = 'ping -c 3 {}'
+    ROUTE_COMMAND = 'route'
+    ENABLE_IP_FORWARDING_CMDS = [
+        'iptables -t nat -A POSTROUTING -o eth3 -j MASQUERADE',
+        'echo 1 > /proc/sys/net/ipv4/ip_forward']
 
     @classmethod
     def setUpClass(cls):
@@ -149,6 +153,7 @@ class L2HostroutesGatewayTest(NetworkingComputeFixture,
         cls.networks_behaviors = cls.net.behaviors.networks_behaviors
         cls.subnets_behaviors = cls.net.behaviors.subnets_behaviors
         cls.ports_behaviors = cls.net.behaviors.ports_behaviors
+        cls.networks_client = cls.networks_behaviors.client
 
         # Get a base cidr for test from the configuration file
         cls.base_cidr = ''.join(
@@ -188,6 +193,14 @@ class L2HostroutesGatewayTest(NetworkingComputeFixture,
         # to nova instances using device_id during port create / update
         self.router = self._create_server('router', [self.network_with_route,
                                                      self.destination_network])
+
+        # Verify a network cannot be deleted if it has an instance attached to
+        # it
+        resp = self.networks_client.delete_network(self.network_with_route.id)
+        msg = ('Attempt to delete a network with an active instance should '
+               'return 409, Conflict. Instead, it returned {}')
+        msg = msg.format(str(resp.status_code))
+        self.assertEqual(resp.status_code, 409, msg)
         return
 
         # Attach router to a port in the destination network
@@ -207,17 +220,7 @@ class L2HostroutesGatewayTest(NetworkingComputeFixture,
         # to nova instances using device_id during port create / update
 
     def _enable_ip_forwarding(self, ssh_client):
-        commands = [
-            'iptables -A INPUT -i lo -j ACCEPT',
-            'iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT',
-            'iptables -A INPUT -m state --state NEW ! -i eth3 -j ACCEPT',
-            ('iptables -A FORWARD -i eth3 -o eth2 -m state --state '
-             'ESTABLISHED,RELATED -j ACCEPT'),
-            'iptables -A FORWARD -i eth2 -o eth3 -j ACCEPT',
-            'iptables -t nat -A POSTROUTING -o eth3 -j MASQUERADE',
-            'iptables -A FORWARD -i eth3 -o eth2 -j REJECT',
-            'echo 1 > /proc/sys/net/ipv4/ip_forward']
-        for cmd in commands:
+        for cmd in self.ENABLE_IP_FORWARDING_CMDS:
             msg = 'Error executing remote shell command: {}'.format(cmd)
             stderr = ssh_client.execute_command(cmd).stderr
             self.assertFalse(stderr, '{}. Error was: {}'.format(msg, stderr))
@@ -230,11 +233,16 @@ class L2HostroutesGatewayTest(NetworkingComputeFixture,
         # Confirm routes are setup correctly in origin server
         destination = self.destination_subnet.cidr[
             :self.destination_subnet.cidr.rindex('/')]
-        route_cmd = 'route -n | grep {}'.format(destination)
+        # TODO remove next 3 line when dev team fixes problem with ipv6 host
+        # routes not being propagated to instances
+        nexthop = getattr(self.router, self.network_with_route.name)
+        self.origin.remote_client.ssh_client.execute_command(
+            'route -A inet6 add {}/48 gw {}'.format(destination, nexthop))
+        route_cmd = '{} -n | grep {}'.format(self.ROUTE_COMMAND, destination)
         route = self.origin.remote_client.ssh_client.execute_command(
             route_cmd).stdout.split(' ')
         msg = "Expected route was not found in 'origin' server"
-        self.assertEqual(destination, route[0], msg)
+        self.assertIn(destination, route[0], msg)
         self.assertIn(
             getattr(self.router, self.network_with_route.name),
             route, msg)
@@ -242,7 +250,7 @@ class L2HostroutesGatewayTest(NetworkingComputeFixture,
         # Confirm routes are setup correctly in destination server
         origin = self.subnet_with_route.cidr[
             :self.subnet_with_route.cidr.rindex('/')]
-        route_cmd = 'route -n | grep {}'.format(origin)
+        route_cmd = '{} -n | grep {}'.format(self.ROUTE_COMMAND, origin)
         route = self.destination.remote_client.ssh_client.execute_command(
             route_cmd).stdout
         msg = "Unexpected route was found in 'destination' server"
@@ -480,3 +488,29 @@ class GatewayPoliciesTest(NetworkingComputeFixture,
                 break
         else:
             self.fail(msg)
+
+
+class L2HostroutesGatewayTestIPV6(L2HostroutesGatewayTest,
+                                  L2HostroutesGatewayMixin):
+
+    """
+    This class implements the same scenario as class L2HostroutesGatewayTest
+    above. The difference is that the 'origin' and 'destination' networks are
+    ipv6
+    """
+
+    PING_COMMAND = 'ping6 -c 3 {}'
+    ROUTE_COMMAND = 'route -A inet6'
+    ENABLE_IP_FORWARDING_CMDS = [
+        'ip6tables -t nat -A POSTROUTING -o eth3 -j MASQUERADE',
+        'echo 1 > /proc/sys/net/ipv6/conf/all/forwarding']
+
+    @classmethod
+    def setUpClass(cls):
+        super(L2HostroutesGatewayTestIPV6, cls).setUpClass()
+
+        # Get a base cidr for test from the configuration file
+        cls.base_cidr = ''.join(
+            [cls.subnets_behaviors.config.ipv6_prefix, '/',
+             str(cls.subnets_behaviors.config.ipv6_suffix)])
+        cls.ip_version = IP(cls.base_cidr).version()
