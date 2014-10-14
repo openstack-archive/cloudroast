@@ -19,8 +19,6 @@ import unittest
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.networking.networks.common.constants \
     import NeutronResponseCodes
-from cloudcafe.networking.networks.common.models.response.network \
-    import Network
 from cloudcafe.networking.networks.config import NetworkingSecondUserConfig
 from cloudroast.networking.networks.fixtures import NetworkingAPIFixture
 
@@ -31,24 +29,16 @@ class NetworkCreateTest(NetworkingAPIFixture):
     def setUpClass(cls):
         """Setting up test data"""
         super(NetworkCreateTest, cls).setUpClass()
-
-        # Data for creating networks and asserting responses
-        cls.network_data = dict(
-            status='ACTIVE', subnets=[],
-            name='test_net_create', admin_state_up=None,
-            tenant_id=cls.net.networking_auth_composite().tenant_id,
-            shared=False)
+        cls.expected_network = cls.get_expected_network_data()
 
     @tags(type='smoke', rbac='creator')
     def test_network_create(self):
         """
         @summary: Creating a network
         """
-        expected_network = Network(**self.network_data)
-
         # Creating network
         resp = self.networks.behaviors.create_network(
-            name=expected_network.name, use_exact_name=True,
+            name=self.expected_network.name, use_exact_name=True,
             raise_exception=False)
         if resp.response.entity and hasattr(resp.response.entity, 'id'):
             self.delete_networks.append(resp.response.entity.id)
@@ -58,9 +48,9 @@ class NetworkCreateTest(NetworkingAPIFixture):
         network = resp.response.entity
 
         # Check the Network response
-        self.assertNetworkResponse(expected_network, network)
+        self.assertNetworkResponse(self.expected_network, network)
 
-    @tags(type='negative', rbac='creator')
+    @tags(type='negative', rbac='creator', quark='yes')
     def test_network_create_w_shared(self):
         """
         @summary: Negative test creating a network with the shared attribute.
@@ -89,13 +79,13 @@ class NetworkCreateTest(NetworkingAPIFixture):
         """
         @summary: Creating a network with the admin_state_up attribute as true
         """
-        expected_network = Network(**self.network_data)
-        expected_network.admin_state_up = True
+        # The expected network will always have the admin_state_up True
+        admin_state_up = True
 
         # Creating expected network
         resp = self.networks.behaviors.create_network(
-            name=expected_network.name,
-            admin_state_up=expected_network.admin_state_up,
+            name=self.expected_network.name,
+            admin_state_up=admin_state_up,
             use_exact_name=True, raise_exception=False)
         if resp.response.entity and hasattr(resp.response.entity, 'id'):
             self.delete_networks.append(resp.response.entity.id)
@@ -105,20 +95,20 @@ class NetworkCreateTest(NetworkingAPIFixture):
         network = resp.response.entity
 
         # Check the Network response
-        self.assertNetworkResponse(expected_network, network)
+        self.assertNetworkResponse(self.expected_network, network)
 
-    @tags(type='positive', rbac='creator')
+    @tags(type='positive', rbac='creator', quark='yes')
     def test_network_create_w_admin_state_up_false(self):
         """
         @summary: Creating a network with the admin_state_up attribute as false
         """
-        expected_network = Network(**self.network_data)
-        expected_network.admin_state_up = False
+        # The expected network will always have the admin_state_up True
+        admin_state_up = False
 
         # Creating expected network
         resp = self.networks.behaviors.create_network(
-            name=expected_network.name,
-            admin_state_up=expected_network.admin_state_up,
+            name=self.expected_network.name,
+            admin_state_up=admin_state_up,
             use_exact_name=True, raise_exception=False)
         if resp.response.entity and hasattr(resp.response.entity, 'id'):
             self.delete_networks.append(resp.response.entity.id)
@@ -128,19 +118,17 @@ class NetworkCreateTest(NetworkingAPIFixture):
         network = resp.response.entity
 
         # Check the Network response
-        self.assertNetworkResponse(expected_network, network)
+        self.assertNetworkResponse(self.expected_network, network)
 
     @tags(type='positive', rbac='creator')
     def test_network_create_w_tenant_id(self):
         """
         @summary: Creating a network with the tenant_id
         """
-        expected_network = Network(**self.network_data)
-
         # Creating expected network
         resp = self.networks.behaviors.create_network(
-            name=expected_network.name,
-            tenant_id=expected_network.tenant_id,
+            name=self.expected_network.name,
+            tenant_id=self.expected_network.tenant_id,
             use_exact_name=True, raise_exception=False)
         if resp.response.entity and hasattr(resp.response.entity, 'id'):
             self.delete_networks.append(resp.response.entity.id)
@@ -150,7 +138,7 @@ class NetworkCreateTest(NetworkingAPIFixture):
         network = resp.response.entity
 
         # Check the Network response
-        self.assertNetworkResponse(expected_network, network)
+        self.assertNetworkResponse(self.expected_network, network)
 
     @unittest.skipIf(not NetworkingSecondUserConfig().tenant_id,
                      'Missing secondary networking user in config file')
@@ -174,6 +162,6 @@ class NetworkCreateTest(NetworkingAPIFixture):
                'while creating a network with another tenant ID').format(
                 resp.response.status_code, NeutronResponseCodes.FORBIDDEN)
         self.assertEqual(resp.response.status_code,
-                         NeutronResponseCodes.FORBIDDEN, msg)
+                         NeutronResponseCodes.BAD_REQUEST, msg)
         self.assertIsNone(resp.response.entity, 'Unexpected entity')
         self.assertTrue(resp.failures, 'Missing expected failures')
