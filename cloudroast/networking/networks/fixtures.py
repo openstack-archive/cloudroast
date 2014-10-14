@@ -76,7 +76,7 @@ class NetworkingFixture(BaseTestFixture):
         """
 
         cls.fixture_log.info('networkingCleanUp ....')
-        if not cls.ports.config.keep_resources:
+        if not cls.ports.config.keep_resources and cls.delete_ports:
             if cls.ports.config.keep_resources_on_failure:
                 cls.fixture_log.info('Keeping failed ports...')
                 for failed_port in cls.failed_ports:
@@ -85,7 +85,7 @@ class NetworkingFixture(BaseTestFixture):
             cls.fixture_log.info('Deleting ports...')
             cls.ports.behaviors.clean_ports(ports_list=cls.delete_ports)
 
-        if not cls.subnets.config.keep_resources:
+        if not cls.subnets.config.keep_resources and cls.delete_subnets:
             if cls.subnets.config.keep_resources_on_failure:
                 cls.fixture_log.info('Keeping failed subnets...')
                 for failed_subnet in cls.failed_subnets:
@@ -95,7 +95,7 @@ class NetworkingFixture(BaseTestFixture):
             cls.subnets.behaviors.clean_subnets(
                 subnets_list=cls.delete_subnets)
 
-        if not cls.networks.config.keep_resources:
+        if not cls.networks.config.keep_resources and cls.delete_networks:
             if cls.networks.config.keep_resources_on_failure:
                 cls.fixture_log.info('Keeping failed networks...')
                 for failed_network in cls.failed_networks:
@@ -106,7 +106,7 @@ class NetworkingFixture(BaseTestFixture):
                 networks_list=cls.delete_networks)
 
     def assertNegativeResponse(self, resp, status_code, msg, delete_list=None,
-                               entity=None):
+                               entity=None, error_type=None):
         """
         @summary: negative test response assertion
         @param resp: networking response
@@ -119,6 +119,8 @@ class NetworkingFixture(BaseTestFixture):
         @type msg: string
         @param entity: if entity should be None it should not be set
         @type entity: None or expected entity
+        @param error_type: Neutron error type at common/constants
+        @type error_type: string
         """
         # Just in case there is a resource that should be deleted
         if (delete_list is not None and resp.response.entity
@@ -140,22 +142,35 @@ class NetworkingFixture(BaseTestFixture):
         else:
             self.assertFalse(resp.response.entity, entity_msg)
 
-    def assertNetworkResponse(self, expected_network, network):
+        # Neutron error type check
+        if error_type:
+            error_msg_check = error_type in resp.failures[0]
+            msg = ('Expected {0} error type in failure msg: {1}').format(
+                error_type, resp.failures[0])
+            self.assertTrue(error_msg_check, msg)
+
+    def assertNetworkResponse(self, expected_network, network,
+                              check_exact_name=True):
         """
         @summary: compares two network entity objects
         """
         self.fixture_log.info('asserting Network response ...')
-        print network
         msg = 'Expected {0} instead of {1}'
+        if check_exact_name:
+            self.assertEqual(
+                expected_network.name, network.name,
+                msg.format(expected_network.name, network.name))
+        else:
+            start_name_msg = 'Expected {0} name to start with {1}'.format(
+                network.name, expected_network.name)
+            self.assertTrue(network.name.startswith(expected_network.name),
+                            start_name_msg)
         self.assertEqual(
             expected_network.status, network.status,
             msg.format(expected_network.status, network.status))
         self.assertEqual(
             expected_network.subnets, network.subnets,
             msg.format(expected_network.subnets, network.subnets))
-        self.assertEqual(
-            expected_network.name, network.name,
-            msg.format(expected_network.name, network.name))
         self.assertEqual(
             expected_network.admin_state_up, network.admin_state_up,
             msg.format(expected_network.admin_state_up,
@@ -174,17 +189,22 @@ class NetworkingFixture(BaseTestFixture):
                 network.kwargs)
             self.assertFalse(network.kwargs, msg)
 
-    def assertSubnetResponse(self, expected_subnet, subnet):
+    def assertSubnetResponse(self, expected_subnet, subnet,
+                             check_exact_name=True):
         """
         @summary: compares two network entity objects
         """
         self.fixture_log.info('asserting Subnet response ...')
-        print expected_subnet
-        print subnet
         msg = 'Expected {0} instead of {1}'
-        self.assertEqual(
-            expected_subnet.name, subnet.name,
-            msg.format(expected_subnet.name, subnet.name))
+        if check_exact_name:
+            self.assertEqual(
+                expected_subnet.name, subnet.name,
+                msg.format(expected_subnet.name, subnet.name))
+        else:
+            start_name_msg = 'Expected {0} name to start with {1}'.format(
+                subnet.name, expected_subnet.name)
+            self.assertTrue(subnet.name.startswith(expected_subnet.name),
+                            start_name_msg)
         self.assertEqual(
             expected_subnet.enable_dhcp, subnet.enable_dhcp,
             msg.format(expected_subnet.enable_dhcp, subnet.enable_dhcp))
