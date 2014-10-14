@@ -208,11 +208,11 @@ class SubnetCreateTest(NetworkingAPIFixture):
         # Check the Subnet response
         self.assertSubnetResponse(expected_subnet, subnet)
 
-    @tags(type='negative', rbac='creator', quark='yes')
+    @tags(type='positive', rbac='creator', quark='yes')
     def test_ipv4_subnet_create_w_enable_dhcp(self):
         """
-        @summary: Negative test creating a subnet with the enable_dhcp param.
-            This attribute is NOT settable with the Quark plugin
+        @summary: Creating a subnet with the enable_dhcp param.
+            This attribute can NOT be set with the Quark plugin
         """
         # Setting the expected Subnet and test data params
         expected_subnet = self.expected_ipv4_subnet
@@ -222,38 +222,60 @@ class SubnetCreateTest(NetworkingAPIFixture):
         resp = self.subnets.behaviors.create_subnet(
             network_id=expected_subnet.network_id,
             name=expected_subnet.name,
+            ip_version=expected_subnet.ip_version,
+            cidr=expected_subnet.cidr,
             enable_dhcp=expected_subnet.enable_dhcp,
             raise_exception=False)
+        if resp.response.entity and hasattr(resp.response.entity, 'id'):
+            self.delete_subnets.append(resp.response.entity.id)
 
-        # Subnet create should be unavailable with the enable_dhcp param
-        msg = '(negative) Creating a subnet with the enable_dhcp param'
-        self.assertNegativeResponse(
-            resp=resp, status_code=NeutronResponseCodes.BAD_REQUEST, msg=msg,
-            delete_list=self.delete_subnets)
+        # Fail the test if any failure is found
+        self.assertFalse(resp.failures)
+        subnet = resp.response.entity
 
-    @tags(type='negative', rbac='creator', quark='yes')
+        # Enable dhcp is not a settable attribute
+        expected_subnet.enable_dhcp = None
+
+        # Check the Subnet response
+        self.assertSubnetResponse(expected_subnet, subnet,
+                                  check_exact_name=False)
+
+    @tags(type='positive', rbac='creator', quark='yes')
     def test_ipv6_subnet_create_w_enable_dhcp(self):
         """
-        @summary: Negative test creating a subnet with the enable_dhcp param.
-            This attribute is NOT settable with the Quark plugin
+        @summary: Creating a subnet with the enable_dhcp param.
+            This attribute can NOT be set with the Quark plugin
         """
         # Setting the expected Subnet and test data params
         expected_subnet = self.expected_ipv6_subnet
         expected_subnet.enable_dhcp = True
 
-        # Creating IPv4 subnet
+        # Creating IPv6 subnet
         resp = self.subnets.behaviors.create_subnet(
             network_id=expected_subnet.network_id,
             name=expected_subnet.name,
             ip_version=expected_subnet.ip_version,
+            cidr=expected_subnet.cidr,
             enable_dhcp=expected_subnet.enable_dhcp,
             raise_exception=False)
+        if resp.response.entity and hasattr(resp.response.entity, 'id'):
+            self.delete_subnets.append(resp.response.entity.id)
 
-        # Subnet create should be unavailable with the enable_dhcp param
-        msg = '(negative) Creating a subnet with the enable_dhcp param'
-        self.assertNegativeResponse(
-            resp=resp, status_code=NeutronResponseCodes.BAD_REQUEST, msg=msg,
-            delete_list=self.delete_subnets)
+        # Fail the test if any failure is found
+        self.assertFalse(resp.failures)
+        subnet = resp.response.entity
+
+        # Need to format IPv6 allocation pools response for assertion
+        subnet.allocation_pools = (
+            self.subnets.behaviors.format_allocation_pools(
+                subnet.allocation_pools))
+
+        # Enable dhcp is not a settable attribute
+        expected_subnet.enable_dhcp = None
+
+        # Check the Subnet response
+        self.assertSubnetResponse(expected_subnet, subnet,
+                                  check_exact_name=False)
 
     @tags(type='negative', rbac='creator')
     def test_ipv4_subnet_create_w_invalid_network_id(self):
