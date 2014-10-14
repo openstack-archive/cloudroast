@@ -150,14 +150,14 @@ class VolumesTestFixture(BaseVolumesTestFixture):
             acceptable_statuses=[statuses.Volume.AVAILABLE],
             error_statuses=[statuses.Volume.ERROR],
             timeout=self.volumes.config.volume_clone_min_timeout,
-            poll_rate=self.volumes.config.volume_status_poll_frequency,
+            poll_interval=self.volumes.config.volume_status_poll_frequency,
             poll_failure_retry_limit=3)
 
         verifier.add_state(
             expected_statuses=[statuses.Volume.AVAILABLE],
             error_statuses=[statuses.Volume.ERROR],
             timeout=timeout,
-            poll_rate=self.volumes.config.volume_status_poll_frequency,
+            poll_interval=self.volumes.config.volume_status_poll_frequency,
             poll_failure_retry_limit=3)
 
         verifier.start()
@@ -175,7 +175,7 @@ class VolumesTestFixture(BaseVolumesTestFixture):
             expected_statuses=[statuses.Volume.ERROR],
             error_statuses=[statuses.Volume.AVAILABLE],
             timeout=self.volumes.config.volume_clone_min_timeout,
-            poll_rate=self.volumes.config.volume_status_poll_frequency,
+            poll_interval=self.volumes.config.volume_status_poll_frequency,
             poll_failure_retry_limit=3)
 
         verifier.start()

@@ -113,14 +113,14 @@ class NovaCLI_IntegrationFixture(BaseVolumesTestFixture):
             acceptable_statuses=[statuses.Volume.AVAILABLE],
             error_statuses=[statuses.Volume.ERROR],
             timeout=1800,
-            poll_rate=10)
+            poll_interval=10)
 
         verifier.add_state(
             expected_statuses=[
                 statuses.Volume.AVAILABLE],
             error_statuses=[
                 statuses.Volume.ERROR],
-            timeout=1800, poll_rate=10)
+            timeout=1800, poll_interval=10)
 
         verifier.start()
 
