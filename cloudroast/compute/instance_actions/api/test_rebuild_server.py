@@ -263,34 +263,34 @@ class RebuildServerTests(object):
 class RebuildBaseFixture(object):
 
     @classmethod
-    def rebuild_and_await(self):
+    def rebuild_and_await(cls):
         # Rebuild and wait for server to return to active state
-        self.metadata = {'key': 'value'}
-        self.name = rand_name('testserver')
-        personality = self.server_behaviors.get_default_injected_files()
-        if self.file_injection_enabled:
-            separator = self.images_config.primary_image_path_separator
-            self.file_path = separator.join(
-                [self.servers_config.default_file_path, 'rebuild.txt'])
-            self.file_contents = 'Test server rebuild.'
+        cls.metadata = {'key': 'value'}
+        cls.name = rand_name('testserver')
+        personality = cls.server_behaviors.get_default_injected_files()
+        if cls.file_injection_enabled:
+            separator = cls.images_config.primary_image_path_separator
+            cls.file_path = separator.join(
+                [cls.servers_config.default_file_path, 'rebuild.txt'])
+            cls.file_contents = 'Test server rebuild.'
             if personality is None:
                 personality = []
-            personality.extend([{'path': self.file_path,
+            personality.extend([{'path': cls.file_path,
                                  'contents': base64.b64encode(
-                                     self.file_contents)}])
-        self.password = 'R3builds3ver'
+                                     cls.file_contents)}])
+        cls.password = 'R3builds3ver'
         security_groups = None
-        if self.security_groups_config.default_security_group:
+        if cls.security_groups_config.default_security_group:
             security_groups = [
-                {"name": self.security_groups_config.default_security_group}]
+                {"name": cls.security_groups_config.default_security_group}]
 
-        self.rebuilt_server_response = self.servers_client.rebuild(
-            self.server.id, self.image_ref_alt, name=self.name,
-            metadata=self.metadata, personality=personality,
-            admin_pass=self.password, key_name=self.key.name,
+        cls.rebuilt_server_response = cls.servers_client.rebuild(
+            cls.server.id, cls.image_ref_alt, name=cls.name,
+            metadata=cls.metadata, personality=personality,
+            admin_pass=cls.password, key_name=cls.key.name,
             security_groups=security_groups)
-        self.server_behaviors.wait_for_server_status(
-            self.server.id, NovaServerStatusTypes.ACTIVE)
+        cls.server_behaviors.wait_for_server_status(
+            cls.server.id, NovaServerStatusTypes.ACTIVE)
 
 
 class ServerFromImageRebuildTests(ServerFromImageFixture,

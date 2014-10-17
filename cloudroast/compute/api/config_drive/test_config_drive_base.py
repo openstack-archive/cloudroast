@@ -51,7 +51,7 @@ class ConfigDriveTest(ComputeFixture):
     @tags(type='smoke', net='no')
     def test_create_server_config_drive_response(self):
         """Verify the config drive is set to Active"""
-        self.assertEqual(200, self.server_response.status_code)
+        self.assertEqual(202, self.server_response.status_code)
         self.assertEqual(self.server.config_drive, 'True',
                          msg="Server config drive is set to true")
 

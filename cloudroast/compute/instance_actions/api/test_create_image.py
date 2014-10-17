@@ -108,10 +108,8 @@ class ServerFromImageCreateImageTests(ServerFromImageFixture,
         cls.metadata = {'user_key1': 'value1',
                         'user_key2': 'value2'}
         server_id = cls.server.id
-        cls.image_response = cls.servers_client.create_image(
+        cls.image_response = cls.image_behaviors.create_active_image(
             server_id, cls.image_name, metadata=cls.metadata)
         cls.image_id = cls.parse_image_id(cls.image_response)
         cls.resources.add(cls.image_id, cls.images_client.delete_image)
-        cls.image_behaviors.wait_for_image_status(
-            cls.image_id, NovaImageStatusTypes.ACTIVE)
-        cls.image = cls.images_client.get_image(cls.image_id).entity
+        cls.image = cls.image_response.entity
