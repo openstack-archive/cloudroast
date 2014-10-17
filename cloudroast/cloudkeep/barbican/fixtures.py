@@ -339,15 +339,14 @@ class ContainerFixture(OrdersFixture):
 
 class ModeDataSetPositive(DatasetList):
     def __init__(self):
-        large_string = str(bytearray().zfill(10001))
         self.append_new_dataset('cbc', {'mode': 'cbc'})
-        self.append_new_dataset('large_string', {'mode': large_string})
 
 
 class ModeDataSetNegative(DatasetList):
     def __init__(self):
+        large_string = str(bytearray().zfill(10001))
         self.append_new_dataset('zero', {'mode': 0})
-
+        self.append_new_dataset('large_string', {'mode': large_string})
 
 class NameDataSetPositive(DatasetList):
     def __init__(self):
