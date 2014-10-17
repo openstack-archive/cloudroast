@@ -269,15 +269,6 @@ class ServerFromImageCreateServerTests(ServerFromImageFixture,
         cls.name = rand_name("server")
         cls.metadata = {'meta_key_1': 'meta_value_1',
                         'meta_key_2': 'meta_value_2'}
-        networks = None
-        if cls.servers_config.default_network:
-            networks = [{'uuid': cls.servers_config.default_network}]
-
-        security_groups = None
-        if cls.security_groups_config.default_security_group:
-            security_groups = [
-                {"name": cls.security_groups_config.default_security_group}]
-
         files = None
         if cls.file_injection_enabled:
             cls.file_contents = 'This is a test file.'
@@ -286,28 +277,18 @@ class ServerFromImageCreateServerTests(ServerFromImageFixture,
                 [cls.servers_config.default_file_path, 'test.txt'])
             files = [{'path': cls.file_path, 'contents': base64.b64encode(
                 cls.file_contents)}]
-        default_files = cls.server_behaviors.get_default_injected_files()
-        if files and default_files:
-            files.extend(default_files)
-        else:
-            files = files or default_files
         cls.key = cls.keypairs_client.create_keypair(rand_name("key")).entity
         cls.resources.add(cls.key.name,
                           cls.keypairs_client.delete_keypair)
-        cls.create_resp = cls.servers_client.create_server(
+        cls.create_resp = cls.server_behaviors.create_active_server(
             cls.name, cls.image_ref, cls.flavor_ref, metadata=cls.metadata,
-            personality=files, key_name=cls.key.name, networks=networks,
-            security_groups=security_groups)
-        created_server = cls.create_resp.entity
-        cls.resources.add(created_server.id,
+            personality=files, key_name=cls.key.name)
+        cls.server = cls.create_resp.entity
+        cls.resources.add(cls.server.id,
                           cls.servers_client.delete_server)
-        wait_response = cls.server_behaviors.wait_for_server_status(
-            created_server.id, NovaServerStatusTypes.ACTIVE)
-        wait_response.entity.admin_pass = created_server.admin_pass
         cls.image = cls.images_client.get_image(cls.image_ref).entity
         cls.flavor = cls.flavors_client.get_flavor_details(
             cls.flavor_ref).entity
-        cls.server = wait_response.entity
 
     @tags(type='smoke', net='no')
     def test_created_server_image_field(self):
