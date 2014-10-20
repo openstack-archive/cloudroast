@@ -24,7 +24,7 @@ from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.compute.common.types import InstanceAuthStrategies
 from cloudroast.networking.networks.fixtures import NetworkingComputeFixture
 
-NAMES_PREFIX = 'l2_hostroutes_gateway'
+NAMES_PREFIX = 'l2_routes_gateway'
 PING_PACKET_LOSS_REGEX = '(\d{1,3})\.?\d*\%.*loss'
 
 
