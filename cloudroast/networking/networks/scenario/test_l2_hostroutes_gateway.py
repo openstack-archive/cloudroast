@@ -17,6 +17,7 @@ limitations under the License.
 from IPy import IP
 import os
 import re
+import time
 
 from cafe.drivers.unittest.decorators import tags
 from cafe.engine.config import EngineConfig
@@ -368,6 +369,19 @@ class GatewayPoliciesTest(NetworkingComputeFixture,
                                 '-o StrictHostKeyChecking=no -i {} root@')
         cls.ssh_command_stub = cls.ssh_command_stub.format(remote_file_path)
 
+    def _execute_ssh_command(self, ssh_client, cmd):
+        # TODO the following hard coded delay will be removed once dev team
+        # fixes bug that makes instances unreachable with ssh for a period of
+        # time right after boot
+        time.sleep(240)
+        response = ssh_client.execute_command(cmd)
+        if ((response.stderr and
+             'Warning: Permanently added' not in response.stderr)):
+            msg = 'Error trying to ssh to test instance from gateway: {}'
+            msg = msg.format(response.stderr)
+            self.fail(msg)
+        return response.stdout
+
     def test_vm_default_route_is_null(self):
         """
         This test verifies that a vm doesn't get a default route if it is
@@ -379,8 +393,8 @@ class GatewayPoliciesTest(NetworkingComputeFixture,
         ssh_cmd = '{}{} {}'.format(self.ssh_command_stub,
                                    getattr(vm, self.access_network.name),
                                    'route | grep default')
-        output = self.gateway.remote_client.ssh_client.execute_command(
-            ssh_cmd).stdout
+        output = self._execute_ssh_command(
+            self.gateway.remote_client.ssh_client, ssh_cmd)
         msg = ('Unexpected default route was found in VM connected to network '
                'without a gateway defined')
         self.assertFalse(output, msg)
@@ -415,8 +429,8 @@ class GatewayPoliciesTest(NetworkingComputeFixture,
         ssh_cmd = '{}{} {}'.format(self.ssh_command_stub,
                                    getattr(vm, self.access_network.name),
                                    'route | grep default')
-        output = self.gateway.remote_client.ssh_client.execute_command(
-            ssh_cmd).stdout
+        output = self._execute_ssh_command(
+            self.gateway.remote_client.ssh_client, ssh_cmd)
         msg = ('Expected default route not found in VM connected to network '
                'with gateway_ip defined')
         self.assertTrue(output, msg)
@@ -452,8 +466,8 @@ class GatewayPoliciesTest(NetworkingComputeFixture,
         ssh_cmd = '{}{} {}'.format(self.ssh_command_stub,
                                    getattr(vm, self.access_network.name),
                                    'route | grep default')
-        output = self.gateway.remote_client.ssh_client.execute_command(
-            ssh_cmd).stdout
+        output = self._execute_ssh_command(
+            self.gateway.remote_client.ssh_client, ssh_cmd)
         msg = ('Expected default route not found in VM connected to network '
                'with gateway_ip defined with host routes')
         self.assertTrue(output, msg)
@@ -493,8 +507,8 @@ class GatewayPoliciesTest(NetworkingComputeFixture,
         ssh_cmd = '{}{} {}'.format(self.ssh_command_stub,
                                    getattr(vm, self.access_network.name),
                                    route_cmd)
-        output = self.gateway.remote_client.ssh_client.execute_command(
-            ssh_cmd).stdout.splitlines()
+        output = self._execute_ssh_command(
+            self.gateway.remote_client.ssh_client, ssh_cmd).splitlines()
         msg = ('Expected route not found in VM connected to network with '
                'that route defined')
         for line in output:
