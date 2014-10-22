@@ -17,6 +17,7 @@ limitations under the License.
 from IPy import IP
 import os
 import re
+import time
 
 from cafe.drivers.unittest.decorators import tags
 from cafe.engine.config import EngineConfig
@@ -70,6 +71,12 @@ class L2HostroutesGatewayMixin(object):
             key_name=cls.keypair.name,
             networks=networks).entity
         cls.resources.add(server.id, cls.servers_client.delete_server)
+
+        # TODO the following hard coded delay will be removed once dev team
+        # fixes bug that makes instances unreachable with ssh for a period of
+        # time right after boot
+        time.sleep(240)
+
         isolated_ips = cls._get_server_isolated_ips(
             server, isolated_networks_to_connect)
         remote_client = None
@@ -108,6 +115,21 @@ class L2HostroutesGatewayMixin(object):
         next_cidr_1st_ip = cidr[-1].ip + 1
         return IP('{}/{}'.format(str(next_cidr_1st_ip),
                                  str(cidr.prefixlen())))
+
+    def _execute_ssh_command(self, ssh_client, cmd):
+        response = ssh_client.execute_command(cmd)
+
+        # The only acceptable error message is the addition of the destination
+        # ip address to the known hosts list. Otherwise, fail the test
+        if ((response.stderr and
+             'Warning: Permanently added' not in response.stderr and
+             'to the list of known hosts' not in response.stderr)):
+            msg = 'Error trying to ssh to test instance from gateway: {}'
+            msg = msg.format(response.stderr)
+            self.fail(msg)
+
+        # Command execution succeeded
+        return response.stdout
 
 
 class L2HostroutesGatewayTest(NetworkingComputeFixture,
@@ -209,9 +231,7 @@ class L2HostroutesGatewayTest(NetworkingComputeFixture,
 
     def _enable_ip_forwarding(self, ssh_client):
         for cmd in self.ENABLE_IP_FORWARDING_CMDS:
-            msg = 'Error executing remote shell command: {}'.format(cmd)
-            stderr = ssh_client.execute_command(cmd).stderr
-            self.assertFalse(stderr, '{}. Error was: {}'.format(msg, stderr))
+            self._execute_ssh_command(ssh_client, cmd)
 
     def _create_communicating_servers(self):
         self.origin = self._create_server('origin', [self.network_with_route])
@@ -221,14 +241,19 @@ class L2HostroutesGatewayTest(NetworkingComputeFixture,
         # Confirm routes are setup correctly in origin server
         destination = self.destination_subnet.cidr[
             :self.destination_subnet.cidr.rindex('/')]
-        # TODO remove next 3 line when dev team fixes problem with ipv6 host
+
+        # TODO remove next 5 lines when dev team fixes problem with ipv6 host
         # routes not being propagated to instances
-        nexthop = getattr(self.router, self.network_with_route.name)
-        self.origin.remote_client.ssh_client.execute_command(
-            'route -A inet6 add {}/48 gw {}'.format(destination, nexthop))
+        if self.__class__.__name__ == 'L2HostroutesGatewayTestIPv6':
+            nexthop = getattr(self.router, self.network_with_route.name)
+            self._execute_ssh_command(
+                self.origin.remote_client.ssh_client,
+                'route -A inet6 add {}/48 gw {}'.format(destination, nexthop))
+
         route_cmd = '{} -n | grep {}'.format(self.ROUTE_COMMAND, destination)
-        route = self.origin.remote_client.ssh_client.execute_command(
-            route_cmd).stdout.split(' ')
+        route = self._execute_ssh_command(
+            self.origin.remote_client.ssh_client,
+            route_cmd).split(' ')
         msg = "Expected route was not found in 'origin' server"
         self.assertIn(destination, route[0], msg)
         self.assertIn(
@@ -239,8 +264,9 @@ class L2HostroutesGatewayTest(NetworkingComputeFixture,
         origin = self.subnet_with_route.cidr[
             :self.subnet_with_route.cidr.rindex('/')]
         route_cmd = '{} -n | grep {}'.format(self.ROUTE_COMMAND, origin)
-        route = self.destination.remote_client.ssh_client.execute_command(
-            route_cmd).stdout
+        route = self._execute_ssh_command(
+            self.destination.remote_client.ssh_client,
+            route_cmd)
         msg = "Unexpected route was found in 'destination' server"
         self.assertFalse(route, msg)
 
@@ -358,8 +384,11 @@ class GatewayPoliciesTest(NetworkingComputeFixture,
             private_key_file.write(cls.keypair.private_key)
         cls.gateway.remote_client.ssh_client.transfer_file_to(
             pkey_file_path, remote_file_path)
-        cls.gateway.remote_client.ssh_client.execute_command(
-            'chmod 600 {}'.format(remote_file_path))
+        error = cls.gateway.remote_client.ssh_client.execute_command(
+            'chmod 600 {}'.format(remote_file_path)).stderr
+        msg = ('Error changing access permission to private key file in '
+               'gateway server')
+        assert not error, msg
 
         # Create a ssh command stub that will be used in the gateway server to
         # execute commands remotely in the servers created by test methods in
@@ -379,8 +408,8 @@ class GatewayPoliciesTest(NetworkingComputeFixture,
         ssh_cmd = '{}{} {}'.format(self.ssh_command_stub,
                                    getattr(vm, self.access_network.name),
                                    'route | grep default')
-        output = self.gateway.remote_client.ssh_client.execute_command(
-            ssh_cmd).stdout
+        output = self._execute_ssh_command(
+            self.gateway.remote_client.ssh_client, ssh_cmd)
         msg = ('Unexpected default route was found in VM connected to network '
                'without a gateway defined')
         self.assertFalse(output, msg)
@@ -415,8 +444,8 @@ class GatewayPoliciesTest(NetworkingComputeFixture,
         ssh_cmd = '{}{} {}'.format(self.ssh_command_stub,
                                    getattr(vm, self.access_network.name),
                                    'route | grep default')
-        output = self.gateway.remote_client.ssh_client.execute_command(
-            ssh_cmd).stdout
+        output = self._execute_ssh_command(
+            self.gateway.remote_client.ssh_client, ssh_cmd)
         msg = ('Expected default route not found in VM connected to network '
                'with gateway_ip defined')
         self.assertTrue(output, msg)
@@ -452,8 +481,8 @@ class GatewayPoliciesTest(NetworkingComputeFixture,
         ssh_cmd = '{}{} {}'.format(self.ssh_command_stub,
                                    getattr(vm, self.access_network.name),
                                    'route | grep default')
-        output = self.gateway.remote_client.ssh_client.execute_command(
-            ssh_cmd).stdout
+        output = self._execute_ssh_command(
+            self.gateway.remote_client.ssh_client, ssh_cmd)
         msg = ('Expected default route not found in VM connected to network '
                'with gateway_ip defined with host routes')
         self.assertTrue(output, msg)
@@ -493,8 +522,8 @@ class GatewayPoliciesTest(NetworkingComputeFixture,
         ssh_cmd = '{}{} {}'.format(self.ssh_command_stub,
                                    getattr(vm, self.access_network.name),
                                    route_cmd)
-        output = self.gateway.remote_client.ssh_client.execute_command(
-            ssh_cmd).stdout.splitlines()
+        output = self._execute_ssh_command(
+            self.gateway.remote_client.ssh_client, ssh_cmd).splitlines()
         msg = ('Expected route not found in VM connected to network with '
                'that route defined')
         for line in output:
