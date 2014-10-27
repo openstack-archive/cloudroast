@@ -135,6 +135,9 @@ class ImagesFixture(BaseTestFixture):
         cls.tasks_schema_json = cls.read_data_file(
             cls.images_config.tasks_schema_json)
 
+        cls.versions_list = cls.images_config.versions_list
+        cls.versions = cls.get_comparison_data(cls.images_config.versions_data)
+
         cls.addClassCleanup(cls.resources.release)
         cls.addClassCleanup(cls.images_behavior.resources.release)
         cls.addClassCleanup(cls.alt_images_behavior.resources.release)
@@ -174,6 +177,37 @@ class ImagesFixture(BaseTestFixture):
             raise file_error
 
         return test_data
+
+    @classmethod
+    def get_comparison_data(cls, data_file):
+        """
+        @summary: Create comparison dictionary based on a given set of data
+        """
+
+        try:
+            with open(data_file, "r") as DATA:
+                all_data = DATA.readlines()
+        except IOError as file_error:
+            raise file_error
+
+        comparison_dict = dict()
+        for line in all_data:
+            # Skip any comments or short lines
+            if line.startswith('#') or len(line) < 5:
+                continue
+            # Get the defined data
+            if line.startswith('+'):
+                line = line.replace('+', '')
+                data_columns = [x.strip().lower() for x in line.split('|')]
+                continue
+            # Process the data
+            each_data = dict()
+            data = [x.strip() for x in line.split("|")]
+            for x, y in zip(data_columns[1:], data[1:]):
+                each_data[x] = y
+            comparison_dict[data[0]] = each_data
+
+        return comparison_dict
 
 
 class ComputeIntegrationFixture(ImagesFixture):
