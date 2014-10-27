@@ -97,8 +97,6 @@ class SubnetUpdateTest(NetworkingAPIFixture):
             gateway_ip=self.expected_ipv4_subnet.gateway_ip,
             dns_nameservers=self.expected_ipv4_subnet.dns_nameservers,
             host_routes=self.expected_ipv4_subnet.host_routes)
-        if resp.response.entity and hasattr(resp.response.entity, 'id'):
-            self.delete_subnets.append(resp.response.entity.id)
 
         # Fail the test if any failure is found
         self.assertFalse(resp.failures)
@@ -132,8 +130,6 @@ class SubnetUpdateTest(NetworkingAPIFixture):
             gateway_ip=self.expected_ipv6_subnet.gateway_ip,
             dns_nameservers=self.expected_ipv6_subnet.dns_nameservers,
             host_routes=self.expected_ipv6_subnet.host_routes)
-        if resp.response.entity and hasattr(resp.response.entity, 'id'):
-            self.delete_subnets.append(resp.response.entity.id)
 
         # Fail the test if any failure is found
         self.assertFalse(resp.failures)
@@ -169,8 +165,6 @@ class SubnetUpdateTest(NetworkingAPIFixture):
             subnet_id=self.ipv4_subnet.id,
             name=self.expected_ipv4_subnet.name,
             dns_nameservers=self.expected_ipv4_subnet.dns_nameservers)
-        if resp.response.entity and hasattr(resp.response.entity, 'id'):
-            self.delete_subnets.append(resp.response.entity.id)
 
         # Fail the test if any failure is found
         self.assertFalse(resp.failures)
@@ -213,8 +207,6 @@ class SubnetUpdateTest(NetworkingAPIFixture):
             subnet_id=self.ipv6_subnet.id,
             name=self.expected_ipv6_subnet.name,
             dns_nameservers=self.expected_ipv6_subnet.dns_nameservers)
-        if resp.response.entity and hasattr(resp.response.entity, 'id'):
-            self.delete_subnets.append(resp.response.entity.id)
 
         # Fail the test if any failure is found
         self.assertFalse(resp.failures)
@@ -270,8 +262,6 @@ class SubnetUpdateTest(NetworkingAPIFixture):
             subnet_id=self.ipv4_subnet.id,
             name=self.expected_ipv4_subnet.name,
             host_routes=self.expected_ipv4_subnet.host_routes)
-        if resp.response.entity and hasattr(resp.response.entity, 'id'):
-            self.delete_subnets.append(resp.response.entity.id)
 
         # Fail the test if any failure is found
         self.assertFalse(resp.failures)
@@ -323,8 +313,6 @@ class SubnetUpdateTest(NetworkingAPIFixture):
             subnet_id=self.ipv6_subnet.id,
             name=self.expected_ipv6_subnet.name,
             host_routes=self.expected_ipv6_subnet.host_routes)
-        if resp.response.entity and hasattr(resp.response.entity, 'id'):
-            self.delete_subnets.append(resp.response.entity.id)
 
         # Fail the test if any failure is found
         self.assertFalse(resp.failures)
@@ -357,12 +345,11 @@ class SubnetUpdateTest(NetworkingAPIFixture):
             delete_list=self.delete_subnets,
             error_type=NeutronErrorTypes.OVER_QUOTA)
 
-    @tags(type='negative', rbac='creator', quark='yes')
+    @tags(type='positive', rbac='creator', quark='yes')
     def test_ipv4_subnet_update_w_enable_dhcp(self):
         """
-        @summary: Negative test updating a subnet with the enable_dhcp param.
-            This attribute is NOT settable with the Quark plugin,
-            read-only attribute
+        @summary: Updating a subnet with the enable_dhcp param.
+            This attribute can NOT be set with the Quark plugin
         """
         # Setting the expected Subnet and test data params
         self.expected_ipv4_subnet.enable_dhcp = True
@@ -372,18 +359,22 @@ class SubnetUpdateTest(NetworkingAPIFixture):
             subnet_id=self.ipv4_subnet.id,
             enable_dhcp=self.expected_ipv4_subnet.enable_dhcp)
 
-        # Subnet create should be unavailable with the enable_dhcp param
-        msg = '(negative) Updating a subnet with the enable_dhcp param'
-        self.assertNegativeResponse(
-            resp=resp, status_code=NeutronResponseCodes.BAD_REQUEST, msg=msg,
-            delete_list=self.delete_subnets)
+        # Fail the test if any failure is found
+        self.assertFalse(resp.failures)
+        subnet = resp.response.entity
+
+        # Enable dhcp is not a settable attribute
+        self.expected_ipv4_subnet.enable_dhcp = None
+
+        # Check the Subnet response
+        self.assertSubnetResponse(self.expected_ipv4_subnet, subnet,
+                                  check_exact_name=False)
 
     @tags(type='negative', rbac='creator', quark='yes')
     def test_ipv6_subnet_update_w_enable_dhcp(self):
         """
-        @summary: Negative test updating a subnet with the enable_dhcp param.
-            This attribute is NOT settable with the Quark plugin,
-            read-only attribute
+        @summary: Updating a subnet with the enable_dhcp param.
+            This attribute can NOT be set with the Quark plugin
         """
         # Setting the expected Subnet and test data params
         self.expected_ipv6_subnet.enable_dhcp = True
@@ -393,11 +384,21 @@ class SubnetUpdateTest(NetworkingAPIFixture):
             subnet_id=self.ipv6_subnet.id,
             enable_dhcp=self.expected_ipv6_subnet.enable_dhcp)
 
-        # Subnet create should be unavailable with the enable_dhcp param
-        msg = '(negative) Updating a subnet with the enable_dhcp param'
-        self.assertNegativeResponse(
-            resp=resp, status_code=NeutronResponseCodes.BAD_REQUEST, msg=msg,
-            delete_list=self.delete_subnets)
+        # Fail the test if any failure is found
+        self.assertFalse(resp.failures)
+        subnet = resp.response.entity
+
+        # Enable dhcp is not a settable attribute
+        self.expected_ipv6_subnet.enable_dhcp = None
+
+        # Need to format IPv6 allocation pools response for assertion
+        subnet.allocation_pools = (
+            self.subnets.behaviors.format_allocation_pools(
+            subnet.allocation_pools))
+
+        # Check the Subnet response
+        self.assertSubnetResponse(self.expected_ipv6_subnet, subnet,
+                                  check_exact_name=False)
 
     @tags(type='smoke', rbac='creator', quark='yes')
     def test_ipv4_subnet_update_allocation_pools(self):
