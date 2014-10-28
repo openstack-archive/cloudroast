@@ -25,6 +25,8 @@ from cloudcafe.networking.networks.common.models.response.network \
     import Network
 from cloudcafe.networking.networks.common.models.response.subnet \
     import Subnet
+from cloudcafe.networking.networks.common.models.response.port \
+    import Port
 from cloudcafe.networking.networks.composites import NetworkingComposite
 from cloudcafe.networking.networks.config import NetworkingSecondUserConfig
 
@@ -182,6 +184,38 @@ class NetworkingFixture(BaseTestFixture):
             self.assertClassSetupFailure(msg)
         return subnet
 
+    def add_port_to_network(self, expected_port, set_up=True):
+        """
+        @summary: creating and adding a test port to a test network
+        @param expected_port: port object with expected params
+        @type expected_port: models.response.port.Port
+        @param set_up: flag for raising an assertClassSetupFailure if subnet
+            is not created as expected
+        @type setup: bool
+        @return: port entity or None if set_up flag set to False
+        @rtype: models.response.port.Port or None
+        """
+        port = None
+        resp = self.ports.behaviors.create_port(
+            network_id=expected_port.network_id,
+            name=expected_port.name,
+            raise_exception=False)
+        if (resp.response.status_code == NeutronResponseCodes.CREATE_PORT
+                and resp.response.entity):
+            port = resp.response.entity
+            self.delete_ports.append(port.id)
+
+            # Check the created port is as expected
+            self.assertPortResponse(
+                expected_port=expected_port, port=port,
+                check_exact_name=False)
+        elif set_up:
+            msg = ('Unable to create test port {0} status code {1}, '
+                'failures: {2}'.format(
+                expected_port.name, resp.response.status_code, resp.failures))
+            self.assertClassSetupFailure(msg)
+        return port
+
     def assertNegativeResponse(self, resp, status_code, msg, delete_list=None,
                                entity=None, error_type=None):
         """
@@ -319,6 +353,91 @@ class NetworkingFixture(BaseTestFixture):
                 subnet.kwargs)
             self.assertFalse(subnet.kwargs, msg)
 
+    def assertFixedIps(self, port, subnet):
+        """
+        @summary: assert the fixed ips of a port are within the subnet cidr,
+            and the ip_addresses are not repeated
+        """
+        fixed_ips = port.fixed_ips
+        subnet_id = subnet.id
+        cidr = subnet.cidr
+        verified_ip = []
+
+        subnet_msg = ('Unexpected subnet id in fixed ip {fixed_ip} instead of '
+            'subnet id {subnet_id}')
+        verify_msg = ('Fixed IP ip_address {ip} not within the expected '
+            'subnet cidr {cidr}')
+        ip_msg = 'Repeated ip_address {ip} within fixed ips {fixed_ips}'
+
+        for fixed_ip in fixed_ips:
+            self.assertEqual(
+                fixed_ip['subnet_id'], subnet_id,
+                subnet_msg.format(fixed_ip=fixed_ip, subnet_id=subnet_id))
+            self.assertTrue(
+                self.subnets.behaviors.verify_ip(
+                    ip_cidr=fixed_ip['ip_address'], ip_range=cidr),
+                verify_msg.format(ip=fixed_ip['ip_address'], cidr=cidr))
+            self.assertNotIn(
+                fixed_ip['ip_address'], verified_ip,
+                ip_msg.format(ip=fixed_ip['ip_address'], fixed_ips=fixed_ips))
+            verified_ip.append(fixed_ip['ip_address'])
+
+    def assertPortResponse(self, expected_port, port, subnet=None,
+                           check_exact_name=True, check_fixed_ips=False):
+        """
+        @summary: compares two port entity objects
+        """
+        self.fixture_log.info('asserting Port response ...')
+        msg = 'Expected {0} instead of {1}'
+        if check_exact_name:
+            self.assertEqual(
+                expected_port.name, port.name,
+                msg.format(expected_port.name, port.name))
+        else:
+            start_name_msg = 'Expected {0} name to start with {1}'.format(
+                port.name, expected_port.name)
+            self.assertTrue(port.name.startswith(expected_port.name),
+                            start_name_msg)
+        self.assertEqual(
+            expected_port.status, port.status,
+            msg.format(expected_port.status, port.status))
+        self.assertEqual(
+            expected_port.admin_state_up, port.admin_state_up,
+            msg.format(expected_port.admin_state_up,
+                       port.admin_state_up))
+        self.assertEqual(
+            expected_port.network_id, port.network_id,
+            msg.format(expected_port.network_id, port.network_id))
+        self.assertEqual(
+            expected_port.tenant_id, port.tenant_id,
+            msg.format(expected_port.tenant_id, port.tenant_id))
+        self.assertEqual(
+            expected_port.device_owner, port.device_owner,
+            msg.format(expected_port.device_owner, port.device_owner))
+        self.assertEqual(
+            expected_port.security_groups, port.security_groups,
+            msg.format(expected_port.security_groups, port.security_groups))
+        self.assertEqual(
+            expected_port.device_id, port.device_id,
+            msg.format(expected_port.device_id, port.device_id))
+
+        self.assertTrue(port.id, 'Missing port ID')
+        self.assertTrue(port.mac_address, 'Missing port MAC Address')
+
+        if check_fixed_ips:
+            self.assertEqual(
+                expected_port.fixed_ips.sort(), port.fixed_ips.sort(),
+                msg.format(expected_port.fixed_ips, port.fixed_ips))
+        elif subnet is not None:
+            self.assertFixedIps(port, subnet)
+        else:
+            self.assertTrue(port.fixed_ips, 'Missing fixed ips')
+
+        if self.config.check_response_attrs:
+            msg = 'Unexpected port response attributes: {0}'.format(
+                port.kwargs)
+            self.assertFalse(port.kwargs, msg)
+
 
 class NetworkingAPIFixture(NetworkingFixture):
     """
@@ -343,6 +462,12 @@ class NetworkingAPIFixture(NetworkingFixture):
             enable_dhcp=None, dns_nameservers=[], gateway_ip=None,
             host_routes=[])
 
+        # Data for creating ports and asserting responses
+        cls.port_data = dict(
+            status='ACTIVE', name='test_api_port', admin_state_up=True,
+            tenant_id=cls.net.networking_auth_composite().tenant_id,
+            device_owner=None, device_id='', security_groups=[])
+
         # Getting second user data for negative testing
         cls.alt_user = NetworkingSecondUserConfig()
 
@@ -354,6 +479,12 @@ class NetworkingAPIFixture(NetworkingFixture):
         """Network object with default data"""
         expected_network = Network(**cls.network_data)
         return expected_network
+
+    @classmethod
+    def get_expected_port_data(cls):
+        """Port object with default data"""
+        expected_port = Port(**cls.port_data)
+        return expected_port
 
     @classmethod
     def get_expected_ipv4_subnet_data(cls):
@@ -376,6 +507,12 @@ class NetworkingAPIFixture(NetworkingFixture):
         allocation_pool = cls.subnets.behaviors.get_allocation_pool(cidr)
         expected_subnet.allocation_pools = [allocation_pool]
         return expected_subnet
+
+    def get_fixed_ips_data(self, subnet, num=1):
+        """Generates multiple fixed ips within a subnet"""
+        ips = self.subnets.behaviors.get_ips(cidr=subnet.cidr, num=num)
+        fixed_ips = [dict(subnet_id=subnet.id, ip_address=ip) for ip in ips]
+        return fixed_ips
 
     def get_ipv4_dns_nameservers_data(self):
         """IPv4 dns nameservers test data (quota is 2)"""
