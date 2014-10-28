@@ -39,15 +39,14 @@ class PortCreateTest(NetworkingAPIFixture):
         cls.expected_ipv4_subnet = cls.get_expected_ipv4_subnet_data()
         cls.expected_ipv6_subnet = cls.get_expected_ipv6_subnet_data()
 
-        # Setting up the Port data
-        cls.expected_port = cls.get_expected_port_data()
-
     def setUp(self):
         network = self.create_test_network(self.expected_network)
 
         self.expected_ipv4_subnet.network_id = network.id
         self.expected_ipv6_subnet.network_id = network.id
 
+        # Setting up the Port data
+        self.expected_port = self.get_expected_port_data()
         self.expected_port.network_id = network.id
 
     def tearDown(self):
