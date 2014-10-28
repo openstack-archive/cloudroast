@@ -140,9 +140,8 @@ class ImagesFixture(BaseTestFixture):
         cls.addClassCleanup(cls.alt_images_behavior.resources.release)
         cls.addClassCleanup(cls.third_images_behavior.resources.release)
 
-        cls.images_client.add_exception_handler(ExceptionHandler())
-        cls.alt_images_client.add_exception_handler(ExceptionHandler())
-        cls.third_images_client.add_exception_handler(ExceptionHandler())
+        cls.exception_handler = ExceptionHandler()
+        cls.images_client.add_exception_handler(cls.exception_handler)
 
     @classmethod
     def tearDownClass(cls):
@@ -151,9 +150,7 @@ class ImagesFixture(BaseTestFixture):
         cls.images_behavior.resources.release()
         cls.alt_images_behavior.resources.release()
         cls.third_images_behavior.resources.release()
-        cls.images_client.delete_exception_handler(ExceptionHandler())
-        cls.alt_images_client.delete_exception_handler(ExceptionHandler())
-        cls.third_images_client.delete_exception_handler(ExceptionHandler())
+        cls.images_client.delete_exception_handler(cls.exception_handler)
 
     @classmethod
     def generate_images_client(cls, auth_data):
