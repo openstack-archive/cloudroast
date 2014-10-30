@@ -13,14 +13,9 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-
-import unittest
-
 from cafe.drivers.unittest.decorators import tags
-from cloudcafe.networking.networks.common.behaviors import NetworkingResponse
 from cloudcafe.networking.networks.common.constants \
     import NeutronResponseCodes, NeutronErrorTypes
-from cloudcafe.networking.networks.config import NetworkingSecondUserConfig
 from cloudroast.networking.networks.fixtures import NetworkingAPIFixture
 
 
@@ -171,6 +166,10 @@ class PortCreateTest(NetworkingAPIFixture):
 
         expected_port.device_id = 'device_id_test'
 
+        # Quark non-updatable params (request still should work)
+        expected_port.admin_state_up = False
+        expected_port.device_owner = 'new_owner_today'
+
         # Creating a port in a network with both subnets
         resp = self.ports.behaviors.create_port(
             network_id=expected_port.network_id, name=expected_port.name,
@@ -178,6 +177,122 @@ class PortCreateTest(NetworkingAPIFixture):
             fixed_ips=expected_port.fixed_ips,
             device_id=expected_port.device_id,
             device_owner=expected_port.device_owner,
+            raise_exception=False, use_exact_name=True)
+        if resp.response.entity and hasattr(resp.response.entity, 'id'):
+            self.delete_ports.append(resp.response.entity.id)
+
+        # Fail the test if any failure is found
+        self.assertFalse(resp.failures)
+        port = resp.response.entity
+
+        # Need to format IPv6 fixed ips response for assertion
+        port.fixed_ips = self.ports.behaviors.format_fixed_ips(
+            port.fixed_ips)
+
+        # Quark non-updatable params (resetting to original values)
+        expected_port.admin_state_up = True
+        expected_port.device_owner = None
+
+        # Check the Port response (Port expected on IPv4 Subnet
+        self.assertPortResponse(expected_port, port, check_fixed_ips=True)
+
+    @tags(type='smoke', rbac='creator')
+    def test_ipv4_port_create_w_fixed_ips(self):
+        """
+        @summary: Creating a port with IPv4 fixed IPs
+        """
+        expected_port = self.expected_port
+        expected_port.name = 'test_ipv4_port_create_w_fixed_ips'
+        ipv4_subnet = self.add_subnet_to_network(self.expected_ipv4_subnet)
+        fixed_ips_number = self.ports.config.fixed_ips_per_port
+        expected_port.fixed_ips = self.get_fixed_ips_data(
+            ipv4_subnet, fixed_ips_number)
+
+        # Creating the port
+        resp = self.ports.behaviors.create_port(
+            network_id=expected_port.network_id, name=expected_port.name,
+            fixed_ips=expected_port.fixed_ips,
+            raise_exception=False, use_exact_name=True)
+        if resp.response.entity and hasattr(resp.response.entity, 'id'):
+            self.delete_ports.append(resp.response.entity.id)
+
+        # Fail the test if any failure is found
+        self.assertFalse(resp.failures)
+        port = resp.response.entity
+
+        # Check the Port response (Port expected on IPv4 Subnet
+        self.assertPortResponse(expected_port, port, check_fixed_ips=True)
+
+    @tags(type='smoke', rbac='creator')
+    def test_ipv4_port_create_w_single_fixed_ips(self):
+        """
+        @summary: Creating a port with IPv4 fixed IP
+        """
+        expected_port = self.expected_port
+        expected_port.name = 'test_ipv4_port_create_w_fixed_ip'
+        ipv4_subnet = self.add_subnet_to_network(self.expected_ipv4_subnet)
+        expected_port.fixed_ips = self.get_fixed_ips_data(ipv4_subnet, 1)
+
+        # Creating the port
+        resp = self.ports.behaviors.create_port(
+            network_id=expected_port.network_id, name=expected_port.name,
+            fixed_ips=expected_port.fixed_ips,
+            raise_exception=False, use_exact_name=True)
+        if resp.response.entity and hasattr(resp.response.entity, 'id'):
+            self.delete_ports.append(resp.response.entity.id)
+
+        # Fail the test if any failure is found
+        self.assertFalse(resp.failures)
+        port = resp.response.entity
+
+        # Check the Port response (Port expected on IPv4 Subnet
+        self.assertPortResponse(expected_port, port, check_fixed_ips=True)
+
+    @tags(type='smoke', rbac='creator')
+    def test_ipv6_port_create_w_fixed_ips(self):
+        """
+        @summary: Creating a port with IPv6 fixed IPs
+        """
+        expected_port = self.expected_port
+        expected_port.name = 'test_ipv6_port_create_w_fixed_ips'
+        ipv6_subnet = self.add_subnet_to_network(self.expected_ipv6_subnet)
+        fixed_ips_number = self.ports.config.fixed_ips_per_port
+        expected_port.fixed_ips = self.get_fixed_ips_data(
+            ipv6_subnet, fixed_ips_number)
+
+        # Creating the port
+        resp = self.ports.behaviors.create_port(
+            network_id=expected_port.network_id, name=expected_port.name,
+            fixed_ips=expected_port.fixed_ips,
+            raise_exception=False, use_exact_name=True)
+        if resp.response.entity and hasattr(resp.response.entity, 'id'):
+            self.delete_ports.append(resp.response.entity.id)
+
+        # Fail the test if any failure is found
+        self.assertFalse(resp.failures)
+        port = resp.response.entity
+
+        # Need to format IPv6 fixed ips response for assertion
+        port.fixed_ips = self.ports.behaviors.format_fixed_ips(
+            port.fixed_ips)
+
+        # Check the Port response (Port expected on IPv4 Subnet
+        self.assertPortResponse(expected_port, port, check_fixed_ips=True)
+
+    @tags(type='smoke', rbac='creator')
+    def test_ipv6_port_create_w_single_fixed_ips(self):
+        """
+        @summary: Creating a port with IPv6 fixed IP
+        """
+        expected_port = self.expected_port
+        expected_port.name = 'test_ipv6_port_create_w_fixed_ip'
+        ipv6_subnet = self.add_subnet_to_network(self.expected_ipv6_subnet)
+        expected_port.fixed_ips = self.get_fixed_ips_data(ipv6_subnet, 1)
+
+        # Creating the port
+        resp = self.ports.behaviors.create_port(
+            network_id=expected_port.network_id, name=expected_port.name,
+            fixed_ips=expected_port.fixed_ips,
             raise_exception=False, use_exact_name=True)
         if resp.response.entity and hasattr(resp.response.entity, 'id'):
             self.delete_ports.append(resp.response.entity.id)
@@ -215,7 +330,7 @@ class PortCreateTest(NetworkingAPIFixture):
             delete_list=self.delete_ports,
             error_type=NeutronErrorTypes.POLICY_NOT_AUTHORIZED)
 
-    @tags(type='quark', rbac='creator', quark='yes')
+    @tags(type='negative', rbac='creator', quark='yes')
     def test_port_create_on_net_w_ipv6_subnet_and_mac_address(self):
         """
         @summary: Negative creating a Port with mac address
@@ -236,3 +351,91 @@ class PortCreateTest(NetworkingAPIFixture):
             resp=resp, status_code=NeutronResponseCodes.FORBIDDEN, msg=msg,
             delete_list=self.delete_ports,
             error_type=NeutronErrorTypes.POLICY_NOT_AUTHORIZED)
+
+    @tags(type='negative', rbac='creator', quark='yes')
+    def test_port_create_on_net_w_ipv4_subnet_and_security_groups(self):
+        """
+        @summary: Negative creating a Port with security groups
+        """
+        expected_port = self.expected_port
+        self.add_subnet_to_network(self.expected_ipv4_subnet)
+        expected_port.security_groups = [
+            'f0ac4394-7e4a-4409-9701-ba8be283dbc3']
+
+        # Trying to create a port with security groups
+        resp = self.ports.behaviors.create_port(
+            network_id=expected_port.network_id, name=expected_port.name,
+            security_groups=expected_port.security_groups,
+            raise_exception=False, use_exact_name=True)
+
+        # Port create should be unavailable with security groups
+        msg = '(negative) Creating a port with security groups'
+        self.assertNegativeResponse(
+            resp=resp, status_code=NeutronResponseCodes.BAD_REQUEST, msg=msg,
+            delete_list=self.delete_ports,
+            error_type=NeutronErrorTypes.SECURITY_GROUPS_NOT_IMPLEMENTED)
+
+    @tags(type='negative', rbac='creator', quark='yes')
+    def test_port_create_on_net_w_ipv6_subnet_and_security_groups(self):
+        """
+        @summary: Negative creating a Port with security groups
+        """
+        expected_port = self.expected_port
+        self.add_subnet_to_network(self.expected_ipv6_subnet)
+        expected_port.security_groups = [
+            'f0ac4394-7e4a-4409-9701-ba8be283dbc3']
+
+        # Trying to create a port with security groups
+        resp = self.ports.behaviors.create_port(
+            network_id=expected_port.network_id, name=expected_port.name,
+            security_groups=expected_port.security_groups,
+            raise_exception=False, use_exact_name=True)
+
+        # Port create should be unavailable with security groups
+        msg = '(negative) Creating a port with security groups'
+        self.assertNegativeResponse(
+            resp=resp, status_code=NeutronResponseCodes.BAD_REQUEST, msg=msg,
+            delete_list=self.delete_ports,
+            error_type=NeutronErrorTypes.SECURITY_GROUPS_NOT_IMPLEMENTED)
+
+    @tags(type='negative', rbac='creator', quark='yes')
+    def test_port_create_on_net_w_ipv4_subnet_and_tenant_id(self):
+        """
+        @summary: Negative creating a Port with tenant id (only for admins)
+        """
+        expected_port = self.expected_port
+        self.add_subnet_to_network(self.expected_ipv4_subnet)
+        expected_port.tenant_id = '5806065'
+
+        # Trying to create a port with security groups
+        resp = self.ports.behaviors.create_port(
+            network_id=expected_port.network_id, name=expected_port.name,
+            tenant_id=expected_port.tenant_id,
+            raise_exception=False, use_exact_name=True)
+
+        # Port create should be unavailable with security groups
+        msg = '(negative) Creating a port with security groups'
+        self.assertNegativeResponse(
+            resp=resp, status_code=NeutronResponseCodes.BAD_REQUEST, msg=msg,
+            delete_list=self.delete_ports)
+
+    @tags(type='negative', rbac='creator', quark='yes')
+    def test_port_create_on_net_w_ipv6_subnet_and_tenant_id(self):
+        """
+        @summary: Negative creating a Port with tenant id (only for admins)
+        """
+        expected_port = self.expected_port
+        self.add_subnet_to_network(self.expected_ipv6_subnet)
+        expected_port.tenant_id = '5806065'
+
+        # Trying to create a port with security groups
+        resp = self.ports.behaviors.create_port(
+            network_id=expected_port.network_id, name=expected_port.name,
+            tenant_id=expected_port.tenant_id,
+            raise_exception=False, use_exact_name=True)
+
+        # Port create should be unavailable with security groups
+        msg = '(negative) Creating a port with security groups'
+        self.assertNegativeResponse(
+            resp=resp, status_code=NeutronResponseCodes.BAD_REQUEST, msg=msg,
+            delete_list=self.delete_ports)

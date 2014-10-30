@@ -425,8 +425,10 @@ class NetworkingFixture(BaseTestFixture):
         self.assertTrue(port.mac_address, 'Missing port MAC Address')
 
         if check_fixed_ips:
+            expected_port.fixed_ips.sort()
+            port.fixed_ips.sort()
             self.assertEqual(
-                expected_port.fixed_ips.sort(), port.fixed_ips.sort(),
+                expected_port.fixed_ips, port.fixed_ips,
                 msg.format(expected_port.fixed_ips, port.fixed_ips))
         elif subnet is not None:
             self.assertFixedIps(port, subnet)
