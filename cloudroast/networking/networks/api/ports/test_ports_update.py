@@ -13,14 +13,9 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-
-import unittest
-
 from cafe.drivers.unittest.decorators import tags
-from cloudcafe.networking.networks.common.behaviors import NetworkingResponse
 from cloudcafe.networking.networks.common.constants \
     import NeutronResponseCodes, NeutronErrorTypes
-from cloudcafe.networking.networks.config import NetworkingSecondUserConfig
 from cloudroast.networking.networks.fixtures import NetworkingAPIFixture
 
 
@@ -99,7 +94,7 @@ class PortUpdateTest(NetworkingAPIFixture):
         expected_port.admin_state_up = True
         expected_port.device_owner = None
 
-        # Check the Port response (Port expected on IPv4 Subnet
+        # Check the Port response
         self.assertPortResponse(expected_port, port, check_fixed_ips=True)
 
     @tags(type='smoke', rbac='creator')
@@ -141,7 +136,7 @@ class PortUpdateTest(NetworkingAPIFixture):
         expected_port.admin_state_up = True
         expected_port.device_owner = None
 
-        # Check the Port response (Port expected on IPv4 Subnet
+        # Check the Port response
         self.assertPortResponse(expected_port, port, check_fixed_ips=True)
 
     @tags(type='smoke', rbac='creator')
@@ -161,7 +156,7 @@ class PortUpdateTest(NetworkingAPIFixture):
         self.assertFalse(resp.failures)
         port = resp.response.entity
 
-        # Check the Port response (Port expected on IPv4 Subnet
+        # Check the Port response
         self.assertPortResponse(expected_port, port, check_fixed_ips=True)
 
     @tags(type='smoke', rbac='creator')
@@ -185,7 +180,7 @@ class PortUpdateTest(NetworkingAPIFixture):
         port.fixed_ips = self.ports.behaviors.format_fixed_ips(
             port.fixed_ips)
 
-        # Check the Port response (Port expected on IPv4 Subnet
+        # Check the Port response
         self.assertPortResponse(expected_port, port, check_fixed_ips=True)
 
     @tags(type='negative', rbac='creator', quark='yes')

@@ -126,12 +126,12 @@ class SubnetCreateTest(NetworkingAPIFixture):
         expected_subnet.allocation_pools = self.get_allocation_pools_data(
             cidr=expected_subnet.cidr, start_increment=3, ip_range=20,
             interval=10, n=3)
-        gateway_ip = self.subnets.behaviors.get_ip(expected_subnet.cidr,
-                                                   increment=2)
+        gateway_ip = self.subnets.behaviors.get_next_ip(
+            cidr=expected_subnet.cidr, num=2)
         expected_subnet.gateway_ip = gateway_ip
         expected_subnet.dns_nameservers = (
             self.get_ipv4_dns_nameservers_data())
-        nexthop = self.subnets.behaviors.get_ip(expected_subnet.cidr)
+        nexthop = self.subnets.behaviors.get_random_ip(expected_subnet.cidr)
         host_route = dict(destination='10.0.3.0/24', nexthop=nexthop)
         expected_subnet.host_routes = self.get_ipv4_host_route_data(num=2)
         expected_subnet.host_routes.append(host_route)
@@ -168,13 +168,13 @@ class SubnetCreateTest(NetworkingAPIFixture):
         expected_subnet.allocation_pools = self.get_allocation_pools_data(
             cidr=expected_subnet.cidr, start_increment=100, ip_range=500,
             interval=50, n=3)
-        gateway_ip = self.subnets.behaviors.get_ip(expected_subnet.cidr,
-                                                   increment=2)
+        gateway_ip = self.subnets.behaviors.get_next_ip(
+            cidr=expected_subnet.cidr, num=2)
         expected_subnet.gateway_ip = gateway_ip
         expected_subnet.dns_nameservers = (
             self.get_ipv6_dns_nameservers_data())
 
-        nexthop = self.subnets.behaviors.get_ip(expected_subnet.cidr)
+        nexthop = self.subnets.behaviors.get_random_ip(expected_subnet.cidr)
         host_route = dict(destination='10.0.3.0/24', nexthop=nexthop)
         expected_subnet.host_routes = self.get_ipv6_host_route_data(num=2)
         expected_subnet.host_routes.append(host_route)
@@ -531,7 +531,7 @@ class SubnetCreateTest(NetworkingAPIFixture):
         # Creating adding a dns nameserver till quota is reached
         for _ in range(quota):
 
-            dns_nameserver = self.subnets.behaviors.get_ip(cidr=dns_cidr)
+            dns_nameserver = self.subnets.behaviors.get_random_ip(dns_cidr)
             expected_subnet.dns_nameservers.append(dns_nameserver)
             resp = self.subnets.behaviors.create_subnet(
                 network_id=expected_subnet.network_id,
@@ -554,7 +554,7 @@ class SubnetCreateTest(NetworkingAPIFixture):
             self.assertFalse(resp.failures)
 
         # Subnet create should be unavailable after quota is reached
-        dns_nameserver = self.subnets.behaviors.get_ip(cidr=dns_cidr)
+        dns_nameserver = self.subnets.behaviors.get_random_ip(dns_cidr)
         expected_subnet.dns_nameservers.append(dns_nameserver)
         resp = self.subnets.behaviors.create_subnet(
             network_id=expected_subnet.network_id, ip_version=4,
@@ -582,7 +582,7 @@ class SubnetCreateTest(NetworkingAPIFixture):
         # Creating adding a dns nameserver till quota is reached
         for _ in range(quota):
 
-            dns_nameserver = self.subnets.behaviors.get_ip(cidr=dns_cidr)
+            dns_nameserver = self.subnets.behaviors.get_random_ip(dns_cidr)
             expected_subnet.dns_nameservers.append(dns_nameserver)
             resp = self.subnets.behaviors.create_subnet(
                 network_id=expected_subnet.network_id,
@@ -613,7 +613,7 @@ class SubnetCreateTest(NetworkingAPIFixture):
             self.assertFalse(resp.failures)
 
         # Subnet create should be unavailable after quota is reached
-        dns_nameserver = self.subnets.behaviors.get_ip(cidr=dns_cidr)
+        dns_nameserver = self.subnets.behaviors.get_random_ip(dns_cidr)
         expected_subnet.dns_nameservers.append(dns_nameserver)
         resp = self.subnets.behaviors.create_subnet(
             network_id=expected_subnet.network_id, ip_version=4,
@@ -769,7 +769,7 @@ class SubnetCreateTest(NetworkingAPIFixture):
         # Creating subnet with multiple host routes till quota is reached
         for _ in range(quota):
             host_route_destination = self.subnets.behaviors.create_ipv4_cidr()
-            host_route_nexthop = self.subnets.behaviors.get_ip(
+            host_route_nexthop = self.subnets.behaviors.get_random_ip(
                 cidr=host_route_destination)
             host_route = self.subnets.behaviors.get_host_routes(
                 cidr=host_route_destination, ips=[host_route_nexthop])
@@ -796,7 +796,7 @@ class SubnetCreateTest(NetworkingAPIFixture):
 
         # Subnet create should be unavailable after quota is reached
         host_route_destination = self.subnets.behaviors.create_ipv4_cidr()
-        host_route_nexthop = self.subnets.behaviors.get_ip(
+        host_route_nexthop = self.subnets.behaviors.get_random_ip(
             cidr=host_route_destination)
         host_route = self.subnets.behaviors.get_host_routes(
             cidr=host_route_destination, ips=[host_route_nexthop])
@@ -827,7 +827,7 @@ class SubnetCreateTest(NetworkingAPIFixture):
         # Creating subnet with multiple host routes till quota is reached
         for _ in range(quota):
             host_route_destination = self.subnets.behaviors.create_ipv6_cidr()
-            host_route_nexthop = self.subnets.behaviors.get_ip(
+            host_route_nexthop = self.subnets.behaviors.get_random_ip(
                 cidr=host_route_destination)
             host_route = self.subnets.behaviors.get_host_routes(
                 cidr=host_route_destination, ips=[host_route_nexthop])
@@ -859,7 +859,7 @@ class SubnetCreateTest(NetworkingAPIFixture):
 
         # Subnet create should be unavailable after quota is reached
         host_route_destination = self.subnets.behaviors.create_ipv6_cidr()
-        host_route_nexthop = self.subnets.behaviors.get_ip(
+        host_route_nexthop = self.subnets.behaviors.get_random_ip(
             cidr=host_route_destination)
         host_route = self.subnets.behaviors.get_host_routes(
             cidr=host_route_destination, ips=[host_route_nexthop])
@@ -1156,8 +1156,8 @@ class SubnetCreateTest(NetworkingAPIFixture):
             cidr=expected_subnet.cidr, first_increment=5)
         allocation_pools = [allocation_pool_1]
         expected_subnet.allocation_pools = allocation_pools
-        gateway_ip = self.subnets.behaviors.get_ip(expected_subnet.cidr,
-                                                   increment=2)
+        gateway_ip = self.subnets.behaviors.get_next_ip(
+            cidr=expected_subnet.cidr, num=2)
         expected_subnet.gateway_ip = gateway_ip
 
         # Creating IPv4 subnet
@@ -1190,8 +1190,8 @@ class SubnetCreateTest(NetworkingAPIFixture):
             cidr=expected_subnet.cidr, first_increment=5)
         allocation_pools = [allocation_pool_1]
         expected_subnet.allocation_pools = allocation_pools
-        gateway_ip = self.subnets.behaviors.get_ip(expected_subnet.cidr,
-                                                   increment=2)
+        gateway_ip = self.subnets.behaviors.get_next_ip(
+            cidr=expected_subnet.cidr, num=2)
         expected_subnet.gateway_ip = gateway_ip
 
         # Creating IPv4 subnet
@@ -1227,8 +1227,8 @@ class SubnetCreateTest(NetworkingAPIFixture):
         expected_subnet = self.expected_ipv4_subnet
 
         # The default allocation pools start at 1
-        gateway_ip = self.subnets.behaviors.get_ip(expected_subnet.cidr,
-                                                   increment=1)
+        gateway_ip = self.subnets.behaviors.get_next_ip(
+            cidr=expected_subnet.cidr, num=1)
         expected_subnet.gateway_ip = gateway_ip
 
         # Creating IPv4 subnet
@@ -1258,8 +1258,8 @@ class SubnetCreateTest(NetworkingAPIFixture):
         expected_subnet = self.expected_ipv6_subnet
 
         # The default allocation pools start at 1
-        gateway_ip = self.subnets.behaviors.get_ip(expected_subnet.cidr,
-                                                   increment=1)
+        gateway_ip = self.subnets.behaviors.get_next_ip(
+            cidr=expected_subnet.cidr, num=1)
         expected_subnet.gateway_ip = gateway_ip
 
         # Creating IPv4 subnet
@@ -1403,7 +1403,7 @@ class SubnetCreateTest(NetworkingAPIFixture):
         expected_subnet = self.expected_ipv4_subnet
         expected_subnet.name = 'test_sub_create_ipv4_w_hroutes'
 
-        nexthop = self.subnets.behaviors.get_ip(expected_subnet.cidr)
+        nexthop = self.subnets.behaviors.get_random_ip(expected_subnet.cidr)
         host_route = dict(destination='10.0.3.0/24', nexthop=nexthop)
         expected_subnet.host_routes = self.get_ipv4_host_route_data(num=2)
         expected_subnet.host_routes.append(host_route)
@@ -1486,7 +1486,7 @@ class SubnetCreateTest(NetworkingAPIFixture):
         expected_subnet = self.expected_ipv6_subnet
         expected_subnet.name = 'test_sub_create_ipv6_w_hroutes'
 
-        nexthop = self.subnets.behaviors.get_ip(expected_subnet.cidr)
+        nexthop = self.subnets.behaviors.get_random_ip(expected_subnet.cidr)
         host_route = dict(destination='10.0.3.0/24', nexthop=nexthop)
         expected_subnet.host_routes = self.get_ipv6_host_route_data(num=2)
         expected_subnet.host_routes.append(host_route)
@@ -1521,8 +1521,8 @@ class SubnetCreateTest(NetworkingAPIFixture):
         expected_subnet = self.expected_ipv6_subnet
 
         host_route_cidr = self.subnets.behaviors.create_ipv6_cidr()
-        nexthop_1 = self.subnets.behaviors.get_ip(
-            cidr=host_route_cidr, increment=100)
+        nexthop_1 = self.subnets.behaviors.get_next_ip(
+            cidr=host_route_cidr, num=100)
 
         # Invalid destination
         host_route = dict(destination='invalid_destination', nexthop=nexthop_1)

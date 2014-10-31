@@ -79,12 +79,13 @@ class SubnetUpdateTest(NetworkingAPIFixture):
         @summary: Updating a subnet with multiple params
         """
         self.expected_ipv4_subnet.name = 'test_sub_update_ipv4'
-        gateway_ip = self.subnets.behaviors.get_ip(
-            self.ipv4_subnet.cidr, increment=1)
+        gateway_ip = self.subnets.behaviors.get_next_ip(
+            cidr=self.ipv4_subnet.cidr, num=1)
         self.expected_ipv4_subnet.gateway_ip = gateway_ip
         dns_nameservers = self.get_ipv4_dns_nameservers_data()
         self.expected_ipv4_subnet.dns_nameservers = dns_nameservers
-        nexthop = self.subnets.behaviors.get_ip(self.expected_ipv4_subnet.cidr)
+        nexthop = self.subnets.behaviors.get_random_ip(
+            self.expected_ipv4_subnet.cidr)
         host_route = dict(destination='10.0.3.0/24', nexthop=nexthop)
         self.expected_ipv4_subnet.host_routes = (
             self.get_ipv4_host_route_data(num=2))
@@ -111,13 +112,14 @@ class SubnetUpdateTest(NetworkingAPIFixture):
         @summary: Updating a subnet with multiple params
         """
         self.expected_ipv6_subnet.name = 'test_sub_update_ipv6'
-        gateway_ip = self.subnets.behaviors.get_ip(
-            self.ipv6_subnet.cidr, increment=1)
+        gateway_ip = self.subnets.behaviors.get_next_ip(
+            cidr=self.ipv6_subnet.cidr, num=1)
         self.expected_ipv6_subnet.gateway_ip = gateway_ip
         dns_nameservers = self.get_ipv6_dns_nameservers_data()
         self.expected_ipv6_subnet.dns_nameservers = dns_nameservers
         host_route_cidr = self.subnets.behaviors.create_ipv6_cidr()
-        nexthop = self.subnets.behaviors.get_ip(self.expected_ipv6_subnet.cidr)
+        nexthop = self.subnets.behaviors.get_random_ip(
+            self.expected_ipv6_subnet.cidr)
         host_route = dict(destination=host_route_cidr, nexthop=nexthop)
         self.expected_ipv6_subnet.host_routes = (
             self.get_ipv6_host_route_data(num=2))
@@ -157,7 +159,7 @@ class SubnetUpdateTest(NetworkingAPIFixture):
 
         # Adding a dns nameserver till quota is reached
         for _ in range(quota):
-            dns_nameserver = self.subnets.behaviors.get_ip(cidr=dns_cidr)
+            dns_nameserver = self.subnets.behaviors.get_random_ip(dns_cidr)
             self.expected_ipv4_subnet.dns_nameservers.append(dns_nameserver)
 
         # Updating the subnet
@@ -174,7 +176,7 @@ class SubnetUpdateTest(NetworkingAPIFixture):
         self.assertSubnetResponse(self.expected_ipv4_subnet, subnet)
 
         # Subnet update should be unavailable after quota is reached
-        dns_nameserver = self.subnets.behaviors.get_ip(cidr=dns_cidr)
+        dns_nameserver = self.subnets.behaviors.get_random_ip(dns_cidr)
         self.expected_ipv4_subnet.dns_nameservers.append(dns_nameserver)
         resp = self.subnets.behaviors.update_subnet(
             subnet_id=self.ipv4_subnet.id,
@@ -199,7 +201,7 @@ class SubnetUpdateTest(NetworkingAPIFixture):
 
         # Adding a dns nameserver till quota is reached
         for _ in range(quota):
-            dns_nameserver = self.subnets.behaviors.get_ip(cidr=dns_cidr)
+            dns_nameserver = self.subnets.behaviors.get_random_ip(dns_cidr)
             self.expected_ipv6_subnet.dns_nameservers.append(dns_nameserver)
 
         # Updating the subnet
@@ -224,7 +226,7 @@ class SubnetUpdateTest(NetworkingAPIFixture):
         self.assertSubnetResponse(self.expected_ipv6_subnet, subnet)
 
         # Subnet update should be unavailable after quota is reached
-        dns_nameserver = self.subnets.behaviors.get_ip(cidr=dns_cidr)
+        dns_nameserver = self.subnets.behaviors.get_random_ip(dns_cidr)
         self.expected_ipv6_subnet.dns_nameservers.append(dns_nameserver)
         resp = self.subnets.behaviors.update_subnet(
             subnet_id=self.ipv6_subnet.id,
@@ -251,7 +253,7 @@ class SubnetUpdateTest(NetworkingAPIFixture):
         # Adding a host_routes till quota is reached
         for _ in range(quota):
             host_route_destination = self.subnets.behaviors.create_ipv4_cidr()
-            host_route_nexthop = self.subnets.behaviors.get_ip(
+            host_route_nexthop = self.subnets.behaviors.get_random_ip(
                 cidr=host_route_destination)
             host_route = self.subnets.behaviors.get_host_routes(
                 cidr=host_route_destination, ips=[host_route_nexthop])
@@ -272,7 +274,7 @@ class SubnetUpdateTest(NetworkingAPIFixture):
 
         # Subnet update should be unavailable after quota is reached
         host_route_destination = self.subnets.behaviors.create_ipv4_cidr()
-        host_route_nexthop = self.subnets.behaviors.get_ip(
+        host_route_nexthop = self.subnets.behaviors.get_random_ip(
             cidr=host_route_destination)
         host_route = self.subnets.behaviors.get_host_routes(
             cidr=host_route_destination, ips=[host_route_nexthop])
@@ -302,7 +304,7 @@ class SubnetUpdateTest(NetworkingAPIFixture):
         # Adding a host_routes till quota is reached
         for _ in range(quota):
             host_route_destination = self.subnets.behaviors.create_ipv6_cidr()
-            host_route_nexthop = self.subnets.behaviors.get_ip(
+            host_route_nexthop = self.subnets.behaviors.get_random_ip(
                 cidr=host_route_destination)
             host_route = self.subnets.behaviors.get_host_routes(
                 cidr=host_route_destination, ips=[host_route_nexthop])
@@ -328,7 +330,7 @@ class SubnetUpdateTest(NetworkingAPIFixture):
 
         # Subnet update should be unavailable after quota is reached
         host_route_destination = self.subnets.behaviors.create_ipv6_cidr()
-        host_route_nexthop = self.subnets.behaviors.get_ip(
+        host_route_nexthop = self.subnets.behaviors.get_random_ip(
             cidr=host_route_destination)
         host_route = self.subnets.behaviors.get_host_routes(
             cidr=host_route_destination, ips=[host_route_nexthop])
@@ -441,8 +443,8 @@ class SubnetUpdateTest(NetworkingAPIFixture):
             allocation pools
         """
         # Test allocation pools start at 5
-        gateway_ip = self.subnets.behaviors.get_ip(self.ipv4_subnet.cidr,
-                                                   increment=7)
+        gateway_ip = self.subnets.behaviors.get_next_ip(
+            cidr=self.ipv4_subnet.cidr, num=7)
 
         resp = self.subnets.behaviors.update_subnet(
             subnet_id=self.ipv4_subnet.id, gateway_ip=gateway_ip)
@@ -462,8 +464,8 @@ class SubnetUpdateTest(NetworkingAPIFixture):
             allocation pools
         """
         # Test allocation pools start at 5
-        gateway_ip = self.subnets.behaviors.get_ip(self.ipv6_subnet.cidr,
-                                                   increment=7)
+        gateway_ip = self.subnets.behaviors.get_next_ip(
+            cidr=self.ipv6_subnet.cidr, num=7)
 
         resp = self.subnets.behaviors.update_subnet(
             subnet_id=self.ipv6_subnet.id, gateway_ip=gateway_ip)
@@ -481,8 +483,8 @@ class SubnetUpdateTest(NetworkingAPIFixture):
         """
         @summary: Updating a subnet gateway_ip
         """
-        gateway_ip = self.subnets.behaviors.get_ip(
-            self.ipv4_subnet.cidr, increment=1)
+        gateway_ip = self.subnets.behaviors.get_next_ip(
+            cidr=self.ipv4_subnet.cidr, num=1)
         self.expected_ipv4_subnet.gateway_ip = gateway_ip
 
         # Updating the subnet
@@ -505,8 +507,8 @@ class SubnetUpdateTest(NetworkingAPIFixture):
         """
         @summary: Updating a subnet gateway_ip
         """
-        gateway_ip = self.subnets.behaviors.get_ip(
-            self.ipv6_subnet.cidr, increment=1)
+        gateway_ip = self.subnets.behaviors.get_next_ip(
+            cidr=self.ipv6_subnet.cidr, num=1)
         self.expected_ipv6_subnet.gateway_ip = gateway_ip
 
         # Updating the subnet
@@ -595,6 +597,9 @@ class SubnetUpdateTest(NetworkingAPIFixture):
         subnet.allocation_pools = (
             self.subnets.behaviors.format_allocation_pools(
             subnet.allocation_pools))
+        subnet.dns_nameservers = (
+            self.subnets.behaviors.format_dns_nameservers(
+                subnet.dns_nameservers))
 
         # Check the Subnet response
         self.assertSubnetResponse(self.expected_ipv6_subnet, subnet,
@@ -625,7 +630,8 @@ class SubnetUpdateTest(NetworkingAPIFixture):
         """
         @summary: Updating a subnet with host_routes
         """
-        nexthop = self.subnets.behaviors.get_ip(self.expected_ipv4_subnet.cidr)
+        nexthop = self.subnets.behaviors.get_random_ip(
+            self.expected_ipv4_subnet.cidr)
         host_route = dict(destination='10.0.3.0/24', nexthop=nexthop)
 
         self.expected_ipv4_subnet.host_routes = (
@@ -693,7 +699,8 @@ class SubnetUpdateTest(NetworkingAPIFixture):
         @summary: Updating a subnet with host_routes
         """
         host_route_cidr = self.subnets.behaviors.create_ipv6_cidr()
-        nexthop = self.subnets.behaviors.get_ip(self.expected_ipv6_subnet.cidr)
+        nexthop = self.subnets.behaviors.get_random_ip(
+            self.expected_ipv6_subnet.cidr)
         host_route = dict(destination=host_route_cidr, nexthop=nexthop)
 
         self.expected_ipv6_subnet.host_routes = (
@@ -727,8 +734,8 @@ class SubnetUpdateTest(NetworkingAPIFixture):
         """
         # Invalid destination
         host_route_cidr = self.subnets.behaviors.create_ipv6_cidr()
-        nexthop_1 = self.subnets.behaviors.get_ip(
-            cidr=host_route_cidr, increment=100)
+        nexthop_1 = self.subnets.behaviors.get_next_ip(
+            cidr=host_route_cidr, num=100)
         host_route = dict(destination='invalid_destination', nexthop=nexthop_1)
         self.expected_ipv6_subnet.host_routes = [host_route]
 

@@ -439,3 +439,39 @@ class PortCreateTest(NetworkingAPIFixture):
         self.assertNegativeResponse(
             resp=resp, status_code=NeutronResponseCodes.BAD_REQUEST, msg=msg,
             delete_list=self.delete_ports)
+
+    @tags(type='negative', rbac='creator', quark='yes')
+    def test_port_create_on_publicnet(self):
+        """
+        @summary: Negative creating a Port on the public network
+        """
+        public_network_id = self.networks.config.public_network_id
+
+        # Trying to create a port on publicnet
+        resp = self.ports.behaviors.create_port(
+            network_id=public_network_id, raise_exception=False)
+
+        # Port create should be unavailable with on public network
+        msg = '(negative) Creating a port on public network'
+        self.assertNegativeResponse(
+            resp=resp, status_code=NeutronResponseCodes.FORBIDDEN, msg=msg,
+            delete_list=self.delete_ports,
+            error_type=NeutronErrorTypes.POLICY_NOT_AUTHORIZED)
+
+    @tags(type='negative', rbac='creator', quark='yes')
+    def test_port_create_on_servicenet(self):
+        """
+        @summary: Negative creating a Port on the service (private) network
+        """
+        service_network_id = self.networks.config.service_network_id
+
+        # Trying to create a port on servicenet
+        resp = self.ports.behaviors.create_port(
+            network_id=service_network_id, raise_exception=False)
+
+        # Port create should be unavailable with on service net
+        msg = '(negative) Creating a port on servicenet'
+        self.assertNegativeResponse(
+            resp=resp, status_code=NeutronResponseCodes.FORBIDDEN, msg=msg,
+            delete_list=self.delete_ports,
+            error_type=NeutronErrorTypes.POLICY_NOT_AUTHORIZED)

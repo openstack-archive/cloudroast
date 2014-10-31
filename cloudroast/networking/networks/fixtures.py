@@ -219,7 +219,7 @@ class NetworkingFixture(BaseTestFixture):
     def assertNegativeResponse(self, resp, status_code, msg, delete_list=None,
                                entity=None, error_type=None):
         """
-        @summary: negative test response assertion
+        @summary: negative or delete test response assertion
         @param resp: networking response
         @type resp: common.behaviors.NetworkingResponse
         @param status_code: expected status code
@@ -513,6 +513,9 @@ class NetworkingAPIFixture(NetworkingFixture):
     def get_fixed_ips_data(self, subnet, num=1):
         """Generates multiple fixed ips within a subnet"""
         ips = self.subnets.behaviors.get_ips(cidr=subnet.cidr, num=num)
+
+        # Removing duplicate IPs in case of any
+        ips = list(set(ips))
         fixed_ips = [dict(subnet_id=subnet.id, ip_address=ip) for ip in ips]
         return fixed_ips
 
@@ -525,8 +528,8 @@ class NetworkingAPIFixture(NetworkingFixture):
     def get_ipv6_dns_nameservers_data(self):
         """IPv6 dns nameservers test data (quota is 2)"""
         dns_cidr = self.subnets.behaviors.create_ipv6_cidr()
-        dns_1 = self.subnets.behaviors.get_ip(cidr=dns_cidr, increment=1)
-        dns_2 = self.subnets.behaviors.get_ip(cidr=dns_cidr, increment=2)
+        dns_1 = self.subnets.behaviors.get_random_ip(dns_cidr)
+        dns_2 = self.subnets.behaviors.get_random_ip(dns_cidr)
         ipv6_dns_nameservers = [dns_1, dns_2]
         return ipv6_dns_nameservers
 
@@ -556,7 +559,7 @@ class NetworkingAPIFixture(NetworkingFixture):
             ipv4_host_routes = self.subnets.behaviors.get_host_routes(
                 cidr=host_route_cidrv4, ips=ipv4_ips)
             host_routes.extend(ipv4_host_routes)
-        nexthop_ipv6 = self.subnets.behaviors.get_ip(host_route_cidrv6)
+        nexthop_ipv6 = self.subnets.behaviors.get_random_ip(host_route_cidrv6)
         ipv6_host_route = self.subnets.behaviors.get_host_routes(
             cidr=host_route_cidrv6, ips=[nexthop_ipv6])
         host_routes.extend(ipv6_host_route)
@@ -575,7 +578,7 @@ class NetworkingAPIFixture(NetworkingFixture):
             ipv6_host_routes = self.subnets.behaviors.get_host_routes(
                 cidr=host_route_cidrv6, ips=ipv6_ips)
             host_routes.extend(ipv6_host_routes)
-        nexthop_ipv4 = self.subnets.behaviors.get_ip(host_route_cidrv4)
+        nexthop_ipv4 = self.subnets.behaviors.get_random_ip(host_route_cidrv4)
         ipv4_host_route = self.subnets.behaviors.get_host_routes(
             cidr=host_route_cidrv4, ips=[nexthop_ipv4])
         host_routes.extend(ipv4_host_route)
