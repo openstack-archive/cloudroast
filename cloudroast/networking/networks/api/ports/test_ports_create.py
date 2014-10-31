@@ -475,3 +475,47 @@ class PortCreateTest(NetworkingAPIFixture):
             resp=resp, status_code=NeutronResponseCodes.FORBIDDEN, msg=msg,
             delete_list=self.delete_ports,
             error_type=NeutronErrorTypes.POLICY_NOT_AUTHORIZED)
+
+    @tags(type='negative', rbac='creator', quark='yes')
+    def test_ipv4_port_create_w_invalid_name(self):
+        """
+        @summary: Negative creating a Port with invalid name
+        """
+        expected_port = self.expected_port
+        self.add_subnet_to_network(self.expected_ipv4_subnet)
+        expected_port.name = 'TestName2<script>alert(/xxs/);</script>'
+
+        # Trying to create a port with invalid name
+        resp = self.ports.behaviors.create_port(
+            network_id=expected_port.network_id,
+            name=expected_port.name,
+            raise_exception=False, use_exact_name=True)
+
+        # Port create should be unavailable
+        msg = '(negative) Creating a port with invalid name: {0}'.format(
+            expected_port.name)
+        self.assertNegativeResponse(
+            resp=resp, status_code=NeutronResponseCodes.BAD_REQUEST, msg=msg,
+            delete_list=self.delete_ports)
+
+    @tags(type='negative', rbac='creator', quark='yes')
+    def test_ipv6_port_create_w_invalid_name(self):
+        """
+        @summary: Negative creating a Port with invalid name
+        """
+        expected_port = self.expected_port
+        self.add_subnet_to_network(self.expected_ipv6_subnet)
+        expected_port.name = 'TestName2<script>alert(/xxs/);</script>'
+
+        # Trying to create a port with invalid name
+        resp = self.ports.behaviors.create_port(
+            network_id=expected_port.network_id,
+            name=expected_port.name,
+            raise_exception=False, use_exact_name=True)
+
+        # Port create should be unavailable
+        msg = '(negative) Creating a port with invalid name: {0}'.format(
+            expected_port.name)
+        self.assertNegativeResponse(
+            resp=resp, status_code=NeutronResponseCodes.BAD_REQUEST, msg=msg,
+            delete_list=self.delete_ports)

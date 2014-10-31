@@ -1491,7 +1491,7 @@ class SubnetCreateTest(NetworkingAPIFixture):
         expected_subnet.host_routes = self.get_ipv6_host_route_data(num=2)
         expected_subnet.host_routes.append(host_route)
 
-        # Creating IPv4 subnet
+        # Creating the subnet
         resp = self.subnets.behaviors.create_subnet(
             network_id=expected_subnet.network_id,
             name=expected_subnet.name,
@@ -1528,7 +1528,7 @@ class SubnetCreateTest(NetworkingAPIFixture):
         host_route = dict(destination='invalid_destination', nexthop=nexthop_1)
         expected_subnet.host_routes = [host_route]
 
-        # Creating IPv4 subnet
+        # Creating the subnet
         resp = self.subnets.behaviors.create_subnet(
             network_id=expected_subnet.network_id,
             name=expected_subnet.name,
@@ -1555,7 +1555,7 @@ class SubnetCreateTest(NetworkingAPIFixture):
         host_route = dict(destination=host_route_cidr, nexthop='invalid_ip')
         expected_subnet.host_routes = [host_route]
 
-        # Creating IPv4 subnet
+        # Creating the subnet
         resp = self.subnets.behaviors.create_subnet(
             network_id=expected_subnet.network_id,
             name=expected_subnet.name,
@@ -1566,6 +1566,54 @@ class SubnetCreateTest(NetworkingAPIFixture):
 
         # Subnet create with invalid host_routes should be unavailable
         msg = '(negative) Subnet create with invalid host_routes'
+        self.assertNegativeResponse(
+            resp=resp, status_code=NeutronResponseCodes.BAD_REQUEST, msg=msg,
+            delete_list=self.delete_subnets)
+
+    @tags(type='negative', rbac='creator')
+    def test_ipv4_subnet_create_w_invalid_name(self):
+        """
+        @summary: Creating a subnet with invalid name
+        """
+        expected_subnet = self.expected_ipv4_subnet
+        expected_subnet.name = 'TestName2<script>alert(/xxs/);</script>'
+
+        # Creating the subnet
+        resp = self.subnets.behaviors.create_subnet(
+            network_id=expected_subnet.network_id,
+            name=expected_subnet.name,
+            ip_version=expected_subnet.ip_version,
+            cidr=expected_subnet.cidr,
+            raise_exception=False, use_exact_name=True)
+
+        # Subnet create with invalid name should be unavailable
+        msg = '(negative) Subnet create with invalid name: {0}'.format(
+            expected_subnet.name)
+
+        self.assertNegativeResponse(
+            resp=resp, status_code=NeutronResponseCodes.BAD_REQUEST, msg=msg,
+            delete_list=self.delete_subnets)
+
+    @tags(type='negative', rbac='creator')
+    def test_ipv6_subnet_create_w_invalid_name(self):
+        """
+        @summary: Creating a subnet with invalid name
+        """
+        expected_subnet = self.expected_ipv6_subnet
+        expected_subnet.name = 'TestName2<script>alert(/xxs/);</script>'
+
+        # Creating the subnet
+        resp = self.subnets.behaviors.create_subnet(
+            network_id=expected_subnet.network_id,
+            name=expected_subnet.name,
+            ip_version=expected_subnet.ip_version,
+            cidr=expected_subnet.cidr,
+            raise_exception=False, use_exact_name=True)
+
+        # Subnet create with invalid name should be unavailable
+        msg = '(negative) Subnet create with invalid name: {0}'.format(
+            expected_subnet.name)
+
         self.assertNegativeResponse(
             resp=resp, status_code=NeutronResponseCodes.BAD_REQUEST, msg=msg,
             delete_list=self.delete_subnets)

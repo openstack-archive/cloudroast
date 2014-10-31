@@ -165,3 +165,24 @@ class NetworkCreateTest(NetworkingAPIFixture):
                          NeutronResponseCodes.BAD_REQUEST, msg)
         self.assertIsNone(resp.response.entity, 'Unexpected entity')
         self.assertTrue(resp.failures, 'Missing expected failures')
+
+    @tags(type='negative', rbac='creator')
+    def test_network_create_w_invalid_name(self):
+        """
+        @summary: Creating a network with invalid name
+        """
+        expected_network = self.expected_network
+        expected_network.name = 'TestName2<script>alert(/xxs/);</script>'
+
+        # Creating the subnet
+        resp = self.networks.behaviors.create_network(
+            name=expected_network.name,
+            raise_exception=False, use_exact_name=True)
+
+        # Network create with invalid name should be unavailable
+        msg = '(negative) Network create with invalid name: {0}'.format(
+            expected_network.name)
+
+        self.assertNegativeResponse(
+            resp=resp, status_code=NeutronResponseCodes.BAD_REQUEST, msg=msg,
+            delete_list=self.delete_subnets)

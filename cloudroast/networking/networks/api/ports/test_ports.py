@@ -71,7 +71,7 @@ class PortTest(NetworkingAPIFixture):
         # Fail the test if any failure is found
         self.assertFalse(resp.failures)
 
-    @tags(type='smoke', rbac='observer', dev='leo2')
+    @tags(type='smoke', rbac='observer')
     def test_list_ports_by_network_id(self):
         """
         @summary: Get ports test (list) by network_id
