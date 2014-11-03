@@ -29,7 +29,9 @@ class NetworkCreateTest(NetworkingAPIFixture):
     def setUpClass(cls):
         """Setting up test data"""
         super(NetworkCreateTest, cls).setUpClass()
-        cls.expected_network = cls.get_expected_network_data()
+
+    def setUp(self):
+        self.expected_network = self.get_expected_network_data()
 
     @tags(type='smoke', rbac='creator')
     def test_network_create(self):
