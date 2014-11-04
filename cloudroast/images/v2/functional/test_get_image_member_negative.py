@@ -1,5 +1,5 @@
 """
-Copyright 2013 Rackspace
+Copyright 2014 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@ limitations under the License.
 """
 
 from cafe.drivers.unittest.decorators import tags
+from cloudcafe.compute.common.exceptions import ItemNotFound
+
 from cloudroast.images.fixtures import ImagesFixture
 
 
@@ -42,6 +44,6 @@ class TestGetImageMemberNegative(ImagesFixture):
         self.assertEqual(response.status_code, 200)
         member = response.entity
 
-        response = self.third_images_client.get_member(
-            self.image.id_, member.member_id)
-        self.assertEqual(response.status_code, 404)
+        with self.assertRaises(ItemNotFound):
+            self.third_images_client.get_member(
+                self.image.id_, member.member_id)

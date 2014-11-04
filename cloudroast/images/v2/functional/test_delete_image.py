@@ -1,5 +1,5 @@
 """
-Copyright 2013 Rackspace
+Copyright 2014 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@ limitations under the License.
 
 from cafe.drivers.unittest.decorators import tags
 
+from cloudcafe.compute.common.exceptions import ItemNotFound
 from cloudroast.images.fixtures import ImagesFixture
 
 
@@ -40,5 +41,5 @@ class TestDeleteImage(ImagesFixture):
         response = self.images_client.delete_image(self.image.id_)
         self.assertEqual(response.status_code, 204)
 
-        response = self.images_client.get_image(self.image.id_)
-        self.assertEqual(response.status_code, 404)
+        with self.assertRaises(ItemNotFound):
+            self.images_client.get_image(self.image.id_)
