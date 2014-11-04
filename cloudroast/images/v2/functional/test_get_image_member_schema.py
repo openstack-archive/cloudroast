@@ -1,5 +1,5 @@
 """
-Copyright 2013 Rackspace
+Copyright 2014 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@ limitations under the License.
 """
 
 from cafe.drivers.unittest.decorators import tags
+
 from cloudroast.images.fixtures import ImagesFixture
 
 
@@ -31,6 +32,9 @@ class TestGetImageMemberSchema(ImagesFixture):
         schema as compared to the image_member_schema.json file
         """
 
+        image_member_schema_json = self.read_data_file(
+            self.images_config.image_member_schema_json)
+
         response = self.images_client.get_image_member_schema()
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.content, self.image_member_schema_json)
+        self.assertEqual(response.content, image_member_schema_json)

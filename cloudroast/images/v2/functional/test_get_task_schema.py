@@ -1,5 +1,5 @@
 """
-Copyright 2013 Rackspace
+Copyright 2014 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@ limitations under the License.
 """
 
 from cafe.drivers.unittest.decorators import tags
+
 from cloudroast.images.fixtures import ImagesFixture
 
 
@@ -31,6 +32,9 @@ class TestGetTaskSchema(ImagesFixture):
         compared to the task_schema.json file
         """
 
+        task_schema_json = self.read_data_file(
+            self.images_config.task_schema_json)
+
         response = self.images_client.get_task_schema()
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.content, self.task_schema_json)
+        self.assertEqual(response.content, task_schema_json)
