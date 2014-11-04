@@ -1,5 +1,5 @@
 """
-Copyright 2013 Rackspace
+Copyright 2014 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@ limitations under the License.
 
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.common.tools.datagen import rand_name
+from cloudcafe.compute.common.exceptions import ItemNotFound
+
 from cloudroast.images.fixtures import ImagesFixture
 
 
@@ -37,8 +39,8 @@ class TestAddImageTagNegative(ImagesFixture):
 
         image_id = 'invalid'
         tag = rand_name('tag')
-        response = self.images_client.add_tag(image_id, tag)
-        self.assertEqual(response.status_code, 404)
+        with self.assertRaises(ItemNotFound):
+            self.images_client.add_tag(image_id, tag)
 
     @tags(type='negative', regression='true')
     def test_add_image_tag_using_blank_image_id(self):
@@ -51,8 +53,8 @@ class TestAddImageTagNegative(ImagesFixture):
 
         image_id = ''
         tag = rand_name('tag')
-        response = self.images_client.add_tag(image_id, tag)
-        self.assertEqual(response.status_code, 404)
+        with self.assertRaises(ItemNotFound):
+            self.images_client.add_tag(image_id, tag)
 
     @tags(type='negative', regression='true')
     def test_add_image_tag_that_is_empty(self):
@@ -65,8 +67,8 @@ class TestAddImageTagNegative(ImagesFixture):
         """
 
         tag = ''
-        response = self.images_client.add_tag(self.image.id_, tag)
-        self.assertEqual(response.status_code, 404)
+        with self.assertRaises(ItemNotFound):
+            self.images_client.add_tag(self.image.id_, tag)
 
     @tags(type='negative', regression='true')
     def test_add_image_tag_using_special_characters(self):
@@ -79,5 +81,5 @@ class TestAddImageTagNegative(ImagesFixture):
         """
 
         tag = '/?:*#@!'
-        response = self.images_client.add_tag(self.image.id_, tag)
-        self.assertEqual(response.status_code, 404)
+        with self.assertRaises(ItemNotFound):
+            self.images_client.add_tag(self.image.id_, tag)

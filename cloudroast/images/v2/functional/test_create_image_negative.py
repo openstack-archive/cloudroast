@@ -1,5 +1,5 @@
 """
-Copyright 2013 Rackspace
+Copyright 2014 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,10 +14,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import unittest2 as unittest
+import unittest
 
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.common.tools.datagen import rand_name
+from cloudcafe.compute.common.exceptions import BadRequest, Forbidden
 from cloudcafe.images.common.types import (
     ImageContainerFormat, ImageDiskFormat, ImageVisibility)
 from cloudcafe.images.config import ImagesConfig
@@ -40,8 +41,8 @@ class TestCreateImageNegative(ImagesFixture):
         2) Verify the response code is 400
         """
 
-        response = self.images_client.create_image(disk_format='unacceptable')
-        self.assertEqual(response.status_code, 400)
+        with self.assertRaises(BadRequest):
+            self.images_client.create_image(disk_format='unacceptable')
 
     @tags(type='negative', regression='true', skipable='true')
     def test_create_image_using_unacceptable_container_format(self):
@@ -52,9 +53,8 @@ class TestCreateImageNegative(ImagesFixture):
         2) Verify the response code is 400
         """
 
-        response = self.images_client.create_image(
-            container_format='unacceptable')
-        self.assertEqual(response.status_code, 400)
+        with self.assertRaises(BadRequest):
+            self.images_client.create_image(container_format='unacceptable')
 
     @tags(type='negative', regression='true', skipable='true')
     def test_create_public_image(self):
@@ -75,18 +75,27 @@ class TestCreateImageNegative(ImagesFixture):
         image_name = rand_name('image')
         allow_public_images = images_config.allow_create_update_public_images
 
-        response = self.images_client.create_image(
-            container_format=ImageContainerFormat.ARI,
-            disk_format=ImageDiskFormat.AKI, name=image_name,
-            visibility=ImageVisibility.PUBLIC)
-
         images = self.images_behavior.list_images_pagination()
         image_names = [image.name for image in images]
 
         if allow_public_images:
+            response = self.images_client.create_image(
+                container_format=ImageContainerFormat.ARI,
+                disk_format=ImageDiskFormat.AKI, name=image_name,
+                visibility=ImageVisibility.PUBLIC)
             self.assertEqual(response.status_code, 201)
+
+            images = self.images_behavior.list_images_pagination()
+            image_names = [image.name for image in images]
             self.assertIn(image_name, image_names)
 
         else:
-            self.assertEqual(response.status_code, 403)
+            with self.assertRaises(Forbidden):
+                self.images_client.create_image(
+                    container_format=ImageContainerFormat.ARI,
+                    disk_format=ImageDiskFormat.AKI, name=image_name,
+                    visibility=ImageVisibility.PUBLIC)
+
+            images = self.images_behavior.list_images_pagination()
+            image_names = [image.name for image in images]
             self.assertNotIn(image_name, image_names)
