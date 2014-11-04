@@ -1,5 +1,5 @@
 """
-Copyright 2013 Rackspace
+Copyright 2014 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@ limitations under the License.
 """
 
 from cafe.drivers.unittest.decorators import tags
+from cloudcafe.compute.common.exceptions import ItemNotFound
+
 from cloudroast.images.fixtures import ImagesFixture
 
 
@@ -37,8 +39,8 @@ class TestGetImageNegative(ImagesFixture):
         """
 
         image = self.images.pop()
-        response = self.alt_images_client.get_image(image.id_)
-        self.assertEqual(response.status_code, 404)
+        with self.assertRaises(ItemNotFound):
+            self.alt_images_client.get_image(image.id_)
 
     @tags(type='negative', regression='true')
     def test_get_image_for_deleted_image(self):
@@ -54,8 +56,8 @@ class TestGetImageNegative(ImagesFixture):
         image = self.images.pop()
         response = self.images_client.delete_image(image.id_)
         self.assertEqual(response.status_code, 204)
-        response = self.images_client.get_image(image.id_)
-        self.assertEqual(response.status_code, 404)
+        with self.assertRaises(ItemNotFound):
+            self.images_client.get_image(image.id_)
 
     @tags(type='negative', regression='true')
     def test_get_image_using_blank_image_id(self):
@@ -67,8 +69,8 @@ class TestGetImageNegative(ImagesFixture):
         """
 
         image_id = ''
-        response = self.images_client.get_image(image_id)
-        self.assertEqual(response.status_code, 404)
+        with self.assertRaises(ItemNotFound):
+            self.images_client.get_image(image_id)
 
     @tags(type='negative', regression='true')
     def test_get_image_using_invalid_image_id(self):
@@ -80,5 +82,5 @@ class TestGetImageNegative(ImagesFixture):
         """
 
         image_id = 'invalid'
-        response = self.images_client.get_image(image_id)
-        self.assertEqual(response.status_code, 404)
+        with self.assertRaises(ItemNotFound):
+            self.images_client.get_image(image_id)
