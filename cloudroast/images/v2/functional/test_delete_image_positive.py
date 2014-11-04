@@ -1,5 +1,5 @@
 """
-Copyright 2013 Rackspace
+Copyright 2014 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,9 +14,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import unittest2 as unittest
+import unittest
 
 from cafe.drivers.unittest.decorators import tags
+from cloudcafe.compute.common.exceptions import Forbidden, ItemNotFound
 from cloudcafe.images.common.types import ImageVisibility, ImageStatus
 from cloudcafe.images.config import ImagesConfig
 
@@ -42,13 +43,12 @@ class TestDeleteImagePositive(ImagesFixture):
         6) Verify that the response code is 404
         """
 
-        member_id = self.alt_tenant_id
         image = self.images_behavior.create_image_via_task()
-        self.images_client.add_member(image.id_, member_id)
+        self.images_client.add_member(image.id_, self.alt_tenant_id)
         response = self.images_client.delete_image(image.id_)
         self.assertEqual(response.status_code, 204)
-        response = self.alt_images_client.get_image(image.id_)
-        self.assertEqual(response.status_code, 404)
+        with self.assertRaises(ItemNotFound):
+            self.alt_images_client.get_image(image.id_)
 
     @unittest.skipUnless(superuser, 'User has incorrect access')
     @tags(type='positive', regression='true', skipable='true')
@@ -67,8 +67,8 @@ class TestDeleteImagePositive(ImagesFixture):
 
         image = self.images_behavior.create_image_via_task(
             visibility=ImageVisibility.PUBLIC)
-        response = self.alt_images_client.delete_image(image.id_)
-        self.assertEqual(response.status_code, 403)
+        with self.assertRaises(Forbidden):
+            self.alt_images_client.delete_image(image.id_)
         response = self.images_client.get_image(image.id_)
         self.assertEqual(response.status_code, 200)
         get_image = response.entity
@@ -110,5 +110,5 @@ class TestDeleteImagePositive(ImagesFixture):
         response = self.images_client.delete_image(image_id=active_image.id_)
         self.assertEqual(response.status_code, 204)
 
-        response = self.images_client.get_image(image_id=active_image.id_)
-        self.assertEqual(response.status_code, 404)
+        with self.assertRaises(ItemNotFound):
+            self.images_client.get_image(image_id=active_image.id_)
