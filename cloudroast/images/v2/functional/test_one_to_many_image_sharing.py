@@ -1,5 +1,5 @@
 """
-Copyright 2013 Rackspace
+Copyright 2014 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -15,96 +15,97 @@ limitations under the License.
 """
 
 from cafe.drivers.unittest.decorators import tags
+from cloudcafe.compute.common.exceptions import ItemNotFound
 from cloudcafe.images.common.types import ImageMemberStatus
+
 from cloudroast.images.fixtures import ImagesFixture
 
 
 class OneToManyImageSharingTest(ImagesFixture):
+
+    @classmethod
+    def setUpClass(cls):
+        super(OneToManyImageSharingTest, cls).setUpClass()
+        cls.image = cls.third_images_behavior.create_image_via_task()
 
     @tags(type='positive', regression='true')
     def test_one_to_many_image_sharing(self):
         """
         @summary: One to many image sharing
 
-        1) Create an image (third_user_image) as a third user tenant
-        2) Verify that tenant cannot access the image
-        3) Verify that alternative tenant cannot access the image
-        4) Add tenant as a member of the image
-        5) Verify that tenant can now access the image
-        6) Add alternative tenant as a member of the image
-        7) Verify that alternative tenant can now access the image
-        8) Update tenant membership status to 'Accepted' for the image
-        9) Verify that tenant can now see the image in their list
-        10) Update alternative tenant membership status to 'Accepted' for the
+        1) Given a previously created image as a third user tenant, verify that
+        tenant cannot access the image
+        2) Verify that alternative tenant cannot access the image
+        3) Add tenant as a member of the image
+        4) Verify that tenant can now access the image
+        5) Add alternative tenant as a member of the image
+        6) Verify that alternative tenant can now access the image
+        7) Update tenant membership status to 'Accepted' for the image
+        8) Verify that tenant can now see the image in their list
+        9) Update alternative tenant membership status to 'Accepted' for the
         image
-        11) Verify that alternative tenant can now see the image in their list
-        12) List all members of the image
-        13) Verify that tenant belongs to the image members list
-        14) Verify that alternative tenant belongs to the image members list
+        10) Verify that alternative tenant can now see the image in their list
+        11) List all members of the image
+        12) Verify that tenant belongs to the image members list
+        13) Verify that alternative tenant belongs to the image members list
         """
 
-        tenant_id = self.tenant_id
-        alt_tenant_id = self.alt_tenant_id
+        with self.assertRaises(ItemNotFound):
+            self.images_client.get_image(image_id=self.image.id_)
 
-        third_user_image = self.third_images_behavior.create_image_via_task()
-
-        response = self.images_client.get_image(image_id=third_user_image.id_)
-        self.assertEqual(response.status_code, 404)
-
-        response = self.alt_images_client.get_image(
-            image_id=third_user_image.id_)
-        self.assertEqual(response.status_code, 404)
+        with self.assertRaises(ItemNotFound):
+            self.alt_images_client.get_image(image_id=self.image.id_)
 
         response = self.third_images_client.add_member(
-            image_id=third_user_image.id_, member_id=tenant_id)
+            image_id=self.image.id_, member_id=self.tenant_id)
         self.assertEqual(response.status_code, 200)
         member = response.entity
-        self.assertEqual(member.member_id, tenant_id)
+        self.assertEqual(member.member_id, self.tenant_id)
         self.assertEqual(member.status, ImageMemberStatus.PENDING)
 
-        response = self.images_client.get_image(image_id=third_user_image.id_)
+        response = self.images_client.get_image(image_id=self.image.id_)
         self.assertEqual(response.status_code, 200)
         image = response.entity
-        self.assertEqual(image, third_user_image)
+        self.assertEqual(image, self.image)
 
         response = self.third_images_client.add_member(
-            image_id=third_user_image.id_, member_id=alt_tenant_id)
+            image_id=self.image.id_, member_id=self.alt_tenant_id)
         self.assertEqual(response.status_code, 200)
         member = response.entity
-        self.assertEqual(member.member_id, alt_tenant_id)
+        self.assertEqual(member.member_id, self.alt_tenant_id)
         self.assertEqual(member.status, ImageMemberStatus.PENDING)
 
         response = self.alt_images_client.get_image(
-            image_id=third_user_image.id_)
+            image_id=self.image.id_)
         self.assertEqual(response.status_code, 200)
         image = response.entity
-        self.assertEqual(image, third_user_image)
+        self.assertEqual(image, self.image)
 
         response = self.images_client.update_member(
-            image_id=third_user_image.id_, member_id=tenant_id,
+            image_id=self.image.id_, member_id=self.tenant_id,
             status=ImageMemberStatus.ACCEPTED)
         member = response.entity
-        self.assertEqual(member.member_id, tenant_id)
+        self.assertEqual(member.member_id, self.tenant_id)
         self.assertEqual(member.status, ImageMemberStatus.ACCEPTED)
 
         response = self.images_client.list_images()
         self.assertEqual(response.status_code, 200)
         images = response.entity
-        self.assertIn(third_user_image, images)
+        self.assertIn(self.image, images)
 
         response = self.alt_images_client.update_member(
-            image_id=third_user_image.id_, member_id=alt_tenant_id,
+            image_id=self.image.id_, member_id=self.alt_tenant_id,
             status=ImageMemberStatus.ACCEPTED)
         member = response.entity
-        self.assertEqual(member.member_id, alt_tenant_id)
+        self.assertEqual(member.member_id, self.alt_tenant_id)
         self.assertEqual(member.status, ImageMemberStatus.ACCEPTED)
 
         response = self.alt_images_client.list_images()
         self.assertEqual(response.status_code, 200)
         images = response.entity
-        self.assertIn(third_user_image, images)
+        self.assertIn(self.image, images)
 
         members_ids = self.third_images_behavior.get_member_ids(
-            image_id=third_user_image.id_)
-        self.assertIn(tenant_id, members_ids)
-        self.assertIn(alt_tenant_id, members_ids)
+            image_id=self.image.id_)
+        self.assertIn(self.tenant_id, members_ids)
+        self.assertIn(self.alt_tenant_id, members_ids)
