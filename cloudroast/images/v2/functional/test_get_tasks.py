@@ -32,10 +32,31 @@ class TestGetTasks(ImagesFixture):
         """
         @summary: Get tasks
 
+        1) Get tasks
+        2) Verify that the response code is 200
+        3) Verify that the list is not empty
+        4) Verify that the owner of each listed task belongs to the user
+        performing the request and that the data is correct
+        """
+
+        response = self.images_client.list_tasks()
+        self.assertEqual(response.status_code, 200)
+
+        get_tasks = response.entity
+        self.assertNotEqual(len(get_tasks), 0)
+
+        [self._validate_listed_task(task) for task in get_tasks]
+
+    @tags(type='positive', regression='true')
+    def test_get_tasks_pagination(self):
+        """
+        @summary: Get all tasks by paginating through all results and verify
+        that the created images are present
+
         1) Given two created tasks, get tasks
         2) Verify that the list is not empty
         3) Verify that the owner of each listed task belongs to the user
-        performing the request
+        performing the request and that the data is correct
         4) Verify that the created tasks are in the list of tasks
         """
 
