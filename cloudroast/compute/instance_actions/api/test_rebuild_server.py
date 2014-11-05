@@ -254,7 +254,8 @@ class RebuildServerTests(object):
             self.server, self.servers_config, password=self.password,
             key=self.key.private_key)
         distro_after_rebuild = remote_client.get_distribution_and_version()
-        if self.image_ref != self.image_ref_alt:
+        if (self.distro_before_rebuild and distro_after_rebuild
+                and self.image_ref != self.image_ref_alt):
             self.assertNotEqual(self.distro_before_rebuild, distro_after_rebuild)
         else:
             self.assertEqual(self.distro_before_rebuild, distro_after_rebuild)
