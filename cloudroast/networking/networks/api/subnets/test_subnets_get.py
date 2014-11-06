@@ -25,7 +25,7 @@ from cloudcafe.networking.networks.config import NetworkingSecondUserConfig
 from cloudroast.networking.networks.fixtures import NetworkingAPIFixture
 
 
-class SubnetListTest(NetworkingAPIFixture):
+class SubnetsGetTest(NetworkingAPIFixture):
 
     @tags(type='negative', rbac='observer', quark='yes')
     def test_hidden_subnets_public_private(self):

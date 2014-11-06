@@ -50,7 +50,7 @@ class MultiplePortsTest(NetworkingAPIFixture):
     def tearDown(self):
         self.networkingCleanUp()
 
-    @tags(type='smoke', rbac='creator')
+    @tags(type='positive', rbac='creator')
     def test_multiple_ipv4_ports_create(self):
         """
         @summary: Creating multiple ports on an IPv4 Subnet
@@ -81,7 +81,7 @@ class MultiplePortsTest(NetworkingAPIFixture):
             port = resp.response.entity
             self.assertPortResponse(expected_port, port, subnet=ipv4_subnet)
 
-    @tags(type='smoke', rbac='creator')
+    @tags(type='positive', rbac='creator')
     def test_multiple_ipv6_ports_create(self):
         """
         @summary: Creating multiple ports on an IPv6 Subnet

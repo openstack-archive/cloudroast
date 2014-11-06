@@ -13,6 +13,8 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
+import time
+
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.networking.networks.common.constants \
     import NeutronResponseCodes, NeutronErrorTypes
@@ -45,6 +47,7 @@ class PortCreateTest(NetworkingAPIFixture):
         self.expected_port.network_id = network.id
 
     def tearDown(self):
+        time.sleep(20)
         self.networkingCleanUp()
 
     @tags(type='negative', rbac='creator')
