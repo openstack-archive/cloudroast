@@ -40,22 +40,23 @@ class PortDeleteTest(NetworkingAPIFixture):
         cls.expected_ipv4_port = cls.get_expected_port_data()
         cls.expected_ipv6_port = cls.get_expected_port_data()
 
-        ipv4_network = cls.create_test_network(cls.expected_network)
-        ipv6_network = cls.create_test_network(cls.expected_network)
+    def setUp(self):
+        ipv4_network = self.create_test_network(self.expected_network)
+        ipv6_network = self.create_test_network(self.expected_network)
 
-        cls.expected_ipv4_subnet.network_id = ipv4_network.id
-        cls.expected_ipv6_subnet.network_id = ipv6_network.id
+        self.expected_ipv4_subnet.network_id = ipv4_network.id
+        self.expected_ipv6_subnet.network_id = ipv6_network.id
 
-        cls.expected_ipv4_port.network_id = ipv4_network.id
-        cls.expected_ipv6_port.network_id = ipv6_network.id
+        self.expected_ipv4_port.network_id = ipv4_network.id
+        self.expected_ipv6_port.network_id = ipv6_network.id
 
         # Creating subnets and ports
-        cls.ipv4_subnet = cls.add_subnet_to_network(
-            cls.expected_ipv4_subnet)
-        cls.ipv6_subnet = cls.add_subnet_to_network(
-            cls.expected_ipv6_subnet)
-        cls.ipv4_port = cls.add_port_to_network(cls.expected_ipv4_port)
-        cls.ipv6_port = cls.add_port_to_network(cls.expected_ipv6_port)
+        self.ipv4_subnet = self.add_subnet_to_network(
+            self.expected_ipv4_subnet)
+        self.ipv6_subnet = self.add_subnet_to_network(
+            self.expected_ipv6_subnet)
+        self.ipv4_port = self.add_port_to_network(self.expected_ipv4_port)
+        self.ipv6_port = self.add_port_to_network(self.expected_ipv6_port)
 
     def tearDown(self):
         time.sleep(30)
