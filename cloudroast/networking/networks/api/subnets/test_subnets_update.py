@@ -73,7 +73,7 @@ class SubnetUpdateTest(NetworkingAPIFixture):
     def tearDown(self):
         self.networkingCleanUp()
 
-    @tags(type='smoke', rbac='creator')
+    @tags(type='positive', rbac='creator')
     def test_ipv4_subnet_update_w_multiple_params(self):
         """
         @summary: Updating a subnet with multiple params
@@ -106,7 +106,7 @@ class SubnetUpdateTest(NetworkingAPIFixture):
         # Check the Subnet response
         self.assertSubnetResponse(self.expected_ipv4_subnet, subnet)
 
-    @tags(type='smoke', rbac='creator')
+    @tags(type='positive', rbac='creator')
     def test_ipv6_subnet_update_w_multiple_params(self):
         """
         @summary: Updating a subnet with multiple params

@@ -41,6 +41,7 @@ class PortUpdateTest(NetworkingAPIFixture):
         cls.expected_ipv6_port = cls.get_expected_port_data()
 
     def setUp(self):
+        time.sleep(30)
         ipv4_network = self.create_test_network(self.expected_network)
         ipv6_network = self.create_test_network(self.expected_network)
 

@@ -21,16 +21,16 @@ from cloudcafe.networking.networks.common.constants \
 from cloudroast.networking.networks.fixtures import NetworkingAPIFixture
 
 
-class PortsGetTest(NetworkingAPIFixture):
+class PortInterfaceTest(NetworkingAPIFixture):
 
     @classmethod
     def setUpClass(cls):
-        """Setting up test data"""
-        super(PortsGetTest, cls).setUpClass()
+        """Testing network interfaces booting up server instances"""
+        super(PortInterfaceTest, cls).setUpClass()
 
         # Setting up the network
         cls.expected_network = cls.get_expected_network_data()
-        cls.expected_network.name = 'test_port_delete_net'
+        cls.expected_network.name = 'test_interface_net'
 
         # Setting up the Subnets data
         cls.expected_ipv4_subnet = cls.get_expected_ipv4_subnet_data()
@@ -41,7 +41,6 @@ class PortsGetTest(NetworkingAPIFixture):
         cls.expected_ipv6_port = cls.get_expected_port_data()
 
     def setUp(self):
-        time.sleep(30)
         ipv4_network = self.create_test_network(self.expected_network)
         ipv6_network = self.create_test_network(self.expected_network)
 
@@ -60,69 +59,8 @@ class PortsGetTest(NetworkingAPIFixture):
         self.ipv6_port = self.add_port_to_network(self.expected_ipv6_port)
 
     def tearDown(self):
-        time.sleep(30)
         self.networkingCleanUp()
 
-    @tags(type='smoke', rbac='observer')
-    def test_list_ports(self):
-        """
-        @summary: Get ports test (list)
-        """
-
-        # Get ports
-        resp = self.ports.behaviors.list_ports()
-
-        # Fail the test if any failure is found
-        self.assertFalse(resp.failures)
-
-    @tags(type='smoke', rbac='observer')
-    def test_list_ports_by_network_id(self):
-        """
-        @summary: Get ports test (list) by network_id
-        """
-        expected_port = self.ipv4_port
-
-        # Get ports
-        resp = self.ports.behaviors.list_ports(
-            network_id=expected_port.network_id)
-
-        # Fail the test if any failure is found
-        self.assertFalse(resp.failures)
-        port = resp.response.entity[0]
-
-        # Check the Port response
-        self.assertPortResponse(expected_port, port)
-
-    @tags(type='smoke', rbac='observer')
-    def test_ipv4_port_get(self):
-        """
-        @summary: Get port test
-        """
-        expected_port = self.ipv4_port
-
-        # Get port
-        resp = self.ports.behaviors.get_port(port_id=expected_port.id)
-
-        # Fail the test if any failure is found
-        self.assertFalse(resp.failures)
-        port = resp.response.entity
-
-        # Check the Port response
-        self.assertPortResponse(expected_port, port)
-
-    @tags(type='smoke', rbac='observer')
-    def test_ipv6_port_get(self):
-        """
-        @summary: Get port test
-        """
-        expected_port = self.ipv6_port
-
-        # Get port
-        resp = self.ports.behaviors.get_port(port_id=expected_port.id)
-
-        # Fail the test if any failure is found
-        self.assertFalse(resp.failures)
-        port = resp.response.entity
-
-        # Check the Port response
-        self.assertPortResponse(expected_port, port)
+    @tags(type='positive', rbac='creator')
+    def test_server_boot_w_network_id(self):
+        pass
