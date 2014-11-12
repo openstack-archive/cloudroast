@@ -78,7 +78,7 @@ class PortDeleteTest(NetworkingAPIFixture):
 
         resp = self.ports.behaviors.get_port(
             port_id=expected_port.id, resource_get_attempts=1,
-                 raise_exception=False, poll_interval=0)
+            raise_exception=False, poll_interval=0)
 
         # Port get should be unavailable since the port is expected to be gone
         msg = '(negative) Getting a deleted port'

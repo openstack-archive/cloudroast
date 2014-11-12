@@ -107,6 +107,8 @@ class NetworkUpdateTest(NetworkingAPIFixture):
         expected_network.admin_state_up = True
 
         # Check the Network response
+        expected_network.subnets.sort()
+        network.subnets.sort()
         self.assertNetworkResponse(expected_network, network)
 
     @tags(type='negative', rbac='creator', quark='yes')
