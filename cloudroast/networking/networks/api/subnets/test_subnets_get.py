@@ -27,6 +27,16 @@ from cloudroast.networking.networks.fixtures import NetworkingAPIFixture
 
 class SubnetsGetTest(NetworkingAPIFixture):
 
+    @tags(type='smoke', rbac='observer')
+    def test_list_subnets(self):
+        """
+        @summary: Get subnets test (list)
+        """
+        resp = self.subnets.behaviors.list_subnets()
+
+        # Fail the test if any failure is found
+        self.assertFalse(resp.failures)
+
     @tags(type='negative', rbac='observer', quark='yes')
     def test_hidden_subnets_public_private(self):
         """
