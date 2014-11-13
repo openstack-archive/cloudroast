@@ -50,13 +50,36 @@ class NetworkGetTest(NetworkingAPIFixture):
         """
         @summary: Get networks test
         """
-        expected_network = self.network
-
-        # Get network
         resp = self.networks.behaviors.list_networks()
 
         # Fail the test if any failure is found
         self.assertFalse(resp.failures)
+
+    @tags(type='smoke', rbac='observer')
+    def test_network_list_w_shared_true(self):
+        """
+        @summary: Get networks test with shared set to True. This should
+            return the Public and Private (servicenet) networks that all
+            users should have.
+        """
+        resp = self.networks.behaviors.list_networks(shared=True)
+
+        # Fail the test if any failure is found
+        self.assertFalse(resp.failures)
+
+        network_list = resp.response.entity
+        network_ids = [net.id for net in network_list]
+
+        missing_networks = []
+        if self.public_network_id not in network_ids:
+            missing_networks.append(self.public_network_id)
+        if self.service_network_id not in network_ids:
+            missing_networks.append(self.service_network_id)
+
+        if missing_networks:
+            msg = 'User networks {0} missing in network list {1}'.format(
+                missing_networks, network_ids)
+            self.fail(msg)
 
     @tags(type='smoke', rbac='observer')
     def test_network_get(self):
