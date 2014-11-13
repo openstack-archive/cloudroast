@@ -13,8 +13,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-import time
-
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.networking.networks.common.constants \
     import NeutronResponseCodes, NeutronErrorTypes
@@ -59,7 +57,6 @@ class PortDeleteTest(NetworkingAPIFixture):
         self.ipv6_port = self.add_port_to_network(self.expected_ipv6_port)
 
     def tearDown(self):
-        time.sleep(30)
         self.networkingCleanUp()
 
     @tags(type='smoke', rbac='admin')
