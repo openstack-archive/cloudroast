@@ -41,6 +41,7 @@ class NetworkUpdateTest(NetworkingAPIFixture):
     def setUp(self):
         self.network = self.create_test_network(self.expected_network)
         self.expected_network.id = self.network.id
+        self.expected_network.shared = False
 
     def tearDown(self):
         self.networkingCleanUp()
