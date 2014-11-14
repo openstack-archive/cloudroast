@@ -492,3 +492,52 @@ class FormPostTest(ObjectStorageFixture):
                                  files[0].get("name"),
                                  404,
                                  object_response.status_code))
+
+    @ObjectStorageFixture.required_features('formpost')
+    def test_object_formpost_to_nonexistent_container(self):
+        """
+        Scenario:
+            Try to FormPOST, using a redirect, to a container that doesn't
+            exist.
+
+        Expected Results:
+            The FormPOST will return a 303 but the location header will
+            include a status code of 404. The object should not be created
+            and a GET on it should return a 404.
+        """
+
+        files = [{'name': 'foo1'}]
+
+        formpost_info = self.client.create_formpost(
+            "not_a_container",
+            files,
+            redirect=self.redirect_url,
+            max_file_size=104857600,
+            max_file_count=1,
+            key=self.tempurl_key)
+
+        formpost_response = self.http_client.post(
+            formpost_info.get('target_url'),
+            headers=formpost_info.get('headers'),
+            data=formpost_info.get('body'),
+            requestslib_kwargs={'allow_redirects': False})
+
+        self.assertIn("location",
+                      formpost_response.headers,
+                      msg="Could not find a redirect location in response "
+                          "headers: {0}".format(formpost_response.headers))
+
+        self.assertIn("status=404",
+                      formpost_response.headers.get("location"),
+                      msg="Expected to be redirected with a status code of "
+                          "404, received {0}".format(
+                              formpost_response.headers.get("location")))
+
+        object_response = self.client.get_object("not_a_container",
+                                                 files[0].get("name"))
+
+        self.assertEqual(404,
+                         object_response.status_code,
+                         msg="GET on object expected status code of {0}, "
+                             "received {1}".format(
+                                 "404", object_response.status_code))
