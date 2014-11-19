@@ -98,6 +98,51 @@ class PortUpdateTest(NetworkingAPIFixture):
         self.assertPortResponse(expected_port, port, check_fixed_ips=True)
 
     @tags(type='smoke', rbac='creator')
+    def test_ipv4_port_update_w_long_name(self):
+        """
+        @summary: Updating an IPv4 port with a 40 char name
+        """
+        expected_port = self.ipv4_port
+        expected_port.name = '1234567890123456789012345678901234567890'
+
+        # Updating the port
+        resp = self.ports.behaviors.update_port(
+            port_id=expected_port.id,
+            name=expected_port.name)
+
+        # Fail the test if any failure is found
+        self.assertFalse(resp.failures)
+        port = resp.response.entity
+
+        # Check the Port response
+        self.assertPortResponse(expected_port, port)
+
+    @tags(type='smoke', rbac='creator')
+    def test_ipv4_port_update_w_long_name_trimming(self):
+        """
+        @summary: Updating an IPv4 port with a 50 char name (name should be
+            trimmed to 40 chars)
+        """
+        expected_port = self.ipv4_port
+        expected_port.name = ('1234567890123456789012345678901234567890'
+                              '1234567890')
+
+        # Updating the port
+        resp = self.ports.behaviors.update_port(
+            port_id=expected_port.id,
+            name=expected_port.name)
+
+        # Fail the test if any failure is found
+        self.assertFalse(resp.failures)
+        port = resp.response.entity
+
+        # Trimming should leave the name with 40 chars
+        expected_port.name = '1234567890123456789012345678901234567890'
+
+        # Check the Port response
+        self.assertPortResponse(expected_port, port)
+
+    @tags(type='smoke', rbac='creator')
     def test_ipv6_port_update(self):
         """
         @summary: Updating an IPv4 port

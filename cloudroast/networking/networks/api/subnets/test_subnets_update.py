@@ -106,6 +106,51 @@ class SubnetUpdateTest(NetworkingAPIFixture):
         # Check the Subnet response
         self.assertSubnetResponse(self.expected_ipv4_subnet, subnet)
 
+    @tags(type='smoke', rbac='creator')
+    def test_ipv4_subnet_update_w_long_name(self):
+        """
+        @summary: Updating a subnet with a 40 char name
+        """
+        expected_subnet = self.expected_ipv4_subnet
+        expected_subnet.name = '1234567890123456789012345678901234567890'
+
+        # Updating the subnet name
+        resp = self.subnets.behaviors.update_subnet(
+            subnet_id=self.ipv4_subnet.id,
+            name=expected_subnet.name)
+
+        # Fail the test if any failure is found
+        self.assertFalse(resp.failures)
+        subnet = resp.response.entity
+
+        # Check the Subnet response
+        self.assertSubnetResponse(expected_subnet, subnet)
+
+    @tags(type='negative', rbac='creator')
+    def test_ipv4_subnet_update_w_long_name_trimming(self):
+        """
+        @summary: Updating a subnet with a 50 char name (name should be
+            trimmed to 40 chars)
+        """
+        expected_subnet = self.expected_ipv4_subnet
+        expected_subnet.name = ('1234567890123456789012345678901234567890'
+                                '1234567890')
+
+        # Updating the subnet name
+        resp = self.subnets.behaviors.update_subnet(
+            subnet_id=self.ipv4_subnet.id,
+            name=expected_subnet.name)
+
+        # Fail the test if any failure is found
+        self.assertFalse(resp.failures)
+        subnet = resp.response.entity
+
+        # Trimming should leave the name with 40 chars
+        expected_subnet.name = '1234567890123456789012345678901234567890'
+
+        # Check the Subnet response
+        self.assertSubnetResponse(expected_subnet, subnet)
+
     @tags(type='positive', rbac='creator')
     def test_ipv6_subnet_update_w_multiple_params(self):
         """
@@ -409,7 +454,7 @@ class SubnetUpdateTest(NetworkingAPIFixture):
         """
         allocation_pools = self.get_allocation_pools_data(
             cidr=self.ipv4_subnet.cidr, start_increment=3, ip_range=20,
-            interval=10, n=3)
+            interval=10, num=3)
         resp = self.subnets.behaviors.update_subnet(
             subnet_id=self.ipv4_subnet.id, allocation_pools=allocation_pools)
         # Subnet update for allocation pools should be unavailable
@@ -425,7 +470,7 @@ class SubnetUpdateTest(NetworkingAPIFixture):
         """
         allocation_pools = self.get_allocation_pools_data(
             cidr=self.ipv6_subnet.cidr, start_increment=100, ip_range=500,
-            interval=50, n=3)
+            interval=50, num=3)
 
         resp = self.subnets.behaviors.update_subnet(
             subnet_id=self.ipv6_subnet.id, allocation_pools=allocation_pools)

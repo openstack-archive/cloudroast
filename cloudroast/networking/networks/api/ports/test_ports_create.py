@@ -150,6 +150,59 @@ class PortCreateTest(NetworkingAPIFixture):
         self.assertPortResponse(expected_port, port, subnet=ipv4_subnet)
 
     @tags(type='smoke', rbac='creator')
+    def test_port_create_on_net_w_both_subnets_w_long_name(self):
+        """
+        @summary: Creating a port with a 40 char name
+        """
+        expected_port = self.expected_port
+        expected_port.name = '1234567890123456789012345678901234567890'
+        ipv4_subnet = self.add_subnet_to_network(self.expected_ipv4_subnet)
+        ipv6_subnet = self.add_subnet_to_network(self.expected_ipv6_subnet)
+
+        # Creating a port in a network with both subnets
+        resp = self.ports.behaviors.create_port(
+            network_id=expected_port.network_id, name=expected_port.name,
+            raise_exception=False, use_exact_name=True)
+        if resp.response.entity and hasattr(resp.response.entity, 'id'):
+            self.delete_ports.append(resp.response.entity.id)
+
+        # Fail the test if any failure is found
+        self.assertFalse(resp.failures)
+        port = resp.response.entity
+
+        # Check the Port response (Port expected on IPv4 Subnet
+        self.assertPortResponse(expected_port, port, subnet=ipv4_subnet)
+
+    @tags(type='negative', rbac='creator')
+    def test_port_create_on_net_w_both_subnets_w_long_name_trimming(self):
+        """
+        @summary: Creating a port with a 50 char name (name should be
+            trimmed to 40 chars)
+        """
+        expected_port = self.expected_port
+        expected_port.name = ('1234567890123456789012345678901234567890'
+                              '1234567890')
+        ipv4_subnet = self.add_subnet_to_network(self.expected_ipv4_subnet)
+        ipv6_subnet = self.add_subnet_to_network(self.expected_ipv6_subnet)
+
+        # Creating a port in a network with both subnets
+        resp = self.ports.behaviors.create_port(
+            network_id=expected_port.network_id, name=expected_port.name,
+            raise_exception=False, use_exact_name=True)
+        if resp.response.entity and hasattr(resp.response.entity, 'id'):
+            self.delete_ports.append(resp.response.entity.id)
+
+        # Fail the test if any failure is found
+        self.assertFalse(resp.failures)
+        port = resp.response.entity
+
+        # Trimming should leave the name with 40 chars
+        expected_port.name = '1234567890123456789012345678901234567890'
+
+        # Check the Port response (Port expected on IPv4 Subnet
+        self.assertPortResponse(expected_port, port, subnet=ipv4_subnet)
+
+    @tags(type='smoke', rbac='creator')
     def test_ipv4_ipv6_port_create_on_net_w_both_subnets(self):
         """
         @summary: Creating a port on network with IPv4 and IPv6 subnets

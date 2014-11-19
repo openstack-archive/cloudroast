@@ -534,10 +534,25 @@ class NetworkingAPIFixture(NetworkingFixture):
         return ipv6_dns_nameservers
 
     def get_allocation_pools_data(self, cidr, start_increment,
-                                  ip_range, interval, n):
-        """Generates allocation pools subnet data"""
+                                  ip_range, interval, num):
+        """
+        @summary: Generates allocation pools subnet data
+        @param cidr: cidr for allocation pools
+        @type cidr: string
+        @param start_increment: increment from first cidr address to first
+            allocation pool IP address
+        @type start_increment: int
+        @param ip_range: ip addresses from start IP to end IP of allocation
+            pool
+        @type ip_range: int
+        @param interval: ip addresses from end of allocation pool to start IP
+            of the next allocation pool (if multiple)
+        @type interval: int
+        @param num: number of allocation pools to create within the cidr
+        @type num: int
+        """
         allocation_pools = []
-        for _ in range(n):
+        for _ in range(num):
             end_increment = start_increment + ip_range
             allocation_pool = self.subnets.behaviors.get_allocation_pool(
                 cidr=cidr, start_increment=start_increment,

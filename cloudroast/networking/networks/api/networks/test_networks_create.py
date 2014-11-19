@@ -52,6 +52,55 @@ class NetworkCreateTest(NetworkingAPIFixture):
         # Check the Network response
         self.assertNetworkResponse(self.expected_network, network)
 
+    @tags(type='smoke', rbac='creator')
+    def test_network_create_w_long_name(self):
+        """
+        @summary: Creating a network with a 40 char name
+        """
+        expected_network = self.expected_network
+        expected_network.name = '1234567890123456789012345678901234567890'
+
+        # Creating network with a 40 char name
+        resp = self.networks.behaviors.create_network(
+            name=expected_network.name, use_exact_name=True,
+            raise_exception=False)
+        if resp.response.entity and hasattr(resp.response.entity, 'id'):
+            self.delete_networks.append(resp.response.entity.id)
+
+        # Fail the test if any failure is found
+        self.assertFalse(resp.failures)
+        network = resp.response.entity
+
+        # Check the Network response
+        self.assertNetworkResponse(self.expected_network, network)
+
+    @tags(type='negative', rbac='creator', quark='yes')
+    def test_network_create_w_long_name_trimming(self):
+        """
+        @summary: Creating a network with a 50 char name (name should be
+            trimmed to 40 chars)
+        """
+        expected_network = self.expected_network
+        expected_network.name = ('1234567890123456789012345678901234567890'
+                                 '1234567890')
+
+        # Creating network with a 40 char name
+        resp = self.networks.behaviors.create_network(
+            name=expected_network.name, use_exact_name=True,
+            raise_exception=False)
+        if resp.response.entity and hasattr(resp.response.entity, 'id'):
+            self.delete_networks.append(resp.response.entity.id)
+
+        # Fail the test if any failure is found
+        self.assertFalse(resp.failures)
+        network = resp.response.entity
+
+        # Trimming should leave the name with 40 chars
+        expected_network.name = '1234567890123456789012345678901234567890'
+
+        # Check the Network response
+        self.assertNetworkResponse(self.expected_network, network)
+
     @tags(type='negative', rbac='creator', quark='yes')
     def test_network_create_w_shared(self):
         """

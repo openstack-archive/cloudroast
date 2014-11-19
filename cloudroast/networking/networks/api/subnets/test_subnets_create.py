@@ -85,6 +85,63 @@ class SubnetCreateTest(NetworkingAPIFixture):
         self.assertSubnetResponse(expected_subnet, subnet)
 
     @tags(type='smoke', rbac='creator')
+    def test_ipv4_subnet_create_w_long_name(self):
+        """
+        @summary: Creating an IPv4 subnet with a 40 char name
+        """
+        # Setting the expected Subnet and test data params
+        expected_subnet = self.expected_ipv4_subnet
+        expected_subnet.name = '1234567890123456789012345678901234567890'
+
+        # Creating IPv4 subnet
+        resp = self.subnets.behaviors.create_subnet(
+            network_id=expected_subnet.network_id,
+            name=expected_subnet.name,
+            ip_version=expected_subnet.ip_version,
+            cidr=expected_subnet.cidr,
+            use_exact_name=True, raise_exception=False)
+        if resp.response.entity and hasattr(resp.response.entity, 'id'):
+            self.delete_subnets.append(resp.response.entity.id)
+
+        # Fail the test if any failure is found
+        self.assertFalse(resp.failures)
+        subnet = resp.response.entity
+
+        # Check the Subnet response
+        self.assertSubnetResponse(expected_subnet, subnet)
+
+    @tags(type='negative', rbac='creator')
+    def test_ipv4_subnet_create_w_long_name_trimming(self):
+        """
+        @summary: Creating an IPv4 subnet with a 50 char name (name should be
+            trimmed to 40 chars)
+        """
+        # Setting the expected Subnet and test data params
+        expected_subnet = self.expected_ipv4_subnet
+        expected_subnet.name = ('1234567890123456789012345678901234567890'
+                                '1234567890')
+
+        # Creating IPv4 subnet
+        resp = self.subnets.behaviors.create_subnet(
+            network_id=expected_subnet.network_id,
+            name=expected_subnet.name,
+            ip_version=expected_subnet.ip_version,
+            cidr=expected_subnet.cidr,
+            use_exact_name=True, raise_exception=False)
+        if resp.response.entity and hasattr(resp.response.entity, 'id'):
+            self.delete_subnets.append(resp.response.entity.id)
+
+        # Fail the test if any failure is found
+        self.assertFalse(resp.failures)
+        subnet = resp.response.entity
+
+        # Trimming should leave the name with 40 chars
+        expected_subnet.name = '1234567890123456789012345678901234567890'
+
+        # Check the Subnet response
+        self.assertSubnetResponse(expected_subnet, subnet)
+
+    @tags(type='smoke', rbac='creator')
     def test_ipv6_subnet_create(self):
         """
         @summary: Creating an IPv6 subnet
@@ -125,7 +182,7 @@ class SubnetCreateTest(NetworkingAPIFixture):
         expected_subnet.name = 'test_sub_create_ipv4'
         expected_subnet.allocation_pools = self.get_allocation_pools_data(
             cidr=expected_subnet.cidr, start_increment=3, ip_range=20,
-            interval=10, n=3)
+            interval=10, num=3)
         gateway_ip = self.subnets.behaviors.get_next_ip(
             cidr=expected_subnet.cidr, num=2)
         expected_subnet.gateway_ip = gateway_ip
@@ -167,7 +224,7 @@ class SubnetCreateTest(NetworkingAPIFixture):
         expected_subnet.name = 'test_sub_create_ipv6'
         expected_subnet.allocation_pools = self.get_allocation_pools_data(
             cidr=expected_subnet.cidr, start_increment=100, ip_range=500,
-            interval=50, n=3)
+            interval=50, num=3)
         gateway_ip = self.subnets.behaviors.get_next_ip(
             cidr=expected_subnet.cidr, num=2)
         expected_subnet.gateway_ip = gateway_ip
@@ -968,7 +1025,7 @@ class SubnetCreateTest(NetworkingAPIFixture):
         expected_subnet.name = 'test_sub_create_ipv4_w_allocation_pools'
         expected_subnet.allocation_pools = self.get_allocation_pools_data(
             cidr=expected_subnet.cidr, start_increment=10, ip_range=20,
-            interval=2, n=3)
+            interval=2, num=3)
 
         # Creating IPv4 subnet
         resp = self.subnets.behaviors.create_subnet(
@@ -1028,7 +1085,7 @@ class SubnetCreateTest(NetworkingAPIFixture):
         expected_subnet.name = 'test_sub_create_ipv6_w_allocation_pools'
         expected_subnet.allocation_pools = self.get_allocation_pools_data(
             cidr=expected_subnet.cidr, start_increment=100, ip_range=700,
-            interval=20, n=3)
+            interval=20, num=3)
 
         # Creating IPv6 subnet
         resp = self.subnets.behaviors.create_subnet(

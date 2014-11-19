@@ -72,6 +72,51 @@ class NetworkUpdateTest(NetworkingAPIFixture):
         self.assertNetworkResponse(expected_network, network)
 
     @tags(type='smoke', rbac='creator')
+    def test_network_update_w_long_name(self):
+        """
+        @summary: Updating a Network with a 40 char name
+        """
+        expected_network = self.expected_network
+        expected_network.name = '1234567890123456789012345678901234567890'
+
+        # Updating the network
+        resp = self.networks.behaviors.update_network(
+            network_id=expected_network.id,
+            name=expected_network.name)
+
+        # Fail the test if any failure is found
+        self.assertFalse(resp.failures)
+        network = resp.response.entity
+
+        # Check the Network response
+        self.assertNetworkResponse(expected_network, network)
+
+    @tags(type='negative', rbac='creator')
+    def test_network_update_w_long_name_trimming(self):
+        """
+        @summary: Updating a Network with a 50 char name (name should be
+            trimmed to 40 chars)
+        """
+        expected_network = self.expected_network
+        expected_network.name = ('1234567890123456789012345678901234567890'
+                                 '1234567890')
+
+        # Updating the network
+        resp = self.networks.behaviors.update_network(
+            network_id=expected_network.id,
+            name=expected_network.name)
+
+        # Fail the test if any failure is found
+        self.assertFalse(resp.failures)
+        network = resp.response.entity
+
+        # Trimming should leave the name with 40 chars
+        expected_network.name = '1234567890123456789012345678901234567890'
+
+        # Check the Network response
+        self.assertNetworkResponse(expected_network, network)
+
+    @tags(type='smoke', rbac='creator')
     def test_network_w_ports_update(self):
         """
         @summary: Updating a Network with subnets and ports
