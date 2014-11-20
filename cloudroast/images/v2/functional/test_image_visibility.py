@@ -1,5 +1,5 @@
 """
-Copyright 2013 Rackspace
+Copyright 2014 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@ limitations under the License.
 """
 
 from cafe.drivers.unittest.decorators import tags
+from cloudcafe.compute.common.exceptions import ItemNotFound
 from cloudcafe.images.common.types import ImageMemberStatus, ImageVisibility
 
 from cloudroast.images.fixtures import ImagesFixture
@@ -113,31 +114,29 @@ class TestImageVisibility(ImagesFixture):
          but not image_one
         """
 
-        tenant_id = self.tenant_id
-        alt_tenant_id = self.alt_tenant_id
         image_one = self.images.pop()
         image_two = self.images.pop()
 
-        response = self.alt_images_client.get_image(image_id=image_one.id_)
-        self.assertEqual(response.status_code, 404)
+        with self.assertRaises(ItemNotFound):
+            self.alt_images_client.get_image(image_id=image_one.id_)
 
-        response = self.alt_images_client.get_image(image_id=image_two.id_)
-        self.assertEqual(response.status_code, 404)
+        with self.assertRaises(ItemNotFound):
+            self.alt_images_client.get_image(image_id=image_two.id_)
 
         images = self.alt_images_behavior.list_images_pagination()
         self.assertNotIn(image_one, images)
         self.assertNotIn(image_two, images)
 
         images = self.alt_images_behavior.list_images_pagination(
-            owner=tenant_id)
+            owner=self.tenant_id)
         self.assertNotIn(image_one, images)
         self.assertNotIn(image_two, images)
 
         response = self.images_client.add_member(
-            image_id=image_two.id_, member_id=alt_tenant_id)
+            image_id=image_two.id_, member_id=self.alt_tenant_id)
         self.assertEqual(response.status_code, 200)
         member = response.entity
-        self.assertEqual(member.member_id, alt_tenant_id)
+        self.assertEqual(member.member_id, self.alt_tenant_id)
         self.assertEqual(member.status, ImageMemberStatus.PENDING)
 
         response = self.alt_images_client.get_image(image_id=image_two.id_)
@@ -146,11 +145,11 @@ class TestImageVisibility(ImagesFixture):
         self.assertEqual(image, image_two)
 
         response = self.alt_images_client.update_member(
-            image_id=image_two.id_, member_id=alt_tenant_id,
+            image_id=image_two.id_, member_id=self.alt_tenant_id,
             status=ImageMemberStatus.ACCEPTED)
         self.assertEqual(response.status_code, 200)
         member = response.entity
-        self.assertEqual(member.member_id, alt_tenant_id)
+        self.assertEqual(member.member_id, self.alt_tenant_id)
         self.assertEqual(member.status, ImageMemberStatus.ACCEPTED)
 
         images = self.alt_images_behavior.list_images_pagination()
@@ -158,6 +157,6 @@ class TestImageVisibility(ImagesFixture):
         self.assertIn(image_two, images)
 
         images = self.alt_images_behavior.list_images_pagination(
-            owner=tenant_id)
+            owner=self.tenant_id)
         self.assertNotIn(image_one, images)
         self.assertIn(image_two, images)
