@@ -1,5 +1,5 @@
 """
-Copyright 2013 Rackspace
+Copyright 2014 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -15,22 +15,27 @@ limitations under the License.
 """
 
 from cafe.drivers.unittest.decorators import tags
+from cloudcafe.compute.common.exceptions import ItemNotFound
+
 from cloudroast.images.fixtures import ImagesFixture
 
 
 class TestGetTaskNegative(ImagesFixture):
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestGetTaskNegative, cls).setUpClass()
+        cls.task = cls.alt_images_behavior.create_new_task()
 
     @tags(type='negative', regression='true')
     def test_get_task_not_owned_by_tenant(self):
         """
         @summary: Get task that is not owned by tenant
 
-        1) Create task with alt_user
-        2) Get task that is not owned by tenant
-        3) Verify that the response code is 404
+        1) Given a previously created task, get task that is not owned by
+        tenant
+        2) Verify that the response code is 404
         """
 
-        task = self.alt_images_behavior.create_new_task()
-
-        response = self.images_client.get_task(task.id_)
-        self.assertEqual(response.status_code, 404)
+        with self.assertRaises(ItemNotFound):
+            self.images_client.get_task(self.task.id_)

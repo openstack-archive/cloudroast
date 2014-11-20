@@ -15,9 +15,10 @@ limitations under the License.
 """
 
 import random
-import unittest2 as unittest
+import unittest
 
 from cafe.drivers.unittest.decorators import tags
+from cloudcafe.compute.common.exceptions import OverLimit
 from cloudcafe.common.tools.datagen import rand_name
 
 from cloudroast.images.fixtures import ImagesFixture
@@ -137,8 +138,8 @@ class TestImageItemQuotas(ImagesFixture):
                 number_of_items = len(getattr(image, items))
 
         api_args = self._get_api_args(api_name, image)
-        response = api(**api_args)
-        self.assertEqual(response.status_code, 413)
+        with self.assertRaises(OverLimit):
+            api(**api_args)
 
         response = self.images_client.get_image(image.id_)
         self.assertEqual(response.status_code, 200)
