@@ -17,6 +17,8 @@ limitations under the License.
 import unittest
 
 from cafe.drivers.unittest.decorators import tags
+from cloudcafe.compute.common.exceptions import (
+    ActionInProgress, BadMediaType, BadRequest, ItemNotFound)
 from cloudcafe.images.common.types import ImageStatus
 from cloudcafe.images.config import ImagesConfig
 
@@ -47,10 +49,10 @@ class StoreImageFileNegativeTest(ImagesFixture):
         2) Verify response code is 415
         """
 
-        response = self.images_client.store_image_file(
-            self.image.id_, self.test_file,
-            content_type="invalid_content_type")
-        self.assertEqual(response.status_code, 415)
+        with self.assertRaises(BadMediaType):
+            self.images_client.store_image_file(
+                self.image.id_, self.test_file,
+                content_type="invalid_content_type")
 
     @tags(type='negative', regression='true', skipable='true')
     def test_store_image_file_with_blank_image_id(self):
@@ -61,9 +63,9 @@ class StoreImageFileNegativeTest(ImagesFixture):
         2) Verify response code is 404
         """
 
-        response = self.images_client.store_image_file(
-            image_id="", file_data=self.test_file)
-        self.assertEqual(response.status_code, 400)
+        with self.assertRaises(BadRequest):
+            self.images_client.store_image_file(
+                image_id="", file_data=self.test_file)
 
     @tags(type='negative', regression='true', skipable='true')
     def test_store_image_file_with_invalid_image_id(self):
@@ -74,9 +76,9 @@ class StoreImageFileNegativeTest(ImagesFixture):
         2) Verify response code is 404
         """
 
-        response = self.images_client.store_image_file(
-            image_id="invalid_id", file_data=self.test_file)
-        self.assertEqual(response.status_code, 404)
+        with self.assertRaises(ItemNotFound):
+            self.images_client.store_image_file(
+                image_id="invalid_id", file_data=self.test_file)
 
     @tags(type='negative', regression='true', skipable='true')
     def test_store_image_file_with_duplicate_data(self):
@@ -104,6 +106,6 @@ class StoreImageFileNegativeTest(ImagesFixture):
         self.assertEqual(updated_image.size, len(self.test_file))
         self.assertIsNotNone(updated_image.checksum)
 
-        response = self.images_client.store_image_file(
-            self.image.id_, self.test_file)
-        self.assertEqual(response.status_code, 409)
+        with self.assertRaises(ActionInProgress):
+            self.images_client.store_image_file(
+                self.image.id_, self.test_file)

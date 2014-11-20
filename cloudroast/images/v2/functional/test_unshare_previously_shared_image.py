@@ -1,5 +1,5 @@
 """
-Copyright 2013 Rackspace
+Copyright 2014 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -15,11 +15,18 @@ limitations under the License.
 """
 
 from cafe.drivers.unittest.decorators import tags
+from cloudcafe.compute.common.exceptions import ItemNotFound
 from cloudcafe.images.common.types import ImageMemberStatus
+
 from cloudroast.images.fixtures import ImagesFixture
 
 
 class UnsharePreviouslySharedImageTest(ImagesFixture):
+
+    @classmethod
+    def setUpClass(cls):
+        super(UnsharePreviouslySharedImageTest, cls).setUpClass()
+        cls.image = cls.images_behavior.create_image_via_task()
 
     @tags(type='positive', regression='true')
     def test_unshare_previously_shared_image(self):
@@ -37,45 +44,43 @@ class UnsharePreviouslySharedImageTest(ImagesFixture):
         images
         """
 
-        image = self.images_behavior.create_image_via_task()
-        alt_tenant_id = self.alt_tenant_id
+        with self.assertRaises(ItemNotFound):
+            self.alt_images_client.get_image(image_id=self.image.id_)
 
-        response = self.alt_images_client.get_image(image_id=image.id_)
-        self.assertEqual(response.status_code, 404)
-
-        response = self.images_client.add_member(image_id=image.id_,
-                                                 member_id=alt_tenant_id)
+        response = self.images_client.add_member(image_id=self.image.id_,
+                                                 member_id=self.alt_tenant_id)
         self.assertEqual(response.status_code, 200)
         member = response.entity
-        self.assertEqual(member.member_id, alt_tenant_id)
+        self.assertEqual(member.member_id, self.alt_tenant_id)
         self.assertEqual(member.status, ImageMemberStatus.PENDING)
 
-        response = self.alt_images_client.get_image(image_id=image.id_)
+        response = self.alt_images_client.get_image(image_id=self.image.id_)
         self.assertEqual(response.status_code, 200)
         new_image = response.entity
-        self.assertEqual(new_image, image)
+        self.assertEqual(new_image, self.image)
 
         response = self.alt_images_client.update_member(
-            image_id=image.id_, member_id=alt_tenant_id,
+            image_id=self.image.id_, member_id=self.alt_tenant_id,
             status=ImageMemberStatus.ACCEPTED)
         self.assertEqual(response.status_code, 200)
         updated_member = response.entity
-        self.assertEqual(updated_member.member_id, alt_tenant_id)
+        self.assertEqual(updated_member.member_id, self.alt_tenant_id)
         self.assertEqual(updated_member.status, ImageMemberStatus.ACCEPTED)
 
         response = self.alt_images_client.list_images()
         self.assertEqual(response.status_code, 200)
         images = response.entity
-        self.assertIn(image, images)
+        self.assertIn(self.image, images)
 
-        response = self.images_client.delete_member(image_id=image.id_,
-                                                    member_id=alt_tenant_id)
+        response = self.images_client.delete_member(
+            image_id=self.image.id_, member_id=self.alt_tenant_id)
         self.assertEqual(response.status_code, 204)
 
-        members_ids = self.images_behavior.get_member_ids(image_id=image.id_)
+        members_ids = self.images_behavior.get_member_ids(
+            image_id=self.image.id_)
         self.assertEqual(members_ids, [])
 
         response = self.alt_images_client.list_images()
         self.assertEqual(response.status_code, 200)
         images = response.entity
-        self.assertNotIn(image, images)
+        self.assertNotIn(self.image, images)
