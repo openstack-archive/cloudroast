@@ -117,7 +117,7 @@ class PortUpdateTest(NetworkingAPIFixture):
         # Check the Port response
         self.assertPortResponse(expected_port, port)
 
-    @tags(type='smoke', rbac='creator')
+    @tags(type='positive', rbac='creator')
     def test_ipv4_port_update_w_long_name_trimming(self):
         """
         @summary: Updating an IPv4 port with a 50 char name (name should be
