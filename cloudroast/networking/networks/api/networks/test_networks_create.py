@@ -19,8 +19,6 @@ import unittest
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.networking.networks.common.constants \
     import NeutronResponseCodes
-from cloudcafe.networking.networks.common.models.response.network \
-    import Network
 from cloudcafe.networking.networks.config import NetworkingSecondUserConfig
 from cloudroast.networking.networks.fixtures import NetworkingAPIFixture
 
@@ -32,21 +30,37 @@ class NetworkCreateTest(NetworkingAPIFixture):
         """Setting up test data"""
         super(NetworkCreateTest, cls).setUpClass()
 
-        # Data for creating networks and asserting responses
-        cls.network_data = dict(
-            status='ACTIVE', subnets=[],
-            name='test_net_create', admin_state_up=None,
-            tenant_id=cls.net.networking_auth_composite().tenant_id,
-            shared=False)
+    def setUp(self):
+        self.expected_network = self.get_expected_network_data()
 
     @tags(type='smoke', rbac='creator')
     def test_network_create(self):
         """
         @summary: Creating a network
         """
-        expected_network = Network(**self.network_data)
-
         # Creating network
+        resp = self.networks.behaviors.create_network(
+            name=self.expected_network.name, use_exact_name=True,
+            raise_exception=False)
+        if resp.response.entity and hasattr(resp.response.entity, 'id'):
+            self.delete_networks.append(resp.response.entity.id)
+
+        # Fail the test if any failure is found
+        self.assertFalse(resp.failures)
+        network = resp.response.entity
+
+        # Check the Network response
+        self.assertNetworkResponse(self.expected_network, network)
+
+    @tags(type='smoke', rbac='creator')
+    def test_network_create_w_long_name(self):
+        """
+        @summary: Creating a network with a 40 char name
+        """
+        expected_network = self.expected_network
+        expected_network.name = '1234567890123456789012345678901234567890'
+
+        # Creating network with a 40 char name
         resp = self.networks.behaviors.create_network(
             name=expected_network.name, use_exact_name=True,
             raise_exception=False)
@@ -58,9 +72,36 @@ class NetworkCreateTest(NetworkingAPIFixture):
         network = resp.response.entity
 
         # Check the Network response
-        self.assertNetworkResponse(expected_network, network)
+        self.assertNetworkResponse(self.expected_network, network)
 
-    @tags(type='negative', rbac='creator')
+    @tags(type='negative', rbac='creator', quark='yes')
+    def test_network_create_w_long_name_trimming(self):
+        """
+        @summary: Creating a network with a 50 char name (name should be
+            trimmed to 40 chars)
+        """
+        expected_network = self.expected_network
+        expected_network.name = ('1234567890123456789012345678901234567890'
+                                 '1234567890')
+
+        # Creating network with a 40 char name
+        resp = self.networks.behaviors.create_network(
+            name=expected_network.name, use_exact_name=True,
+            raise_exception=False)
+        if resp.response.entity and hasattr(resp.response.entity, 'id'):
+            self.delete_networks.append(resp.response.entity.id)
+
+        # Fail the test if any failure is found
+        self.assertFalse(resp.failures)
+        network = resp.response.entity
+
+        # Trimming should leave the name with 40 chars
+        expected_network.name = '1234567890123456789012345678901234567890'
+
+        # Check the Network response
+        self.assertNetworkResponse(self.expected_network, network)
+
+    @tags(type='negative', rbac='creator', quark='yes')
     def test_network_create_w_shared(self):
         """
         @summary: Negative test creating a network with the shared attribute.
@@ -89,13 +130,13 @@ class NetworkCreateTest(NetworkingAPIFixture):
         """
         @summary: Creating a network with the admin_state_up attribute as true
         """
-        expected_network = Network(**self.network_data)
-        expected_network.admin_state_up = True
+        # The expected network will always have the admin_state_up True
+        admin_state_up = True
 
         # Creating expected network
         resp = self.networks.behaviors.create_network(
-            name=expected_network.name,
-            admin_state_up=expected_network.admin_state_up,
+            name=self.expected_network.name,
+            admin_state_up=admin_state_up,
             use_exact_name=True, raise_exception=False)
         if resp.response.entity and hasattr(resp.response.entity, 'id'):
             self.delete_networks.append(resp.response.entity.id)
@@ -105,20 +146,20 @@ class NetworkCreateTest(NetworkingAPIFixture):
         network = resp.response.entity
 
         # Check the Network response
-        self.assertNetworkResponse(expected_network, network)
+        self.assertNetworkResponse(self.expected_network, network)
 
-    @tags(type='positive', rbac='creator')
+    @tags(type='positive', rbac='creator', quark='yes')
     def test_network_create_w_admin_state_up_false(self):
         """
         @summary: Creating a network with the admin_state_up attribute as false
         """
-        expected_network = Network(**self.network_data)
-        expected_network.admin_state_up = False
+        # The expected network will always have the admin_state_up True
+        admin_state_up = False
 
         # Creating expected network
         resp = self.networks.behaviors.create_network(
-            name=expected_network.name,
-            admin_state_up=expected_network.admin_state_up,
+            name=self.expected_network.name,
+            admin_state_up=admin_state_up,
             use_exact_name=True, raise_exception=False)
         if resp.response.entity and hasattr(resp.response.entity, 'id'):
             self.delete_networks.append(resp.response.entity.id)
@@ -128,19 +169,17 @@ class NetworkCreateTest(NetworkingAPIFixture):
         network = resp.response.entity
 
         # Check the Network response
-        self.assertNetworkResponse(expected_network, network)
+        self.assertNetworkResponse(self.expected_network, network)
 
     @tags(type='positive', rbac='creator')
     def test_network_create_w_tenant_id(self):
         """
         @summary: Creating a network with the tenant_id
         """
-        expected_network = Network(**self.network_data)
-
         # Creating expected network
         resp = self.networks.behaviors.create_network(
-            name=expected_network.name,
-            tenant_id=expected_network.tenant_id,
+            name=self.expected_network.name,
+            tenant_id=self.expected_network.tenant_id,
             use_exact_name=True, raise_exception=False)
         if resp.response.entity and hasattr(resp.response.entity, 'id'):
             self.delete_networks.append(resp.response.entity.id)
@@ -150,7 +189,7 @@ class NetworkCreateTest(NetworkingAPIFixture):
         network = resp.response.entity
 
         # Check the Network response
-        self.assertNetworkResponse(expected_network, network)
+        self.assertNetworkResponse(self.expected_network, network)
 
     @unittest.skipIf(not NetworkingSecondUserConfig().tenant_id,
                      'Missing secondary networking user in config file')
@@ -174,6 +213,27 @@ class NetworkCreateTest(NetworkingAPIFixture):
                'while creating a network with another tenant ID').format(
                 resp.response.status_code, NeutronResponseCodes.FORBIDDEN)
         self.assertEqual(resp.response.status_code,
-                         NeutronResponseCodes.FORBIDDEN, msg)
+                         NeutronResponseCodes.BAD_REQUEST, msg)
         self.assertIsNone(resp.response.entity, 'Unexpected entity')
         self.assertTrue(resp.failures, 'Missing expected failures')
+
+    @tags(type='negative', rbac='creator')
+    def test_network_create_w_invalid_name(self):
+        """
+        @summary: Creating a network with invalid name
+        """
+        expected_network = self.expected_network
+        expected_network.name = 'TestName2<script>alert(/xxs/);</script>'
+
+        # Creating the subnet
+        resp = self.networks.behaviors.create_network(
+            name=expected_network.name,
+            raise_exception=False, use_exact_name=True)
+
+        # Network create with invalid name should be unavailable
+        msg = '(negative) Network create with invalid name: {0}'.format(
+            expected_network.name)
+
+        self.assertNegativeResponse(
+            resp=resp, status_code=NeutronResponseCodes.BAD_REQUEST, msg=msg,
+            delete_list=self.delete_subnets)
