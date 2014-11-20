@@ -70,4 +70,5 @@ class TestGetVersions(ImagesFixture):
                     'status', version_data.get('status').lower(),
                     version.status.lower()))
 
+        self.assertEqual.im_class.maxDiff = None
         self.assertListEqual(errors, [])
