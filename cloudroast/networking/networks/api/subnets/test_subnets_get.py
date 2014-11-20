@@ -27,6 +27,52 @@ from cloudroast.networking.networks.fixtures import NetworkingAPIFixture
 
 class SubnetsGetTest(NetworkingAPIFixture):
 
+    @classmethod
+    def setUpClass(cls):
+        """Setting up test data"""
+        super(SubnetsGetTest, cls).setUpClass()
+        cls.expected_network = cls.get_expected_network_data()
+        cls.expected_network.name = 'test_subnet_update_net'
+
+    def setUp(self):
+        """
+        @summary: setting up network with subnets for testing updates
+        """
+        # Setting up the Subnets data
+        self.expected_ipv4_subnet = self.get_expected_ipv4_subnet_data()
+        self.expected_ipv6_subnet = self.get_expected_ipv6_subnet_data()
+
+        # Overwriting name and allocation pools from default data
+        self.expected_ipv4_subnet.name = 'test_sub_ipv4_update'
+        ipv4_allocation_pool_1 = self.subnets.behaviors.get_allocation_pool(
+            cidr=self.expected_ipv4_subnet.cidr, first_increment=5)
+        self.expected_ipv4_subnet.allocation_pools = [ipv4_allocation_pool_1]
+
+        self.expected_ipv6_subnet.name = 'test_sub_ipv6_update'
+        ipv6_allocation_pool_1 = self.subnets.behaviors.get_allocation_pool(
+            cidr=self.expected_ipv6_subnet.cidr, first_increment=5)
+        self.expected_ipv6_subnet.allocation_pools = [ipv6_allocation_pool_1]
+
+        # Reseting to default data
+        self.expected_ipv4_subnet.host_routes = []
+        self.expected_ipv4_subnet.dns_nameservers = []
+        self.expected_ipv6_subnet.host_routes = []
+        self.expected_ipv6_subnet.dns_nameservers = []
+
+        # Setting up the network with IPv4 and IPv6 subnets
+        network = self.create_test_network(self.expected_network)
+
+        self.expected_ipv4_subnet.network_id = network.id
+        self.ipv4_subnet = self.add_subnet_to_network(
+            expected_subnet=self.expected_ipv4_subnet)
+
+        self.expected_ipv6_subnet.network_id = network.id
+        self.ipv6_subnet = self.add_subnet_to_network(
+            expected_subnet=self.expected_ipv6_subnet)
+
+    def tearDown(self):
+        self.networkingCleanUp()
+
     @tags(type='smoke', rbac='observer')
     def test_list_subnets(self):
         """

@@ -79,6 +79,9 @@ class SubnetDeleteTest(NetworkingAPIFixture):
         # IPv6 Subnet should still be there
         resp = self.subnets.behaviors.get_subnet(
             subnet_id=ipv6_subnet.id)
+
+        # Fail the test if any failure is found
+        self.assertFalse(resp.failures)
         get_ipv6_subnet = resp.response.entity
 
         # Need to format IPv6 allocation pools response for assertion
@@ -124,6 +127,9 @@ class SubnetDeleteTest(NetworkingAPIFixture):
         # IPv4 Subnet should still be there
         resp = self.subnets.behaviors.get_subnet(
             subnet_id=ipv4_subnet.id)
+
+        # Fail the test if any failure is found
+        self.assertFalse(resp.failures)
         get_ipv4_subnet = resp.response.entity
 
         # Need to format IPv4 allocation pools response for assertion
