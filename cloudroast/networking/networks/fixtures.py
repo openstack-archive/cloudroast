@@ -92,6 +92,7 @@ class NetworkingFixture(BaseTestFixture):
                         cls.delete_ports.remove(failed_port)
             cls.fixture_log.info('Deleting ports...')
             cls.ports.behaviors.clean_ports(ports_list=cls.delete_ports)
+            cls.delete_ports = []
 
         if not cls.subnets.config.keep_resources and cls.delete_subnets:
             if cls.subnets.config.keep_resources_on_failure:
@@ -102,6 +103,7 @@ class NetworkingFixture(BaseTestFixture):
             cls.fixture_log.info('Deleting subnets...')
             cls.subnets.behaviors.clean_subnets(
                 subnets_list=cls.delete_subnets)
+            cls.delete_subnets = []
 
         if not cls.networks.config.keep_resources and cls.delete_networks:
             if cls.networks.config.keep_resources_on_failure:
@@ -112,6 +114,7 @@ class NetworkingFixture(BaseTestFixture):
             cls.fixture_log.info('Deleting networks...')
             cls.networks.behaviors.clean_networks(
                 networks_list=cls.delete_networks)
+            cls.delete_networks = []
 
     def create_test_network(self, expected_network, set_up=True):
         """
