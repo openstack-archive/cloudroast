@@ -16,14 +16,11 @@ limitations under the License.
 
 from cafe.drivers.unittest.decorators import tags
 
-from cloudcafe.compute.composites import ComputeAdminComposite
 from cloudcafe.compute.common.types import NovaServerRebootTypes
-from cloudcafe.compute.common.exceptions import Forbidden
+from cloudcafe.compute.common.exceptions import ActionInProgress
 from cloudcafe.compute.common.types import NovaServerStatusTypes \
     as ServerStates
 from cloudcafe.compute.common.clients.ping import PingClient
-
-from cloudroast.compute.fixtures import ServerFromImageFixture
 
 
 class SuspendServerTests(object):
@@ -38,7 +35,7 @@ class SuspendServerTests(object):
         self.assertEqual(response.status_code, 202)
 
         self.admin_server_behaviors.wait_for_server_status(
-            self.server.id, ServerStates.SUSPENDED)
+            self.server.id, ServerStates.PAUSED)
 
         PingClient.ping_until_unreachable(
             self.ping_ip, timeout=60, interval_time=5)
@@ -61,7 +58,7 @@ class SuspendServerTests(object):
 class NegativeSuspendServerTests(object):
 
     @tags(type='smoke', net='yes')
-    def test_reboot_hard_suspended_server(self):
+    def test_suspend_reboot_hard_server(self):
         """Verify that a server reboot after suspend does not restore it"""
 
         self.ping_ip = self.parse_ip_address_for_communication(self.server)
@@ -70,38 +67,14 @@ class NegativeSuspendServerTests(object):
         self.assertEqual(response.status_code, 202)
 
         self.admin_server_behaviors.wait_for_server_status(
-            self.server.id, ServerStates.SUSPENDED)
+            self.server.id, ServerStates.PAUSED)
 
         PingClient.ping_until_unreachable(
             self.ping_ip, timeout=60, interval_time=5)
 
-        with self.assertRaises(Forbidden):
+        with self.assertRaises(ActionInProgress):
             self.servers_client.reboot(self.server.id,
                                        NovaServerRebootTypes.HARD)
 
         PingClient.ping_until_unreachable(
             self.ping_ip, timeout=60, interval_time=5)
-
-
-class ServerFromImageSuspendTests(ServerFromImageFixture,
-                                  SuspendServerTests):
-
-    @classmethod
-    def setUpClass(cls):
-        super(ServerFromImageSuspendTests, cls).setUpClass()
-        cls.compute_admin = ComputeAdminComposite()
-        cls.admin_servers_client = cls.compute_admin.servers.client
-        cls.admin_server_behaviors = cls.compute_admin.servers.behaviors
-        cls.server = cls.server_behaviors.create_active_server().entity
-
-
-class ServerFromImageNegativeSuspendTests(ServerFromImageFixture,
-                                          NegativeSuspendServerTests):
-
-    @classmethod
-    def setUpClass(cls):
-        super(ServerFromImageNegativeSuspendTests, cls).setUpClass()
-        cls.compute_admin = ComputeAdminComposite()
-        cls.admin_servers_client = cls.compute_admin.servers.client
-        cls.admin_server_behaviors = cls.compute_admin.servers.behaviors
-        cls.create_server()
