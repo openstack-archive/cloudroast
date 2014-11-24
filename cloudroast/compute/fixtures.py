@@ -113,6 +113,26 @@ class ComputeFixture(BaseTestFixture):
         image_ref = image_response.headers['location']
         return image_ref.rsplit('/')[-1]
 
+    @classmethod
+    def get_ip_address_for_communication(cls, server):
+        """
+        @summary: Get the IP address of an instance based on the configuration
+            (IPv4 or IPv6)
+        @param server: Server instance
+        @type server: Server object
+        @return: IP
+        @rtype: string
+        """
+
+        address = server.addresses.get_by_name(
+            cls.servers_config.network_for_ssh)
+        version = cls.servers_config.ip_address_version_for_ssh
+
+        ping_ip = address.ipv4 if version == 4 else address.ipv6
+        cls.verify_server_reachable(ping_ip)
+
+        return ping_ip
+
     def validate_instance_action(self, action, server_id,
                                  user_id, project_id, request_id):
         message = "Expected {0} to be {1}, was {2}."
