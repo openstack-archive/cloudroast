@@ -137,6 +137,26 @@ class ComputeFixture(BaseTestFixture):
         self.assertIsNone(action.message)
 
     @classmethod
+    def get_accessible_ip_address(cls, server):
+        """
+        @summary: Get the IP address of an instance based on the configuration
+            (IPv4 or IPv6) and check if the ip is reachable
+        @param server: Server instance
+        @type server: Server object
+        @return: IP
+        @rtype: string
+        """
+
+        address = server.addresses.get_by_name(
+            cls.servers_config.network_for_ssh)
+        version = cls.servers_config.ip_address_version_for_ssh
+
+        ping_ip = address.ipv4 if version == 4 else address.ipv6
+        cls.verify_server_reachable(ping_ip)
+
+        return ping_ip
+
+    @classmethod
     def verify_server_reachable(cls, ip=None):
         """
         @summary: Verify server connectivity with a basic ping check.
