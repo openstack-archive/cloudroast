@@ -100,7 +100,7 @@ Example::
 Before Committing
 -----------------
 - Follow the general OpenStack submission workflow
-  (https://wiki.openstack.org/wiki/Gerrit_Workflow). This means all
+  (http://docs.openstack.org/infra/manual/developers.html#development-workflow). This means all
   all submissions should be squashed into one commit with one commit id
   and be submitted from a feature branch, not master.
 - Always run a PEP8 check on your modified code before committing.
