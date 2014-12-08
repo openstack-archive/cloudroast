@@ -63,21 +63,26 @@ class ImagesFixture(BaseTestFixture):
         cls.user_list = cls.generate_user_list(cls.images_config.account_list)
 
         cls.access_data = cls.user_list['user'][cls.ACCESS_DATA]
-        cls.alt_access_data = cls.user_list['alt_user'][cls.ACCESS_DATA]
-        cls.third_access_data = cls.user_list['third_user'][cls.ACCESS_DATA]
-
         cls.images_client = cls.user_list['user'][cls.CLIENT]
-        cls.alt_images_client = cls.user_list['alt_user'][cls.CLIENT]
-        cls.third_images_client = cls.user_list['third_user'][cls.CLIENT]
-
         cls.images_behavior = cls.user_list['user'][cls.BEHAVIOR]
-        cls.alt_images_behavior = cls.user_list['alt_user'][cls.BEHAVIOR]
-        cls.third_images_behavior = cls.user_list['third_user'][cls.BEHAVIOR]
-
         cls.tenant_id = cls.access_data.token.tenant.id_
-        cls.alt_tenant_id = cls.alt_access_data.token.tenant.id_
-        cls.third_tenant_id = cls.third_access_data.token.tenant.id_
-        cls.full_access_tenant_id = cls.access_data.token.tenant.id_
+        cls.addClassCleanup(cls.images_behavior.resources.release)
+
+        if cls.user_list.get('alt_user'):
+            cls.alt_access_data = cls.user_list['alt_user'][cls.ACCESS_DATA]
+            cls.alt_images_client = cls.user_list['alt_user'][cls.CLIENT]
+            cls.alt_images_behavior = cls.user_list['alt_user'][cls.BEHAVIOR]
+            cls.alt_tenant_id = cls.alt_access_data.token.tenant.id_
+            cls.addClassCleanup(cls.alt_images_behavior.resources.release)
+
+        if cls.user_list.get('third_user'):
+            cls.third_access_data = (
+                cls.user_list['third_user'][cls.ACCESS_DATA])
+            cls.third_images_client = cls.user_list['third_user'][cls.CLIENT]
+            cls.third_images_behavior = (
+                cls.user_list['third_user'][cls.BEHAVIOR])
+            cls.third_tenant_id = cls.third_access_data.token.tenant.id_
+            cls.addClassCleanup(cls.third_images_behavior.resources.release)
 
         cls.error_msg = Messages.ERROR_MSG
         cls.id_regex = re.compile(ImageProperties.ID_REGEX)
@@ -91,9 +96,6 @@ class ImagesFixture(BaseTestFixture):
         cls.test_file = cls.read_data_file(cls.images_config.test_file)
 
         cls.addClassCleanup(cls.resources.release)
-        cls.addClassCleanup(cls.images_behavior.resources.release)
-        cls.addClassCleanup(cls.alt_images_behavior.resources.release)
-        cls.addClassCleanup(cls.third_images_behavior.resources.release)
 
         cls.exception_handler = ExceptionHandler()
         cls.images_client.add_exception_handler(cls.exception_handler)
@@ -103,8 +105,10 @@ class ImagesFixture(BaseTestFixture):
         super(ImagesFixture, cls).tearDownClass()
         cls.resources.release()
         cls.images_behavior.resources.release()
-        cls.alt_images_behavior.resources.release()
-        cls.third_images_behavior.resources.release()
+        if cls.user_list.get('alt_user'):
+            cls.alt_images_behavior.resources.release()
+        if cls.user_list.get('third_user'):
+            cls.third_images_behavior.resources.release()
         cls.images_client.delete_exception_handler(cls.exception_handler)
 
     @classmethod
