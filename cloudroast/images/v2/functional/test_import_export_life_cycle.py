@@ -62,7 +62,7 @@ class TestImportExportLifeCycle(ObjectStorageIntegrationFixture):
 
         response = self.server_behaviors.create_active_server(
             image_ref=task.result.image_id)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 202)
         server = response.entity
 
         remote_client = self.server_behaviors.get_remote_instance_client(
