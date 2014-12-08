@@ -84,7 +84,7 @@ class TestShareImportedImage(ObjectStorageIntegrationFixture):
 
         response = self.alt_server_behaviors.create_active_server(
             image_ref=image_id)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 202)
         server = response.entity
         self.assertEqual(server.status.lower(), 'active')
 
