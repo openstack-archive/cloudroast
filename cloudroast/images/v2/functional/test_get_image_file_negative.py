@@ -28,6 +28,7 @@ allow_put_image_file = images_config.allow_put_image_file
 allow_get_image_file = images_config.allow_get_image_file
 
 
+@unittest.skipUnless(allow_get_image_file, 'Endpoint has incorrect access')
 class GetImageFileNegativeTest(ImagesFixture):
 
     @classmethod
@@ -35,7 +36,6 @@ class GetImageFileNegativeTest(ImagesFixture):
         super(GetImageFileNegativeTest, cls).setUpClass()
         cls.images = cls.images_behavior.create_new_images(count=2)
 
-    @unittest.skipUnless(allow_get_image_file, 'Endpoint has incorrect access')
     @tags(type='negative', regression='true', skipable='true')
     def test_get_image_file_using_blank_image_id(self):
         """
@@ -48,7 +48,6 @@ class GetImageFileNegativeTest(ImagesFixture):
         with self.assertRaises(ItemNotFound):
             self.images_client.get_image_file(image_id="")
 
-    @unittest.skipUnless(allow_get_image_file, 'Endpoint has incorrect access')
     @tags(type='negative', regression='true', skipable='true')
     def test_get_image_file_using_invalid_image_id(self):
         """
@@ -61,7 +60,6 @@ class GetImageFileNegativeTest(ImagesFixture):
         with self.assertRaises(ItemNotFound):
             self.images_client.get_image_file(image_id="invalid_id")
 
-    @unittest.skipUnless(allow_get_image_file, 'Endpoint has incorrect access')
     @tags(type='negative', regression='true', skipable='true')
     def test_get_image_file_for_non_existent_file(self):
         """
@@ -77,8 +75,8 @@ class GetImageFileNegativeTest(ImagesFixture):
         response = self.images_client.get_image_file(image_id=image.id_)
         self.assertEqual(response.status_code, 204)
 
-    @unittest.skipUnless(allow_post_images and allow_put_image_file and
-                         allow_get_image_file, 'Endpoint has incorrect access')
+    @unittest.skipUnless(allow_post_images and allow_put_image_file,
+                         'Endpoint has incorrect access')
     @tags(type='negative', regression='true', skipable='true')
     def test_get_image_file_as_non_member_of_the_image(self):
         """
