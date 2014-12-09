@@ -75,6 +75,40 @@ class ServerRescueTests(object):
         disks = remote_client.get_all_disks()
         self.assertEqual(len(disks.keys()), original_num_disks)
 
+    @tags(type='smoke', net='yes')
+    def test_rescue_with_image_change_server_test(self):
+        # Rescue server with image rebuild change
+        rescue_response = self.rescue_client.rescue(
+            self.server_sec.id,
+            rescue_image_ref=self.image_ref_alt)
+        changed_password = rescue_response.entity.admin_pass
+        self.assertEqual(rescue_response.status_code, 200)
+
+        # Enter rescue mode
+        rescue_server_response = self.server_behaviors.wait_for_server_status(
+            self.server_sec.id, 'RESCUE')
+        rescue_server = rescue_server_response.entity
+        rescue_server.admin_pass = changed_password
+
+        # Test distro change after rescue with rebuild
+        remote_client = self.server_behaviors.get_remote_instance_client(
+            self.server_sec, self.servers_config, password=changed_password,
+            key=self.key.private_key)
+        distro_after_rebuild = remote_client.get_distribution_and_version()
+        if (self.distro_before_rebuild and
+                distro_after_rebuild and
+                self.image_ref != self.image_ref_alt):
+            self.assertNotEqual(self.distro_before_rebuild,
+                                distro_after_rebuild)
+        else:
+            self.assertEqual(self.distro_before_rebuild, distro_after_rebuild)
+
+        # Exit rescue mode
+        unrescue_response = self.rescue_client.unrescue(self.server_sec.id)
+        self.assertEqual(unrescue_response.status_code, 202)
+        self.server_behaviors.wait_for_server_status(self.server_sec.id,
+                                                     'ACTIVE')
+
 
 class ServerFromImageRescueTests(ServerFromImageFixture,
                                  ServerRescueTests):
@@ -85,6 +119,10 @@ class ServerFromImageRescueTests(ServerFromImageFixture,
         cls.key = cls.keypairs_client.create_keypair(rand_name("key")).entity
         cls.resources.add(cls.key.name,
                           cls.keypairs_client.delete_keypair)
-        cls.create_server(key_name=cls.key.name)
+        cls.server = cls.create_server(key_name=cls.key.name)
+        cls.server_sec = cls.create_server(key_name=cls.key.name)
         flavor_response = cls.flavors_client.get_flavor_details(cls.flavor_ref)
         cls.flavor = flavor_response.entity
+        remote_client = cls.server_behaviors.get_remote_instance_client(
+            cls.server_sec, cls.servers_config, key=cls.key.private_key)
+        cls.distro_before_rebuild = remote_client.get_distribution_and_version()
