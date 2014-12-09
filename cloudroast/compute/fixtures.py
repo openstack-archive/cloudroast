@@ -16,6 +16,7 @@ limitations under the License.
 
 import time
 import sys
+import unittest
 
 from cafe.drivers.unittest.fixtures import BaseTestFixture
 from cloudcafe.common.resources import ResourcePool
@@ -328,3 +329,20 @@ class ServerFromVolumeV2Fixture(BlockstorageIntegrationFixture):
         cls.server = cls.server_response.entity
         cls.resources.add(cls.server.id, cls.servers_client.delete_server)
         return cls.server
+
+
+def requires_extension(*extensions):
+    """Requires decorator main purpose skips execution of test if the extension
+        is not found in list extensions call"""
+    def decorator(func):
+        compute = ComputeComposite()
+        rescue_client = compute.extension.client
+        list_extensions = rescue_client.list_extensions()
+        name_list = set()
+        for element in list_extensions.entity:
+            name_list.add(element.name)
+        if set(extensions).issubset(name_list) is False:
+            return unittest.skip("Required extensions are not present for running this test")(func)
+        else:
+            return func
+    return decorator
