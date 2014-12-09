@@ -1,5 +1,5 @@
 """
-Copyright 2013 Rackspace
+Copyright 2014 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.compute.common.types import ComputeHypervisors
 from cloudcafe.compute.config import ComputeConfig
 from cloudroast.compute.fixtures import ServerFromImageFixture
+from cloudroast.compute.decorators import requires_extension
 
 compute_config = ComputeConfig()
 hypervisor = compute_config.hypervisor.lower()
@@ -74,6 +75,51 @@ class ServerRescueTests(object):
             key=self.key.private_key)
         disks = remote_client.get_all_disks()
         self.assertEqual(len(disks.keys()), original_num_disks)
+
+    @requires_extension('ExtendedRescueWithImage')
+    @tags(type='smoke', net='yes')
+    def test_rescue_with_image_change_server_test(self):
+        """
+        Verify that a server can enter and exit rescue mode when an image is
+        supplied to the rescue request. This test will execute only if the
+        extension is enable. This is determined automatically.
+        """
+        server = self.create_server(key_name=self.key.name)
+        remote_client = self.server_behaviors.get_remote_instance_client(
+            server, self.servers_config, key=self.key.private_key)
+        distro_before_rescue = remote_client.get_distribution_and_version()
+
+        # Rescue server with image supplied to rescue request
+        rescue_response = self.rescue_client.rescue(
+            server.id,
+            rescue_image_ref=self.image_ref_alt)
+        self.assertEqual(rescue_response.status_code, 200)
+        changed_password = rescue_response.entity.admin_pass
+
+        # Enter rescue mode
+        rescue_server_response = self.server_behaviors.wait_for_server_status(
+            server.id, 'RESCUE')
+        rescue_server = rescue_server_response.entity
+        rescue_server.admin_pass = changed_password
+
+        # Test distro change after rescue with image supplied
+        remote_client = self.server_behaviors.get_remote_instance_client(
+            server, self.servers_config, password=changed_password,
+            key=self.key.private_key)
+        distro_after_rescue = remote_client.get_distribution_and_version()
+        if (distro_before_rescue and
+                distro_after_rescue and
+                self.image_ref != self.image_ref_alt):
+            self.assertNotEqual(distro_before_rescue,
+                                distro_after_rescue)
+        else:
+            self.assertEqual(distro_before_rescue, distro_after_rescue)
+
+        # Exit rescue mode
+        unrescue_response = self.rescue_client.unrescue(server.id)
+        self.assertEqual(unrescue_response.status_code, 202)
+        self.server_behaviors.wait_for_server_status(server.id,
+                                                     'ACTIVE')
 
 
 class ServerFromImageRescueTests(ServerFromImageFixture,
