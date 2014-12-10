@@ -14,8 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import unittest
-
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.compute.common.exceptions import Forbidden, ItemNotFound
@@ -159,7 +157,6 @@ class TestUpdateImageNegative(ImagesFixture):
         updated_image = response.entity
         self.assertEqual(updated_image.file_, image.file_)
 
-    @unittest.skip('Bug, Redmine #7467')
     @tags(type='negative', regression='true')
     def test_verify_format_of_active_image_cannot_be_updated(self):
         """
