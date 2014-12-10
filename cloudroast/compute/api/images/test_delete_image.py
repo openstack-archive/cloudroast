@@ -28,8 +28,6 @@ class DeleteImageTest(ComputeFixture):
         cls.server = cls.server_behaviors.create_active_server().entity
         cls.image = cls.image_behaviors.create_active_image(
             cls.server.id).entity
-        cls.server_behaviors.wait_for_server_task_state(
-            cls.server.id, 'none', cls.servers_config.server_build_timeout)
         cls.resp = cls.images_client.delete_image(cls.image.id)
         cls.image_behaviors.wait_for_image_to_be_deleted(cls.image.id)
 
