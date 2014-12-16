@@ -27,6 +27,8 @@ images_config = ImagesConfig()
 allow_post_images = images_config.allow_post_images
 
 
+@unittest.skipUnless(allow_post_images, 'Functionality disabled with provided '
+                     'endpoint')
 class TestUpdateImage(ImagesFixture):
 
     @classmethod
@@ -34,7 +36,6 @@ class TestUpdateImage(ImagesFixture):
         super(TestUpdateImage, cls).setUpClass()
         cls.image = cls.images_behavior.create_new_image()
 
-    @unittest.skipUnless(allow_post_images, 'Endpoint has incorrect access')
     @tags(type='positive', regression='true', skipable='true')
     def test_update_image_replace_core_properties(self):
         """
