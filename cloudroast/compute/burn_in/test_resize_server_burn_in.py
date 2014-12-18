@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import unittest as unittest
+import unittest
 from unittest.suite import TestSuite
 
 from cafe.drivers.unittest.decorators import tags
