@@ -1,7 +1,7 @@
 from cafe.drivers.unittest.datasets import DatasetList
 from cafe.drivers.unittest.decorators import tags, DataDrivenClass
 
-from cloudcafe.identity.config import (
+from cloudcafe.identity.v3.config import (
     ServiceAdmin, IdentityAdmin, UserAdmin, UserManage, DefaultUser)
 from cloudroast.identity.v3.fixture import IdentityV3Fixture
 
