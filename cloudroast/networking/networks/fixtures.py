@@ -356,18 +356,21 @@ class NetworkingFixture(BaseTestFixture):
                 subnet.kwargs)
             self.assertFalse(subnet.kwargs, msg)
 
-    def assertFixedIps(self, port, subnet):
+    def assertFixedIps(self, port, subnet, enabled_fixed_ips):
         """
         @summary: assert the fixed ips of a port are within the subnet cidr,
             and the ip_addresses are not repeated
         """
         fixed_ips = port.fixed_ips
         subnet_id = subnet.id
+        enabled = enabled_fixed_ips
         cidr = subnet.cidr
         verified_ip = []
 
         subnet_msg = ('Unexpected subnet id in fixed ip {fixed_ip} instead of '
             'subnet id {subnet_id}')
+        enabled_msg = ('Expected fixed ip enabled value of {enabled} '
+            'in fixed ip {fixed_ip}')
         verify_msg = ('Fixed IP ip_address {ip} not within the expected '
             'subnet cidr {cidr}')
         ip_msg = 'Repeated ip_address {ip} within fixed ips {fixed_ips}'
@@ -376,6 +379,9 @@ class NetworkingFixture(BaseTestFixture):
             self.assertEqual(
                 fixed_ip['subnet_id'], subnet_id,
                 subnet_msg.format(fixed_ip=fixed_ip, subnet_id=subnet_id))
+            self.assertEqual(
+                fixed_ip['enabled'], enabled,
+                enabled_msg.format(enabled=enabled, fixed_ip=fixed_ip))
             self.assertTrue(
                 self.subnets.behaviors.verify_ip(
                     ip_cidr=fixed_ip['ip_address'], ip_range=cidr),
@@ -386,7 +392,8 @@ class NetworkingFixture(BaseTestFixture):
             verified_ip.append(fixed_ip['ip_address'])
 
     def assertPortResponse(self, expected_port, port, subnet=None,
-                           check_exact_name=True, check_fixed_ips=False):
+                           check_exact_name=True, check_fixed_ips=False,
+                           enabled_fixed_ips=True):
         """
         @summary: compares two port entity objects
         """
@@ -434,7 +441,7 @@ class NetworkingFixture(BaseTestFixture):
                 expected_port.fixed_ips, port.fixed_ips,
                 msg.format(expected_port.fixed_ips, port.fixed_ips))
         elif subnet is not None:
-            self.assertFixedIps(port, subnet)
+            self.assertFixedIps(port, subnet, enabled_fixed_ips)
         else:
             self.assertTrue(port.fixed_ips, 'Missing fixed ips')
 
@@ -513,13 +520,14 @@ class NetworkingAPIFixture(NetworkingFixture):
         expected_subnet.allocation_pools = [allocation_pool]
         return expected_subnet
 
-    def get_fixed_ips_data(self, subnet, num=1):
+    def get_fixed_ips_data(self, subnet, num=1, enabled=True):
         """Generates multiple fixed ips within a subnet"""
         ips = self.subnets.behaviors.get_ips(cidr=subnet.cidr, num=num)
 
         # Removing duplicate IPs in case of any
         ips = list(set(ips))
-        fixed_ips = [dict(subnet_id=subnet.id, ip_address=ip) for ip in ips]
+        fixed_ips = [dict(subnet_id=subnet.id, ip_address=ip, enabled=enabled)
+                     for ip in ips]
         return fixed_ips
 
     def get_ipv4_dns_nameservers_data(self):
