@@ -95,3 +95,20 @@ class ImagesDatasetListGenerator(object):
                                         {'params': {'visibility': visibility}})
 
         return dataset_list
+
+    @staticmethod
+    def VersionsDatasetList():
+        """@summary: Generates a dataset list for the list versions request"""
+
+        dataset_list = DatasetList()
+
+        dataset_list.append_new_dataset('url_with_no_backslash',
+                                        {'url_addition': ''})
+        dataset_list.append_new_dataset('url_with_backslash',
+                                        {'url_addition': '/'})
+        dataset_list.append_new_dataset('url_with_versions_and_no_backslash',
+                                        {'url_addition': '/versions'})
+        dataset_list.append_new_dataset('url_with_versions_and_backslash',
+                                        {'url_addition': '/versions/'})
+
+        return dataset_list
