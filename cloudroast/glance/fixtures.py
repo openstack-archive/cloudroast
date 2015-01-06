@@ -1,5 +1,5 @@
 """
-Copyright 2014 Rackspace
+Copyright 2015 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -16,11 +16,13 @@ limitations under the License.
 from cafe.drivers.unittest.fixtures import BaseTestFixture
 from cloudcafe.common.resources import ResourcePool
 from cloudcafe.compute.common.exception_handler import ExceptionHandler
-from cloudroast.objectstorage.fixtures import ObjectStorageFixture
-from cloudroast.compute.fixtures import ComputeFixture
+from cloudcafe.glance.common.constants import Messages
 from cloudcafe.glance.composite import (
     ImagesComposite, ImagesAuthComposite, ImagesAuthCompositeAltOne,
     ImagesAuthCompositeAltTwo)
+
+from cloudroast.compute.fixtures import ComputeFixture
+from cloudroast.objectstorage.fixtures import ObjectStorageFixture
 
 
 class ImagesFixture(BaseTestFixture):
@@ -39,7 +41,7 @@ class ImagesFixture(BaseTestFixture):
         cls.images_alt_one = ImagesComposite(user_two)
         cls.images_alt_two = ImagesComposite(user_three)
 
-        # Todo(Luke): Save messages as a class global
+        cls.status_code_msg = Messages.STATUS_CODE_MSG
 
         cls.addClassCleanup(cls.resources.release)
         cls.exception_handler = ExceptionHandler()
