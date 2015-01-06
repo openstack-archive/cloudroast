@@ -15,7 +15,6 @@ limitations under the License.
 """
 from cafe.drivers.unittest.fixtures import BaseTestFixture
 from cloudcafe.common.resources import ResourcePool
-from cloudcafe.compute.common.exception_handler import ExceptionHandler
 from cloudcafe.glance.common.constants import Messages
 from cloudcafe.glance.composite import (
     ImagesComposite, ImagesAuthComposite, ImagesAuthCompositeAltOne,
@@ -44,8 +43,6 @@ class ImagesFixture(BaseTestFixture):
         cls.status_code_msg = Messages.STATUS_CODE_MSG
 
         cls.addClassCleanup(cls.resources.release)
-        cls.exception_handler = ExceptionHandler()
-        cls.images.client.add_exception_handler(cls.exception_handler)
 
     @classmethod
     def tearDownClass(cls):
@@ -53,7 +50,6 @@ class ImagesFixture(BaseTestFixture):
         cls.images.behaviors.resources.release()
         cls.images_alt_one.behaviors.resources.release()
         cls.images_alt_two.behaviors.resources.release()
-        cls.images.client.delete_exception_handler(cls.exception_handler)
         super(ImagesFixture, cls).tearDownClass()
 
     @classmethod
