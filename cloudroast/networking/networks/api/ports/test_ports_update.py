@@ -28,33 +28,53 @@ class PortUpdateTest(NetworkingAPIFixture):
 
         # Setting up the network
         cls.expected_network = cls.get_expected_network_data()
-        cls.expected_network.name = 'test_port_create_net'
+        cls.expected_network.name = 'test_port_update_net'
+        cls.expected_dual_network = cls.get_expected_network_data()
+        cls.expected_dual_network.name = 'test_port_update_dual_net'
 
         # Setting up the Subnets data
         cls.expected_ipv4_subnet = cls.get_expected_ipv4_subnet_data()
         cls.expected_ipv6_subnet = cls.get_expected_ipv6_subnet_data()
+        cls.expected_dual_ipv4_subnet = cls.get_expected_ipv4_subnet_data()
+        cls.expected_dual_ipv6_subnet = cls.get_expected_ipv6_subnet_data()
 
         # Setting up the Port data
         cls.expected_ipv4_port = cls.get_expected_port_data()
         cls.expected_ipv6_port = cls.get_expected_port_data()
+        cls.expected_dual_ipv4_port = cls.get_expected_port_data()
+        cls.expected_dual_ipv6_port = cls.get_expected_port_data()
 
     def setUp(self):
         ipv4_network = self.create_test_network(self.expected_network)
-        ipv6_network = self.create_test_network(self.expected_network)
-
         self.expected_ipv4_subnet.network_id = ipv4_network.id
-        self.expected_ipv6_subnet.network_id = ipv6_network.id
-
         self.expected_ipv4_port.network_id = ipv4_network.id
+
+        ipv6_network = self.create_test_network(self.expected_network)
+        self.expected_ipv6_subnet.network_id = ipv6_network.id
         self.expected_ipv6_port.network_id = ipv6_network.id
+
+        dual_network = self.create_test_network(self.expected_dual_network)
+        self.expected_dual_ipv4_subnet.network_id = dual_network.id
+        self.expected_dual_ipv6_subnet.network_id = dual_network.id
+        self.expected_dual_ipv4_port.network_id = dual_network.id
+        self.expected_dual_ipv6_port.network_id = dual_network.id
 
         # Creating subnets and ports
         self.ipv4_subnet = self.add_subnet_to_network(
             self.expected_ipv4_subnet)
         self.ipv6_subnet = self.add_subnet_to_network(
             self.expected_ipv6_subnet)
+        self.dual_ipv4_subnet = self.add_subnet_to_network(
+            self.expected_dual_ipv4_subnet)
+        self.dual_ipv6_subnet = self.add_subnet_to_network(
+            self.expected_dual_ipv6_subnet)
+
         self.ipv4_port = self.add_port_to_network(self.expected_ipv4_port)
         self.ipv6_port = self.add_port_to_network(self.expected_ipv6_port)
+        self.dual_ipv4_port = self.add_port_to_network(
+            self.expected_dual_ipv4_port)
+        self.dual_ipv6_port = self.add_port_to_network(
+            self.expected_dual_ipv6_port)
 
     def tearDown(self):
         self.networkingCleanUp()
@@ -227,6 +247,182 @@ class PortUpdateTest(NetworkingAPIFixture):
 
         # Check the Port response
         self.assertPortResponse(expected_port, port, check_fixed_ips=True)
+
+    @tags(type='smoke', rbac='creator')
+    def test_ipv4_port_update_fixed_ips_on_dual_net(self):
+        """
+        @summary: Updating an IPv4 with IPv4 and IPv6 fixed ips
+        """
+        expected_port = self.dual_ipv4_port
+
+        fixed_ips = self.get_fixed_ips_data(self.dual_ipv6_subnet, 2)
+        fixed_ips.extend(self.get_fixed_ips_data(self.dual_ipv4_subnet, 2))
+        expected_port.fixed_ips = fixed_ips
+
+        # Updating the port
+        resp = self.ports.behaviors.update_port(
+            port_id=expected_port.id,
+            fixed_ips=expected_port.fixed_ips)
+
+        # Fail the test if any failure is found
+        self.assertFalse(resp.failures)
+        port = resp.response.entity
+
+        # Need to format IPv6 fixed ips response for assertion
+        port.fixed_ips = self.ports.behaviors.format_fixed_ips(
+            port.fixed_ips)
+
+        # Check the Port response
+        self.assertPortResponse(expected_port, port, check_fixed_ips=True)
+
+    @tags(type='smoke', rbac='creator')
+    def test_ipv6_port_update_fixed_ips_on_dual_net(self):
+        """
+        @summary: Updating an IPv6 with IPv4 and IPv6 fixed ips
+        """
+        expected_port = self.dual_ipv6_port
+
+        fixed_ips = self.get_fixed_ips_data(self.dual_ipv6_subnet, 2)
+        fixed_ips.extend(self.get_fixed_ips_data(self.dual_ipv4_subnet, 2))
+        expected_port.fixed_ips = fixed_ips
+
+        # Updating the port
+        resp = self.ports.behaviors.update_port(
+            port_id=expected_port.id,
+            fixed_ips=expected_port.fixed_ips)
+
+        # Fail the test if any failure is found
+        self.assertFalse(resp.failures)
+        port = resp.response.entity
+
+        # Need to format IPv6 fixed ips response for assertion
+        port.fixed_ips = self.ports.behaviors.format_fixed_ips(
+            port.fixed_ips)
+
+        # Check the Port response
+        self.assertPortResponse(expected_port, port, check_fixed_ips=True)
+
+    @tags(type='smoke', rbac='creator')
+    def test_ipv4_port_update_fixed_ips_on_dual_net_w_subnet_id_only(self):
+        """
+        @summary: Updating an IPv4 with subnet ID only
+        """
+        expected_port = self.dual_ipv4_port
+
+        fixed_ips = [dict(subnet_id=self.dual_ipv4_subnet.id)]
+        expected_port.fixed_ips = fixed_ips
+
+        # Updating the port
+        resp = self.ports.behaviors.update_port(
+            port_id=expected_port.id,
+            fixed_ips=expected_port.fixed_ips)
+
+        # Fail the test if any failure is found
+        self.assertFalse(resp.failures)
+        port = resp.response.entity
+
+        # Check the Port response
+        self.assertPortResponse(expected_port, port,
+                                subnet=self.dual_ipv4_subnet)
+
+    @tags(type='smoke', rbac='creator')
+    def test_ipv6_port_update_fixed_ips_on_dual_net_w_subnet_id_only(self):
+        """
+        @summary: Updating an IPv6 with subnet ID only
+        """
+        expected_port = self.dual_ipv6_port
+
+        fixed_ips = [dict(subnet_id=self.dual_ipv6_subnet.id)]
+        expected_port.fixed_ips = fixed_ips
+
+        # Updating the port
+        resp = self.ports.behaviors.update_port(
+            port_id=expected_port.id,
+            fixed_ips=expected_port.fixed_ips)
+
+        # Fail the test if any failure is found
+        self.assertFalse(resp.failures)
+        port = resp.response.entity
+
+        # Need to format IPv6 fixed ips response for assertion
+        port.fixed_ips = self.ports.behaviors.format_fixed_ips(
+            port.fixed_ips)
+
+        # Check the Port response
+        self.assertPortResponse(expected_port, port,
+                                subnet=self.dual_ipv6_subnet)
+
+    @tags(type='positive', rbac='creator')
+    def test_ipv4_port_update_w_subnet_ids_only(self):
+        """
+        @summary: Updating IPv4 and IPv6 port fixed ips w subnet IDs only
+        """
+        expected_port = self.dual_ipv4_port
+
+        fixed_ips = [dict(subnet_id=self.dual_ipv4_subnet.id),
+                     dict(subnet_id=self.dual_ipv4_subnet.id)]
+        expected_port.fixed_ips = fixed_ips
+
+        # Updating the port
+        resp = self.ports.behaviors.update_port(
+            port_id=expected_port.id,
+            fixed_ips=expected_port.fixed_ips)
+
+        # Fail the test if any failure is found
+        self.assertFalse(resp.failures)
+        port = resp.response.entity
+
+        # Check the Port response
+        self.assertFixedIpsSubnetIds(port, expected_port)
+        self.assertPortResponse(expected_port, port)
+
+    @tags(type='positive', rbac='creator')
+    def test_ipv6_port_update_w_subnet_ids_only(self):
+        """
+        @summary: Updating IPv4 and IPv6 port fixed ips w subnet IDs only
+        """
+        expected_port = self.dual_ipv6_port
+
+        fixed_ips = [dict(subnet_id=self.dual_ipv6_subnet.id),
+                     dict(subnet_id=self.dual_ipv6_subnet.id)]
+        expected_port.fixed_ips = fixed_ips
+
+        # Updating the port
+        resp = self.ports.behaviors.update_port(
+            port_id=expected_port.id,
+            fixed_ips=expected_port.fixed_ips)
+
+        # Fail the test if any failure is found
+        self.assertFalse(resp.failures)
+        port = resp.response.entity
+
+        # Check the Port response
+        self.assertFixedIpsSubnetIds(port, expected_port)
+        self.assertPortResponse(expected_port, port)
+
+    @tags(type='positive', rbac='creator')
+    def test_ipv4_ipv6_port_update_w_subnet_ids_only(self):
+        """
+        @summary: Updating IPv4 and IPv6 port fixed ips w subnet IDs only
+        """
+        expected_port = self.dual_ipv6_port
+
+        fixed_ips = [dict(subnet_id=self.dual_ipv6_subnet.id),
+                     dict(subnet_id=self.dual_ipv4_subnet.id)]
+        expected_port.fixed_ips = fixed_ips
+
+        # Updating the port
+        resp = self.ports.behaviors.update_port(
+            port_id=expected_port.id,
+            fixed_ips=expected_port.fixed_ips)
+
+        # Fail the test if any failure is found
+        self.assertFalse(resp.failures)
+        port = resp.response.entity
+
+        # Check the Port response
+        self.assertFixedIpsSubnetIds(port, expected_port)
+        self.assertPortResponse(expected_port, port)
 
     @tags(type='negative', rbac='creator', quark='yes')
     def test_ipv4_port_update_w_security_groups(self):

@@ -26,7 +26,7 @@ class PortCreateTest(NetworkingAPIFixture):
         """Setting up test data"""
         super(PortCreateTest, cls).setUpClass()
 
-        # Setting up the network
+        # Setting up the networks
         cls.expected_network = cls.get_expected_network_data()
         cls.expected_network.name = 'test_port_create_net'
 
@@ -250,6 +250,92 @@ class PortCreateTest(NetworkingAPIFixture):
         self.assertPortResponse(expected_port, port, check_fixed_ips=True)
 
     @tags(type='smoke', rbac='creator')
+    def test_ipv4_port_create_on_net_w_subnet_ids_from_another_network(self):
+        """
+        @summary: Creating a port with subnet ID from another network but with
+            a valid subnet as well, the other network subnet should be ignored
+        """
+        expected_port = self.expected_port
+        expected_port.name = 'test_port_create_on_dual_net'
+
+        ipv4_subnet = self.add_subnet_to_network(self.expected_ipv4_subnet)
+        ipv6_subnet = self.add_subnet_to_network(self.expected_ipv6_subnet)
+
+        # Creating the alt network and subnets
+        expected_network_alt = self.get_expected_network_data()
+        expected_network_alt.name = 'test_port_create_net_alt'
+        network_alt = self.create_test_network(expected_network_alt)
+        expected_ipv4_subnet_alt = self.get_expected_ipv4_subnet_data()
+        expected_ipv6_subnet_alt = self.get_expected_ipv6_subnet_data()
+        expected_ipv4_subnet_alt.network_id = network_alt.id
+        expected_ipv6_subnet_alt.network_id = network_alt.id
+        ipv4_subnet_alt = self.add_subnet_to_network(expected_ipv4_subnet_alt)
+        ipv6_subnet_alt = self.add_subnet_to_network(expected_ipv6_subnet_alt)
+
+        fixed_ips = [dict(subnet_id=ipv4_subnet_alt.id)]
+        fixed_ips.append(dict(subnet_id=ipv4_subnet.id))
+        fixed_ips.append(dict(subnet_id=ipv6_subnet_alt.id))
+        expected_port.fixed_ips = fixed_ips
+
+        # Creating a port in a network with both subnets with invalid fixed IP
+        resp = self.ports.behaviors.create_port(
+            network_id=expected_port.network_id, name=expected_port.name,
+            fixed_ips=expected_port.fixed_ips,
+            raise_exception=False, use_exact_name=True)
+        if resp.response.entity and hasattr(resp.response.entity, 'id'):
+            self.delete_ports.append(resp.response.entity.id)
+
+        # Fail the test if any failure is found
+        self.assertFalse(resp.failures)
+        port = resp.response.entity
+
+        # Check the Port response (Port expected on IPv4 Subnet
+        self.assertPortResponse(expected_port, port, subnet=ipv4_subnet)
+
+    @tags(type='smoke', rbac='creator')
+    def test_ipv6_port_create_on_net_w_subnet_ids_from_another_network(self):
+        """
+        @summary: Creating a port with subnet ID from another network but with
+            a valid subnet as well, the other network subnet should be ignored
+        """
+        expected_port = self.expected_port
+        expected_port.name = 'test_port_create_on_dual_net'
+
+        ipv4_subnet = self.add_subnet_to_network(self.expected_ipv4_subnet)
+        ipv6_subnet = self.add_subnet_to_network(self.expected_ipv6_subnet)
+
+        # Creating the alt network and subnets
+        expected_network_alt = self.get_expected_network_data()
+        expected_network_alt.name = 'test_port_create_net_alt'
+        network_alt = self.create_test_network(expected_network_alt)
+        expected_ipv4_subnet_alt = self.get_expected_ipv4_subnet_data()
+        expected_ipv6_subnet_alt = self.get_expected_ipv6_subnet_data()
+        expected_ipv4_subnet_alt.network_id = network_alt.id
+        expected_ipv6_subnet_alt.network_id = network_alt.id
+        ipv4_subnet_alt = self.add_subnet_to_network(expected_ipv4_subnet_alt)
+        ipv6_subnet_alt = self.add_subnet_to_network(expected_ipv6_subnet_alt)
+
+        fixed_ips = [dict(subnet_id=ipv4_subnet_alt.id)]
+        fixed_ips.append(dict(subnet_id=ipv6_subnet_alt.id))
+        fixed_ips.append(dict(subnet_id=ipv6_subnet.id))
+        expected_port.fixed_ips = fixed_ips
+
+        # Creating a port in a network with both subnets with invalid fixed IP
+        resp = self.ports.behaviors.create_port(
+            network_id=expected_port.network_id, name=expected_port.name,
+            fixed_ips=expected_port.fixed_ips,
+            raise_exception=False, use_exact_name=True)
+        if resp.response.entity and hasattr(resp.response.entity, 'id'):
+            self.delete_ports.append(resp.response.entity.id)
+
+        # Fail the test if any failure is found
+        self.assertFalse(resp.failures)
+        port = resp.response.entity
+
+        # Check the Port response (Port expected on IPv4 Subnet
+        self.assertPortResponse(expected_port, port, subnet=ipv6_subnet)
+
+    @tags(type='smoke', rbac='creator')
     def test_ipv4_port_create_w_fixed_ips(self):
         """
         @summary: Creating a port with IPv4 fixed IPs
@@ -300,6 +386,64 @@ class PortCreateTest(NetworkingAPIFixture):
 
         # Check the Port response (Port expected on IPv4 Subnet
         self.assertPortResponse(expected_port, port, check_fixed_ips=True)
+
+    @tags(type='smoke', rbac='creator')
+    def test_ipv4_port_create_on_net_w_both_subnets(self):
+        """
+        @summary: Creating a port on network with IPv4 and IPv6 subnets
+        """
+        expected_port = self.expected_port
+        expected_port.name = 'test_ipv4_port_create_on_dual_net'
+
+        ipv4_subnet = self.add_subnet_to_network(self.expected_ipv4_subnet)
+        ipv6_subnet = self.add_subnet_to_network(self.expected_ipv6_subnet)
+
+        fixed_ips = self.get_fixed_ips_data(ipv4_subnet, 2)
+        expected_port.fixed_ips = fixed_ips
+
+        # Creating a port in a network with both subnets
+        resp = self.ports.behaviors.create_port(
+            network_id=expected_port.network_id, name=expected_port.name,
+            fixed_ips=expected_port.fixed_ips,
+            raise_exception=False, use_exact_name=True)
+        if resp.response.entity and hasattr(resp.response.entity, 'id'):
+            self.delete_ports.append(resp.response.entity.id)
+
+        # Fail the test if any failure is found
+        self.assertFalse(resp.failures)
+        port = resp.response.entity
+
+        # Check the Port response (Port expected on IPv4 Subnet)
+        self.assertPortResponse(expected_port, port, check_fixed_ips=True)
+
+    @tags(type='smoke', rbac='creator')
+    def test_ipv4_port_create_on_net_w_both_subnets_w_subnet_id_only(self):
+        """
+        @summary: Creating a port on network with IPv4 and IPv6 subnets
+            giving the subnet id only in the fixed IPs attribute
+        """
+        expected_port = self.expected_port
+        expected_port.name = 'test_ipv4_port_create_on_dual_net'
+
+        ipv4_subnet = self.add_subnet_to_network(self.expected_ipv4_subnet)
+        ipv6_subnet = self.add_subnet_to_network(self.expected_ipv6_subnet)
+        fixed_ips = [dict(subnet_id=ipv4_subnet.id)]
+        expected_port.fixed_ips = fixed_ips
+
+        # Creating a port in a network with both subnets
+        resp = self.ports.behaviors.create_port(
+            network_id=expected_port.network_id, name=expected_port.name,
+            fixed_ips=expected_port.fixed_ips,
+            raise_exception=False, use_exact_name=True)
+        if resp.response.entity and hasattr(resp.response.entity, 'id'):
+            self.delete_ports.append(resp.response.entity.id)
+
+        # Fail the test if any failure is found
+        self.assertFalse(resp.failures)
+        port = resp.response.entity
+
+        # Check the Port response (Port expected on IPv4 Subnet)
+        self.assertPortResponse(expected_port, port, subnet=ipv4_subnet)
 
     @tags(type='smoke', rbac='creator')
     def test_ipv6_port_create_w_fixed_ips(self):
@@ -360,6 +504,303 @@ class PortCreateTest(NetworkingAPIFixture):
 
         # Check the Port response (Port expected on IPv4 Subnet
         self.assertPortResponse(expected_port, port, check_fixed_ips=True)
+
+    @tags(type='smoke', rbac='creator')
+    def test_ipv6_port_create_on_net_w_both_subnets(self):
+        """
+        @summary: Creating a port on network with IPv4 and IPv6 subnets
+        """
+        expected_port = self.expected_port
+        expected_port.name = 'test_ipv6_port_create_on_dual_net'
+
+        ipv4_subnet = self.add_subnet_to_network(self.expected_ipv4_subnet)
+        ipv6_subnet = self.add_subnet_to_network(self.expected_ipv6_subnet)
+
+        fixed_ips = self.get_fixed_ips_data(ipv6_subnet, 2)
+        expected_port.fixed_ips = fixed_ips
+
+        # Creating a port in a network with both subnets
+        resp = self.ports.behaviors.create_port(
+            network_id=expected_port.network_id, name=expected_port.name,
+            fixed_ips=expected_port.fixed_ips,
+            raise_exception=False, use_exact_name=True)
+        if resp.response.entity and hasattr(resp.response.entity, 'id'):
+            self.delete_ports.append(resp.response.entity.id)
+
+        # Fail the test if any failure is found
+        self.assertFalse(resp.failures)
+        port = resp.response.entity
+
+        # Need to format IPv6 fixed ips response for assertion
+        port.fixed_ips = self.ports.behaviors.format_fixed_ips(
+            port.fixed_ips)
+
+        # Check the Port response (Port expected on IPv4 Subnet)
+        self.assertPortResponse(expected_port, port, check_fixed_ips=True)
+
+    @tags(type='smoke', rbac='creator')
+    def test_ipv6_port_create_on_net_w_both_subnets_w_subnet_id_only(self):
+        """
+        @summary: Creating a port on network with IPv4 and IPv6 subnets
+            giving the subnet id only in the fixed IPs attribute
+        """
+        expected_port = self.expected_port
+        expected_port.name = 'test_ipv4_port_create_on_dual_net'
+
+        ipv4_subnet = self.add_subnet_to_network(self.expected_ipv4_subnet)
+        ipv6_subnet = self.add_subnet_to_network(self.expected_ipv6_subnet)
+        fixed_ips = [dict(subnet_id=ipv6_subnet.id)]
+        expected_port.fixed_ips = fixed_ips
+
+        # Creating a port in a network with both subnets
+        resp = self.ports.behaviors.create_port(
+            network_id=expected_port.network_id, name=expected_port.name,
+            fixed_ips=expected_port.fixed_ips,
+            raise_exception=False, use_exact_name=True)
+        if resp.response.entity and hasattr(resp.response.entity, 'id'):
+            self.delete_ports.append(resp.response.entity.id)
+
+        # Fail the test if any failure is found
+        self.assertFalse(resp.failures)
+        port = resp.response.entity
+
+        # Need to format IPv6 fixed ips response for assertion
+        port.fixed_ips = self.ports.behaviors.format_fixed_ips(
+            port.fixed_ips)
+
+        # Check the Port response (Port expected on IPv4 Subnet)
+        self.assertPortResponse(expected_port, port, subnet=ipv6_subnet)
+
+    @tags(type='positive', rbac='creator')
+    def test_ipv4_port_create_w_subnet_ids_only(self):
+        """
+        @summary: Creating a port on network with multiple IPv4 subnets
+            giving the subnet ids only in the fixed IPs attribute
+        """
+        expected_port = self.expected_port
+        expected_port.name = 'test_ipv4_port_create_on_dual_net'
+
+        ipv4_subnet = self.add_subnet_to_network(self.expected_ipv4_subnet)
+        fixed_ips = [dict(subnet_id=ipv4_subnet.id),
+                     dict(subnet_id=ipv4_subnet.id)]
+        expected_port.fixed_ips = fixed_ips
+
+        # Creating a port in a network with both subnets
+        resp = self.ports.behaviors.create_port(
+            network_id=expected_port.network_id, name=expected_port.name,
+            fixed_ips=expected_port.fixed_ips,
+            raise_exception=False, use_exact_name=True)
+        if resp.response.entity and hasattr(resp.response.entity, 'id'):
+            self.delete_ports.append(resp.response.entity.id)
+
+        # Fail the test if any failure is found
+        self.assertFalse(resp.failures)
+        port = resp.response.entity
+
+        # Checking the expected subnets are within the port fixed ips
+        self.assertFixedIpsSubnetIds(port, expected_port)
+
+        # Check the Port response (Port expected on IPv4 Subnet)
+        self.assertPortResponse(expected_port, port)
+
+    @tags(type='positive', rbac='creator')
+    def test_ipv6_port_create_w_subnet_ids_only(self):
+        """
+        @summary: Creating a port on network with multiple IPv6 subnets
+            giving the subnet ids only in the fixed IPs attribute
+        """
+        expected_port = self.expected_port
+        expected_port.name = 'test_ipv6_port_create_on_dual_net'
+
+        ipv6_subnet = self.add_subnet_to_network(self.expected_ipv6_subnet)
+        fixed_ips = [dict(subnet_id=ipv6_subnet.id),
+                     dict(subnet_id=ipv6_subnet.id)]
+        expected_port.fixed_ips = fixed_ips
+
+        # Creating a port in a network with both subnets
+        resp = self.ports.behaviors.create_port(
+            network_id=expected_port.network_id, name=expected_port.name,
+            fixed_ips=expected_port.fixed_ips,
+            raise_exception=False, use_exact_name=True)
+        if resp.response.entity and hasattr(resp.response.entity, 'id'):
+            self.delete_ports.append(resp.response.entity.id)
+
+        # Fail the test if any failure is found
+        self.assertFalse(resp.failures)
+        port = resp.response.entity
+
+        # Checking the expected subnets are within the port fixed ips
+        self.assertFixedIpsSubnetIds(port, expected_port)
+
+        # Check the Port response (Port expected on IPv4 Subnet)
+        self.assertPortResponse(expected_port, port)
+
+    @tags(type='smoke', rbac='creator')
+    def test_ipv4_ipv6_port_create_w_subnet_ids_only(self):
+        """
+        @summary: Creating a port on network with IPv4 and IPv6 subnets
+            giving the subnet ids only in the fixed IPs attribute
+        """
+        expected_port = self.expected_port
+        expected_port.name = 'test_ipv4_ipv6_port_create_on_dual_net'
+
+        ipv4_subnet = self.add_subnet_to_network(self.expected_ipv4_subnet)
+        ipv6_subnet = self.add_subnet_to_network(self.expected_ipv6_subnet)
+        fixed_ips = [dict(subnet_id=ipv4_subnet.id),
+                     dict(subnet_id=ipv6_subnet.id)]
+        expected_port.fixed_ips = fixed_ips
+
+        # Creating a port in a network with both subnets
+        resp = self.ports.behaviors.create_port(
+            network_id=expected_port.network_id, name=expected_port.name,
+            fixed_ips=expected_port.fixed_ips,
+            raise_exception=False, use_exact_name=True)
+        if resp.response.entity and hasattr(resp.response.entity, 'id'):
+            self.delete_ports.append(resp.response.entity.id)
+
+        # Fail the test if any failure is found
+        self.assertFalse(resp.failures)
+        port = resp.response.entity
+
+        # Checking the expected subnets are within the port fixed ips
+        self.assertFixedIpsSubnetIds(port, expected_port)
+
+        # Check the Port response (Port expected on IPv4 Subnet)
+        self.assertPortResponse(expected_port, port)
+
+    @tags(type='smoke', rbac='creator')
+    def test_port_create_on_net_w_both_subnets_w_invalid_subnet_id(self):
+        """
+        @summary: Negative Creating a port on network with IPv4 and IPv6
+            subnets giving an invalid subnet id in the fixed IPs attribute
+        """
+        expected_port = self.expected_port
+        expected_port.name = 'test_port_create_on_dual_net'
+
+        ipv4_subnet = self.add_subnet_to_network(self.expected_ipv4_subnet)
+        ipv6_subnet = self.add_subnet_to_network(self.expected_ipv6_subnet)
+        fixed_ips = [dict(subnet_id='invalid_subnet_id')]
+        expected_port.fixed_ips = fixed_ips
+
+        # Creating a port in a network with both subnets
+        resp = self.ports.behaviors.create_port(
+            network_id=expected_port.network_id, name=expected_port.name,
+            fixed_ips=expected_port.fixed_ips,
+            raise_exception=False, use_exact_name=True)
+        if resp.response.entity and hasattr(resp.response.entity, 'id'):
+            self.delete_ports.append(resp.response.entity.id)
+
+        # Port create should be unavailable with invalid subnet ID
+        msg = '(negative) Creating a port with invalid Subnet Id at Fixed IPs'
+        self.assertNegativeResponse(
+            resp=resp, status_code=NeutronResponseCodes.BAD_REQUEST, msg=msg,
+            delete_list=self.delete_ports)
+
+    @tags(type='negative', rbac='creator')
+    def test_ipv4_port_create_w_subnet_id_from_another_network(self):
+        """
+        @summary: Negative Creating a port with subnet ID from another network
+        """
+        expected_port = self.expected_port
+        ipv4_subnet = self.add_subnet_to_network(self.expected_ipv4_subnet)
+
+        # Creating the alt network and subnets
+        expected_network_alt = self.get_expected_network_data()
+        expected_network_alt.name = 'test_port_create_net_alt'
+        network_alt = self.create_test_network(expected_network_alt)
+        expected_ipv4_subnet_alt = self.get_expected_ipv4_subnet_data()
+        expected_ipv4_subnet_alt.network_id = network_alt.id
+        ipv4_subnet_alt = self.add_subnet_to_network(expected_ipv4_subnet_alt)
+
+        fixed_ips = [dict(subnet_id=ipv4_subnet_alt.id)]
+        expected_port.fixed_ips = fixed_ips
+
+        # Creating a port in a network with both subnets with invalid fixed IP
+        resp = self.ports.behaviors.create_port(
+            network_id=expected_port.network_id, name=expected_port.name,
+            fixed_ips=expected_port.fixed_ips,
+            raise_exception=False, use_exact_name=True)
+        if resp.response.entity and hasattr(resp.response.entity, 'id'):
+            self.delete_ports.append(resp.response.entity.id)
+
+        # Port create should be unavailable with invalid subnet ID
+        msg = '(negative) Creating a port w invalid IPv4 subnet at Fixed IPs'
+        self.assertNegativeResponse(
+            resp=resp, status_code=NeutronResponseCodes.CONFLICT, msg=msg,
+            delete_list=self.delete_ports)
+
+    @tags(type='negative', rbac='creator')
+    def test_ipv6_port_create_w_subnet_id_from_another_network(self):
+        """
+        @summary: Negative Creating a port with subnet ID from another network
+        """
+        expected_port = self.expected_port
+        ipv6_subnet = self.add_subnet_to_network(self.expected_ipv6_subnet)
+
+        # Creating the alt network and subnets
+        expected_network_alt = self.get_expected_network_data()
+        expected_network_alt.name = 'test_port_create_net_alt'
+        network_alt = self.create_test_network(expected_network_alt)
+        expected_ipv6_subnet_alt = self.get_expected_ipv6_subnet_data()
+        expected_ipv6_subnet_alt.network_id = network_alt.id
+        ipv6_subnet_alt = self.add_subnet_to_network(expected_ipv6_subnet_alt)
+
+        fixed_ips = [dict(subnet_id=ipv6_subnet_alt.id)]
+        expected_port.fixed_ips = fixed_ips
+
+        # Creating a port in a network with both subnets with invalid fixed IP
+        resp = self.ports.behaviors.create_port(
+            network_id=expected_port.network_id, name=expected_port.name,
+            fixed_ips=expected_port.fixed_ips,
+            raise_exception=False, use_exact_name=True)
+        if resp.response.entity and hasattr(resp.response.entity, 'id'):
+            self.delete_ports.append(resp.response.entity.id)
+
+        # Port create should be unavailable with invalid subnet ID
+        msg = '(negative) Creating a port w invalid IPv6 subnet at Fixed IPs'
+        self.assertNegativeResponse(
+            resp=resp, status_code=NeutronResponseCodes.CONFLICT, msg=msg,
+            delete_list=self.delete_ports)
+
+    @tags(type='negative', rbac='creator')
+    def test_port_create_w_subnet_ids_from_another_network(self):
+        """
+        @summary: Negative Creating a port with subnet ID from another network
+        """
+        expected_port = self.expected_port
+        expected_port.name = 'test_port_create_on_dual_net'
+
+        ipv4_subnet = self.add_subnet_to_network(self.expected_ipv4_subnet)
+        ipv6_subnet = self.add_subnet_to_network(self.expected_ipv6_subnet)
+
+        # Creating the alt network and subnets
+        expected_network_alt = self.get_expected_network_data()
+        expected_network_alt.name = 'test_port_create_net_alt'
+        network_alt = self.create_test_network(expected_network_alt)
+        expected_ipv4_subnet_alt = self.get_expected_ipv4_subnet_data()
+        expected_ipv6_subnet_alt = self.get_expected_ipv6_subnet_data()
+        expected_ipv4_subnet_alt.network_id = network_alt.id
+        expected_ipv6_subnet_alt.network_id = network_alt.id
+        ipv4_subnet_alt = self.add_subnet_to_network(expected_ipv4_subnet_alt)
+        ipv6_subnet_alt = self.add_subnet_to_network(expected_ipv6_subnet_alt)
+
+        fixed_ips = [dict(subnet_id=ipv4_subnet_alt.id)]
+        fixed_ips.append(dict(subnet_id=ipv4_subnet_alt.id))
+        expected_port.fixed_ips = fixed_ips
+
+        # Creating a port in a network with both subnets with invalid fixed IP
+        resp = self.ports.behaviors.create_port(
+            network_id=expected_port.network_id, name=expected_port.name,
+            fixed_ips=expected_port.fixed_ips,
+            raise_exception=False, use_exact_name=True)
+        if resp.response.entity and hasattr(resp.response.entity, 'id'):
+            self.delete_ports.append(resp.response.entity.id)
+
+        # Port create should be unavailable with invalid subnet ID
+        msg = '(negative) Creating a port w invalid IPv4 subnet at Fixed IPs'
+        self.assertNegativeResponse(
+            resp=resp, status_code=NeutronResponseCodes.CONFLICT, msg=msg,
+            delete_list=self.delete_ports)
 
     @tags(type='negative', rbac='creator', quark='yes')
     def test_port_create_on_net_w_ipv4_subnet_and_mac_address(self):
@@ -460,7 +901,7 @@ class PortCreateTest(NetworkingAPIFixture):
         self.add_subnet_to_network(self.expected_ipv4_subnet)
         expected_port.tenant_id = '5806065'
 
-        # Trying to create a port with security groups
+        # Trying to create a port with tenant ID
         resp = self.ports.behaviors.create_port(
             network_id=expected_port.network_id, name=expected_port.name,
             tenant_id=expected_port.tenant_id,
@@ -481,7 +922,7 @@ class PortCreateTest(NetworkingAPIFixture):
         self.add_subnet_to_network(self.expected_ipv6_subnet)
         expected_port.tenant_id = '5806065'
 
-        # Trying to create a port with security groups
+        # Trying to create a port with tenant ID
         resp = self.ports.behaviors.create_port(
             network_id=expected_port.network_id, name=expected_port.name,
             tenant_id=expected_port.tenant_id,

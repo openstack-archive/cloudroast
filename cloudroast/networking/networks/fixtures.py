@@ -391,6 +391,25 @@ class NetworkingFixture(BaseTestFixture):
                 ip_msg.format(ip=fixed_ip['ip_address'], fixed_ips=fixed_ips))
             verified_ip.append(fixed_ip['ip_address'])
 
+    def assertFixedIpsSubnetIds(self, port, expected_port):
+        """
+        @summary: assert the port fixed ips subnet Ids
+        """
+        fixed_ips = port.fixed_ips
+        expected_fixed_ips = expected_port.fixed_ips
+        subnet_ids = self.ports.behaviors.get_fixed_ips_subnet_ids(fixed_ips)
+        expected_subnet_ids = self.ports.behaviors.get_fixed_ips_subnet_ids(
+            expected_fixed_ips)
+        subnet_ids.sort()
+        expected_subnet_ids.sort()
+
+        msg = ('Unexpected subnet IDs {unexpected_ids} instead of the expected'
+               ' {expected_ids} within port fixed ips {ips} at port {port} in '
+               'network {network}').format(unexpected_ids=subnet_ids,
+                expected_ids=expected_subnet_ids, ips=fixed_ips, port=port.id,
+                network=port.network_id)
+        self.assertListEqual(subnet_ids, expected_subnet_ids, msg)
+
     def assertPortResponse(self, expected_port, port, subnet=None,
                            check_exact_name=True, check_fixed_ips=False,
                            enabled_fixed_ips=True):
