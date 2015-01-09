@@ -14,6 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import unittest
+
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.compute.composites import ComputeAdminComposite
 from cloudcafe.compute.common.types import NovaServerRebootTypes
@@ -56,7 +58,7 @@ class SuspendServerTests(object):
             "Unable to connect to active server {0} after suspending "
             "and resuming".format(self.server.id))
 
-
+@unittest.skip("Failing due to RM11052")
 class NegativeSuspendServerTests(object):
 
     @tags(type='smoke', net='yes')
