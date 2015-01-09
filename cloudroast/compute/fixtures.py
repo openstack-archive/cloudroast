@@ -23,6 +23,7 @@ from cloudcafe.compute.config import ComputeEndpointConfig, \
     MarshallingConfig
 from cloudcafe.compute.composites import ComputeComposite, \
     ComputeAdminComposite, ComputeIntegrationComposite
+from cloudcafe.objectstorage.composites import ObjectStorageComposite
 from cloudcafe.compute.common.exception_handler import ExceptionHandler
 from cloudcafe.compute.common.clients.ping import PingClient
 from cloudcafe.compute.common.exceptions import ServerUnreachable
@@ -228,6 +229,16 @@ class BlockstorageIntegrationFixture(ComputeFixture):
         cls.volume_create_timeout = volumes.config.volume_create_max_timeout
         cls.blockstorage_client = volumes.client
         cls.blockstorage_behavior = volumes.behaviors
+
+
+class ObjectstorageIntegrationFixture(ComputeFixture):
+
+    @classmethod
+    def setUpClass(cls):
+        super(ObjectstorageIntegrationFixture, cls).setUpClass()
+        cls.object_storage_api = ObjectStorageComposite()
+        cls.object_storage_client = cls.object_storage_api.client
+        cls.object_storage_behaviors = cls.object_storage_api.behaviors
 
 
 class ServerFromImageFixture(ComputeFixture):
