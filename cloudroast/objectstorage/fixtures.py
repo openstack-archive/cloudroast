@@ -162,7 +162,7 @@ class ObjectStorageFixture(BaseTestFixture):
         super(ObjectStorageFixture, cls).setUpClass()
         object_storage_api = ObjectStorageComposite()
 
-        cls.auth_data = object_storage_api.auth_info
+        cls.auth_info = object_storage_api.auth_info
         cls.objectstorage_api_config = object_storage_api.config
         cls.storage_url = object_storage_api.storage_url
         cls.auth_token = object_storage_api.auth_token
