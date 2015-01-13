@@ -13,6 +13,8 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
+import unittest
+
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.networking.networks.common.constants \
     import NeutronResponseCodes, NeutronErrorTypes
@@ -125,6 +127,7 @@ class PortCreateTest(NetworkingAPIFixture):
         # Check the Port response
         self.assertPortResponse(expected_port, port, subnet=ipv6_subnet)
 
+    @unittest.skip('Needs RM10996 fix')
     @tags(type='smoke', rbac='creator')
     def test_port_create_on_net_w_both_subnets(self):
         """
@@ -149,6 +152,7 @@ class PortCreateTest(NetworkingAPIFixture):
         # Check the Port response (Port expected on IPv4 Subnet
         self.assertPortResponse(expected_port, port, subnet=ipv4_subnet)
 
+    @unittest.skip('Needs RM10996 fix')
     @tags(type='smoke', rbac='creator')
     def test_port_create_on_net_w_both_subnets_w_long_name(self):
         """
@@ -289,7 +293,7 @@ class PortCreateTest(NetworkingAPIFixture):
         self.assertFalse(resp.failures)
         port = resp.response.entity
 
-        # Check the Port response (Port expected on IPv4 Subnet
+        # Port should be created only with fixed IP from the valid subnet
         self.assertPortResponse(expected_port, port, subnet=ipv4_subnet)
 
     @tags(type='smoke', rbac='creator')
@@ -332,7 +336,7 @@ class PortCreateTest(NetworkingAPIFixture):
         self.assertFalse(resp.failures)
         port = resp.response.entity
 
-        # Check the Port response (Port expected on IPv4 Subnet
+        # Port should be created only with fixed IP from the valid subnet
         self.assertPortResponse(expected_port, port, subnet=ipv6_subnet)
 
     @tags(type='smoke', rbac='creator')
@@ -359,7 +363,7 @@ class PortCreateTest(NetworkingAPIFixture):
         self.assertFalse(resp.failures)
         port = resp.response.entity
 
-        # Check the Port response (Port expected on IPv4 Subnet
+        # Check the Port response (Port expected on IPv4 Subnet)
         self.assertPortResponse(expected_port, port, check_fixed_ips=True)
 
     @tags(type='smoke', rbac='creator')
