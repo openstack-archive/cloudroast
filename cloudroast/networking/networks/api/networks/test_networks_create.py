@@ -13,7 +13,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-
 import unittest
 
 from cafe.drivers.unittest.decorators import tags
@@ -74,6 +73,7 @@ class NetworkCreateTest(NetworkingAPIFixture):
         # Check the Network response
         self.assertNetworkResponse(self.expected_network, network)
 
+    @unittest.skip('Needs RM10088 fix')
     @tags(type='negative', rbac='creator', quark='yes')
     def test_network_create_w_long_name_trimming(self):
         """

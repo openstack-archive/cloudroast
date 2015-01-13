@@ -13,6 +13,8 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
+import unittest
+
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.networking.networks.common.constants \
     import NeutronResponseCodes, NeutronErrorTypes
@@ -91,6 +93,7 @@ class NetworkUpdateTest(NetworkingAPIFixture):
         # Check the Network response
         self.assertNetworkResponse(expected_network, network)
 
+    @unittest.skip('Needs RM10088 fix')
     @tags(type='negative', rbac='creator')
     def test_network_update_w_long_name_trimming(self):
         """

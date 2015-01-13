@@ -13,6 +13,8 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
+import unittest
+
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.networking.networks.common.constants \
     import NeutronResponseCodes, NeutronErrorTypes
@@ -137,6 +139,7 @@ class PortUpdateTest(NetworkingAPIFixture):
         # Check the Port response
         self.assertPortResponse(expected_port, port)
 
+    @unittest.skip('Needs RM10088 fix')
     @tags(type='positive', rbac='creator')
     def test_ipv4_port_update_w_long_name_trimming(self):
         """
@@ -352,6 +355,7 @@ class PortUpdateTest(NetworkingAPIFixture):
         self.assertPortResponse(expected_port, port,
                                 subnet=self.dual_ipv6_subnet)
 
+    @unittest.skip('Needs RM11046 fix')
     @tags(type='positive', rbac='creator')
     def test_ipv4_port_update_w_subnet_ids_only(self):
         """
@@ -376,6 +380,7 @@ class PortUpdateTest(NetworkingAPIFixture):
         self.assertFixedIpsSubnetIds(port, expected_port)
         self.assertPortResponse(expected_port, port)
 
+    @unittest.skip('Needs RM11046 fix')
     @tags(type='positive', rbac='creator')
     def test_ipv6_port_update_w_subnet_ids_only(self):
         """
@@ -400,6 +405,7 @@ class PortUpdateTest(NetworkingAPIFixture):
         self.assertFixedIpsSubnetIds(port, expected_port)
         self.assertPortResponse(expected_port, port)
 
+    @unittest.skip('Needs RM11046 fix')
     @tags(type='positive', rbac='creator')
     def test_ipv4_ipv6_port_update_w_subnet_ids_only(self):
         """

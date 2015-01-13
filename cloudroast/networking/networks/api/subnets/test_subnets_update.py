@@ -13,7 +13,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-
 import unittest
 
 import IPy
@@ -73,6 +72,7 @@ class SubnetUpdateTest(NetworkingAPIFixture):
     def tearDown(self):
         self.networkingCleanUp()
 
+    @unittest.skip('Needs RM10143 fix')
     @tags(type='positive', rbac='creator')
     def test_ipv4_subnet_update_w_multiple_params(self):
         """
@@ -126,6 +126,7 @@ class SubnetUpdateTest(NetworkingAPIFixture):
         # Check the Subnet response
         self.assertSubnetResponse(expected_subnet, subnet)
 
+    @unittest.skip('Needs RM10088 fix')
     @tags(type='negative', rbac='creator')
     def test_ipv4_subnet_update_w_long_name_trimming(self):
         """
@@ -151,6 +152,7 @@ class SubnetUpdateTest(NetworkingAPIFixture):
         # Check the Subnet response
         self.assertSubnetResponse(expected_subnet, subnet)
 
+    @unittest.skip('Needs RM10143 fix')
     @tags(type='positive', rbac='creator')
     def test_ipv6_subnet_update_w_multiple_params(self):
         """

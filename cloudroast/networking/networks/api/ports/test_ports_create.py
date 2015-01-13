@@ -177,6 +177,7 @@ class PortCreateTest(NetworkingAPIFixture):
         # Check the Port response (Port expected on IPv4 Subnet
         self.assertPortResponse(expected_port, port, subnet=ipv4_subnet)
 
+    @unittest.skip('Needs RM10088 fix')
     @tags(type='negative', rbac='creator')
     def test_port_create_on_net_w_both_subnets_w_long_name_trimming(self):
         """

@@ -13,7 +13,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-
 import unittest
 
 from cafe.drivers.unittest.decorators import tags
@@ -110,6 +109,7 @@ class SubnetCreateTest(NetworkingAPIFixture):
         # Check the Subnet response
         self.assertSubnetResponse(expected_subnet, subnet)
 
+    @unittest.skip('Needs RM10088 fix')
     @tags(type='negative', rbac='creator')
     def test_ipv4_subnet_create_w_long_name_trimming(self):
         """
@@ -684,6 +684,7 @@ class SubnetCreateTest(NetworkingAPIFixture):
             delete_list=self.delete_subnets,
             error_type=NeutronErrorTypes.OVER_QUOTA)
 
+    @unittest.skip('Needs RM10109 fix')
     @tags(type='negative', rbac='creator', quark='yes')
     def test_ipv4_subnet_allocation_pools_quota(self):
         """
@@ -745,6 +746,7 @@ class SubnetCreateTest(NetworkingAPIFixture):
             delete_list=self.delete_subnets,
             error_type=NeutronErrorTypes.OVER_QUOTA)
 
+    @unittest.skip('Needs RM10109 fix')
     @tags(type='negative', rbac='creator', quark='yes')
     def test_ipv6_subnet_allocation_pools_quota(self):
         """
