@@ -181,10 +181,10 @@ class RebuildServerTests(object):
         remote_client = self.server_behaviors.get_remote_instance_client(
             self.server, self.servers_config, password=self.password,
             key=self.key.private_key)
-        self.assertTrue(remote_client.is_file_present(self.file_path))
+        self.assertTrue(remote_client.is_file_present(self.rebuilt_file_path))
         self.assertEqual(
-            remote_client.get_file_details(self.file_path).content,
-            self.file_contents)
+            remote_client.get_file_details(self.rebuilt_file_path).content,
+            self.rebuilt_file_contents)
 
     @tags(type='smoke', net='no')
     def test_server_metadata_set_on_rebuild(self):
@@ -248,8 +248,24 @@ class RebuildServerTests(object):
                          actual_disk_config.lower() == 'auto')
 
     @tags(type='smoke', net='yes')
+    @unittest.skipUnless(file_injection_enabled, "File injection disabled.")
+    def test_file_system_cleared_on_rebuild(self):
+        """
+        Verify that after a rebuild any files on the file system that are
+        not explicitly injected into the rebuild are no longer on the
+        file system.
+        """
+        remote_client = self.server_behaviors.get_remote_instance_client(
+            self.server, self.servers_config, password=self.password,
+            key=self.key.private_key)
+        self.assertFalse(remote_client.is_file_present(self.file_path))
+
+    @unittest.skip("Skipping until refactor of 'get_distribution_and_version'")
+    @tags(type='smoke', net='yes')
     def test_distro_after_rebuild(self):
-        """Verify the distro is changed if using rebuild with different image"""
+        """
+        Verify the distro is changed if using rebuild with different image
+        """
         remote_client = self.server_behaviors.get_remote_instance_client(
             self.server, self.servers_config, password=self.password,
             key=self.key.private_key)
@@ -257,7 +273,8 @@ class RebuildServerTests(object):
         if (self.distro_before_rebuild and
                 distro_after_rebuild and
                 self.image_ref != self.image_ref_alt):
-            self.assertNotEqual(self.distro_before_rebuild, distro_after_rebuild)
+            self.assertNotEqual(self.distro_before_rebuild,
+                                distro_after_rebuild)
         else:
             self.assertEqual(self.distro_before_rebuild, distro_after_rebuild)
 
@@ -272,14 +289,14 @@ class RebuildBaseFixture(object):
         personality = cls.server_behaviors.get_default_injected_files()
         if cls.file_injection_enabled:
             separator = cls.images_config.primary_image_path_separator
-            cls.file_path = separator.join(
+            cls.rebuilt_file_path = separator.join(
                 [cls.servers_config.default_file_path, 'rebuild.txt'])
-            cls.file_contents = 'Test server rebuild.'
+            cls.rebuilt_file_contents = 'Test server rebuild.'
             if personality is None:
                 personality = []
-            personality.extend([{'path': cls.file_path,
+            personality.extend([{'path': cls.rebuilt_file_path,
                                  'contents': base64.b64encode(
-                                     cls.file_contents)}])
+                                     cls.rebuilt_file_contents)}])
         cls.password = 'R3builds3ver'
         security_groups = None
         if cls.security_groups_config.default_security_group:
@@ -305,12 +322,26 @@ class ServerFromImageRebuildTests(ServerFromImageFixture,
         cls.key = cls.keypairs_client.create_keypair(rand_name("key")).entity
         cls.resources.add(cls.key.name,
                           cls.keypairs_client.delete_keypair)
-        cls.create_server(key_name=cls.key.name)
-        response = cls.flavors_client.get_flavor_details(cls.flavor_ref)
-        cls.flavor = response.entity
-        remote_client = cls.server_behaviors.get_remote_instance_client(
-            cls.server, cls.servers_config, key=cls.key.private_key)
-        cls.distro_before_rebuild = remote_client.get_distribution_and_version()
+
+        personality = cls.server_behaviors.get_default_injected_files()
+        if cls.file_injection_enabled:
+            separator = cls.images_config.primary_image_path_separator
+            cls.file_path = separator.join(
+                [cls.servers_config.default_file_path, 'test.txt'])
+            cls.file_contents = 'Test initial server build.'
+            if personality is None:
+                personality = []
+            personality.extend([{'path': cls.file_path,
+                                 'contents': base64.b64encode(
+                                     cls.file_contents)}])
+
+        cls.create_resp = cls.server_behaviors.create_active_server(
+            personality=personality, key_name=cls.key.name)
+        cls.server = cls.create_resp.entity
+
+        cls.resources.add(cls.server.id, cls.servers_client.delete_server)
+        cls.flavor = cls.flavors_client.get_flavor_details(
+            cls.flavor_ref).entity
         cls.rebuild_and_await()
 
     @tags(type='smoke', net='yes')
@@ -324,3 +355,5 @@ class ServerFromImageRebuildTests(ServerFromImageFixture,
         self.assertEqual(disk_size, self.flavor.disk,
                          msg="Expected disk to be {0} GB, was {1} GB".format(
                              self.flavor.disk, disk_size))
+
+
