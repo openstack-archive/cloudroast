@@ -19,15 +19,22 @@ from cafe.engine.http.client import HTTPClient
 from cloudroast.objectstorage.fixtures import ObjectStorageFixture
 from cloudroast.objectstorage.generators import ObjectDatasetList
 
-CONTAINER_DESCRIPTOR = 'cors'
+CONTAINER_DESCRIPTOR = 'cors_container'
 
 
 @DataDrivenFixture
 class CORSTest(ObjectStorageFixture):
 
+    @classmethod
+    def setUpClass(cls):
+        super(CORSTest, cls).setUpClass()
+
+        cls.dumb_client = HTTPClient()
+        cls.object_name = cls.behaviors.VALID_OBJECT_NAME
+
     @data_driven_test(ObjectDatasetList())
     @ObjectStorageFixture.required_features('tempurl')
-    def ddtest_container_cors_with_tempurl(self, object_type, generate_object):
+    def ddtest_container_cors_with_tempurl(self, generate_object):
         """
         Scenario:
             Create a container with CORS headers.
@@ -54,18 +61,19 @@ class CORSTest(ObjectStorageFixture):
             ','.join(expose_headers)}
 
         container_name = self.create_temp_container(
-            descriptor='container-smoke', headers=container_headers)
-        object_name = 'object'
+            descriptor=CONTAINER_DESCRIPTOR, headers=container_headers)
+
         object_headers = {'Content-Type': 'text/plain'}
-        generate_object(container_name, object_name, headers=object_headers)
+        generate_object(container_name,
+                        self.object_name,
+                        headers=object_headers)
+
         tempurl_key = self.behaviors.get_tempurl_key()
         tempurl_info = self.client.create_temp_url(
-            'GET', container_name, object_name, 900, tempurl_key)
-
-        dumb_client = HTTPClient()
+            'GET', container_name, self.object_name, 900, tempurl_key)
 
         # Requests with no Origin should not return CORS headers.
-        response = dumb_client.request(
+        response = self.dumb_client.request(
             'GET', tempurl_info.get('target_url'), params={
                 'temp_url_sig': tempurl_info.get('signature'),
                 'temp_url_expires': tempurl_info.get('expires')})
@@ -79,7 +87,7 @@ class CORSTest(ObjectStorageFixture):
             'Expose-Headers should not be returned.')
 
         # Requests with Origin which matches, should return CORS headers.
-        response = dumb_client.request(
+        response = self.dumb_client.request(
             'GET', tempurl_info.get('target_url'), params={
                 'temp_url_sig': tempurl_info.get('signature'),
                 'temp_url_expires': tempurl_info.get('expires')},
@@ -97,7 +105,7 @@ class CORSTest(ObjectStorageFixture):
             # CORS should work according to the spec.
             # Requests with Origin which does not match, should not return
             # CORS headers.
-            response = dumb_client.request(
+            response = self.dumb_client.request(
                 'GET', tempurl_info.get('target_url'), params={
                     'temp_url_sig': tempurl_info.get('signature'),
                     'temp_url_expires': tempurl_info.get('expires')},
@@ -114,7 +122,7 @@ class CORSTest(ObjectStorageFixture):
             # Early implementation of CORS.
             # Requests with Origin which does not match, should not return
             # CORS headers.
-            response = dumb_client.request(
+            response = self.dumb_client.request(
                 'GET', tempurl_info.get('target_url'), params={
                     'temp_url_sig': tempurl_info.get('signature'),
                     'temp_url_expires': tempurl_info.get('expires')},
@@ -157,7 +165,7 @@ class CORSTest(ObjectStorageFixture):
             'X-Container-Meta-Access-Control-Expose-Headers':
             ','.join(expose_headers)}
         container_name = self.create_temp_container(
-            descriptor='container-smoke', headers=container_headers)
+            descriptor=CONTAINER_DESCRIPTOR, headers=container_headers)
 
         tempurl_key = self.behaviors.get_tempurl_key()
         files = [{'name': 'foo1'}]
@@ -165,9 +173,9 @@ class CORSTest(ObjectStorageFixture):
         # Requests with no Origin should not return CORS headers.
         formpost_info = self.client.create_formpost(
             container_name, files, key=tempurl_key)
-        dumb_client = HTTPClient()
+
         headers = formpost_info.get('headers')
-        response = dumb_client.post(
+        response = self.dumb_client.post(
             formpost_info.get('target_url'),
             headers=headers,
             data=formpost_info.get('body'),
@@ -181,10 +189,10 @@ class CORSTest(ObjectStorageFixture):
         # Requests with Origin which does match, should return CORS headers.
         formpost_info = self.client.create_formpost(
             container_name, files, key=tempurl_key)
-        dumb_client = HTTPClient()
+
         headers = formpost_info.get('headers')
         headers['Origin'] = 'http://example.com'
-        response = dumb_client.post(
+        response = self.dumb_client.post(
             formpost_info.get('target_url'),
             headers=headers,
             data=formpost_info.get('body'),
@@ -200,10 +208,10 @@ class CORSTest(ObjectStorageFixture):
             # CORS headers.
             formpost_info = self.client.create_formpost(
                 container_name, files, key=tempurl_key)
-            dumb_client = HTTPClient()
+
             headers = formpost_info.get('headers')
             headers['Origin'] = 'http://foo.com'
-            response = dumb_client.post(
+            response = self.dumb_client.post(
                 formpost_info.get('target_url'),
                 headers=headers,
                 data=formpost_info.get('body'),
@@ -220,10 +228,10 @@ class CORSTest(ObjectStorageFixture):
             # CORS headers.
             formpost_info = self.client.create_formpost(
                 container_name, files, key=tempurl_key)
-            dumb_client = HTTPClient()
+
             headers = formpost_info.get('headers')
             headers['Origin'] = 'http://foo.com'
-            response = dumb_client.post(
+            response = self.dumb_client.post(
                 formpost_info.get('target_url'),
                 headers=headers,
                 data=formpost_info.get('body'),
@@ -234,9 +242,155 @@ class CORSTest(ObjectStorageFixture):
             self.assertTrue('location' in response.headers)
             self.assertTrue('access-control-allow-origin' in response.headers)
 
+    def test_container_cors_preflight_request(self):
+        """
+        Scenario:
+            Create a container with CORS headers:
+               X-Container-Meta-Access-Control-Allow-Origin
+               X-Container-Meta-Access-Control-Max-Age
+               X-Container-Meta-Access-Control-Expose-Headers
+            Make a preflight request using the OPTIONS call with an Origin
+            that matches the container header.
+            Make a preflight request using the OPTIONS call with an Origin
+            that does not match the container header.
+
+        Expected Results:
+            If the Origin matches the Allow-Origin set:
+                CF should return a 200.
+            If the Origin does not match the Allow-Origin set:
+                CF should return a 401.
+        """
+        expose_headers = ['Content-Length', 'Etag', 'X-Timestamp',
+                          'X-Trans-Id']
+        container_headers = {
+            'X-Container-Meta-Access-Control-Allow-Origin':
+            'http://example.com',
+            'X-Container-Meta-Access-Control-Max-Age': '5',
+            'X-Container-Meta-Access-Control-Expose-Headers':
+            ','.join(expose_headers)}
+
+        container_name = self.create_temp_container(
+            descriptor=CONTAINER_DESCRIPTOR, headers=container_headers)
+
+        container_url = '{0}/{1}'.format(
+            self.client.storage_url, container_name)
+
+        # OPTIONS Preflight request with matching Origin should return 200
+        headers = {'Origin': 'http://example.com',
+                   'Access-Control-Request-Method': 'POST'}
+        preflight_response = self.dumb_client.request('OPTIONS',
+                                                      container_url,
+                                                      headers=headers)
+
+        self.assertEqual(preflight_response.status_code,
+                         200,
+                         msg="Preflight request with matching Origin should "
+                             "return {0} status code, received a {1}".format(
+                                 "200", preflight_response.status_code))
+
+        # OPTIONS Preflight request with non-matching Origin should return 401
+        headers = {'Origin': 'http://test.com',
+                   'Access-Control-Request-Method': 'POST'}
+        preflight_response = self.dumb_client.request(
+            'OPTIONS', container_url, headers=headers)
+
+        self.assertEqual(preflight_response.status_code,
+                         401,
+                         msg="Preflight request with non-matching Origin "
+                             "should return {0} status code, received a "
+                             "{1}".format("401",
+                                          preflight_response.status_code))
+
+    @data_driven_test(ObjectDatasetList())
+    @ObjectStorageFixture.required_features('tempurl')
+    def ddtest_container_cors_with_wildcard_origin(self, generate_object):
+        """
+        Scenario:
+            Create a container with CORS headers:
+               X-Container-Meta-Access-Control-Allow-Origin
+               X-Container-Meta-Access-Control-Max-Age
+               X-Container-Meta-Access-Control-Expose-Headers
+            The X-Container-Meta-Access-Control-Allow-Origin header will be
+            set to '*'.
+            Retrieve an object with no Origin.
+            Retrieve an object from a 'test' Origin.
+
+        Expected Results:
+            Retrieving the object with no Origin should not return a CORS
+            header of Access-Control-Allow-Origin.
+            Retrieving the object from any Origin should return a CORS
+            header of Access-Control-Allow-Origin and it should be set to '*'.
+        """
+
+        expose_headers = ['Content-Length', 'Etag', 'X-Timestamp',
+                          'X-Trans-Id']
+        container_headers = {
+            'X-Container-Meta-Access-Control-Allow-Origin': '*',
+            'X-Container-Meta-Access-Control-Max-Age': '5',
+            'X-Container-Meta-Access-Control-Expose-Headers':
+            ','.join(expose_headers)}
+
+        container_name = self.create_temp_container(
+            descriptor=CONTAINER_DESCRIPTOR, headers=container_headers)
+
+        object_headers = {'Content-Type': 'text/plain'}
+        generate_object(container_name,
+                        self.object_name,
+                        headers=object_headers)
+
+        tempurl_key = self.behaviors.get_tempurl_key()
+        tempurl_info = self.client.create_temp_url('GET',
+                                                   container_name,
+                                                   self.object_name,
+                                                   900,
+                                                   tempurl_key)
+
+        # tempURL parameters
+        parameters = {'temp_url_sig': tempurl_info.get('signature'),
+                      'temp_url_expires': tempurl_info.get('expires')}
+
+        # Requests with no Origin should not return CORS headers.
+        cors_response = self.dumb_client.request('GET',
+                                                 tempurl_info.get(
+                                                     'target_url'),
+                                                 params=parameters)
+        self.assertNotIn('Access-Control-Allow-Origin',
+                         cors_response.headers,
+                         msg="Allow-Origin header should not be returned "
+                             "when a request is made with no Origin")
+        self.assertNotIn('Access-Control-Max-Age',
+                         cors_response.headers,
+                         msg="Max-Age header should not be returned when a "
+                             "request is made with no Origin")
+        self.assertNotIn('Access-Control-Expose-Headers',
+                         cors_response.headers,
+                         msg="Expose-Headers header should not be returned "
+                             "when a request is made with no Origin")
+
+        headers = {'Origin': 'http://example.com'}
+        parameters = {'temp_url_sig': tempurl_info.get('signature'),
+                      'temp_url_expires': tempurl_info.get('expires')}
+
+        # Requests with any Origin will return * as the allowed origin
+        cors_response = self.dumb_client.request('GET',
+                                                 tempurl_info.get(
+                                                     'target_url'),
+                                                 params=parameters,
+                                                 headers=headers)
+        self.assertIn('Access-Control-Allow-Origin',
+                      cors_response.headers,
+                      msg="The header Access-Control-Allow-Origin should be "
+                          "returned in the list of headers: {0}".format(
+                              cors_response.headers))
+        self.assertEqual(
+            cors_response.headers.get('Access-Control-Allow-Origin'),
+            '*',
+            msg="Allow-Origin header set to {0}, should be set to '*'".format(
+                cors_response.headers.get('Access-Control-Allow-Origin')))
+
     @data_driven_test(ObjectDatasetList())
     @ObjectStorageFixture.required_features('tempurl', 'object-cors')
-    def ddtest_object_cors_with_tempurl(self, object_type, generate_object):
+    def ddtest_object_cors_with_tempurl(self, generate_object):
         """
         Scenario:
             Create a container.
@@ -255,7 +409,7 @@ class CORSTest(ObjectStorageFixture):
         """
         container_name = self.create_temp_container(
             descriptor=CONTAINER_DESCRIPTOR)
-        object_name = 'object'
+
         expose_headers = ['Content-Length', 'Etag', 'X-Timestamp',
                           'X-Trans-Id']
         object_headers = {
@@ -265,15 +419,16 @@ class CORSTest(ObjectStorageFixture):
             'X-Object-Meta-Access-Control-Max-Age': '5',
             'X-Object-Meta-Access-Control-Expose-Headers':
             ','.join(expose_headers)}
-        generate_object(container_name, object_name, headers=object_headers)
+        generate_object(container_name,
+                        self.object_name,
+                        headers=object_headers)
+
         tempurl_key = self.behaviors.get_tempurl_key()
         tempurl_info = self.client.create_temp_url(
-            'GET', container_name, object_name, 900, tempurl_key)
-
-        dumb_client = HTTPClient()
+            'GET', container_name, self.object_name, 900, tempurl_key)
 
         # Requests with no Origin should not return CORS headers.
-        response = dumb_client.request(
+        response = self.dumb_client.request(
             'GET', tempurl_info.get('target_url'), params={
                 'temp_url_sig': tempurl_info.get('signature'),
                 'temp_url_expires': tempurl_info.get('expires')})
@@ -287,7 +442,7 @@ class CORSTest(ObjectStorageFixture):
             'Expose-Headers should not be returned.')
 
         # Requests with Origin which does match, should return CORS headers.
-        response = dumb_client.request(
+        response = self.dumb_client.request(
             'GET', tempurl_info.get('target_url'), params={
                 'temp_url_sig': tempurl_info.get('signature'),
                 'temp_url_expires': tempurl_info.get('expires')},
@@ -305,7 +460,7 @@ class CORSTest(ObjectStorageFixture):
             # CORS should work according to the spec.
             # Requests with Origin which does not match, should not return
             # CORS headers.
-            response = dumb_client.request(
+            response = self.dumb_client.request(
                 'GET', tempurl_info.get('target_url'), params={
                     'temp_url_sig': tempurl_info.get('signature'),
                     'temp_url_expires': tempurl_info.get('expires')},
@@ -322,7 +477,7 @@ class CORSTest(ObjectStorageFixture):
             # Early implementation of CORS.
             # Requests with Origin which does not match, should not return
             # CORS headers.
-            response = dumb_client.request(
+            response = self.dumb_client.request(
                 'GET', tempurl_info.get('target_url'), params={
                     'temp_url_sig': tempurl_info.get('signature'),
                     'temp_url_expires': tempurl_info.get('expires')},
@@ -342,7 +497,7 @@ class CORSTest(ObjectStorageFixture):
     @data_driven_test(ObjectDatasetList())
     @ObjectStorageFixture.required_features('tempurl', 'object-cors')
     def ddtest_object_override_container_cors_with_tempurl(
-            self, object_type, generate_object):
+            self, generate_object):
         """
         Scenario:
             Create a container with CORS headers.
@@ -366,7 +521,7 @@ class CORSTest(ObjectStorageFixture):
             'X-Container-Meta-Access-Control-Expose-Headers':
             ','.join(container_expose_headers)}
         container_name = self.create_temp_container(
-            descriptor='container-smoke', headers=container_headers)
+            descriptor=CONTAINER_DESCRIPTOR, headers=container_headers)
 
         object_expose_headers = ['X-Timestamp', 'X-Trans-Id']
         object_headers = {
@@ -375,17 +530,18 @@ class CORSTest(ObjectStorageFixture):
             'http://bar.com',
             'X-Object-Meta-Access-Control-Expose-Headers':
             ','.join(object_expose_headers)}
-        object_name = 'object'
-        object_headers = {'Content-Type': 'text/plain'}
-        generate_object(container_name, object_name, headers=object_headers)
+
+        # object_headers = {'Content-Type': 'text/plain'}
+        generate_object(container_name,
+                        self.object_name,
+                        headers=object_headers)
+
         tempurl_key = self.behaviors.get_tempurl_key()
         tempurl_info = self.client.create_temp_url(
-            'GET', container_name, object_name, 900, tempurl_key)
-
-        dumb_client = HTTPClient()
+            'GET', container_name, self.object_name, 900, tempurl_key)
 
         # Requests with no Origin should not return CORS headers.
-        response = dumb_client.request(
+        response = self.dumb_client.request(
             'GET', tempurl_info.get('target_url'), params={
                 'temp_url_sig': tempurl_info.get('signature'),
                 'temp_url_expires': tempurl_info.get('expires')})
@@ -398,7 +554,7 @@ class CORSTest(ObjectStorageFixture):
 
         # Requests with Origin which matches object, should return CORS
         # headers.
-        response = dumb_client.request(
+        response = self.dumb_client.request(
             'GET', tempurl_info.get('target_url'), params={
                 'temp_url_sig': tempurl_info.get('signature'),
                 'temp_url_expires': tempurl_info.get('expires')},
@@ -419,7 +575,7 @@ class CORSTest(ObjectStorageFixture):
 
             # Requests with Origin which matches container, should not return
             # CORS headers.
-            response = dumb_client.request(
+            response = self.dumb_client.request(
                 'GET', tempurl_info.get('target_url'), params={
                     'temp_url_sig': tempurl_info.get('signature'),
                     'temp_url_expires': tempurl_info.get('expires')},
@@ -433,7 +589,7 @@ class CORSTest(ObjectStorageFixture):
 
             # Requests with Origin which does not match, should not return
             # CORS headers.
-            response = dumb_client.request(
+            response = self.dumb_client.request(
                 'GET', tempurl_info.get('target_url'), params={
                     'temp_url_sig': tempurl_info.get('signature'),
                     'temp_url_expires': tempurl_info.get('expires')},
@@ -449,7 +605,7 @@ class CORSTest(ObjectStorageFixture):
 
             # Requests with Origin which matches container, should not return
             # CORS headers.
-            response = dumb_client.request(
+            response = self.dumb_client.request(
                 'GET', tempurl_info.get('target_url'), params={
                     'temp_url_sig': tempurl_info.get('signature'),
                     'temp_url_expires': tempurl_info.get('expires')},
@@ -463,7 +619,7 @@ class CORSTest(ObjectStorageFixture):
 
             # Requests with Origin which does not match, should not return
             # CORS headers.
-            response = dumb_client.request(
+            response = self.dumb_client.request(
                 'GET', tempurl_info.get('target_url'), params={
                     'temp_url_sig': tempurl_info.get('signature'),
                     'temp_url_expires': tempurl_info.get('expires')},
