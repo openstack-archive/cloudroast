@@ -341,7 +341,7 @@ class FormPostTest(ObjectStorageFixture):
             than the max_file_size.
 
         Expected Results:
-            Should return a 413 and no object should be created
+            Should return a 400 and no object should be created
         """
         container_name = self.create_temp_container(
             descriptor=CONTAINER_DESCRIPTOR)
@@ -363,7 +363,7 @@ class FormPostTest(ObjectStorageFixture):
             requestslib_kwargs={'allow_redirects': False})
 
         method = 'Object FormPOST over max file size '
-        expected = 413
+        expected = 400
         received = formpost_response.status_code
 
         self.assertEqual(
