@@ -257,7 +257,7 @@ class FormPostTest(ObjectStorageFixture):
                                                delete_after))
 
         # wait for the object to be deleted.
-        sleep(delete_after)
+        sleep(self.objectstorage_api_config.object_deletion_wait_interval)
 
         delete_response = self.client.get_object(container_name,
                                                  files[0].get("name"))
@@ -405,12 +405,12 @@ class FormPostTest(ObjectStorageFixture):
             files,
             redirect="",
             expires=expire_time,
-            max_file_size=10,
+            max_file_size=104857600,
             max_file_count=1,
             key=self.tempurl_key)
 
         # Wait for form to expire
-        sleep(65)
+        sleep(self.objectstorage_api_config.object_deletion_wait_interval)
 
         formpost_response = self.http_client.post(
             formpost_info.get('target_url'),
