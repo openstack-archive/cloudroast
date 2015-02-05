@@ -41,21 +41,19 @@ class ImagesFixture(BaseTestFixture):
         cls.images_alt_two = ImagesComposite(user_three)
 
         cls.status_code_msg = Messages.STATUS_CODE_MSG
+        cls.ok_resp_msg = Messages.OK_RESP_MSG
 
         cls.addClassCleanup(cls.resources.release)
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.resources.release()
-        cls.images.behaviors.resources.release()
-        cls.images_alt_one.behaviors.resources.release()
-        cls.images_alt_two.behaviors.resources.release()
-        super(ImagesFixture, cls).tearDownClass()
 
     @classmethod
     def get_comparison_data(cls, data_file):
         """
         @summary: Create comparison dictionary based on a given set of data
+
+        @param data_file: File containing data to compare
+        @param data_file: String
+        @return: Comparison_dict
+        @rtype: Dictionary
         """
 
         with open(data_file, "r") as DATA:
@@ -81,7 +79,8 @@ class ImagesFixture(BaseTestFixture):
         return comparison_dict
 
 
-class ImagesIntergrationFixture(ComputeFixture, ObjectStorageFixture):
+class ImagesIntergrationFixture(ComputeFixture, ImagesFixture,
+                                ObjectStorageFixture):
     """
     @summary: Fixture for Compute API and Object Storage API integration
     with Images
