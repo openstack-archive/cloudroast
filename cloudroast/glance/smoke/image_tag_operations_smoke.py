@@ -27,6 +27,11 @@ class ImageTagOperationsSmoke(ImagesFixture):
         cls.created_images = cls.images.behaviors.create_images_via_task(
             count=2)
 
+    @classmethod
+    def tearDownClass(cls):
+        cls.images.behaviors.resources.release()
+        super(ImageTagOperationsSmoke, cls).tearDownClass()
+
     def test_add_image_tag(self):
         """
         @summary: Add an image tag
