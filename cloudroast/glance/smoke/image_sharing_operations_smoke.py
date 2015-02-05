@@ -33,7 +33,12 @@ class ImageSharingOperationsSmoke(ImagesFixture):
             count=5)
         cls.image = cls.created_images.pop()
 
-    @data_driven_test(ImagesDatasetListGenerator.ListImageMembersDatasetList())
+    @classmethod
+    def tearDownClass(cls):
+        cls.images.behaviors.resources.release()
+        super(ImageSharingOperationsSmoke, cls).tearDownClass()
+
+    @data_driven_test(ImagesDatasetListGenerator.ListImageMembers())
     def ddtest_list_image_members(self, params):
         """
         @summary: List all image members

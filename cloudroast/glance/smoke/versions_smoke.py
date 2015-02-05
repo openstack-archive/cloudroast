@@ -24,7 +24,7 @@ from cloudroast.glance.generators import ImagesDatasetListGenerator
 @DataDrivenFixture
 class VersionsSmoke(ImagesFixture):
 
-    @data_driven_test(ImagesDatasetListGenerator.VersionsDatasetList())
+    @data_driven_test(ImagesDatasetListGenerator.Versions())
     def ddtest_list_versions(self, url_addition):
         """
         @summary: List all versions

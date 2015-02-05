@@ -27,11 +27,16 @@ class ImageTaskOperationsSmoke(ImagesFixture):
         cls.created_tasks = cls.images.behaviors.create_new_tasks(count=2)
         cls.image = cls.images.behaviors.create_image_via_task()
 
+    @classmethod
+    def tearDownClass(cls):
+        cls.images.behaviors.resources.release()
+        super(ImageTaskOperationsSmoke, cls).tearDownClass()
+
     def test_list_tasks(self):
         """
-        @summary: List all tasks
+        @summary: List subset of tasks
 
-        1) List all tasks
+        1) List subset of tasks
         2) Verify the response status code is 200
         """
 
