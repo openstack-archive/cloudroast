@@ -32,21 +32,48 @@ class ImageOperationsSmoke(ImagesFixture):
         cls.image = created_images.pop()
         cls.alt_image = created_images.pop()
 
-    @data_driven_test(ImagesDatasetListGenerator.ListImagesDatasetList())
+    @classmethod
+    def tearDownClass(cls):
+        cls.images.behaviors.resources.release()
+        super(ImageOperationsSmoke, cls).tearDownClass()
+
+    @data_driven_test(
+        ImagesDatasetListGenerator.ListImagesFilters(),
+        ImagesDatasetListGenerator.ListImagesParameters(),
+        ImagesDatasetListGenerator.ListImagesSort())
     def ddtest_list_images(self, params):
         """
-        @summary: List all images
+        @summary: List a subset of images passing in valid query parameters
 
         @param params: Parameter being passed to the list images request
         @type params: Dictionary
 
-        1) List all images passing in a query parameter
+        1) List subset of images passing in a query parameter
         2) Verify the response status code is 200
         """
 
         resp = self.images.client.list_images(params)
         self.assertEqual(resp.status_code, 200,
                          self.status_code_msg.format(200, resp.status_code))
+
+    @data_driven_test(
+        ImagesDatasetListGenerator.ListImagesInvalidParameters())
+    def ddtest_invalid_list_images(self, params):
+        """
+        @summary: Attempt to list a subset of images passing in invalid query
+        parameters
+
+        @param params: Parameter being passed to the list images request
+        @type params: Dictionary
+
+        1) Attempt to list a subset of images passing in an invalid query
+        parameter
+        2) Verify the response status code is 400
+        """
+
+        resp = self.images.client.list_images(params)
+        self.assertEqual(resp.status_code, 400,
+                         self.status_code_msg.format(400, resp.status_code))
 
     def test_get_image_details(self):
         """
