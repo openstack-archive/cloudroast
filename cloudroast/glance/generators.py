@@ -20,7 +20,7 @@ from cafe.drivers.unittest.datasets import DatasetList
 from cloudcafe.common.tools.datagen import random_int, rand_name, random_string
 from cloudcafe.glance.common.types import (
     ImageContainerFormat, ImageDiskFormat, ImageMemberStatus, ImageOSType,
-    ImageStatus, ImageType, ImageVisibility, SortDirection)
+    ImageStatus, ImageType, ImageVisibility, Schemas, SortDirection)
 from cloudcafe.glance.composite import ImagesComposite, ImagesAuthComposite
 
 user_one = ImagesAuthComposite()
@@ -40,7 +40,7 @@ class ImagesDatasetListGenerator(object):
         @rtype: DatasetList
         """
 
-        auto_disk_config = False
+        auto_disk_config = 'False'
         checksum = random_string()
         container_format = ImageContainerFormat.AMI
         created_at = datetime.now()
@@ -88,8 +88,8 @@ class ImagesDatasetListGenerator(object):
     @staticmethod
     def ListImagesParameters():
         """
-        @summary: Generates a dataset list for the list images request
-        containing parameters
+        @summary: Generates a dataset list of parameters for the list images
+        request
 
         @return: Dataset_list
         @rtype: DatasetList
@@ -111,8 +111,8 @@ class ImagesDatasetListGenerator(object):
     @staticmethod
     def ListImagesSort():
         """
-        @summary: Generates a dataset list for the list images request
-        containing sort options
+        @summary: Generates a dataset list of sort parameters for the list
+        images request
 
         @return: Dataset_list
         @rtype: DatasetList
@@ -140,8 +140,8 @@ class ImagesDatasetListGenerator(object):
     @staticmethod
     def ListImagesInvalidParameters():
         """
-        @summary: Generates a dataset list for the list images request
-        containing invalid parameters
+        @summary: Generates a dataset list of invalid parameters for the list
+        images request
 
         @return: Dataset_list
         @rtype: DatasetList
@@ -152,13 +152,119 @@ class ImagesDatasetListGenerator(object):
                      'passing_invalid_sort_key': {'sort_key': 'invalid'},
                      'passing_invalid_sort_dir': {'sort_dir': 'invalid'}}
 
-        return build_basic_dataset(data_dict, 'params')
+        return build_basic_dataset(data_dict, 'property')
+
+    @staticmethod
+    def UpdateImageAllowed(image_status=ImageStatus.ACTIVE):
+        """
+        @summary: Generates a dataset list of properties that are allowed to be
+        updated for the update image request
+
+        @param image_status: Status of image being updated
+        @type image_status: String
+
+        @return: Dataset_list
+        @rtype: DatasetList
+        """
+
+        auto_disk_config = 'False'
+        container_format = ImageContainerFormat.AKI
+        disk_format = ImageDiskFormat.ISO
+        min_disk = images.config.min_disk
+        min_ram = images.config.min_ram
+        name = rand_name('image')
+        tags = [rand_name('tag1')]
+        protected = False
+
+        data_dict = {
+            'passing_auto_disk_config': {'auto_disk_config': auto_disk_config},
+            'passing_min_disk': {'min_disk': min_disk},
+            'passing_min_ram': {'min_ram': min_ram},
+            'passing_name': {'name': name}, 'passing_tags': {'tags': tags},
+            'passing_protected': {'protected': protected}}
+
+        if image_status == ImageStatus.QUEUED:
+            data_dict.update({'passing_container_format':
+                              {'container_format': container_format},
+                              'passing_disk_format':
+                              {'disk_format': disk_format}})
+            data_dict.pop('passing_auto_disk_config')
+
+        return build_basic_dataset(data_dict, 'property')
+
+    @staticmethod
+    def UpdateImageInaccessible():
+        """
+        @summary: Generates a dataset list of properties that are inaccessible
+        to the user for the update image request
+
+        @return: Dataset_list
+        @rtype: DatasetList
+        """
+
+        deleted = True
+        deleted_at = str(datetime.now())
+        location = '/v2/images/00000000-0000-0000-0000-000000000000/test_file'
+
+        data_dict = {
+            'passing_deleted': {'deleted': deleted},
+            'passing_deleted_at': {'deleted_at': deleted_at},
+            'passing_location': {'location': location}}
+
+        return build_basic_dataset(data_dict, 'property')
+
+    @staticmethod
+    def UpdateImageRestricted():
+        """
+        @summary: Generates a dataset list of properties that are restricted
+        for the update image request
+
+        @return: Dataset_list
+        @rtype: DatasetList
+        """
+
+        # Properties that are read-only
+        id_ = '00000000-0000-0000-0000-000000000000'
+        checksum = random_string()
+        created_at = str(datetime.now())
+        file_ = '/v2/images/00000000-0000-0000-0000-000000000000/file'
+        schema = Schemas.IMAGE_MEMBER_SCHEMA
+        self_ = '/v2/images/00000000-0000-0000-0000-000000000000'
+        size = random_int(0, 9999999)
+        status = ImageStatus.ACTIVE
+        updated_at = str(datetime.now())
+
+        # Properties that are reserved
+        image_type = ImageType.IMPORT
+        os_type = ImageOSType.LINUX
+        owner = random_int(0, 999999)
+        user_id = random_string()
+
+        # Properties that unauthorized
+        visibility = ImageVisibility.PUBLIC
+
+        data_dict = {
+            'passing_id': {'id': id_},
+            'passing_checksum': {'checksum': checksum},
+            'passing_created_at': {'created_at': created_at},
+            'passing_file': {'file': file_},
+            'passing_schema': {'schema': schema},
+            'passing_self': {'self': self_}, 'passing_size': {'size': size},
+            'passing_status': {'status': status},
+            'passing_updated_at': {'updated_at': updated_at},
+            'passing_image_type': {'image_type': image_type},
+            'passing_os_type': {'os_type': os_type},
+            'passing_owner': {'owner': owner},
+            'passing_user_id': {'user_id': user_id},
+            'passing_visibility': {'visibility': visibility}}
+
+        return build_basic_dataset(data_dict, 'property')
 
     @staticmethod
     def ListImageMembers():
         """
-        @summary: Generates a dataset list for the list image members
-        request
+        @summary: Generates a dataset list of parameters for the list image
+        members request
 
         @return: Dataset_list
         @rtype: DatasetList
@@ -178,7 +284,8 @@ class ImagesDatasetListGenerator(object):
     @staticmethod
     def Versions():
         """
-        @summary: Generates a dataset list for the list versions request
+        @summary: Generates a dataset list of url additions for the list
+        versions request
 
         @return: Dataset_list
         @rtype: DatasetList
@@ -193,12 +300,13 @@ class ImagesDatasetListGenerator(object):
 
 def build_basic_dataset(data_dict, name):
     """
-    @summary: Builds a dataset from a dictionary of key-value pairs
+    @summary: Builds a dataset list from a dictionary of key-value pairs
 
     @param data_dict: Url amendments and values for the dataset list
     @type data_dict: Dictionary
     @param name: Name of the test parameter
     @type name: String
+
     @return: Dataset_List
     @rtype: DatasetList
     """
