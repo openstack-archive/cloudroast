@@ -27,7 +27,7 @@ hypervisor = compute_config.hypervisor.lower()
 
 
 @unittest.skipIf(
-    hypervisor in [ComputeHypervisors.IRONIC],
+    hypervisor in [ComputeHypervisors.IRONIC,ComputeHypervisors.ON_METAL],
     'Get VNC console not supported in current configuration.')
 class ServerVncConsoleTests(object):
 

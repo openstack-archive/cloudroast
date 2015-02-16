@@ -33,7 +33,8 @@ resize_enabled = flavors_config.resize_enabled
 can_resize = (
     resize_enabled
     and hypervisor not in [ComputeHypervisors.IRONIC,
-                           ComputeHypervisors.LXC_LIBVIRT])
+                           ComputeHypervisors.LXC_LIBVIRT,
+                           ComputeHypervisors.ON_METAL])
 
 
 class ResizeServerUpRevertTests(object):

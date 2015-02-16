@@ -19,7 +19,13 @@ from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.compute.common.types import NovaImageStatusTypes
 from cloudroast.compute.fixtures import ServerFromImageFixture
 
+compute_config = ComputeConfig()
+hypervisor = compute_config.hypervisor.lower()
 
+
+@unittest.skipIf(
+    hypervisor in [ComputeHypervisors.IRONIC,ComputeHypervisors.ON_METAL],
+    'Get VNC console not supported in current configuration.')
 class CreateImageTest(object):
 
     @tags(type='smoke', net='no')

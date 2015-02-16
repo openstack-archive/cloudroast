@@ -26,7 +26,9 @@ hypervisor = compute_config.hypervisor.lower()
 
 
 @unittest.skipIf(
-    hypervisor in [ComputeHypervisors.IRONIC, ComputeHypervisors.LXC_LIBVIRT],
+    hypervisor in [ComputeHypervisors.IRONIC,
+                   ComputeHypervisors.LXC_LIBVIRT,
+                   ComputeHypervisors.ON_METAL],
     'Rescue server not supported in current configuration.')
 class ServerRescueTests(object):
 
