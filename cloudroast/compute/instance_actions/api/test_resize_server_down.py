@@ -33,7 +33,8 @@ resize_enabled = flavors_config.resize_enabled
 can_resize = (
     resize_enabled
     and hypervisor not in [ComputeHypervisors.IRONIC,
-                           ComputeHypervisors.LXC_LIBVIRT])
+                           ComputeHypervisors.LXC_LIBVIRT,
+                           ComputeHypervisors.ON_METAL])
 
 
 class ResizeServerDownConfirmTests(object):
@@ -64,7 +65,7 @@ class ResizeServerDownConfirmTests(object):
     @tags(type='positive', net='yes')
     @unittest.skipIf(
         hypervisor == ComputeHypervisors.KVM,
-        'Disks do resize down for KVM.')
+        'Resize down is not supported by the desired hypervisor or driver.')
     def test_created_server_disk_size(self):
         """Verify the size of the virtual disk matches that of the flavor"""
         remote_client = self.server_behaviors.get_remote_instance_client(
@@ -153,7 +154,8 @@ class ResizeDownConfirmBaseFixture(object):
 
 
 @unittest.skipUnless(
-    resize_enabled, 'Resize not enabled for this flavor class.')
+    resize_enabled,
+    'Resize is not supported by the desired hypervisor or driver.')
 class ServerFromImageResizeServerDownConfirmTests(
         ServerFromImageFixture,
         ResizeServerDownConfirmTests,

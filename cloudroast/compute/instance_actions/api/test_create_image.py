@@ -19,7 +19,13 @@ from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.compute.common.types import NovaImageStatusTypes
 from cloudroast.compute.fixtures import ServerFromImageFixture
 
+compute_config = ComputeConfig()
+hypervisor = compute_config.hypervisor.lower()
 
+
+@unittest.skipIf(
+    hypervisor in [ComputeHypervisors.IRONIC, ComputeHypervisors.ON_METAL],
+    'Create image is not supported by the desired hypervisor or driver.')
 class CreateImageTest(object):
 
     @tags(type='smoke', net='no')
