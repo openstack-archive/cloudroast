@@ -14,101 +14,198 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from cafe.drivers.unittest.datasets import DatasetList
+from datetime import datetime
 
-from cloudcafe.common.tools.datagen import rand_name, random_int
+from cafe.drivers.unittest.datasets import DatasetList
+from cloudcafe.common.tools.datagen import random_int, rand_name, random_string
 from cloudcafe.glance.common.types import (
-    ImageMemberStatus, ImageStatus, ImageVisibility, SortDirection)
+    ImageContainerFormat, ImageDiskFormat, ImageMemberStatus, ImageOSType,
+    ImageStatus, ImageType, ImageVisibility, SortDirection)
+from cloudcafe.glance.composite import ImagesComposite, ImagesAuthComposite
+
+user_one = ImagesAuthComposite()
+images = ImagesComposite(user_one)
 
 
 class ImagesDatasetListGenerator(object):
     """@summary: Generator for Images API"""
 
     @staticmethod
-    def ListImagesDatasetList():
-        """@summary: Generates a dataset list for the list images request"""
+    def ListImagesFilters():
+        """
+        @summary: Generates a dataset list of filters for the list images
+        request
 
-        dataset_list = DatasetList()
+        @return: Dataset_list
+        @rtype: DatasetList
+        """
 
-        limit = 2
-        # TODO: Add marker when able to add image creation, after composite
-        member_status = ImageMemberStatus.ACCEPTED
-        name = rand_name("name")
+        auto_disk_config = False
+        checksum = random_string()
+        container_format = ImageContainerFormat.AMI
+        created_at = datetime.now()
+        disk_format = ImageDiskFormat.RAW
+        id_ = '00000000-0000-0000-0000-000000000000'
+        image_type = ImageType.IMPORT
+        min_disk = images.config.min_disk
+        min_ram = images.config.min_ram
+        name = rand_name('image')
+        os_type = ImageOSType.LINUX
         owner = random_int(0, 999999)
-        size_max = random_int(900000, 999999)
-        size_min = random_int(0, 899999)
-        sort_dir = SortDirection.DESCENDING
-        sort_key = 'name'
+        protected = False
+        size = random_int(0, 9999999)
         status = ImageStatus.ACTIVE
-        tag = rand_name('tag')
+        updated_at = datetime.now()
+        user_id = random_string()
         visibility = ImageVisibility.PUBLIC
 
-        dataset_list.append_new_dataset('passing_no_parameters',
-                                        {'params': {}})
-        dataset_list.append_new_dataset('passing_limit',
-                                        {'params': {'limit': limit}})
-        dataset_list.append_new_dataset(
-            'passing_member_status',
-            {'params': {'member_status': member_status}})
-        dataset_list.append_new_dataset('passing_name',
-                                        {'params': {'name': name}})
-        dataset_list.append_new_dataset('passing_owner',
-                                        {'params': {'owner': owner}})
-        dataset_list.append_new_dataset('passing_size_max',
-                                        {'params': {'size_max': size_max}})
-        dataset_list.append_new_dataset('passing_size_min',
-                                        {'params': {'size_min': size_min}})
-        dataset_list.append_new_dataset('passing_sort_dir',
-                                        {'params': {'sort_dir': sort_dir}})
-        dataset_list.append_new_dataset('passing_sort_key',
-                                        {'params': {'sort_key': sort_key}})
-        dataset_list.append_new_dataset('passing_status',
-                                        {'params': {'status': status}})
-        dataset_list.append_new_dataset('passing_tag',
-                                        {'params': {'tag': tag}})
-        dataset_list.append_new_dataset('passing_visibility',
-                                        {'params': {'visibility': visibility}})
+        data_dict = {'passing_auto_disk_config':
+                     {'auto_disk_config': auto_disk_config},
+                     'passing_checksum': {'checksum': checksum},
+                     'passing_container_format':
+                     {'container_format': container_format},
+                     'passing_created_at': {'created_at': created_at},
+                     'passing_disk_format': {'disk_format': disk_format},
+                     'passing_id': {'id_': id_},
+                     'passing_image_type': {'image_type': image_type},
+                     'passing_min_disk': {'min_disk': min_disk},
+                     'passing_min_ram': {'min_ram': min_ram},
+                     'passing_multiple_filters':
+                     {'container_format': container_format,
+                      'disk_format': disk_format},
+                     'passing_name': {'name': name},
+                     'passing_os_type': {'os_type': os_type},
+                     'passing_owner': {'owner': owner},
+                     'passing_protected': {'protected': protected},
+                     'passing_size': {'size': size},
+                     'passing_status': {'status': status},
+                     'passing_updated_at': {'updated_at': updated_at},
+                     'passing_user_id': {'user_id': user_id},
+                     'passing_visibility': {'visibility': visibility}}
 
-        return dataset_list
+        return build_basic_dataset(data_dict, 'params')
 
     @staticmethod
-    def ListImageMembersDatasetList():
+    def ListImagesParameters():
+        """
+        @summary: Generates a dataset list for the list images request
+        containing parameters
+
+        @return: Dataset_list
+        @rtype: DatasetList
+        """
+
+        limit = 10
+        marker = None
+        sort_dir = SortDirection.ASCENDING
+        sort_key = 'name'
+
+        data_dict = {'passing_no_parameters': {},
+                     'passing_limit': {'limit': limit},
+                     'passing_marker': {'marker': marker},
+                     'passing_sort_dir': {'sort_dir': sort_dir},
+                     'passing_sort_key': {'sort_key': sort_key}}
+
+        return build_basic_dataset(data_dict, 'params')
+
+    @staticmethod
+    def ListImagesSort():
+        """
+        @summary: Generates a dataset list for the list images request
+        containing sort options
+
+        @return: Dataset_list
+        @rtype: DatasetList
+        """
+
+        data_dict = {}
+        additional_prop = images.config.additional_property
+
+        properties = [
+            additional_prop, 'auto_disk_config', 'checksum',
+            'container_format', 'created_at', 'disk_format', 'image_type',
+            'min_disk', 'min_ram', 'name', 'os_type', 'owner', 'protected',
+            'size', 'status', 'tags', 'updated_at', 'user_id', 'visibility']
+
+        for prop in properties:
+            data_dict.update(
+                {'passing_sort_dir_asc_and_sort_key_{0}'.format(prop):
+                 {'sort_dir': SortDirection.ASCENDING, 'sort_key': prop}})
+            data_dict.update(
+                {'passing_sort_dir_desc_and_sort_key_{0}'.format(prop):
+                 {'sort_dir': SortDirection.DESCENDING, 'sort_key': prop}})
+
+        return build_basic_dataset(data_dict, 'params')
+
+    @staticmethod
+    def ListImagesInvalidParameters():
+        """
+        @summary: Generates a dataset list for the list images request
+        containing invalid parameters
+
+        @return: Dataset_list
+        @rtype: DatasetList
+        """
+
+        data_dict = {'passing_invalid_limit': {'limit': 'invalid'},
+                     'passing_invalid_marker': {'marker': 'invalid'},
+                     'passing_invalid_sort_key': {'sort_key': 'invalid'},
+                     'passing_invalid_sort_dir': {'sort_dir': 'invalid'}}
+
+        return build_basic_dataset(data_dict, 'params')
+
+    @staticmethod
+    def ListImageMembers():
         """
         @summary: Generates a dataset list for the list image members
         request
-        """
 
-        dataset_list = DatasetList()
+        @return: Dataset_list
+        @rtype: DatasetList
+        """
 
         member_status = ImageMemberStatus.ACCEPTED
         owner = random_int(0, 999999)
         visibility = ImageVisibility.PUBLIC
 
-        dataset_list.append_new_dataset('passing_no_parameters',
-                                        {'params': {}})
-        dataset_list.append_new_dataset(
-            'passing_member_status',
-            {'params': {'member_status': member_status}})
-        dataset_list.append_new_dataset('passing_owner',
-                                        {'params': {'owner': owner}})
-        dataset_list.append_new_dataset('passing_visibility',
-                                        {'params': {'visibility': visibility}})
+        data_dict = {'passing_no_parameters': {},
+                     'passing_member_status': {'member_status': member_status},
+                     'passing_owner': {'owner': owner},
+                     'passing_visibility': {'visibility': visibility}}
 
-        return dataset_list
+        return build_basic_dataset(data_dict, 'params')
 
     @staticmethod
-    def VersionsDatasetList():
-        """@summary: Generates a dataset list for the list versions request"""
+    def Versions():
+        """
+        @summary: Generates a dataset list for the list versions request
 
-        dataset_list = DatasetList()
+        @return: Dataset_list
+        @rtype: DatasetList
+        """
 
-        dataset_list.append_new_dataset('url_with_no_backslash',
-                                        {'url_addition': ''})
-        dataset_list.append_new_dataset('url_with_backslash',
-                                        {'url_addition': '/'})
-        dataset_list.append_new_dataset('url_with_versions_and_no_backslash',
-                                        {'url_addition': '/versions'})
-        dataset_list.append_new_dataset('url_with_versions_and_backslash',
-                                        {'url_addition': '/versions/'})
+        data_dict = {'url_with_no_backslash': '', 'url_with_backslash': '/',
+                     'url_with_versions_and_no_backslash': '/versions',
+                     'url_with_versions_and_backslash': '/versions/'}
 
-        return dataset_list
+        return build_basic_dataset(data_dict, 'url_addition')
+
+
+def build_basic_dataset(data_dict, name):
+    """
+    @summary: Builds a dataset from a dictionary of key-value pairs
+
+    @param data_dict: Url amendments and values for the dataset list
+    @type data_dict: Dictionary
+    @param name: Name of the test parameter
+    @type name: String
+    @return: Dataset_List
+    @rtype: DatasetList
+    """
+
+    dataset_list = DatasetList()
+
+    for key, value in data_dict.iteritems():
+        dataset_list.append_new_dataset(key, {name: value})
+
+    return dataset_list
