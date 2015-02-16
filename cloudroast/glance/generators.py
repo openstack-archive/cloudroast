@@ -28,7 +28,7 @@ images = ImagesComposite(user_one)
 
 
 class ImagesDatasetListGenerator(object):
-    """@summary: Generator for Images API"""
+    """@summary: Generators for Images API"""
 
     @staticmethod
     def ListImagesFilters():
@@ -152,7 +152,7 @@ class ImagesDatasetListGenerator(object):
                      'passing_invalid_sort_key': {'sort_key': 'invalid'},
                      'passing_invalid_sort_dir': {'sort_dir': 'invalid'}}
 
-        return build_basic_dataset(data_dict, 'property')
+        return build_basic_dataset(data_dict, 'prop')
 
     @staticmethod
     def UpdateImageAllowed(image_status=ImageStatus.ACTIVE):
@@ -173,15 +173,16 @@ class ImagesDatasetListGenerator(object):
         min_disk = images.config.min_disk
         min_ram = images.config.min_ram
         name = rand_name('image')
-        tags = [rand_name('tag1')]
         protected = False
+        tags = [rand_name('tag1')]
 
         data_dict = {
             'passing_auto_disk_config': {'auto_disk_config': auto_disk_config},
             'passing_min_disk': {'min_disk': min_disk},
             'passing_min_ram': {'min_ram': min_ram},
-            'passing_name': {'name': name}, 'passing_tags': {'tags': tags},
-            'passing_protected': {'protected': protected}}
+            'passing_name': {'name': name},
+            'passing_protected': {'protected': protected},
+            'passing_tags': {'tags': tags}}
 
         if image_status == ImageStatus.QUEUED:
             data_dict.update({'passing_container_format':
@@ -190,7 +191,7 @@ class ImagesDatasetListGenerator(object):
                               {'disk_format': disk_format}})
             data_dict.pop('passing_auto_disk_config')
 
-        return build_basic_dataset(data_dict, 'property')
+        return build_basic_dataset(data_dict, 'prop')
 
     @staticmethod
     def UpdateImageInaccessible():
@@ -213,13 +214,13 @@ class ImagesDatasetListGenerator(object):
             'passing_location': {'location': location},
             'passing_virtual_size': {'virtual_size': virtual_size}}
 
-        return build_basic_dataset(data_dict, 'property')
+        return build_basic_dataset(data_dict, 'prop')
 
     @staticmethod
-    def UpdateImageRestricted():
+    def UpdateRegisterImageRestricted():
         """
         @summary: Generates a dataset list of properties that are restricted
-        for the update image request
+        for the update and register image requests
 
         @return: Dataset_list
         @rtype: DatasetList
@@ -260,7 +261,40 @@ class ImagesDatasetListGenerator(object):
             'passing_user_id': {'user_id': user_id},
             'passing_visibility': {'visibility': visibility}}
 
-        return build_basic_dataset(data_dict, 'property')
+        return build_basic_dataset(data_dict, 'prop')
+
+    @staticmethod
+    def RegisterImageInvalidValues():
+        """
+        @summary: Generates a dataset list of properties that are invalid
+        values for the register image request
+
+        @return: Dataset_list
+        @rtype: DatasetList
+        """
+
+        auto_disk_config = 'invalid'
+        container_format = 'invalid'
+        disk_format = 'invalid'
+        min_disk = 'invalid'
+        min_ram = 'invalid'
+        name = 0
+        protected = 'invalid'
+        tags = 0
+
+        data_dict = {
+            'passing_invalid_auto_disk_config':
+            {'auto_disk_config': auto_disk_config},
+            'passing_invalid_container_format':
+            {'container_format': container_format},
+            'passing_invalid_disk_format': {'disk_format': disk_format},
+            'passing_invalid_min_disk': {'min_disk': min_disk},
+            'passing_invalid_min_ram': {'min_ram': min_ram},
+            'passing_invalid_name': {'name': name},
+            'passing_invalid_protected': {'protected': protected},
+            'passing_invalid_tags': {'tags': tags}}
+
+        return build_basic_dataset(data_dict, 'prop')
 
     @staticmethod
     def ListImageMembers():
