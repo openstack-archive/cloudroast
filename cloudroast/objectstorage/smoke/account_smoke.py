@@ -13,6 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
+from cafe.engine.http.client import HTTPClient
 from cloudroast.objectstorage.fixtures import ObjectStorageFixture
 
 STATUS_CODE_MSG = ("{method} expected status code {expected}"
@@ -379,3 +380,50 @@ class AccountSmokeTest(ObjectStorageFixture):
             recieved,
             msg="'content-type' header value expected: {0} recieved:"
             " {1}".format(expected, recieved))
+
+    def test_list_containers_with_alt_url_version(self):
+        """
+        Scenario:
+            Attempt to list containers on an account using 'v1.0' instead of
+            the standard 'v1' in the storage url.
+            Attempt to list containers on an account using 'v1.' instead of
+            the standard 'v1' in the storage url.
+
+        Expected Results:
+            For both cases, should receive a response of 200.
+        """
+        dumb_client = HTTPClient()
+        token = self.client.auth_token
+
+        modified_url = self.storage_url.replace('/v1/', '/v1.0/')
+        headers = {'X-AUTH-TOKEN': token}
+        list_response = dumb_client.request('GET',
+                                            modified_url,
+                                            headers=headers)
+
+        method = "Account List Containers with 'v1.0' in URL"
+        expected = 200
+        received = list_response.status_code
+
+        self.assertEqual(expected,
+                         received,
+                         msg=STATUS_CODE_MSG.format(
+                             method=method,
+                             expected=expected,
+                             recieved=str(received)))
+
+        modified_url = self.storage_url.replace('/v1/', '/v1./')
+        list_response = dumb_client.request('GET',
+                                            modified_url,
+                                            headers=headers)
+
+        method = "Account List Containers with 'v1.' in URL"
+        expected = 200
+        received = list_response.status_code
+
+        self.assertEqual(expected,
+                         received,
+                         msg=STATUS_CODE_MSG.format(
+                             method=method,
+                             expected=expected,
+                             recieved=str(received)))
