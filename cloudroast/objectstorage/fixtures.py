@@ -25,8 +25,8 @@ class ObjectStorageUser(object):
         self.passwd = password
         self.token = None
         self.storage_url = None
-        self.objstorage_client = None
-        self.objstorage_behaviors = None
+        self.client = None
+        self.behaviors = None
         self.roles = []
 
 
