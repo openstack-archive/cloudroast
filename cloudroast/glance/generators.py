@@ -297,25 +297,26 @@ class ImagesDatasetListGenerator(object):
         return build_basic_dataset(data_dict, 'prop')
 
     @staticmethod
-    def ListImageMembers():
+    def ListImageMembersStatuses():
         """
-        @summary: Generates a dataset list of parameters for the list image
-        members request
+        @summary: Generates a dataset list of image member statuses for the
+        list image members request
 
         @return: Dataset_list
         @rtype: DatasetList
         """
 
-        member_status = ImageMemberStatus.ACCEPTED
-        owner = random_int(0, 999999)
-        visibility = ImageVisibility.PUBLIC
+        data_dict = {}
+        member_statuses = [
+            ImageMemberStatus.ACCEPTED, ImageMemberStatus.PENDING,
+            ImageMemberStatus.REJECTED]
 
-        data_dict = {'passing_no_parameters': {},
-                     'passing_member_status': {'member_status': member_status},
-                     'passing_owner': {'owner': owner},
-                     'passing_visibility': {'visibility': visibility}}
+        for status in member_statuses:
+            data_dict.update(
+                {'passing_{0}_status'.format(status):
+                 {'member_status': status}})
 
-        return build_basic_dataset(data_dict, 'params')
+        return build_basic_dataset(data_dict, 'status')
 
     @staticmethod
     def Versions():
