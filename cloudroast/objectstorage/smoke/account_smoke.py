@@ -332,7 +332,7 @@ class AccountSmokeTest(ObjectStorageFixture):
             " {1}".format(expected, recieved))
 
     def test_metadata_retrieval_with_existing_account(self):
-        response = self.client.retrieve_account_metadata()
+        response = self.client.get_account_metadata()
 
         method = "account metadata retrieval"
         expected = 204
