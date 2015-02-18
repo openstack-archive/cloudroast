@@ -37,10 +37,7 @@ class ImageOperationsSmoke(ImagesFixture):
         cls.images.behaviors.resources.release()
         super(ImageOperationsSmoke, cls).tearDownClass()
 
-    @data_driven_test(
-        ImagesDatasetListGenerator.ListImagesFilters(),
-        ImagesDatasetListGenerator.ListImagesParameters(),
-        ImagesDatasetListGenerator.ListImagesSort())
+    @data_driven_test(ImagesDatasetListGenerator.ListImagesSmoke())
     def ddtest_list_images(self, params):
         """
         @summary: List a subset of images passing in valid query parameters
@@ -68,12 +65,13 @@ class ImageOperationsSmoke(ImagesFixture):
 
         1) Attempt to list a subset of images passing in an invalid query
         parameter
-        2) Verify the response status code is 400
+        2) Verify the response status code is 200
         """
 
+        # Invalid parameters should be ignored, the response code should be 200
         resp = self.images.client.list_images(params)
-        self.assertEqual(resp.status_code, 400,
-                         self.status_code_msg.format(400, resp.status_code))
+        self.assertEqual(resp.status_code, 200,
+                         self.status_code_msg.format(200, resp.status_code))
 
     def test_get_image_details(self):
         """
