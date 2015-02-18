@@ -1,0 +1,8 @@
+Verified+2: Jenkins
+Code-Review+2: Carlos Martinez <carlos.martinez@rackspace.com>
+Workflow+1: Carlos Martinez <carlos.martinez@rackspace.com>
+Submitted-by: Jenkins
+Submitted-at: Wed, 18 Feb 2015 20:11:48 +0000
+Reviewed-on: https://review.openstack.org/156798
+Project: stackforge/cloudroast
+Branch: refs/heads/master
