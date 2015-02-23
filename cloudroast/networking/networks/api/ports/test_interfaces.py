@@ -61,6 +61,6 @@ class PortInterfaceTest(NetworkingAPIFixture):
     def tearDown(self):
         self.networkingCleanUp()
 
-    @tags(type='positive', rbac='creator')
+    @tags('positive', 'creator')
     def test_server_boot_w_network_id(self):
         pass

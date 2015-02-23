@@ -127,9 +127,11 @@ class L2HostroutesGatewayTest(NetworkingComputeFixture,
         # be added when dev team completes functionallity to attach vif's
         # to nova instances using device_id during port create / update
 
-    def _enable_ip_forwarding(self, ssh_client):
+    def _enable_ip_forwarding(self):
+        self.router.remote_client = self._get_remote_client(self.router)
         for cmd in self.ENABLE_IP_FORWARDING_CMDS:
-            self._execute_ssh_command(ssh_client, cmd)
+            self._execute_ssh_command(self.router.remote_client.ssh_client,
+                                      cmd)
 
     def _create_communicating_servers(self):
         self.origin = self._create_server('origin', [self.network_with_route])
@@ -137,6 +139,7 @@ class L2HostroutesGatewayTest(NetworkingComputeFixture,
                                                [self.destination_network])
 
         # Confirm routes are setup correctly in origin server
+        self.origin.remote_client = self._get_remote_client(self.origin)
         destination = self.destination_subnet.cidr[
             :self.destination_subnet.cidr.rindex('/')]
 
@@ -159,6 +162,8 @@ class L2HostroutesGatewayTest(NetworkingComputeFixture,
             route, msg)
 
         # Confirm routes are setup correctly in destination server
+        self.destination.remote_client = self._get_remote_client(
+            self.destination)
         origin = self.subnet_with_route.cidr[
             :self.subnet_with_route.cidr.rindex('/')]
         route_cmd = '{} -n | grep {}'.format(self.ROUTE_COMMAND, origin)
@@ -200,6 +205,15 @@ class L2HostroutesGatewayTest(NetworkingComputeFixture,
         return ssh_client.execute_command(ssh_cmd)
 
     def _verify_expected_connectivity(self):
+        """
+        Verfies that the expected connectivity takes place after the scenario
+        has been set up:
+
+        1) The "origin" instance should be able to ping and ssh the
+        "destination" instance
+        2) The "destination" instance shouldn't be able to ping and ssh the
+        "origin" instance
+        """
         # Confirm destination instance can be pinged and sshed from origin
         # instance
         origin_address = getattr(self.origin, self.network_with_route.name)
@@ -233,7 +247,7 @@ class L2HostroutesGatewayTest(NetworkingComputeFixture,
         self._create_router()
         self._set_host_routes()
         self._create_communicating_servers()
-        self._enable_ip_forwarding(self.router.remote_client.ssh_client)
+        self._enable_ip_forwarding()
         self._verify_expected_connectivity()
 
 
@@ -308,6 +322,7 @@ class GatewayPoliciesTest(NetworkingComputeFixture,
         # this keypair, the gateway server will be able to execute commands
         # over ssh in all of them
         remote_file_path = '/root/pkey'
+        cls.gateway.remote_client = cls._get_remote_client(cls.gateway)
         cls._transfer_private_key_to_vm(cls.gateway.remote_client.ssh_client,
                                         cls.keypair.private_key,
                                         remote_file_path)
@@ -333,6 +348,7 @@ class GatewayPoliciesTest(NetworkingComputeFixture,
         # time right after boot
         time.sleep(240)
 
+        self.gateway.remote_client = self._get_remote_client(self.gateway)
         ssh_cmd = '{}{} {}'.format(self.ssh_command_stub,
                                    getattr(vm, self.access_network.name),
                                    'route | grep default')
@@ -374,6 +390,7 @@ class GatewayPoliciesTest(NetworkingComputeFixture,
         time.sleep(240)
 
         # Confirm vm got expected default route
+        self.gateway.remote_client = self._get_remote_client(self.gateway)
         ssh_cmd = '{}{} {}'.format(self.ssh_command_stub,
                                    getattr(vm, self.access_network.name),
                                    'route | grep default')
@@ -416,6 +433,7 @@ class GatewayPoliciesTest(NetworkingComputeFixture,
         time.sleep(240)
 
         # Confirm vm got expected default route
+        self.gateway.remote_client = self._get_remote_client(self.gateway)
         ssh_cmd = '{}{} {}'.format(self.ssh_command_stub,
                                    getattr(vm, self.access_network.name),
                                    'route | grep default')
@@ -460,6 +478,7 @@ class GatewayPoliciesTest(NetworkingComputeFixture,
         time.sleep(240)
 
         # Confirm vm got expected route
+        self.gateway.remote_client = self._get_remote_client(self.gateway)
         range_origin = str(IP(cidr[0].ip))
         route_cmd = 'route -n | grep {}'.format(range_origin)
         ssh_cmd = '{}{} {}'.format(self.ssh_command_stub,

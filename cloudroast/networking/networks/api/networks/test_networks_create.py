@@ -32,7 +32,7 @@ class NetworkCreateTest(NetworkingAPIFixture):
     def setUp(self):
         self.expected_network = self.get_expected_network_data()
 
-    @tags(type='smoke', rbac='creator')
+    @tags('smoke', 'creator')
     def test_network_create(self):
         """
         @summary: Creating a network
@@ -51,7 +51,7 @@ class NetworkCreateTest(NetworkingAPIFixture):
         # Check the Network response
         self.assertNetworkResponse(self.expected_network, network)
 
-    @tags(type='smoke', rbac='creator')
+    @tags('smoke', 'creator')
     def test_network_create_w_long_name(self):
         """
         @summary: Creating a network with a 40 char name
@@ -74,7 +74,7 @@ class NetworkCreateTest(NetworkingAPIFixture):
         self.assertNetworkResponse(self.expected_network, network)
 
     @unittest.skip('Needs RM10088 fix')
-    @tags(type='negative', rbac='creator', quark='yes')
+    @tags('negative', 'creator', 'quark')
     def test_network_create_w_long_name_trimming(self):
         """
         @summary: Creating a network with a 50 char name (name should be
@@ -101,7 +101,7 @@ class NetworkCreateTest(NetworkingAPIFixture):
         # Check the Network response
         self.assertNetworkResponse(self.expected_network, network)
 
-    @tags(type='negative', rbac='creator', quark='yes')
+    @tags('negative', 'creator', 'quark')
     def test_network_create_w_shared(self):
         """
         @summary: Negative test creating a network with the shared attribute.
@@ -125,7 +125,7 @@ class NetworkCreateTest(NetworkingAPIFixture):
         self.assertIsNone(resp.response.entity, 'Unexpected entity')
         self.assertTrue(resp.failures, 'Missing expected failures')
 
-    @tags(type='positive', rbac='creator')
+    @tags('positive', 'creator')
     def test_network_create_w_admin_state_up_true(self):
         """
         @summary: Creating a network with the admin_state_up attribute as true
@@ -148,7 +148,7 @@ class NetworkCreateTest(NetworkingAPIFixture):
         # Check the Network response
         self.assertNetworkResponse(self.expected_network, network)
 
-    @tags(type='positive', rbac='creator', quark='yes')
+    @tags('positive', 'creator', 'quark')
     def test_network_create_w_admin_state_up_false(self):
         """
         @summary: Creating a network with the admin_state_up attribute as false
@@ -171,7 +171,7 @@ class NetworkCreateTest(NetworkingAPIFixture):
         # Check the Network response
         self.assertNetworkResponse(self.expected_network, network)
 
-    @tags(type='positive', rbac='creator')
+    @tags('positive', 'creator')
     def test_network_create_w_tenant_id(self):
         """
         @summary: Creating a network with the tenant_id
@@ -193,7 +193,7 @@ class NetworkCreateTest(NetworkingAPIFixture):
 
     @unittest.skipIf(not NetworkingSecondUserConfig().tenant_id,
                      'Missing secondary networking user in config file')
-    @tags(type='negative', alt_user='yes', rbac='creator')
+    @tags('negative', 'alt_user', 'creator')
     def test_network_create_w_another_tenant_id(self):
         """
         @summary: Negative test creating a network under another tenant.
@@ -217,7 +217,7 @@ class NetworkCreateTest(NetworkingAPIFixture):
         self.assertIsNone(resp.response.entity, 'Unexpected entity')
         self.assertTrue(resp.failures, 'Missing expected failures')
 
-    @tags(type='negative', rbac='creator')
+    @tags('negative', 'creator')
     def test_network_create_w_invalid_name(self):
         """
         @summary: Creating a network with invalid name

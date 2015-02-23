@@ -50,7 +50,7 @@ class MultiplePortsTest(NetworkingAPIFixture):
     def tearDown(self):
         self.networkingCleanUp()
 
-    @tags(type='positive', rbac='creator')
+    @tags('positive', 'creator')
     def test_multiple_ipv4_ports_create(self):
         """
         @summary: Creating multiple ports on an IPv4 Subnet
@@ -81,7 +81,7 @@ class MultiplePortsTest(NetworkingAPIFixture):
             port = resp.response.entity
             self.assertPortResponse(expected_port, port, subnet=ipv4_subnet)
 
-    @tags(type='positive', rbac='creator')
+    @tags('positive', 'creator')
     def test_multiple_ipv6_ports_create(self):
         """
         @summary: Creating multiple ports on an IPv6 Subnet
@@ -114,7 +114,7 @@ class MultiplePortsTest(NetworkingAPIFixture):
 
     @unittest.skipIf(not PortsConfig().test_quotas,
                      'Ports quotas test flag not set')
-    @tags(type='quotas', rbac='creator')
+    @tags('quotas', 'creator')
     def test_quotas_ipv4_ports_create(self):
         """
         @summary: Checking port create quotas
@@ -159,7 +159,7 @@ class MultiplePortsTest(NetworkingAPIFixture):
 
     @unittest.skipIf(not PortsConfig().test_quotas,
                      'Ports quotas test flag not set')
-    @tags(type='quotas', rbac='creator')
+    @tags('quotas', 'creator')
     def test_quotas_ipv6_ports_create(self):
         """
         @summary: Checking port create quotas

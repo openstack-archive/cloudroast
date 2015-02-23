@@ -48,7 +48,7 @@ class NetworkUpdateTest(NetworkingAPIFixture):
     def tearDown(self):
         self.networkingCleanUp()
 
-    @tags(type='smoke', rbac='creator')
+    @tags('smoke', 'creator')
     def test_network_update(self):
         """
         @summary: Updating a Network
@@ -73,7 +73,7 @@ class NetworkUpdateTest(NetworkingAPIFixture):
         # Check the Network response
         self.assertNetworkResponse(expected_network, network)
 
-    @tags(type='smoke', rbac='creator')
+    @tags('smoke', 'creator')
     def test_network_update_w_long_name(self):
         """
         @summary: Updating a Network with a 40 char name
@@ -94,7 +94,7 @@ class NetworkUpdateTest(NetworkingAPIFixture):
         self.assertNetworkResponse(expected_network, network)
 
     @unittest.skip('Needs RM10088 fix')
-    @tags(type='negative', rbac='creator')
+    @tags('negative', 'creator')
     def test_network_update_w_long_name_trimming(self):
         """
         @summary: Updating a Network with a 50 char name (name should be
@@ -119,7 +119,7 @@ class NetworkUpdateTest(NetworkingAPIFixture):
         # Check the Network response
         self.assertNetworkResponse(expected_network, network)
 
-    @tags(type='smoke', rbac='creator')
+    @tags('smoke', 'creator')
     def test_network_w_ports_update(self):
         """
         @summary: Updating a Network with subnets and ports
@@ -160,7 +160,7 @@ class NetworkUpdateTest(NetworkingAPIFixture):
         network.subnets.sort()
         self.assertNetworkResponse(expected_network, network)
 
-    @tags(type='negative', rbac='creator', quark='yes')
+    @tags('negative', 'creator', 'quark')
     def test_network_update_w_shared(self):
         """
         @summary: Negative Updating a Network shared parameter

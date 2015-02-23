@@ -81,7 +81,7 @@ class PortUpdateTest(NetworkingAPIFixture):
     def tearDown(self):
         self.networkingCleanUp()
 
-    @tags(type='smoke', rbac='creator')
+    @tags('smoke', 'creator')
     def test_ipv4_port_update(self):
         """
         @summary: Updating an IPv4 port
@@ -90,13 +90,12 @@ class PortUpdateTest(NetworkingAPIFixture):
         expected_port.name = 'test_fixed_ips_ipv4_port_update'
 
         fixed_ips_number = self.ports.config.fixed_ips_per_port
-        expected_port.fixed_ips = self.get_fixed_ips_data(
+        expected_port.fixed_ips = self.subnets.behaviors.get_fixed_ips(
             self.ipv4_subnet, fixed_ips_number)
 
         # Quark non-updatable params (request still should work)
         expected_port.device_id = 'device_id_update_test'
         expected_port.admin_state_up = False
-        expected_port.device_owner = 'device_owner_update_test'
 
         # Updating the port
         resp = self.ports.behaviors.update_port(
@@ -114,12 +113,11 @@ class PortUpdateTest(NetworkingAPIFixture):
         # Quark non-updatable params (resetting to original values)
         expected_port.device_id = ''
         expected_port.admin_state_up = True
-        expected_port.device_owner = None
 
         # Check the Port response
         self.assertPortResponse(expected_port, port, check_fixed_ips=True)
 
-    @tags(type='smoke', rbac='creator')
+    @tags('smoke', 'creator')
     def test_ipv4_port_update_w_long_name(self):
         """
         @summary: Updating an IPv4 port with a 40 char name
@@ -140,7 +138,7 @@ class PortUpdateTest(NetworkingAPIFixture):
         self.assertPortResponse(expected_port, port)
 
     @unittest.skip('Needs RM10088 fix')
-    @tags(type='positive', rbac='creator')
+    @tags('positive', 'creator')
     def test_ipv4_port_update_w_long_name_trimming(self):
         """
         @summary: Updating an IPv4 port with a 50 char name (name should be
@@ -165,7 +163,7 @@ class PortUpdateTest(NetworkingAPIFixture):
         # Check the Port response
         self.assertPortResponse(expected_port, port)
 
-    @tags(type='smoke', rbac='creator')
+    @tags('smoke', 'creator')
     def test_ipv6_port_update(self):
         """
         @summary: Updating an IPv4 port
@@ -174,13 +172,12 @@ class PortUpdateTest(NetworkingAPIFixture):
         expected_port.name = 'test_fixed_ips_ipv6_port_update'
 
         fixed_ips_number = self.ports.config.fixed_ips_per_port
-        expected_port.fixed_ips = self.get_fixed_ips_data(
+        expected_port.fixed_ips = self.subnets.behaviors.get_fixed_ips(
             self.ipv6_subnet, fixed_ips_number)
 
         # Quark non-updatable params (request still should work)
         expected_port.device_id = 'device_id_update_test'
         expected_port.admin_state_up = False
-        expected_port.device_owner = 'device_owner_update_test'
 
         # Updating the port
         resp = self.ports.behaviors.update_port(
@@ -188,8 +185,7 @@ class PortUpdateTest(NetworkingAPIFixture):
             name=expected_port.name,
             admin_state_up=expected_port.admin_state_up,
             fixed_ips=expected_port.fixed_ips,
-            device_id=expected_port.device_id,
-            device_owner=expected_port.device_owner)
+            device_id=expected_port.device_id)
 
         # Fail the test if any failure is found
         self.assertFalse(resp.failures)
@@ -202,18 +198,18 @@ class PortUpdateTest(NetworkingAPIFixture):
         # Quark non-updatable params (resetting to original values)
         expected_port.device_id = ''
         expected_port.admin_state_up = True
-        expected_port.device_owner = None
 
         # Check the Port response
         self.assertPortResponse(expected_port, port, check_fixed_ips=True)
 
-    @tags(type='smoke', rbac='creator')
+    @tags('smoke', 'creator')
     def test_ipv4_port_update_w_single_fixed_ips(self):
         """
         @summary: Updating an IPv4 port fixed ips with single value
         """
         expected_port = self.ipv4_port
-        expected_port.fixed_ips = self.get_fixed_ips_data(self.ipv4_subnet, 1)
+        expected_port.fixed_ips = self.subnets.behaviors.get_fixed_ips(
+            self.ipv4_subnet, 1)
 
         # Updating the port
         resp = self.ports.behaviors.update_port(
@@ -227,13 +223,14 @@ class PortUpdateTest(NetworkingAPIFixture):
         # Check the Port response
         self.assertPortResponse(expected_port, port, check_fixed_ips=True)
 
-    @tags(type='smoke', rbac='creator')
+    @tags('smoke', 'creator')
     def test_ipv6_port_update_w_single_fixed_ips(self):
         """
         @summary: Updating an IPv6 port fixed ips with single value
         """
         expected_port = self.ipv6_port
-        expected_port.fixed_ips = self.get_fixed_ips_data(self.ipv6_subnet, 1)
+        expected_port.fixed_ips = self.subnets.behaviors.get_fixed_ips(
+            self.ipv6_subnet, 1)
 
         # Updating the port
         resp = self.ports.behaviors.update_port(
@@ -251,15 +248,17 @@ class PortUpdateTest(NetworkingAPIFixture):
         # Check the Port response
         self.assertPortResponse(expected_port, port, check_fixed_ips=True)
 
-    @tags(type='smoke', rbac='creator')
+    @tags('smoke', 'creator')
     def test_ipv4_port_update_fixed_ips_on_dual_net(self):
         """
         @summary: Updating an IPv4 with IPv4 and IPv6 fixed ips
         """
         expected_port = self.dual_ipv4_port
 
-        fixed_ips = self.get_fixed_ips_data(self.dual_ipv6_subnet, 2)
-        fixed_ips.extend(self.get_fixed_ips_data(self.dual_ipv4_subnet, 2))
+        fixed_ips = self.subnets.behaviors.get_fixed_ips(
+            self.dual_ipv6_subnet, 2)
+        fixed_ips.extend(self.subnets.behaviors.get_fixed_ips(
+            self.dual_ipv4_subnet, 2))
         expected_port.fixed_ips = fixed_ips
 
         # Updating the port
@@ -278,15 +277,17 @@ class PortUpdateTest(NetworkingAPIFixture):
         # Check the Port response
         self.assertPortResponse(expected_port, port, check_fixed_ips=True)
 
-    @tags(type='smoke', rbac='creator')
+    @tags('smoke', 'creator')
     def test_ipv6_port_update_fixed_ips_on_dual_net(self):
         """
         @summary: Updating an IPv6 with IPv4 and IPv6 fixed ips
         """
         expected_port = self.dual_ipv6_port
 
-        fixed_ips = self.get_fixed_ips_data(self.dual_ipv6_subnet, 2)
-        fixed_ips.extend(self.get_fixed_ips_data(self.dual_ipv4_subnet, 2))
+        fixed_ips = self.subnets.behaviors.get_fixed_ips(
+            self.dual_ipv6_subnet, 2)
+        fixed_ips.extend(self.subnets.behaviors.get_fixed_ips(
+            self.dual_ipv4_subnet, 2))
         expected_port.fixed_ips = fixed_ips
 
         # Updating the port
@@ -305,7 +306,7 @@ class PortUpdateTest(NetworkingAPIFixture):
         # Check the Port response
         self.assertPortResponse(expected_port, port, check_fixed_ips=True)
 
-    @tags(type='smoke', rbac='creator')
+    @tags('smoke', 'creator')
     def test_ipv4_port_update_fixed_ips_on_dual_net_w_subnet_id_only(self):
         """
         @summary: Updating an IPv4 with subnet ID only
@@ -328,7 +329,7 @@ class PortUpdateTest(NetworkingAPIFixture):
         self.assertPortResponse(expected_port, port,
                                 subnet=self.dual_ipv4_subnet)
 
-    @tags(type='smoke', rbac='creator')
+    @tags('smoke', 'creator')
     def test_ipv6_port_update_fixed_ips_on_dual_net_w_subnet_id_only(self):
         """
         @summary: Updating an IPv6 with subnet ID only
@@ -356,7 +357,7 @@ class PortUpdateTest(NetworkingAPIFixture):
                                 subnet=self.dual_ipv6_subnet)
 
     @unittest.skip('Needs RM11046 fix')
-    @tags(type='positive', rbac='creator')
+    @tags('positive', 'creator')
     def test_ipv4_port_update_w_subnet_ids_only(self):
         """
         @summary: Updating IPv4 and IPv6 port fixed ips w subnet IDs only
@@ -377,11 +378,11 @@ class PortUpdateTest(NetworkingAPIFixture):
         port = resp.response.entity
 
         # Check the Port response
-        self.assertFixedIpsSubnetIds(port, expected_port)
+        self.assertPortFixedIpsSubnetIds(port, expected_port)
         self.assertPortResponse(expected_port, port)
 
     @unittest.skip('Needs RM11046 fix')
-    @tags(type='positive', rbac='creator')
+    @tags('positive', 'creator')
     def test_ipv6_port_update_w_subnet_ids_only(self):
         """
         @summary: Updating IPv4 and IPv6 port fixed ips w subnet IDs only
@@ -402,11 +403,11 @@ class PortUpdateTest(NetworkingAPIFixture):
         port = resp.response.entity
 
         # Check the Port response
-        self.assertFixedIpsSubnetIds(port, expected_port)
+        self.assertPortFixedIpsSubnetIds(port, expected_port)
         self.assertPortResponse(expected_port, port)
 
     @unittest.skip('Needs RM11046 fix')
-    @tags(type='positive', rbac='creator')
+    @tags('positive', 'creator')
     def test_ipv4_ipv6_port_update_w_subnet_ids_only(self):
         """
         @summary: Updating IPv4 and IPv6 port fixed ips w subnet IDs only
@@ -427,10 +428,10 @@ class PortUpdateTest(NetworkingAPIFixture):
         port = resp.response.entity
 
         # Check the Port response
-        self.assertFixedIpsSubnetIds(port, expected_port)
+        self.assertPortFixedIpsSubnetIds(port, expected_port)
         self.assertPortResponse(expected_port, port)
 
-    @tags(type='negative', rbac='creator', quark='yes')
+    @tags('negative', 'creator', 'quark')
     def test_ipv4_port_update_w_security_groups(self):
         """
         @summary: Negative updating a Port with security groups
@@ -451,7 +452,7 @@ class PortUpdateTest(NetworkingAPIFixture):
             delete_list=self.delete_ports,
             error_type=NeutronErrorTypes.SECURITY_GROUPS_NOT_IMPLEMENTED)
 
-    @tags(type='negative', rbac='creator', quark='yes')
+    @tags('negative', 'creator', 'quark')
     def test_ipv6_port_update_w_security_groups(self):
         """
         @summary: Negative updating a Port with security groups

@@ -73,7 +73,7 @@ class SubnetUpdateTest(NetworkingAPIFixture):
         self.networkingCleanUp()
 
     @unittest.skip('Needs RM10143 fix')
-    @tags(type='positive', rbac='creator')
+    @tags('positive', 'creator')
     def test_ipv4_subnet_update_w_multiple_params(self):
         """
         @summary: Updating a subnet with multiple params
@@ -88,7 +88,7 @@ class SubnetUpdateTest(NetworkingAPIFixture):
             self.expected_ipv4_subnet.cidr)
         host_route = dict(destination='10.0.3.0/24', nexthop=nexthop)
         self.expected_ipv4_subnet.host_routes = (
-            self.get_ipv4_host_route_data(num=2))
+            self.get_host_route_data())
         self.expected_ipv4_subnet.host_routes.append(host_route)
 
         # Updating the subnet
@@ -106,7 +106,7 @@ class SubnetUpdateTest(NetworkingAPIFixture):
         # Check the Subnet response
         self.assertSubnetResponse(self.expected_ipv4_subnet, subnet)
 
-    @tags(type='smoke', rbac='creator')
+    @tags('smoke', 'creator')
     def test_ipv4_subnet_update_w_long_name(self):
         """
         @summary: Updating a subnet with a 40 char name
@@ -127,7 +127,7 @@ class SubnetUpdateTest(NetworkingAPIFixture):
         self.assertSubnetResponse(expected_subnet, subnet)
 
     @unittest.skip('Needs RM10088 fix')
-    @tags(type='negative', rbac='creator')
+    @tags('negative', 'creator')
     def test_ipv4_subnet_update_w_long_name_trimming(self):
         """
         @summary: Updating a subnet with a 50 char name (name should be
@@ -153,7 +153,7 @@ class SubnetUpdateTest(NetworkingAPIFixture):
         self.assertSubnetResponse(expected_subnet, subnet)
 
     @unittest.skip('Needs RM10143 fix')
-    @tags(type='positive', rbac='creator')
+    @tags('positive', 'creator')
     def test_ipv6_subnet_update_w_multiple_params(self):
         """
         @summary: Updating a subnet with multiple params
@@ -169,7 +169,7 @@ class SubnetUpdateTest(NetworkingAPIFixture):
             self.expected_ipv6_subnet.cidr)
         host_route = dict(destination=host_route_cidr, nexthop=nexthop)
         self.expected_ipv6_subnet.host_routes = (
-            self.get_ipv6_host_route_data(num=2))
+            self.get_host_route_data())
         self.expected_ipv6_subnet.host_routes.append(host_route)
 
         # Updating the subnet
@@ -195,7 +195,7 @@ class SubnetUpdateTest(NetworkingAPIFixture):
         # Check the Subnet response
         self.assertSubnetResponse(self.expected_ipv6_subnet, subnet)
 
-    @tags(type='negative', rbac='creator', quark='yes')
+    @tags('negative', 'creator', 'quark')
     def test_ipv4_subnet_update_dns_nameservers_quota(self):
         """
         @summary: Negative testing IPv4 dns nameservers per subnet quota limit
@@ -237,7 +237,7 @@ class SubnetUpdateTest(NetworkingAPIFixture):
             delete_list=self.delete_subnets,
             error_type=NeutronErrorTypes.OVER_QUOTA)
 
-    @tags(type='negative', rbac='creator', quark='yes')
+    @tags('negative', 'creator', 'quark')
     def test_ipv6_subnet_update_dns_nameservers_quota(self):
         """
         @summary: Negative testing ipv6 dns nameservers per subnet quota limit
@@ -287,7 +287,7 @@ class SubnetUpdateTest(NetworkingAPIFixture):
             delete_list=self.delete_subnets,
             error_type=NeutronErrorTypes.OVER_QUOTA)
 
-    @tags(type='negative', rbac='creator', quark='yes')
+    @tags('negative', 'creator', 'quark')
     def test_ipv4_subnet_update_host_routes_quota(self):
         """
         @summary: Negative testing IPv4 host routes per subnet
@@ -338,7 +338,7 @@ class SubnetUpdateTest(NetworkingAPIFixture):
             delete_list=self.delete_subnets,
             error_type=NeutronErrorTypes.OVER_QUOTA)
 
-    @tags(type='negative', rbac='creator', quark='yes')
+    @tags('negative', 'creator', 'quark')
     def test_ipv6_subnet_update_host_routes_quota(self):
         """
         @summary: Negative testing IPv6 host routes per subnet
@@ -394,7 +394,7 @@ class SubnetUpdateTest(NetworkingAPIFixture):
             delete_list=self.delete_subnets,
             error_type=NeutronErrorTypes.OVER_QUOTA)
 
-    @tags(type='positive', rbac='creator', quark='yes')
+    @tags('positive', 'creator', 'quark')
     def test_ipv4_subnet_update_w_enable_dhcp(self):
         """
         @summary: Updating a subnet with the enable_dhcp param.
@@ -419,7 +419,7 @@ class SubnetUpdateTest(NetworkingAPIFixture):
         self.assertSubnetResponse(self.expected_ipv4_subnet, subnet,
                                   check_exact_name=False)
 
-    @tags(type='negative', rbac='creator', quark='yes')
+    @tags('negative', 'creator', 'quark')
     def test_ipv6_subnet_update_w_enable_dhcp(self):
         """
         @summary: Updating a subnet with the enable_dhcp param.
@@ -449,12 +449,12 @@ class SubnetUpdateTest(NetworkingAPIFixture):
         self.assertSubnetResponse(self.expected_ipv6_subnet, subnet,
                                   check_exact_name=False)
 
-    @tags(type='smoke', rbac='creator', quark='yes')
+    @tags('smoke', 'creator', 'quark')
     def test_ipv4_subnet_update_allocation_pools(self):
         """
         @summary: Negative updating allocation pools on an IPv4 subnet
         """
-        allocation_pools = self.get_allocation_pools_data(
+        allocation_pools = self.subnets.behaviors.get_allocation_pools(
             cidr=self.ipv4_subnet.cidr, start_increment=3, ip_range=20,
             interval=10, num=3)
         resp = self.subnets.behaviors.update_subnet(
@@ -465,12 +465,12 @@ class SubnetUpdateTest(NetworkingAPIFixture):
             resp=resp, status_code=NeutronResponseCodes.BAD_REQUEST, msg=msg,
             delete_list=self.delete_subnets)
 
-    @tags(type='smoke', rbac='creator', quark='yes')
+    @tags('smoke', 'creator', 'yes')
     def test_ipv6_subnet_update_allocation_pools(self):
         """
         @summary: Negative updating allocation pools on an IPv6 subnet
         """
-        allocation_pools = self.get_allocation_pools_data(
+        allocation_pools = self.subnets.behaviors.get_allocation_pools(
             cidr=self.ipv6_subnet.cidr, start_increment=100, ip_range=500,
             interval=50, num=3)
 
@@ -483,7 +483,7 @@ class SubnetUpdateTest(NetworkingAPIFixture):
             resp=resp, status_code=NeutronResponseCodes.BAD_REQUEST, msg=msg,
             delete_list=self.delete_subnets)
 
-    @tags(type='negative', rbac='creator')
+    @tags('negative', 'creator')
     def test_ipv4_subnet_update_w_overlapping_gateway_ip(self):
         """
         @summary: Negative updating a subnet with gateway_ip overlapping the
@@ -504,7 +504,7 @@ class SubnetUpdateTest(NetworkingAPIFixture):
             error_type=NeutronErrorTypes.GATEWAY_CONFLICT_WITH_ALLOCATION_POOLS
             )
 
-    @tags(type='negative', rbac='creator')
+    @tags('negative', 'creator')
     def test_ipv6_subnet_update_w_overlapping_gateway_ip(self):
         """
         @summary: Negative updating a subnet with gateway_ip overlapping the
@@ -525,7 +525,7 @@ class SubnetUpdateTest(NetworkingAPIFixture):
             error_type=NeutronErrorTypes.GATEWAY_CONFLICT_WITH_ALLOCATION_POOLS
             )
 
-    @tags(type='positive', rbac='creator')
+    @tags('positive', 'creator')
     def test_ipv4_subnet_update_w_gateway_ip(self):
         """
         @summary: Updating a subnet gateway_ip
@@ -549,7 +549,7 @@ class SubnetUpdateTest(NetworkingAPIFixture):
         self.assertSubnetResponse(self.expected_ipv4_subnet, subnet,
                                   check_exact_name=False)
 
-    @tags(type='positive', rbac='creator')
+    @tags('positive', 'creator')
     def test_ipv6_subnet_update_w_gateway_ip(self):
         """
         @summary: Updating a subnet gateway_ip
@@ -578,7 +578,7 @@ class SubnetUpdateTest(NetworkingAPIFixture):
         self.assertSubnetResponse(self.expected_ipv6_subnet, subnet,
                                   check_exact_name=False)
 
-    @tags(type='positive', rbac='creator')
+    @tags('positive', 'creator')
     def test_ipv4_subnet_update_w_dns_nameservers(self):
         """
         @summary: Updating a subnet with dns_nameservers
@@ -601,7 +601,7 @@ class SubnetUpdateTest(NetworkingAPIFixture):
         self.assertSubnetResponse(self.expected_ipv4_subnet, subnet,
                                   check_exact_name=False)
 
-    @tags(type='negative', rbac='creator')
+    @tags('negative', 'creator')
     def test_ipv4_subnet_update_w_invalid_dns_nameservers(self):
         """
         @summary: Updating a subnet with invalid dns_nameservers
@@ -621,7 +621,7 @@ class SubnetUpdateTest(NetworkingAPIFixture):
             delete_list=self.delete_subnets,
             error_type=NeutronErrorTypes.ADDR_FORMAT_ERROR)
 
-    @tags(type='positive', rbac='creator')
+    @tags('positive', 'creator')
     def test_ipv6_subnet_update_w_dns_nameservers(self):
         """
         @summary: Updating a subnet with dns_nameservers
@@ -652,7 +652,7 @@ class SubnetUpdateTest(NetworkingAPIFixture):
         self.assertSubnetResponse(self.expected_ipv6_subnet, subnet,
                                   check_exact_name=False)
 
-    @tags(type='negative', rbac='creator')
+    @tags('negative', 'creator')
     def test_ipv6_subnet_update_w_invalid_dns_nameservers(self):
         """
         @summary: Negative updating a subnet with invalid dns_nameservers
@@ -672,7 +672,7 @@ class SubnetUpdateTest(NetworkingAPIFixture):
             delete_list=self.delete_subnets,
             error_type=NeutronErrorTypes.ADDR_FORMAT_ERROR)
 
-    @tags(type='positive', rbac='creator')
+    @tags('positive', 'creator')
     def test_ipv4_subnet_update_w_host_routes(self):
         """
         @summary: Updating a subnet with host_routes
@@ -682,7 +682,7 @@ class SubnetUpdateTest(NetworkingAPIFixture):
         host_route = dict(destination='10.0.3.0/24', nexthop=nexthop)
 
         self.expected_ipv4_subnet.host_routes = (
-            self.get_ipv4_host_route_data(num=2))
+            self.get_host_route_data())
         self.expected_ipv4_subnet.host_routes.append(host_route)
 
         # Updating the subnet
@@ -700,7 +700,7 @@ class SubnetUpdateTest(NetworkingAPIFixture):
         self.assertSubnetResponse(self.expected_ipv4_subnet, subnet,
                                   check_exact_name=False)
 
-    @tags(type='negative', rbac='creator')
+    @tags('negative', 'creator')
     def test_ipv4_subnet_update_w_invalid_host_routes_destination(self):
         """
         @summary: Updating a subnet with invalid host_routes
@@ -720,7 +720,7 @@ class SubnetUpdateTest(NetworkingAPIFixture):
             resp=resp, status_code=NeutronResponseCodes.BAD_REQUEST, msg=msg,
             delete_list=self.delete_subnets)
 
-    @tags(type='negative', rbac='creator')
+    @tags('negative', 'creator')
     def test_ipv4_subnet_update_w_invalid_host_routes_nexthop(self):
         """
         @summary: Updating a subnet with invalid host_routes
@@ -740,7 +740,7 @@ class SubnetUpdateTest(NetworkingAPIFixture):
             resp=resp, status_code=NeutronResponseCodes.BAD_REQUEST, msg=msg,
             delete_list=self.delete_subnets)
 
-    @tags(type='positive', rbac='creator')
+    @tags('positive', 'creator')
     def test_ipv6_subnet_update_w_host_routes(self):
         """
         @summary: Updating a subnet with host_routes
@@ -751,7 +751,7 @@ class SubnetUpdateTest(NetworkingAPIFixture):
         host_route = dict(destination=host_route_cidr, nexthop=nexthop)
 
         self.expected_ipv6_subnet.host_routes = (
-            self.get_ipv6_host_route_data(num=2))
+            self.get_host_route_data())
         self.expected_ipv6_subnet.host_routes.append(host_route)
 
         # Updating the subnet
@@ -774,7 +774,7 @@ class SubnetUpdateTest(NetworkingAPIFixture):
         self.assertSubnetResponse(self.expected_ipv6_subnet, subnet,
                                   check_exact_name=False)
 
-    @tags(type='negative', rbac='creator')
+    @tags('negative', 'creator')
     def test_ipv6_subnet_update_w_invalid_host_routes_destination(self):
         """
         @summary: Negative updating a subnet with invalid host_routes
@@ -797,7 +797,7 @@ class SubnetUpdateTest(NetworkingAPIFixture):
             resp=resp, status_code=NeutronResponseCodes.BAD_REQUEST, msg=msg,
             delete_list=self.delete_subnets)
 
-    @tags(type='negative', rbac='creator')
+    @tags('negative', 'creator')
     def test_ipv6_subnet_update_w_invalid_host_routes_nexthop(self):
         """
         @summary: Negative updating a subnet with invalid host_routes

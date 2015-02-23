@@ -29,6 +29,10 @@ from cloudcafe.networking.networks.common.models.response.port \
     import Port
 from cloudcafe.networking.networks.composites import NetworkingComposite
 from cloudcafe.networking.networks.config import NetworkingSecondUserConfig
+from cloudcafe.networking.networks.extensions.security_groups_api.composites \
+    import SecurityGroupsComposite
+from cloudcafe.networking.networks.extensions.security_groups_api.models.\
+    response import SecurityGroup, SecurityGroupRule
 
 
 class NetworkingFixture(BaseTestFixture):
@@ -69,6 +73,13 @@ class NetworkingFixture(BaseTestFixture):
         cls.failed_subnets = []
         cls.delete_ports = []
         cls.failed_ports = []
+
+        # Getting user data for testing
+        cls.user = cls.net.networking_auth_composite()
+        cls.alt_user = NetworkingSecondUserConfig()
+
+        # Using the networkingCleanup method
+        cls.addClassCleanup(cls.networkingCleanUp)
 
         # For resources delete management like Compute, Images or alternative
         # to the networkingCleanUp
@@ -356,63 +367,72 @@ class NetworkingFixture(BaseTestFixture):
                 subnet.kwargs)
             self.assertFalse(subnet.kwargs, msg)
 
-    def assertFixedIps(self, port, subnet, enabled_fixed_ips):
+    def assertPortFixedIpsFromSubnet(self, port, subnet):
         """
         @summary: assert the fixed ips of a port are within the subnet cidr,
             and the ip_addresses are not repeated
         """
         fixed_ips = port.fixed_ips
         subnet_id = subnet.id
-        enabled = enabled_fixed_ips
         cidr = subnet.cidr
         verified_ip = []
+        failures = []
 
-        subnet_msg = ('Unexpected subnet id in fixed ip {fixed_ip} instead of '
-            'subnet id {subnet_id}')
-        enabled_msg = ('Expected fixed ip enabled value of {enabled} '
-            'in fixed ip {fixed_ip}')
+        subnet_msg = ('Unexpected subnet id in fixed IP {fixed_ip} instead of '
+            'subnet id {subnet_id} in port {port} fixed IPs {fixed_ips}')
         verify_msg = ('Fixed IP ip_address {ip} not within the expected '
-            'subnet cidr {cidr}')
-        ip_msg = 'Repeated ip_address {ip} within fixed ips {fixed_ips}'
+            'subnet cidr {cidr} in port {port} fixed IPs {fixed_ips}')
+        ip_msg = ('Repeated ip_address {ip} within fixed ips {fixed_ips} '
+            'at port {port}')
 
         for fixed_ip in fixed_ips:
-            self.assertEqual(
-                fixed_ip['subnet_id'], subnet_id,
-                subnet_msg.format(fixed_ip=fixed_ip, subnet_id=subnet_id))
-            self.assertEqual(
-                fixed_ip['enabled'], enabled,
-                enabled_msg.format(enabled=enabled, fixed_ip=fixed_ip))
-            self.assertTrue(
-                self.subnets.behaviors.verify_ip(
-                    ip_cidr=fixed_ip['ip_address'], ip_range=cidr),
-                verify_msg.format(ip=fixed_ip['ip_address'], cidr=cidr))
-            self.assertNotIn(
-                fixed_ip['ip_address'], verified_ip,
-                ip_msg.format(ip=fixed_ip['ip_address'], fixed_ips=fixed_ips))
+            if fixed_ip['subnet_id'] != subnet_id:
+                failures.apppend(subnet_msg.format(fixed_ip=fixed_ip,
+                    subnet_id=subnet_id, port=port.id, fixed_ips=fixed_ips))
+            fixed_ip_within_cidr = self.subnets.behaviors.verify_ip(
+                ip_cidr=fixed_ip['ip_address'], ip_range=cidr)
+            if fixed_ip_within_cidr is not True:
+                failures.append(verify_msg.format(ip=fixed_ip['ip_address'],
+                    cidr=cidr, port=port.id, fixed_ips=fixed_ips))
+            if fixed_ip['ip_address'] in verified_ip:
+                failures.append(ip_msg.format(ip=fixed_ip['ip_address'],
+                    fixed_ips=fixed_ips, port=port.id))
             verified_ip.append(fixed_ip['ip_address'])
+        self.assertFalse(failures)
 
-    def assertFixedIpsSubnetIds(self, port, expected_port):
+    def assertPortFixedIpsSubnetIds(self, port, expected_port):
         """
-        @summary: assert the port fixed ips subnet Ids
+        @summary: assert the port fixed IPs subnet IDs
         """
-        fixed_ips = port.fixed_ips
         expected_fixed_ips = expected_port.fixed_ips
-        subnet_ids = self.ports.behaviors.get_fixed_ips_subnet_ids(fixed_ips)
-        expected_subnet_ids = self.ports.behaviors.get_fixed_ips_subnet_ids(
+        expected_result = self.ports.behaviors.get_subnet_ids_from_fixed_ips(
             expected_fixed_ips)
-        subnet_ids.sort()
+        emsg = ('Invalid fixed IPs data {errors} within expected port '
+                'fixed IPs {ips}').format(errors=expected_result['errors'],
+                                          ips=expected_fixed_ips)
+        self.assertFalse(expected_result['errors'], emsg)
+        expected_subnet_ids = expected_result['subnet_ids']
         expected_subnet_ids.sort()
 
+        fixed_ips = port.fixed_ips
+        result = self.ports.behaviors.get_subnet_ids_from_fixed_ips(fixed_ips)
+        rmsg = ('Invalid fixed IPs {errors} within port fixed IPs {ips} '
+                'at port {port} in network {network}').format(
+                    errors=result['errors'], ips=fixed_ips, port=port.id,
+                    network=port.network_id)
+        self.assertFalse(result['errors'], rmsg)
+        subnet_ids = result['subnet_ids']
+        subnet_ids.sort()
+
         msg = ('Unexpected subnet IDs {unexpected_ids} instead of the expected'
-               ' {expected_ids} within port fixed ips {ips} at port {port} in '
+               ' {expected_ids} within port fixed Ips {ips} at port {port} in '
                'network {network}').format(unexpected_ids=subnet_ids,
                 expected_ids=expected_subnet_ids, ips=fixed_ips, port=port.id,
                 network=port.network_id)
         self.assertListEqual(subnet_ids, expected_subnet_ids, msg)
 
     def assertPortResponse(self, expected_port, port, subnet=None,
-                           check_exact_name=True, check_fixed_ips=False,
-                           enabled_fixed_ips=True):
+                           check_exact_name=True, check_fixed_ips=False):
         """
         @summary: compares two port entity objects
         """
@@ -460,7 +480,7 @@ class NetworkingFixture(BaseTestFixture):
                 expected_port.fixed_ips, port.fixed_ips,
                 msg.format(expected_port.fixed_ips, port.fixed_ips))
         elif subnet is not None:
-            self.assertFixedIps(port, subnet, enabled_fixed_ips)
+            self.assertPortFixedIpsFromSubnet(port, subnet)
         else:
             self.assertTrue(port.fixed_ips, 'Missing fixed ips')
 
@@ -483,27 +503,21 @@ class NetworkingAPIFixture(NetworkingFixture):
         cls.network_data = dict(
             status='ACTIVE', subnets=[],
             name='test_api_net', admin_state_up=True,
-            tenant_id=cls.net.networking_auth_composite().tenant_id,
+            tenant_id=cls.user.tenant_id,
             shared=False)
 
         # Data for creating subnets and asserting responses
         cls.subnet_data = dict(
             name='test_api_subnet',
-            tenant_id=cls.net.networking_auth_composite().tenant_id,
+            tenant_id=cls.user.tenant_id,
             enable_dhcp=None, dns_nameservers=[], gateway_ip=None,
             host_routes=[])
 
         # Data for creating ports and asserting responses
         cls.port_data = dict(
             status='ACTIVE', name='test_api_port', admin_state_up=True,
-            tenant_id=cls.net.networking_auth_composite().tenant_id,
+            tenant_id=cls.user.tenant_id,
             device_owner=None, device_id='', security_groups=[])
-
-        # Getting second user data for negative testing
-        cls.alt_user = NetworkingSecondUserConfig()
-
-        # Using the networkingCleanup method
-        cls.addClassCleanup(cls.networkingCleanUp)
 
     @classmethod
     def get_expected_network_data(cls):
@@ -539,16 +553,6 @@ class NetworkingAPIFixture(NetworkingFixture):
         expected_subnet.allocation_pools = [allocation_pool]
         return expected_subnet
 
-    def get_fixed_ips_data(self, subnet, num=1, enabled=True):
-        """Generates multiple fixed ips within a subnet"""
-        ips = self.subnets.behaviors.get_ips(cidr=subnet.cidr, num=num)
-
-        # Removing duplicate IPs in case of any
-        ips = list(set(ips))
-        fixed_ips = [dict(subnet_id=subnet.id, ip_address=ip, enabled=enabled)
-                     for ip in ips]
-        return fixed_ips
-
     def get_ipv4_dns_nameservers_data(self):
         """IPv4 dns nameservers test data (quota is 2)"""
                 # IPv4 dns_nameservers test data
@@ -563,70 +567,19 @@ class NetworkingAPIFixture(NetworkingFixture):
         ipv6_dns_nameservers = [dns_1, dns_2]
         return ipv6_dns_nameservers
 
-    def get_allocation_pools_data(self, cidr, start_increment,
-                                  ip_range, interval, num):
-        """
-        @summary: Generates allocation pools subnet data
-        @param cidr: cidr for allocation pools
-        @type cidr: string
-        @param start_increment: increment from first cidr address to first
-            allocation pool IP address
-        @type start_increment: int
-        @param ip_range: ip addresses from start IP to end IP of allocation
-            pool
-        @type ip_range: int
-        @param interval: ip addresses from end of allocation pool to start IP
-            of the next allocation pool (if multiple)
-        @type interval: int
-        @param num: number of allocation pools to create within the cidr
-        @type num: int
-        """
-        allocation_pools = []
-        for _ in range(num):
-            end_increment = start_increment + ip_range
-            allocation_pool = self.subnets.behaviors.get_allocation_pool(
-                cidr=cidr, start_increment=start_increment,
-                end_increment=end_increment)
-            allocation_pools.append(allocation_pool)
-            start_increment = end_increment + interval
-        return allocation_pools
-
-    def get_ipv4_host_route_data(self, num=1):
-        """IPv4 host routes test data (num host routes, quota is 3)"""
-        host_route_cidrv6 = self.subnets.behaviors.create_ipv6_cidr()
+    def get_host_route_data(self, ipv4_num=1, ipv6_num=1):
+        """Host routes test data (host routes quota is 3)"""
         host_route_cidrv4 = self.subnets.behaviors.create_ipv4_cidr()
-
-        # Minus 1 since it is added afterwards with an IPv6 nexthop
-        num -= 1
-        host_routes = []
-        if num:
-            ipv4_ips = self.subnets.behaviors.get_ips(host_route_cidrv4, num)
-            ipv4_host_routes = self.subnets.behaviors.get_host_routes(
-                cidr=host_route_cidrv4, ips=ipv4_ips)
-            host_routes.extend(ipv4_host_routes)
-        nexthop_ipv6 = self.subnets.behaviors.get_random_ip(host_route_cidrv6)
-        ipv6_host_route = self.subnets.behaviors.get_host_routes(
-            cidr=host_route_cidrv6, ips=[nexthop_ipv6])
-        host_routes.extend(ipv6_host_route)
-        return host_routes
-
-    def get_ipv6_host_route_data(self, num=1):
-        """IPv6 host routes test data (n host routes, quota is 3)"""
         host_route_cidrv6 = self.subnets.behaviors.create_ipv6_cidr()
-        host_route_cidrv4 = self.subnets.behaviors.create_ipv4_cidr()
 
-        # Minus 1 since it is added afterwards with an IPv4 nexthop
-        num -= 1
-        host_routes = []
-        if num:
-            ipv6_ips = self.subnets.behaviors.get_ips(host_route_cidrv6, num)
-            ipv6_host_routes = self.subnets.behaviors.get_host_routes(
-                cidr=host_route_cidrv6, ips=ipv6_ips)
-            host_routes.extend(ipv6_host_routes)
-        nexthop_ipv4 = self.subnets.behaviors.get_random_ip(host_route_cidrv4)
-        ipv4_host_route = self.subnets.behaviors.get_host_routes(
-            cidr=host_route_cidrv4, ips=[nexthop_ipv4])
-        host_routes.extend(ipv4_host_route)
+        ipv4_ips = self.subnets.behaviors.get_ips(host_route_cidrv4, ipv4_num)
+        ipv4_host_routes = self.subnets.behaviors.get_host_routes(
+            cidr=host_route_cidrv4, ips=ipv4_ips)
+        ipv6_ips = self.subnets.behaviors.get_ips(host_route_cidrv6, ipv6_num)
+        ipv6_host_routes = self.subnets.behaviors.get_host_routes(
+            cidr=host_route_cidrv6, ips=ipv6_ips)
+
+        host_routes = ipv4_host_routes + ipv6_host_routes
         return host_routes
 
 
@@ -650,5 +603,198 @@ class NetworkingComputeFixture(NetworkingFixture):
         cls.flavor_ref = cls.flavors.config.primary_flavor
         cls.image_ref = cls.images.config.primary_image
 
-        # Using the networkingCleanup method
-        cls.addClassCleanup(cls.networkingCleanUp)
+
+class NetworkingSecurityGroupsFixture(NetworkingFixture):
+    """
+    @summary: fixture for networking security groups tests
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        super(NetworkingSecurityGroupsFixture, cls).setUpClass()
+        cls.sec = SecurityGroupsComposite()
+
+        # Data for creating security groups
+        cls.security_group_data = dict(
+            description='', security_group_rules=[], name='test_secgroup',
+            tenant_id=cls.user.tenant_id)
+
+        # Data for creating security group rules
+        cls.security_group_rule_data = dict(
+            remote_group_id=None, direction='ingress', remote_ip_prefix=None,
+            protocol=None, ethertype='IPv4', port_range_max=None,
+            port_range_min=None,
+            tenant_id=cls.user.tenant_id)
+
+        cls.delete_secgroups = []
+        cls.failed_secgroups = []
+        cls.delete_secgroups_rules = []
+        cls.failed_secgroups_rules = []
+
+        # Using the secGroupCleanup method
+        cls.addClassCleanup(cls.secGroupCleanUp)
+
+    @classmethod
+    def get_expected_secgroup_data(cls):
+        """Security Group object with default data"""
+        expected_secgroup = SecurityGroup(**cls.security_group_data)
+        return expected_secgroup
+
+    @classmethod
+    def get_expected_secrule_data(cls):
+        """Security Group Rule object with default data"""
+        expected_secrule = SecurityGroupRule(**cls.security_group_rule_data)
+        return expected_secrule
+
+    @classmethod
+    def secGroupCleanUp(cls):
+        """
+        @summary: Deletes security groups and rules using the keep_resources
+            and keep_resources_on_failure flags. Will be called after any
+            class tearDown or setUp failure.
+        """
+        cls.fixture_log.info('secGroupCleanUp: deleting groups and rules....')
+        cls.secRulesCleanUp()
+        cls.secGroupsCleanUp()
+
+    @classmethod
+    def secRulesCleanUp(cls):
+        """
+        @summary: Deletes security groups rules using the keep_resources
+            and keep_resources_on_failure flags
+        """
+        cls.fixture_log.info('secRulesCleanUp: deleting rules....')
+        if not cls.sec.config.keep_resources and cls.delete_secgroups_rules:
+            if cls.sec.config.keep_resources_on_failure:
+                cls.fixture_log.info('Keeping failed security rules...')
+                for failed_secrule in cls.failed_secgroups_rules:
+                    if failed_secrule in cls.delete_secgroups_rules:
+                        cls.delete_secgroups_rules.remove(failed_secrule)
+            cls.fixture_log.info('Deleting security group rules...')
+            cls.sec.behaviors.delete_security_group_rules(
+                security_group_rule_list=cls.delete_secgroups_rules)
+            cls.delete_secgroups_rules = []
+
+    @classmethod
+    def secGroupsCleanUp(cls):
+        """
+        @summary: Deletes security groups using the keep_resources
+            and keep_resources_on_failure flags
+        """
+        cls.fixture_log.info('secGroupsCleanUp: deleting groups....')
+        if not cls.sec.config.keep_resources and cls.delete_secgroups:
+            if cls.sec.config.keep_resources_on_failure:
+                cls.fixture_log.info('Keeping failed security groups...')
+                for failed_secgroup in cls.failed_secgroups:
+                    if failed_secgroup in cls.delete_secgroups:
+                        cls.delete_secgroups.remove(failed_secgroup)
+            cls.fixture_log.info('Deleting security groups...')
+            cls.sec.behaviors.delete_security_groups(
+                security_group_list=cls.delete_secgroups)
+            cls.delete_secgroups = []
+
+    def create_test_secgroup(self, expected_secgroup):
+        """
+        @summary: creating a test security group
+        @param expected_secgroup: security group object with expected params
+        @type expected_secgroup: models.response.SecurityGroup
+        @return: security group entity
+        @rtype: models.response.SecurityGroup
+        """
+        # ResourceBuildException will be raised if not created successfully
+        resp = self.sec.behaviors.create_security_group(
+            name=expected_secgroup.name,
+            description=expected_secgroup.description)
+
+        secgroup = resp.response.entity
+        self.delete_secgroups.append(secgroup.id)
+
+        # Check the Security Group response
+        self.assertSecurityGroupResponse(expected_secgroup, secgroup,
+                                         check_exact_name=False)
+        return secgroup
+
+    def assertSecurityGroupResponse(self, expected_secgroup, secgroup,
+                                    check_exact_name=True,
+                                    check_secgroup_rules=True):
+        """
+        @summary: compares two security group entity objects
+        """
+        self.fixture_log.info('asserting Security Group response ...')
+        msg = 'Expected {0} instead of {1}'
+
+        self.assertTrue(secgroup.id, 'Missing Security Group ID')
+
+        if check_exact_name:
+            self.assertEqual(expected_secgroup.name, secgroup.name,
+                msg.format(expected_secgroup.name, secgroup.name))
+        else:
+            start_name_msg = 'Expected {0} name to start with {1}'.format(
+                secgroup.name, expected_secgroup.name)
+            self.assertTrue(secgroup.name.startswith(expected_secgroup.name),
+                            start_name_msg)
+        self.assertEqual(
+            expected_secgroup.description, secgroup.description,
+            msg.format(expected_secgroup.description, secgroup.description))
+        self.assertEqual(
+            expected_secgroup.tenant_id, secgroup.tenant_id,
+            msg.format(expected_secgroup.tenant_id, secgroup.tenant_id))
+
+        if check_secgroup_rules:
+            self.assertEqual(
+                expected_secgroup.security_group_rules,
+                secgroup.security_group_rules,
+                    msg.format(expected_secgroup.security_group_rules,
+                               secgroup.security_group_rules))
+
+        if self.config.check_response_attrs:
+            msg = 'Unexpected Security Groups response attributes: {0}'.format(
+                secgroup.kwargs)
+            self.assertFalse(secgroup.kwargs, msg)
+
+    def assertSecurityGroupRuleResponse(self, expected_secrule, secrule):
+        """
+        @summary: compares two security group rule entity objects
+        """
+        self.fixture_log.info('asserting Security Group Rule response ...')
+        msg = 'Expected {0} instead of {1}'
+
+        self.assertTrue(secrule.id, 'Missing Security Group Rule ID')
+
+        self.assertEqual(
+            expected_secrule.remote_group_id, secrule.remote_group_id,
+            msg.format(expected_secrule.remote_group_id,
+                       secrule.remote_group_id))
+        self.assertEqual(
+            expected_secrule.direction, secrule.direction,
+            msg.format(expected_secrule.direction, secrule.direction))
+        self.assertEqual(
+            expected_secrule.remote_ip_prefix, secrule.remote_ip_prefix,
+            msg.format(expected_secrule.remote_ip_prefix,
+                       secrule.remote_ip_prefix))
+        self.assertEqual(
+            expected_secrule.protocol, secrule.protocol,
+            msg.format(expected_secrule.protocol, secrule.protocol))
+        self.assertEqual(
+            expected_secrule.ethertype, secrule.ethertype,
+            msg.format(expected_secrule.ethertype, secrule.ethertype))
+        self.assertEqual(
+            expected_secrule.port_range_max, secrule.port_range_max,
+            msg.format(expected_secrule.port_range_max,
+                       secrule.port_range_max))
+        self.assertEqual(
+            expected_secrule.security_group_id, secrule.security_group_id,
+            msg.format(expected_secrule.security_group_id,
+                       secrule.security_group_id))
+        self.assertEqual(
+            expected_secrule.port_range_min, secrule.port_range_min,
+            msg.format(expected_secrule.port_range_min,
+                       secrule.port_range_min))
+        self.assertEqual(
+            expected_secrule.tenant_id, secrule.tenant_id,
+            msg.format(expected_secrule.tenant_id, secrule.tenant_id))
+
+        if self.config.check_response_attrs:
+            msg = ('Unexpected Security Groups Rule response attributes: '
+                   '{0}').format(secrule.kwargs)
+            self.assertFalse(secrule.kwargs, msg)

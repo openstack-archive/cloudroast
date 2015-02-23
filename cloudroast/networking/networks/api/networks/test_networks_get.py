@@ -45,7 +45,7 @@ class NetworkGetTest(NetworkingAPIFixture):
     def tearDown(self):
         self.networkingCleanUp()
 
-    @tags(type='smoke', rbac='observer')
+    @tags('smoke', 'observer')
     def test_network_list(self):
         """
         @summary: Get networks test
@@ -55,7 +55,7 @@ class NetworkGetTest(NetworkingAPIFixture):
         # Fail the test if any failure is found
         self.assertFalse(resp.failures)
 
-    @tags(type='smoke', rbac='observer')
+    @tags('smoke', 'observer')
     def test_network_list_w_shared_true(self):
         """
         @summary: Get networks test with shared set to True. This should
@@ -81,7 +81,7 @@ class NetworkGetTest(NetworkingAPIFixture):
                 missing_networks, network_ids)
             self.fail(msg)
 
-    @tags(type='smoke', rbac='observer')
+    @tags('smoke', 'observer')
     def test_network_get(self):
         """
         @summary: Get network test
@@ -99,7 +99,7 @@ class NetworkGetTest(NetworkingAPIFixture):
         # Check the network response
         self.assertNetworkResponse(expected_network, network)
 
-    @tags(type='smoke', rbac='observer')
+    @tags('smoke', 'observer')
     def test_network_w_subnets_get(self):
         """
         @summary: Get network with subnets test
@@ -127,7 +127,7 @@ class NetworkGetTest(NetworkingAPIFixture):
         network.subnets.sort()
         self.assertNetworkResponse(expected_network, network)
 
-    @tags(type='smoke', rbac='observer')
+    @tags('smoke', 'observer')
     def test_network_w_ports_get(self):
         """
         @summary: Get network with ports test

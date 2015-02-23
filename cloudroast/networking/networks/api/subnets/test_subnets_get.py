@@ -73,7 +73,7 @@ class SubnetsGetTest(NetworkingAPIFixture):
     def tearDown(self):
         self.networkingCleanUp()
 
-    @tags(type='smoke', rbac='observer')
+    @tags('smoke', 'observer')
     def test_list_subnets(self):
         """
         @summary: Get subnets test (list)
@@ -83,7 +83,7 @@ class SubnetsGetTest(NetworkingAPIFixture):
         # Fail the test if any failure is found
         self.assertFalse(resp.failures)
 
-    @tags(type='negative', rbac='observer', quark='yes')
+    @tags('negative', 'observer', 'quark')
     def test_hidden_subnets_public_private(self):
         """
         @summary: Testing public and service net (private) networks are NOT

@@ -44,7 +44,7 @@ class NetworkDeleteTest(NetworkingAPIFixture):
     def tearDown(self):
         self.networkingCleanUp()
 
-    @tags(type='smoke', rbac='admin')
+    @tags('smoke', 'admin')
     def test_network_delete(self):
         """
         @summary: Deleting a Network
@@ -69,7 +69,7 @@ class NetworkDeleteTest(NetworkingAPIFixture):
             delete_list=self.delete_networks,
             error_type=NeutronErrorTypes.NETWORK_NOT_FOUND)
 
-    @tags(type='smoke', rbac='admin')
+    @tags('smoke', 'admin')
     def test_network_delete_w_subnets(self):
         """
         @summary: Deleting a Network with subnets
@@ -101,7 +101,7 @@ class NetworkDeleteTest(NetworkingAPIFixture):
             delete_list=self.delete_networks,
             error_type=NeutronErrorTypes.NETWORK_NOT_FOUND)
 
-    @tags(type='negative', rbac='admin')
+    @tags('negative', 'admin')
     def test_network_delete_w_ports(self):
         """
         @summary: Negative Deleting a Network with ports

@@ -59,7 +59,7 @@ class PortDeleteTest(NetworkingAPIFixture):
     def tearDown(self):
         self.networkingCleanUp()
 
-    @tags(type='smoke', rbac='admin')
+    @tags('smoke', 'admin')
     def test_ipv4_port_delete(self):
         """
         @summary: Delete port test
@@ -84,7 +84,7 @@ class PortDeleteTest(NetworkingAPIFixture):
             delete_list=self.delete_ports,
             error_type=NeutronErrorTypes.PORT_NOT_FOUND)
 
-    @tags(type='smoke', rbac='admin')
+    @tags('smoke', 'admin')
     def test_ipv6_port_delete(self):
         """
         @summary: Delete port test
@@ -104,6 +104,62 @@ class PortDeleteTest(NetworkingAPIFixture):
 
         # Port get should be unavailable since the port is expected to be gone
         msg = '(negative) Getting a deleted port'
+        self.assertNegativeResponse(
+            resp=resp, status_code=NeutronResponseCodes.NOT_FOUND, msg=msg,
+            delete_list=self.delete_ports,
+            error_type=NeutronErrorTypes.PORT_NOT_FOUND)
+
+    @tags('positive', 'admin')
+    def test_port_delete_with_device_id(self):
+        """
+        @summary: Deleting a port with device id data
+        """
+        expected_port = self.expected_ipv4_port
+        expected_port.name = 'test_port_delete_w_device_id'
+        fixed_ips = self.subnets.behaviors.get_fixed_ips(self.ipv4_subnet, 2)
+        expected_port.fixed_ips = fixed_ips
+        expected_port.device_id = 'device_id_test'
+
+        # Quark non-updatable params (request still should work)
+        expected_port.admin_state_up = False
+
+        # Creating a port in a network with both subnets
+        resp = self.ports.behaviors.create_port(
+            network_id=expected_port.network_id, name=expected_port.name,
+            admin_state_up=expected_port.admin_state_up,
+            fixed_ips=expected_port.fixed_ips,
+            device_id=expected_port.device_id,
+            raise_exception=False, use_exact_name=True)
+        if resp.response.entity and hasattr(resp.response.entity, 'id'):
+            self.delete_ports.append(resp.response.entity.id)
+
+        # Fail the test if any failure is found
+        self.assertFalse(resp.failures)
+        port = resp.response.entity
+
+        # Need to format IPv6 fixed ips response for assertion
+        port.fixed_ips = self.ports.behaviors.format_fixed_ips(
+            port.fixed_ips)
+
+        # Quark non-updatable params (resetting to original values)
+        expected_port.admin_state_up = True
+
+        # Check the Port response (Port expected on IPv4 Subnet
+        self.assertPortResponse(expected_port, port, check_fixed_ips=True)
+
+        # Deleting the port
+        resp = self.ports.behaviors.delete_port(
+            port_id=port.id)
+
+        # Fail the test if any failure is found
+        self.assertFalse(resp.failures)
+
+        resp = self.ports.behaviors.get_port(
+            port_id=port.id, resource_get_attempts=1,
+                 raise_exception=False, poll_interval=0)
+
+        # Port get should be unavailable since the port is expected to be gone
+        msg = '(negative) Getting a deleted port w device id data'
         self.assertNegativeResponse(
             resp=resp, status_code=NeutronResponseCodes.NOT_FOUND, msg=msg,
             delete_list=self.delete_ports,

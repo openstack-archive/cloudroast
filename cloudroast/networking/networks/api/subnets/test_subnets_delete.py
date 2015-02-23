@@ -44,7 +44,7 @@ class SubnetDeleteTest(NetworkingAPIFixture):
     def tearDown(self):
         self.networkingCleanUp()
 
-    @tags(type='smoke', rbac='admin')
+    @tags('smoke', 'admin')
     def test_ipv4_subnet_delete_on_net_w_other_subnet(self):
         """
         @summary: Deleting an IPv4 subnet delete
@@ -92,7 +92,7 @@ class SubnetDeleteTest(NetworkingAPIFixture):
         # Check the IPv6 Subnet remains the same
         self.assertSubnetResponse(ipv6_subnet, get_ipv6_subnet)
 
-    @tags(type='smoke', rbac='admin')
+    @tags('smoke', 'admin')
     def test_ipv6_subnet_delete_on_net_w_other_subnet(self):
         """
         @summary: Deleting an IPv6 subnet delete

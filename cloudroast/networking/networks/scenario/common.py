@@ -27,7 +27,7 @@ PING_PACKET_LOSS_REGEX = '(\d{1,3})\.?\d*\%.*loss'
 
 class Instance(object):
 
-    def __init__(self, entity, isolated_ips, remote_client):
+    def __init__(self, entity, isolated_ips, remote_client=None):
         self.entity = entity
         for network_name, ip in isolated_ips.items():
             setattr(self, network_name, ip)
@@ -69,14 +69,7 @@ class L2HostroutesGatewayMixin(object):
         cls.resources.add(server.id, cls.servers_client.delete_server)
         isolated_ips = cls._get_server_isolated_ips(
             server, isolated_networks_to_connect)
-        remote_client = None
-        if public_and_service:
-            public_ip = cls.server_behaviors.get_public_ip_address(server)
-            remote_client = cls.server_behaviors.get_remote_instance_client(
-                server, ip_address=public_ip, username='root',
-                key=cls.keypair.private_key,
-                auth_strategy=InstanceAuthStrategies.KEY)
-        return Instance(server, isolated_ips, remote_client)
+        return Instance(server, isolated_ips)
 
     @classmethod
     def _get_server_isolated_ips(cls, server, isolated_networks):
@@ -91,6 +84,16 @@ class L2HostroutesGatewayMixin(object):
         name = rand_name(NAMES_PREFIX)
         cls.keypair = cls.keypairs_client.create_keypair(name).entity
         cls.resources.add(name, cls.keypairs_client.delete_keypair)
+
+    @classmethod
+    def _get_remote_client(cls, server):
+        remote_client = cls.server_behaviors.get_remote_instance_client(
+            server.entity,
+            ip_address=cls.server_behaviors.get_public_ip_address(
+                server.entity),
+            username='root', key=cls.keypair.private_key,
+            auth_strategy=InstanceAuthStrategies.KEY)
+        return remote_client
 
     @classmethod
     def _transfer_private_key_to_vm(cls, ssh_client, private_key,

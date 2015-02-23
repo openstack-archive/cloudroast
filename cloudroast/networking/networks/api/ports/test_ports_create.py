@@ -49,7 +49,7 @@ class PortCreateTest(NetworkingAPIFixture):
     def tearDown(self):
         self.networkingCleanUp()
 
-    @tags(type='negative', rbac='creator')
+    @tags('negative', 'creator')
     def test_port_create_on_net_without_subnet(self):
         """
         @summary: Negative creating a Port on Network without subnets
@@ -65,7 +65,7 @@ class PortCreateTest(NetworkingAPIFixture):
             delete_list=self.delete_ports,
             error_type=NeutronErrorTypes.IP_ADDRESS_GENERATION_FAILURE)
 
-    @tags(type='negative', rbac='creator')
+    @tags('negative', 'creator')
     def test_port_create_w_inexistent_network_id(self):
         """
         @summary: Negative test creating a Port with an inexistent Network ID
@@ -81,7 +81,7 @@ class PortCreateTest(NetworkingAPIFixture):
             delete_list=self.delete_ports,
             error_type=NeutronErrorTypes.NETWORK_NOT_FOUND)
 
-    @tags(type='smoke', rbac='creator')
+    @tags('smoke', 'creator')
     def test_port_create_on_net_w_ipv4_subnet(self):
         """
         @summary: Creating a port on an IPv4 Subnet
@@ -104,7 +104,7 @@ class PortCreateTest(NetworkingAPIFixture):
         # Check the Port response
         self.assertPortResponse(expected_port, port, subnet=ipv4_subnet)
 
-    @tags(type='smoke', rbac='creator')
+    @tags('smoke', 'creator')
     def test_port_create_on_net_w_ipv6_subnet(self):
         """
         @summary: Creating a port on an IPv6 Subnet
@@ -127,8 +127,7 @@ class PortCreateTest(NetworkingAPIFixture):
         # Check the Port response
         self.assertPortResponse(expected_port, port, subnet=ipv6_subnet)
 
-    @unittest.skip('Needs RM10996 fix')
-    @tags(type='smoke', rbac='creator')
+    @tags('smoke', 'creator')
     def test_port_create_on_net_w_both_subnets(self):
         """
         @summary: Creating a port on network with IPv4 and IPv6 subnets
@@ -152,8 +151,7 @@ class PortCreateTest(NetworkingAPIFixture):
         # Check the Port response (Port expected on IPv4 Subnet
         self.assertPortResponse(expected_port, port, subnet=ipv4_subnet)
 
-    @unittest.skip('Needs RM10996 fix')
-    @tags(type='smoke', rbac='creator')
+    @tags('smoke', 'creator')
     def test_port_create_on_net_w_both_subnets_w_long_name(self):
         """
         @summary: Creating a port with a 40 char name
@@ -178,7 +176,7 @@ class PortCreateTest(NetworkingAPIFixture):
         self.assertPortResponse(expected_port, port, subnet=ipv4_subnet)
 
     @unittest.skip('Needs RM10088 fix')
-    @tags(type='negative', rbac='creator')
+    @tags('negative', 'creator')
     def test_port_create_on_net_w_both_subnets_w_long_name_trimming(self):
         """
         @summary: Creating a port with a 50 char name (name should be
@@ -207,7 +205,7 @@ class PortCreateTest(NetworkingAPIFixture):
         # Check the Port response (Port expected on IPv4 Subnet
         self.assertPortResponse(expected_port, port, subnet=ipv4_subnet)
 
-    @tags(type='smoke', rbac='creator')
+    @tags('smoke', 'creator')
     def test_ipv4_ipv6_port_create_on_net_w_both_subnets(self):
         """
         @summary: Creating a port on network with IPv4 and IPv6 subnets
@@ -218,15 +216,14 @@ class PortCreateTest(NetworkingAPIFixture):
         ipv4_subnet = self.add_subnet_to_network(self.expected_ipv4_subnet)
         ipv6_subnet = self.add_subnet_to_network(self.expected_ipv6_subnet)
 
-        fixed_ips = self.get_fixed_ips_data(ipv6_subnet, 2)
-        fixed_ips.extend(self.get_fixed_ips_data(ipv4_subnet, 2))
+        fixed_ips = self.subnets.behaviors.get_fixed_ips(ipv6_subnet, 2)
+        fixed_ips.extend(self.subnets.behaviors.get_fixed_ips(ipv4_subnet, 2))
         expected_port.fixed_ips = fixed_ips
 
         expected_port.device_id = 'device_id_test'
 
         # Quark non-updatable params (request still should work)
         expected_port.admin_state_up = False
-        expected_port.device_owner = 'new_owner_today'
 
         # Creating a port in a network with both subnets
         resp = self.ports.behaviors.create_port(
@@ -234,7 +231,6 @@ class PortCreateTest(NetworkingAPIFixture):
             admin_state_up=expected_port.admin_state_up,
             fixed_ips=expected_port.fixed_ips,
             device_id=expected_port.device_id,
-            device_owner=expected_port.device_owner,
             raise_exception=False, use_exact_name=True)
         if resp.response.entity and hasattr(resp.response.entity, 'id'):
             self.delete_ports.append(resp.response.entity.id)
@@ -249,12 +245,11 @@ class PortCreateTest(NetworkingAPIFixture):
 
         # Quark non-updatable params (resetting to original values)
         expected_port.admin_state_up = True
-        expected_port.device_owner = None
 
         # Check the Port response (Port expected on IPv4 Subnet
         self.assertPortResponse(expected_port, port, check_fixed_ips=True)
 
-    @tags(type='smoke', rbac='creator')
+    @tags('smoke', 'creator')
     def test_ipv4_port_create_on_net_w_subnet_ids_from_another_network(self):
         """
         @summary: Creating a port with subnet ID from another network but with
@@ -297,7 +292,7 @@ class PortCreateTest(NetworkingAPIFixture):
         # Port should be created only with fixed IP from the valid subnet
         self.assertPortResponse(expected_port, port, subnet=ipv4_subnet)
 
-    @tags(type='smoke', rbac='creator')
+    @tags('smoke', 'creator')
     def test_ipv6_port_create_on_net_w_subnet_ids_from_another_network(self):
         """
         @summary: Creating a port with subnet ID from another network but with
@@ -340,7 +335,7 @@ class PortCreateTest(NetworkingAPIFixture):
         # Port should be created only with fixed IP from the valid subnet
         self.assertPortResponse(expected_port, port, subnet=ipv6_subnet)
 
-    @tags(type='smoke', rbac='creator')
+    @tags('smoke', 'creator')
     def test_ipv4_port_create_w_fixed_ips(self):
         """
         @summary: Creating a port with IPv4 fixed IPs
@@ -349,7 +344,7 @@ class PortCreateTest(NetworkingAPIFixture):
         expected_port.name = 'test_ipv4_port_create_w_fixed_ips'
         ipv4_subnet = self.add_subnet_to_network(self.expected_ipv4_subnet)
         fixed_ips_number = self.ports.config.fixed_ips_per_port
-        expected_port.fixed_ips = self.get_fixed_ips_data(
+        expected_port.fixed_ips = self.subnets.behaviors.get_fixed_ips(
             ipv4_subnet, fixed_ips_number)
 
         # Creating the port
@@ -367,7 +362,7 @@ class PortCreateTest(NetworkingAPIFixture):
         # Check the Port response (Port expected on IPv4 Subnet)
         self.assertPortResponse(expected_port, port, check_fixed_ips=True)
 
-    @tags(type='smoke', rbac='creator')
+    @tags('smoke', 'creator')
     def test_ipv4_port_create_w_single_fixed_ips(self):
         """
         @summary: Creating a port with IPv4 fixed IP
@@ -375,7 +370,8 @@ class PortCreateTest(NetworkingAPIFixture):
         expected_port = self.expected_port
         expected_port.name = 'test_ipv4_port_create_w_fixed_ip'
         ipv4_subnet = self.add_subnet_to_network(self.expected_ipv4_subnet)
-        expected_port.fixed_ips = self.get_fixed_ips_data(ipv4_subnet, 1)
+        expected_port.fixed_ips = self.subnets.behaviors.get_fixed_ips(
+            ipv4_subnet, 1)
 
         # Creating the port
         resp = self.ports.behaviors.create_port(
@@ -392,7 +388,7 @@ class PortCreateTest(NetworkingAPIFixture):
         # Check the Port response (Port expected on IPv4 Subnet
         self.assertPortResponse(expected_port, port, check_fixed_ips=True)
 
-    @tags(type='smoke', rbac='creator')
+    @tags('smoke', 'creator')
     def test_ipv4_port_create_on_net_w_both_subnets(self):
         """
         @summary: Creating a port on network with IPv4 and IPv6 subnets
@@ -403,7 +399,7 @@ class PortCreateTest(NetworkingAPIFixture):
         ipv4_subnet = self.add_subnet_to_network(self.expected_ipv4_subnet)
         ipv6_subnet = self.add_subnet_to_network(self.expected_ipv6_subnet)
 
-        fixed_ips = self.get_fixed_ips_data(ipv4_subnet, 2)
+        fixed_ips = self.subnets.behaviors.get_fixed_ips(ipv4_subnet, 2)
         expected_port.fixed_ips = fixed_ips
 
         # Creating a port in a network with both subnets
@@ -421,7 +417,7 @@ class PortCreateTest(NetworkingAPIFixture):
         # Check the Port response (Port expected on IPv4 Subnet)
         self.assertPortResponse(expected_port, port, check_fixed_ips=True)
 
-    @tags(type='smoke', rbac='creator')
+    @tags('smoke', 'creator')
     def test_ipv4_port_create_on_net_w_both_subnets_w_subnet_id_only(self):
         """
         @summary: Creating a port on network with IPv4 and IPv6 subnets
@@ -450,7 +446,7 @@ class PortCreateTest(NetworkingAPIFixture):
         # Check the Port response (Port expected on IPv4 Subnet)
         self.assertPortResponse(expected_port, port, subnet=ipv4_subnet)
 
-    @tags(type='smoke', rbac='creator')
+    @tags('smoke', 'creator')
     def test_ipv6_port_create_w_fixed_ips(self):
         """
         @summary: Creating a port with IPv6 fixed IPs
@@ -459,7 +455,7 @@ class PortCreateTest(NetworkingAPIFixture):
         expected_port.name = 'test_ipv6_port_create_w_fixed_ips'
         ipv6_subnet = self.add_subnet_to_network(self.expected_ipv6_subnet)
         fixed_ips_number = self.ports.config.fixed_ips_per_port
-        expected_port.fixed_ips = self.get_fixed_ips_data(
+        expected_port.fixed_ips = self.subnets.behaviors.get_fixed_ips(
             ipv6_subnet, fixed_ips_number)
 
         # Creating the port
@@ -481,7 +477,7 @@ class PortCreateTest(NetworkingAPIFixture):
         # Check the Port response (Port expected on IPv4 Subnet
         self.assertPortResponse(expected_port, port, check_fixed_ips=True)
 
-    @tags(type='smoke', rbac='creator')
+    @tags('smoke', 'creator')
     def test_ipv6_port_create_w_single_fixed_ips(self):
         """
         @summary: Creating a port with IPv6 fixed IP
@@ -489,7 +485,8 @@ class PortCreateTest(NetworkingAPIFixture):
         expected_port = self.expected_port
         expected_port.name = 'test_ipv6_port_create_w_fixed_ip'
         ipv6_subnet = self.add_subnet_to_network(self.expected_ipv6_subnet)
-        expected_port.fixed_ips = self.get_fixed_ips_data(ipv6_subnet, 1)
+        expected_port.fixed_ips = self.subnets.behaviors.get_fixed_ips(
+            ipv6_subnet, 1)
 
         # Creating the port
         resp = self.ports.behaviors.create_port(
@@ -510,7 +507,7 @@ class PortCreateTest(NetworkingAPIFixture):
         # Check the Port response (Port expected on IPv4 Subnet
         self.assertPortResponse(expected_port, port, check_fixed_ips=True)
 
-    @tags(type='smoke', rbac='creator')
+    @tags('smoke', 'creator')
     def test_ipv6_port_create_on_net_w_both_subnets(self):
         """
         @summary: Creating a port on network with IPv4 and IPv6 subnets
@@ -521,7 +518,7 @@ class PortCreateTest(NetworkingAPIFixture):
         ipv4_subnet = self.add_subnet_to_network(self.expected_ipv4_subnet)
         ipv6_subnet = self.add_subnet_to_network(self.expected_ipv6_subnet)
 
-        fixed_ips = self.get_fixed_ips_data(ipv6_subnet, 2)
+        fixed_ips = self.subnets.behaviors.get_fixed_ips(ipv6_subnet, 2)
         expected_port.fixed_ips = fixed_ips
 
         # Creating a port in a network with both subnets
@@ -543,7 +540,7 @@ class PortCreateTest(NetworkingAPIFixture):
         # Check the Port response (Port expected on IPv4 Subnet)
         self.assertPortResponse(expected_port, port, check_fixed_ips=True)
 
-    @tags(type='smoke', rbac='creator')
+    @tags('smoke', 'creator')
     def test_ipv6_port_create_on_net_w_both_subnets_w_subnet_id_only(self):
         """
         @summary: Creating a port on network with IPv4 and IPv6 subnets
@@ -576,7 +573,7 @@ class PortCreateTest(NetworkingAPIFixture):
         # Check the Port response (Port expected on IPv4 Subnet)
         self.assertPortResponse(expected_port, port, subnet=ipv6_subnet)
 
-    @tags(type='positive', rbac='creator')
+    @tags('positive', 'creator')
     def test_ipv4_port_create_w_subnet_ids_only(self):
         """
         @summary: Creating a port on network with multiple IPv4 subnets
@@ -603,12 +600,12 @@ class PortCreateTest(NetworkingAPIFixture):
         port = resp.response.entity
 
         # Checking the expected subnets are within the port fixed ips
-        self.assertFixedIpsSubnetIds(port, expected_port)
+        self.assertPortFixedIpsSubnetIds(port, expected_port)
 
         # Check the Port response (Port expected on IPv4 Subnet)
         self.assertPortResponse(expected_port, port)
 
-    @tags(type='positive', rbac='creator')
+    @tags('positive', 'creator')
     def test_ipv6_port_create_w_subnet_ids_only(self):
         """
         @summary: Creating a port on network with multiple IPv6 subnets
@@ -635,12 +632,12 @@ class PortCreateTest(NetworkingAPIFixture):
         port = resp.response.entity
 
         # Checking the expected subnets are within the port fixed ips
-        self.assertFixedIpsSubnetIds(port, expected_port)
+        self.assertPortFixedIpsSubnetIds(port, expected_port)
 
         # Check the Port response (Port expected on IPv4 Subnet)
         self.assertPortResponse(expected_port, port)
 
-    @tags(type='smoke', rbac='creator')
+    @tags('smoke', 'creator')
     def test_ipv4_ipv6_port_create_w_subnet_ids_only(self):
         """
         @summary: Creating a port on network with IPv4 and IPv6 subnets
@@ -668,12 +665,12 @@ class PortCreateTest(NetworkingAPIFixture):
         port = resp.response.entity
 
         # Checking the expected subnets are within the port fixed ips
-        self.assertFixedIpsSubnetIds(port, expected_port)
+        self.assertPortFixedIpsSubnetIds(port, expected_port)
 
         # Check the Port response (Port expected on IPv4 Subnet)
         self.assertPortResponse(expected_port, port)
 
-    @tags(type='smoke', rbac='creator')
+    @tags('smoke', 'creator')
     def test_port_create_on_net_w_both_subnets_w_invalid_subnet_id(self):
         """
         @summary: Negative Creating a port on network with IPv4 and IPv6
@@ -701,7 +698,7 @@ class PortCreateTest(NetworkingAPIFixture):
             resp=resp, status_code=NeutronResponseCodes.BAD_REQUEST, msg=msg,
             delete_list=self.delete_ports)
 
-    @tags(type='negative', rbac='creator')
+    @tags('negative', 'creator')
     def test_ipv4_port_create_w_subnet_id_from_another_network(self):
         """
         @summary: Negative Creating a port with subnet ID from another network
@@ -734,7 +731,7 @@ class PortCreateTest(NetworkingAPIFixture):
             resp=resp, status_code=NeutronResponseCodes.CONFLICT, msg=msg,
             delete_list=self.delete_ports)
 
-    @tags(type='negative', rbac='creator')
+    @tags('negative', 'creator')
     def test_ipv6_port_create_w_subnet_id_from_another_network(self):
         """
         @summary: Negative Creating a port with subnet ID from another network
@@ -767,7 +764,7 @@ class PortCreateTest(NetworkingAPIFixture):
             resp=resp, status_code=NeutronResponseCodes.CONFLICT, msg=msg,
             delete_list=self.delete_ports)
 
-    @tags(type='negative', rbac='creator')
+    @tags('negative', 'creator')
     def test_port_create_w_subnet_ids_from_another_network(self):
         """
         @summary: Negative Creating a port with subnet ID from another network
@@ -807,7 +804,7 @@ class PortCreateTest(NetworkingAPIFixture):
             resp=resp, status_code=NeutronResponseCodes.CONFLICT, msg=msg,
             delete_list=self.delete_ports)
 
-    @tags(type='negative', rbac='creator', quark='yes')
+    @tags('negative', 'creator', 'quark')
     def test_port_create_on_net_w_ipv4_subnet_and_mac_address(self):
         """
         @summary: Negative creating a Port with mac address
@@ -829,7 +826,7 @@ class PortCreateTest(NetworkingAPIFixture):
             delete_list=self.delete_ports,
             error_type=NeutronErrorTypes.POLICY_NOT_AUTHORIZED)
 
-    @tags(type='negative', rbac='creator', quark='yes')
+    @tags('negative', 'creator', 'quark')
     def test_port_create_on_net_w_ipv6_subnet_and_mac_address(self):
         """
         @summary: Negative creating a Port with mac address
@@ -851,7 +848,7 @@ class PortCreateTest(NetworkingAPIFixture):
             delete_list=self.delete_ports,
             error_type=NeutronErrorTypes.POLICY_NOT_AUTHORIZED)
 
-    @tags(type='negative', rbac='creator', quark='yes')
+    @tags('negative', 'creator', 'quark')
     def test_port_create_on_net_w_ipv4_subnet_and_security_groups(self):
         """
         @summary: Negative creating a Port with security groups
@@ -874,7 +871,7 @@ class PortCreateTest(NetworkingAPIFixture):
             delete_list=self.delete_ports,
             error_type=NeutronErrorTypes.SECURITY_GROUPS_NOT_IMPLEMENTED)
 
-    @tags(type='negative', rbac='creator', quark='yes')
+    @tags('negative', 'creator', 'quark')
     def test_port_create_on_net_w_ipv6_subnet_and_security_groups(self):
         """
         @summary: Negative creating a Port with security groups
@@ -897,7 +894,7 @@ class PortCreateTest(NetworkingAPIFixture):
             delete_list=self.delete_ports,
             error_type=NeutronErrorTypes.SECURITY_GROUPS_NOT_IMPLEMENTED)
 
-    @tags(type='negative', rbac='creator', quark='yes')
+    @tags('negative', 'creator', 'quark')
     def test_port_create_on_net_w_ipv4_subnet_and_tenant_id(self):
         """
         @summary: Negative creating a Port with tenant id (only for admins)
@@ -918,7 +915,7 @@ class PortCreateTest(NetworkingAPIFixture):
             resp=resp, status_code=NeutronResponseCodes.BAD_REQUEST, msg=msg,
             delete_list=self.delete_ports)
 
-    @tags(type='negative', rbac='creator', quark='yes')
+    @tags('negative', 'creator', 'quark')
     def test_port_create_on_net_w_ipv6_subnet_and_tenant_id(self):
         """
         @summary: Negative creating a Port with tenant id (only for admins)
@@ -939,7 +936,7 @@ class PortCreateTest(NetworkingAPIFixture):
             resp=resp, status_code=NeutronResponseCodes.BAD_REQUEST, msg=msg,
             delete_list=self.delete_ports)
 
-    @tags(type='negative', rbac='creator', quark='yes')
+    @tags('negative', 'creator', 'quark')
     def test_port_create_on_publicnet(self):
         """
         @summary: Negative creating a Port on the public network
@@ -957,7 +954,7 @@ class PortCreateTest(NetworkingAPIFixture):
             delete_list=self.delete_ports,
             error_type=NeutronErrorTypes.POLICY_NOT_AUTHORIZED)
 
-    @tags(type='negative', rbac='creator', quark='yes')
+    @tags('negative', 'creator', 'quark')
     def test_port_create_on_servicenet(self):
         """
         @summary: Negative creating a Port on the service (private) network
@@ -975,7 +972,7 @@ class PortCreateTest(NetworkingAPIFixture):
             delete_list=self.delete_ports,
             error_type=NeutronErrorTypes.POLICY_NOT_AUTHORIZED)
 
-    @tags(type='negative', rbac='creator', quark='yes')
+    @tags('negative', 'creator', 'quark')
     def test_ipv4_port_create_w_invalid_name(self):
         """
         @summary: Negative creating a Port with invalid name
@@ -997,7 +994,7 @@ class PortCreateTest(NetworkingAPIFixture):
             resp=resp, status_code=NeutronResponseCodes.BAD_REQUEST, msg=msg,
             delete_list=self.delete_ports)
 
-    @tags(type='negative', rbac='creator', quark='yes')
+    @tags('negative', 'creator', 'quark')
     def test_ipv6_port_create_w_invalid_name(self):
         """
         @summary: Negative creating a Port with invalid name

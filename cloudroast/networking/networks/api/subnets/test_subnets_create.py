@@ -57,7 +57,7 @@ class SubnetCreateTest(NetworkingAPIFixture):
     def tearDown(self):
         self.networkingCleanUp()
 
-    @tags(type='smoke', rbac='creator')
+    @tags('smoke', 'creator')
     def test_ipv4_subnet_create(self):
         """
         @summary: Creating an IPv4 subnet
@@ -83,7 +83,7 @@ class SubnetCreateTest(NetworkingAPIFixture):
         # Check the Subnet response
         self.assertSubnetResponse(expected_subnet, subnet)
 
-    @tags(type='smoke', rbac='creator')
+    @tags('smoke', 'creator')
     def test_ipv4_subnet_create_w_long_name(self):
         """
         @summary: Creating an IPv4 subnet with a 40 char name
@@ -110,7 +110,7 @@ class SubnetCreateTest(NetworkingAPIFixture):
         self.assertSubnetResponse(expected_subnet, subnet)
 
     @unittest.skip('Needs RM10088 fix')
-    @tags(type='negative', rbac='creator')
+    @tags('negative', 'creator')
     def test_ipv4_subnet_create_w_long_name_trimming(self):
         """
         @summary: Creating an IPv4 subnet with a 50 char name (name should be
@@ -141,7 +141,7 @@ class SubnetCreateTest(NetworkingAPIFixture):
         # Check the Subnet response
         self.assertSubnetResponse(expected_subnet, subnet)
 
-    @tags(type='smoke', rbac='creator')
+    @tags('smoke', 'creator')
     def test_ipv6_subnet_create(self):
         """
         @summary: Creating an IPv6 subnet
@@ -172,7 +172,7 @@ class SubnetCreateTest(NetworkingAPIFixture):
         # Check the Subnet response
         self.assertSubnetResponse(expected_subnet, subnet)
 
-    @tags(type='smoke', rbac='creator')
+    @tags('smoke', 'creator')
     def test_ipv4_subnet_create_w_multiple_params(self):
         """
         @summary: Creating an IPv4 subnet
@@ -180,9 +180,10 @@ class SubnetCreateTest(NetworkingAPIFixture):
         # Setting the expected Subnet and test data params
         expected_subnet = self.expected_ipv4_subnet
         expected_subnet.name = 'test_sub_create_ipv4'
-        expected_subnet.allocation_pools = self.get_allocation_pools_data(
-            cidr=expected_subnet.cidr, start_increment=3, ip_range=20,
-            interval=10, num=3)
+        expected_subnet.allocation_pools = (
+            self.subnets.behaviors.get_allocation_pools(
+                cidr=expected_subnet.cidr, start_increment=3, ip_range=20,
+                interval=10, num=3))
         gateway_ip = self.subnets.behaviors.get_next_ip(
             cidr=expected_subnet.cidr, num=2)
         expected_subnet.gateway_ip = gateway_ip
@@ -190,7 +191,7 @@ class SubnetCreateTest(NetworkingAPIFixture):
             self.get_ipv4_dns_nameservers_data())
         nexthop = self.subnets.behaviors.get_random_ip(expected_subnet.cidr)
         host_route = dict(destination='10.0.3.0/24', nexthop=nexthop)
-        expected_subnet.host_routes = self.get_ipv4_host_route_data(num=2)
+        expected_subnet.host_routes = self.get_host_route_data()
         expected_subnet.host_routes.append(host_route)
 
         # Creating IPv4 subnet
@@ -214,7 +215,7 @@ class SubnetCreateTest(NetworkingAPIFixture):
         # Check the Subnet response
         self.assertSubnetResponse(expected_subnet, subnet)
 
-    @tags(type='smoke', rbac='creator')
+    @tags('smoke', 'creator')
     def test_ipv6_subnet_create_w_multiple_params(self):
         """
         @summary: Creating an IPv6 subnet
@@ -222,9 +223,10 @@ class SubnetCreateTest(NetworkingAPIFixture):
         # Setting the expected Subnet and test data params
         expected_subnet = self.expected_ipv6_subnet
         expected_subnet.name = 'test_sub_create_ipv6'
-        expected_subnet.allocation_pools = self.get_allocation_pools_data(
-            cidr=expected_subnet.cidr, start_increment=100, ip_range=500,
-            interval=50, num=3)
+        expected_subnet.allocation_pools = (
+            self.subnets.behaviors.get_allocation_pools(
+                cidr=expected_subnet.cidr, start_increment=100, ip_range=500,
+                interval=50, num=3))
         gateway_ip = self.subnets.behaviors.get_next_ip(
             cidr=expected_subnet.cidr, num=2)
         expected_subnet.gateway_ip = gateway_ip
@@ -233,7 +235,7 @@ class SubnetCreateTest(NetworkingAPIFixture):
 
         nexthop = self.subnets.behaviors.get_random_ip(expected_subnet.cidr)
         host_route = dict(destination='10.0.3.0/24', nexthop=nexthop)
-        expected_subnet.host_routes = self.get_ipv6_host_route_data(num=2)
+        expected_subnet.host_routes = self.get_host_route_data()
         expected_subnet.host_routes.append(host_route)
 
         # Creating IPv6 subnet
@@ -265,7 +267,7 @@ class SubnetCreateTest(NetworkingAPIFixture):
         # Check the Subnet response
         self.assertSubnetResponse(expected_subnet, subnet)
 
-    @tags(type='positive', rbac='creator', quark='yes')
+    @tags('positive', 'creator', 'quark')
     def test_ipv4_subnet_create_w_enable_dhcp(self):
         """
         @summary: Creating a subnet with the enable_dhcp param.
@@ -297,7 +299,7 @@ class SubnetCreateTest(NetworkingAPIFixture):
         self.assertSubnetResponse(expected_subnet, subnet,
                                   check_exact_name=False)
 
-    @tags(type='positive', rbac='creator', quark='yes')
+    @tags('positive', 'creator', 'quark')
     def test_ipv6_subnet_create_w_enable_dhcp(self):
         """
         @summary: Creating a subnet with the enable_dhcp param.
@@ -334,7 +336,7 @@ class SubnetCreateTest(NetworkingAPIFixture):
         self.assertSubnetResponse(expected_subnet, subnet,
                                   check_exact_name=False)
 
-    @tags(type='negative', rbac='creator')
+    @tags('negative', 'creator')
     def test_ipv4_subnet_create_w_invalid_network_id(self):
         """
         @summary: Negative test creating a subnet with an invalid Network ID
@@ -354,7 +356,7 @@ class SubnetCreateTest(NetworkingAPIFixture):
             resp=resp, status_code=NeutronResponseCodes.BAD_REQUEST, msg=msg,
             delete_list=self.delete_subnets)
 
-    @tags(type='negative', rbac='creator')
+    @tags('negative', 'creator')
     def test_ipv4_subnet_create_w_inexistent_network_id(self):
         """
         @summary: Negative test creating a subnet with an inexistent Network ID
@@ -374,7 +376,7 @@ class SubnetCreateTest(NetworkingAPIFixture):
             resp=resp, status_code=NeutronResponseCodes.NOT_FOUND, msg=msg,
             delete_list=self.delete_subnets)
 
-    @tags(type='negative', rbac='creator')
+    @tags('negative', 'creator')
     def test_ipv4_subnet_create_without_network_id(self):
         """
         @summary: Negative test creating a subnet without Network ID
@@ -396,7 +398,7 @@ class SubnetCreateTest(NetworkingAPIFixture):
             resp=resp, status_code=NeutronResponseCodes.BAD_REQUEST, msg=msg,
             delete_list=self.delete_subnets)
 
-    @tags(type='negative', rbac='creator')
+    @tags('negative', 'creator')
     def test_ipv4_subnet_create_without_cidr(self):
         """
         @summary: Negative test creating a subnet without CIDR
@@ -415,7 +417,7 @@ class SubnetCreateTest(NetworkingAPIFixture):
             resp=resp, status_code=NeutronResponseCodes.BAD_REQUEST, msg=msg,
             delete_list=self.delete_subnets)
 
-    @tags(type='negative', rbac='creator')
+    @tags('negative', 'creator')
     def test_ipv4_subnet_create_without_ip_version(self):
         """
         @summary: Negative test creating a subnet without ip version
@@ -438,7 +440,7 @@ class SubnetCreateTest(NetworkingAPIFixture):
             resp=resp, status_code=NeutronResponseCodes.BAD_REQUEST, msg=msg,
             delete_list=self.delete_subnets)
 
-    @tags(type='positive', rbac='creator')
+    @tags('positive', 'creator')
     def test_subnet_create_w_tenant_id(self):
         """
         @summary: Creating a subnet with the tenant_id
@@ -466,7 +468,7 @@ class SubnetCreateTest(NetworkingAPIFixture):
 
     @unittest.skipIf(not NetworkingSecondUserConfig().tenant_id,
                      'Missing secondary networking user in config file')
-    @tags(type='negative', alt_user='yes', rbac='creator')
+    @tags('negative', 'alt_user', 'creator')
     def test_subnet_create_w_another_tenant_id(self):
         """
         @summary: Negative test creating a subnet with another tenant.
@@ -486,7 +488,7 @@ class SubnetCreateTest(NetworkingAPIFixture):
             resp=resp, status_code=NeutronResponseCodes.BAD_REQUEST, msg=msg,
             delete_list=self.delete_subnets)
 
-    @tags(type='negative', rbac='creator', quark='yes')
+    @tags('negative', 'creator', 'quark')
     def test_ipv4_subnet_quota(self):
         """
         @summary: Negative testing IPv4 subnets quotas limit
@@ -527,7 +529,7 @@ class SubnetCreateTest(NetworkingAPIFixture):
             delete_list=self.delete_subnets,
             error_type=NeutronErrorTypes.OVER_QUOTA)
 
-    @tags(type='negative', rbac='creator', quark='yes')
+    @tags('negative', 'creator', 'quark')
     def test_ipv6_subnet_quota(self):
         """
         @summary: Negative testing IPv6 subnets quotas limit
@@ -573,7 +575,7 @@ class SubnetCreateTest(NetworkingAPIFixture):
             delete_list=self.delete_subnets,
             error_type=NeutronErrorTypes.OVER_QUOTA)
 
-    @tags(type='negative', rbac='creator', quark='yes')
+    @tags('negative', 'creator', 'quark')
     def test_ipv4_subnet_dns_nameservers_quota(self):
         """
         @summary: Negative testing IPv4 dns nameservers per subnet quota limit
@@ -624,7 +626,7 @@ class SubnetCreateTest(NetworkingAPIFixture):
             delete_list=self.delete_subnets,
             error_type=NeutronErrorTypes.OVER_QUOTA)
 
-    @tags(type='negative', rbac='creator', quark='yes')
+    @tags('negative', 'creator', 'quark')
     def test_ipv6_subnet_dns_nameservers_quota(self):
         """
         @summary: Negative testing IPv6 dns nameservers per subnet quota limit
@@ -685,7 +687,7 @@ class SubnetCreateTest(NetworkingAPIFixture):
             error_type=NeutronErrorTypes.OVER_QUOTA)
 
     @unittest.skip('Needs RM10109 fix')
-    @tags(type='negative', rbac='creator', quark='yes')
+    @tags('negative', 'creator', 'quark')
     def test_ipv4_subnet_allocation_pools_quota(self):
         """
         @summary: Negative testing IPv4 allocation pools per subnet
@@ -747,7 +749,7 @@ class SubnetCreateTest(NetworkingAPIFixture):
             error_type=NeutronErrorTypes.OVER_QUOTA)
 
     @unittest.skip('Needs RM10109 fix')
-    @tags(type='negative', rbac='creator', quark='yes')
+    @tags('negative', 'creator', 'quark')
     def test_ipv6_subnet_allocation_pools_quota(self):
         """
         @summary: Negative testing IPv6 allocation pools per subnet
@@ -813,7 +815,7 @@ class SubnetCreateTest(NetworkingAPIFixture):
             delete_list=self.delete_subnets,
             error_type=NeutronErrorTypes.OVER_QUOTA)
 
-    @tags(type='negative', rbac='creator', quark='yes')
+    @tags('negative', 'creator', 'quark')
     def test_ipv4_subnet_host_routes_quota(self):
         """
         @summary: Negative testing IPv4 host routes per subnet
@@ -871,7 +873,7 @@ class SubnetCreateTest(NetworkingAPIFixture):
             delete_list=self.delete_subnets,
             error_type=NeutronErrorTypes.OVER_QUOTA)
 
-    @tags(type='negative', rbac='creator', quark='yes')
+    @tags('negative', 'creator', 'quark')
     def test_ipv6_subnet_host_routes_quota(self):
         """
         @summary: Negative testing IPv4 host routes per subnet
@@ -934,7 +936,7 @@ class SubnetCreateTest(NetworkingAPIFixture):
             delete_list=self.delete_subnets,
             error_type=NeutronErrorTypes.OVER_QUOTA)
 
-    @tags(type='negative', rbac='creator', quark='yes')
+    @tags('negative', 'creator', 'quark')
     def test_ipv4_subnet_create_on_public_network(self):
         """
         @summary: Negative test creating a subnet on the public network
@@ -955,7 +957,7 @@ class SubnetCreateTest(NetworkingAPIFixture):
             delete_list=self.delete_subnets,
             error_type=NeutronErrorTypes.POLICY_NOT_AUTHORIZED)
 
-    @tags(type='negative', rbac='creator', quark='yes')
+    @tags('negative', 'creator', 'quark')
     def test_ipv4_subnet_create_on_service_network(self):
         """
         @summary: Negative test creating a subnet on the service network
@@ -976,7 +978,7 @@ class SubnetCreateTest(NetworkingAPIFixture):
             delete_list=self.delete_subnets,
             error_type=NeutronErrorTypes.POLICY_NOT_AUTHORIZED)
 
-    @tags(type='negative', rbac='creator', quark='yes')
+    @tags('negative', 'creator', 'quark')
     def test_ipv6_subnet_create_on_public_network(self):
         """
         @summary: Negative test creating a subnet on the public network
@@ -997,7 +999,7 @@ class SubnetCreateTest(NetworkingAPIFixture):
             delete_list=self.delete_subnets,
             error_type=NeutronErrorTypes.POLICY_NOT_AUTHORIZED)
 
-    @tags(type='negative', rbac='creator', quark='yes')
+    @tags('negative', 'creator', 'quark')
     def test_ipv6_subnet_create_on_service_network(self):
         """
         @summary: Negative test creating a subnet on the service network
@@ -1018,16 +1020,17 @@ class SubnetCreateTest(NetworkingAPIFixture):
             delete_list=self.delete_subnets,
             error_type=NeutronErrorTypes.POLICY_NOT_AUTHORIZED)
 
-    @tags(type='positive', rbac='creator')
+    @tags('positive', 'creator')
     def test_ipv4_subnet_create_w_allocation_pools(self):
         """
         @summary: Creating a subnet with allocation pools
         """
         expected_subnet = self.expected_ipv4_subnet
         expected_subnet.name = 'test_sub_create_ipv4_w_allocation_pools'
-        expected_subnet.allocation_pools = self.get_allocation_pools_data(
-            cidr=expected_subnet.cidr, start_increment=10, ip_range=20,
-            interval=2, num=3)
+        expected_subnet.allocation_pools = (
+            self.subnets.behaviors.get_allocation_pools(
+                cidr=expected_subnet.cidr, start_increment=10, ip_range=20,
+                interval=2, num=3))
 
         # Creating IPv4 subnet
         resp = self.subnets.behaviors.create_subnet(
@@ -1047,7 +1050,7 @@ class SubnetCreateTest(NetworkingAPIFixture):
         # Check the Subnet response
         self.assertSubnetResponse(expected_subnet, subnet)
 
-    @tags(type='negative', rbac='creator')
+    @tags('negative', 'creator')
     def test_ipv4_subnet_create_w_overlapping_allocation_pools(self):
         """
         @summary: Negative creating a subnet with overlapping allocation pools
@@ -1078,16 +1081,17 @@ class SubnetCreateTest(NetworkingAPIFixture):
             delete_list=self.delete_subnets,
             error_type=NeutronErrorTypes.OVERLAPPING_ALLOCATION_POOLS)
 
-    @tags(type='positive', rbac='creator')
+    @tags('positive', 'creator')
     def test_ipv6_subnet_create_w_allocation_pools(self):
         """
         @summary: Creating a subnet with allocation pools
         """
         expected_subnet = self.expected_ipv6_subnet
         expected_subnet.name = 'test_sub_create_ipv6_w_allocation_pools'
-        expected_subnet.allocation_pools = self.get_allocation_pools_data(
-            cidr=expected_subnet.cidr, start_increment=100, ip_range=700,
-            interval=20, num=3)
+        expected_subnet.allocation_pools = (
+            self.subnets.behaviors.get_allocation_pools(
+                cidr=expected_subnet.cidr, start_increment=100, ip_range=700,
+                interval=20, num=3))
 
         # Creating IPv6 subnet
         resp = self.subnets.behaviors.create_subnet(
@@ -1112,7 +1116,7 @@ class SubnetCreateTest(NetworkingAPIFixture):
         # Check the Subnet response
         self.assertSubnetResponse(expected_subnet, subnet)
 
-    @tags(type='negative', rbac='creator')
+    @tags('negative', 'creator')
     def test_ipv6_subnet_create_w_overlapping_allocation_pools(self):
         """
         @summary: Negative creating a subnet with overlapping allocation pools
@@ -1143,7 +1147,7 @@ class SubnetCreateTest(NetworkingAPIFixture):
             delete_list=self.delete_subnets,
             error_type=NeutronErrorTypes.OVERLAPPING_ALLOCATION_POOLS)
 
-    @tags(type='smoke', rbac='creator')
+    @tags('smoke', 'creator')
     def test_ipv4_subnet_create_ip_policy(self):
         """
         @summary: Negative subnet create with allocation pools outside
@@ -1175,7 +1179,7 @@ class SubnetCreateTest(NetworkingAPIFixture):
             delete_list=self.delete_subnets,
             error_type=NeutronErrorTypes.OUT_OF_BOUNDS_ALLOCATION_POOL)
 
-    @tags(type='smoke', rbac='creator')
+    @tags('smoke', 'creator')
     def test_ipv6_subnet_create_ip_policy(self):
         """
         @summary: Negative subnet create with allocation pools outside
@@ -1204,7 +1208,7 @@ class SubnetCreateTest(NetworkingAPIFixture):
             delete_list=self.delete_subnets,
             error_type=NeutronErrorTypes.OUT_OF_BOUNDS_ALLOCATION_POOL)
 
-    @tags(type='positive', rbac='creator')
+    @tags('positive', 'creator')
     def test_ipv4_subnet_create_w_gateway_ip(self):
         """
         @summary: Creating a subnet with gateway_ip
@@ -1238,7 +1242,7 @@ class SubnetCreateTest(NetworkingAPIFixture):
         # Check the Subnet response
         self.assertSubnetResponse(expected_subnet, subnet)
 
-    @tags(type='positive', rbac='creator')
+    @tags('positive', 'creator')
     def test_ipv6_subnet_create_w_gateway_ip(self):
         """
         @summary: Creating a subnet with gateway_ip
@@ -1277,7 +1281,7 @@ class SubnetCreateTest(NetworkingAPIFixture):
         # Check the Subnet response
         self.assertSubnetResponse(expected_subnet, subnet)
 
-    @tags(type='negative', rbac='creator')
+    @tags('negative', 'creator')
     def test_ipv4_subnet_create_w_overlapping_gateway_ip(self):
         """
         @summary: Negative creating a subnet with gateway_ip overlapping the
@@ -1308,7 +1312,7 @@ class SubnetCreateTest(NetworkingAPIFixture):
             error_type=NeutronErrorTypes.GATEWAY_CONFLICT_WITH_ALLOCATION_POOLS
             )
 
-    @tags(type='negative', rbac='creator')
+    @tags('negative', 'creator')
     def test_ipv6_subnet_create_w_overlapping_gateway_ip(self):
         """
         @summary: Negative creating a subnet with gateway_ip overlapping the
@@ -1339,7 +1343,7 @@ class SubnetCreateTest(NetworkingAPIFixture):
             error_type=NeutronErrorTypes.GATEWAY_CONFLICT_WITH_ALLOCATION_POOLS
             )
 
-    @tags(type='positive', rbac='creator')
+    @tags('positive', 'creator')
     def test_ipv4_subnet_create_w_dns_nameservers(self):
         """
         @summary: Creating a subnet with dns_nameservers
@@ -1367,7 +1371,7 @@ class SubnetCreateTest(NetworkingAPIFixture):
         # Check the Subnet response
         self.assertSubnetResponse(expected_subnet, subnet)
 
-    @tags(type='negative', rbac='creator')
+    @tags('negative', 'creator')
     def test_ipv4_subnet_create_w_invalid_dns_nameservers(self):
         """
         @summary: Creating a subnet with invalid dns_nameservers
@@ -1392,7 +1396,7 @@ class SubnetCreateTest(NetworkingAPIFixture):
             delete_list=self.delete_subnets,
             error_type=NeutronErrorTypes.ADDR_FORMAT_ERROR)
 
-    @tags(type='positive', rbac='creator')
+    @tags('positive', 'creator')
     def test_ipv6_subnet_create_w_dns_nameservers(self):
         """
         @summary: Creating a subnet with dns_nameservers
@@ -1429,7 +1433,7 @@ class SubnetCreateTest(NetworkingAPIFixture):
         # Check the Subnet response
         self.assertSubnetResponse(expected_subnet, subnet)
 
-    @tags(type='negative', rbac='creator')
+    @tags('negative', 'creator')
     def test_ipv6_subnet_create_w_invalid_dns_nameservers(self):
         """
         @summary: Creating a subnet with invalid dns_nameservers
@@ -1454,7 +1458,7 @@ class SubnetCreateTest(NetworkingAPIFixture):
             delete_list=self.delete_subnets,
             error_type=NeutronErrorTypes.ADDR_FORMAT_ERROR)
 
-    @tags(type='positive', rbac='creator')
+    @tags('positive', 'creator')
     def test_ipv4_subnet_create_w_host_routes(self):
         """
         @summary: Creating a subnet with host_routes
@@ -1464,7 +1468,7 @@ class SubnetCreateTest(NetworkingAPIFixture):
 
         nexthop = self.subnets.behaviors.get_random_ip(expected_subnet.cidr)
         host_route = dict(destination='10.0.3.0/24', nexthop=nexthop)
-        expected_subnet.host_routes = self.get_ipv4_host_route_data(num=2)
+        expected_subnet.host_routes = self.get_host_route_data()
         expected_subnet.host_routes.append(host_route)
 
         # Creating IPv4 subnet
@@ -1485,7 +1489,7 @@ class SubnetCreateTest(NetworkingAPIFixture):
         # Check the Subnet response
         self.assertSubnetResponse(expected_subnet, subnet)
 
-    @tags(type='negative', rbac='creator')
+    @tags('negative', 'creator')
     def test_ipv4_subnet_create_w_invalid_host_routes_destination(self):
         """
         @summary: Creating a subnet with invalid host_routes
@@ -1511,7 +1515,7 @@ class SubnetCreateTest(NetworkingAPIFixture):
             resp=resp, status_code=NeutronResponseCodes.BAD_REQUEST, msg=msg,
             delete_list=self.delete_subnets)
 
-    @tags(type='negative', rbac='creator')
+    @tags('negative', 'creator')
     def test_ipv4_subnet_create_w_invalid_host_routes_nexthop(self):
         """
         @summary: Creating a subnet with invalid host_routes
@@ -1537,7 +1541,7 @@ class SubnetCreateTest(NetworkingAPIFixture):
             resp=resp, status_code=NeutronResponseCodes.BAD_REQUEST, msg=msg,
             delete_list=self.delete_subnets)
 
-    @tags(type='positive', rbac='creator')
+    @tags('positive', 'creator')
     def test_ipv6_subnet_create_w_host_routes(self):
         """
         @summary: Creating a subnet with host_routes
@@ -1547,7 +1551,7 @@ class SubnetCreateTest(NetworkingAPIFixture):
 
         nexthop = self.subnets.behaviors.get_random_ip(expected_subnet.cidr)
         host_route = dict(destination='10.0.3.0/24', nexthop=nexthop)
-        expected_subnet.host_routes = self.get_ipv6_host_route_data(num=2)
+        expected_subnet.host_routes = self.get_host_route_data()
         expected_subnet.host_routes.append(host_route)
 
         # Creating the subnet
@@ -1572,7 +1576,7 @@ class SubnetCreateTest(NetworkingAPIFixture):
         # Check the Subnet response
         self.assertSubnetResponse(expected_subnet, subnet)
 
-    @tags(type='negative', rbac='creator')
+    @tags('negative', 'creator')
     def test_ipv6_subnet_create_w_invalid_host_routes_destination(self):
         """
         @summary: Creating a subnet with invalid host_routes
@@ -1602,7 +1606,7 @@ class SubnetCreateTest(NetworkingAPIFixture):
             resp=resp, status_code=NeutronResponseCodes.BAD_REQUEST, msg=msg,
             delete_list=self.delete_subnets)
 
-    @tags(type='negative', rbac='creator')
+    @tags('negative', 'creator')
     def test_ipv6_subnet_create_w_invalid_host_routes_nexthop(self):
         """
         @summary: Creating a subnet with invalid host_routes
@@ -1629,7 +1633,7 @@ class SubnetCreateTest(NetworkingAPIFixture):
             resp=resp, status_code=NeutronResponseCodes.BAD_REQUEST, msg=msg,
             delete_list=self.delete_subnets)
 
-    @tags(type='negative', rbac='creator')
+    @tags('negative', 'creator')
     def test_ipv4_subnet_create_w_invalid_name(self):
         """
         @summary: Creating a subnet with invalid name
@@ -1653,7 +1657,7 @@ class SubnetCreateTest(NetworkingAPIFixture):
             resp=resp, status_code=NeutronResponseCodes.BAD_REQUEST, msg=msg,
             delete_list=self.delete_subnets)
 
-    @tags(type='negative', rbac='creator')
+    @tags('negative', 'creator')
     def test_ipv6_subnet_create_w_invalid_name(self):
         """
         @summary: Creating a subnet with invalid name
