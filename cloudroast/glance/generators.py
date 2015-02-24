@@ -100,11 +100,84 @@ class ImagesDatasetListGenerator(object):
         sort_dir = SortDirection.ASCENDING
         sort_key = 'name'
 
-        data_dict = {'passing_no_parameters': {},
-                     'passing_limit': {'limit': limit},
+        data_dict = {'passing_limit': {'limit': limit},
                      'passing_marker': {'marker': marker},
                      'passing_sort_dir': {'sort_dir': sort_dir},
                      'passing_sort_key': {'sort_key': sort_key}}
+
+        return build_basic_dataset(data_dict, 'params')
+
+    @staticmethod
+    def ListImagesSmoke():
+        """
+        @summary: Generates a dataset list of parameters for the list images
+        request for smoke tests
+
+        @return: Dataset_list
+        @rtype: DatasetList
+        """
+
+        additional_property = images.config.additional_property
+        additional_property_value = images.config.additional_property_value
+        auto_disk_config = 'False'
+        checksum = random_string()
+        container_format = ImageContainerFormat.AMI
+        created_at = datetime.now()
+        disk_format = ImageDiskFormat.RAW
+        id_ = '00000000-0000-0000-0000-000000000000'
+        image_type = ImageType.IMPORT
+        limit = 10
+        marker = None
+        member_status = ImageMemberStatus.ACCEPTED
+        min_disk = images.config.min_disk
+        min_ram = images.config.min_ram
+        name = rand_name('image')
+        os_type = ImageOSType.LINUX
+        owner = random_int(0, 999999)
+        protected = False
+        size = random_int(0, 9999999)
+        size_max = images.config.size_max
+        size_min = images.config.size_min
+        status = ImageStatus.ACTIVE
+        sort_dir = SortDirection.ASCENDING
+        sort_key = 'name'
+        tag = [rand_name('tag')]
+        updated_at = datetime.now()
+        user_id = random_string()
+        visibility = ImageVisibility.SHARED
+
+        data_dict = {'passing_additional_property':
+                     {additional_property: additional_property_value},
+                     'passing_auto_disk_config':
+                     {'auto_disk_config': auto_disk_config},
+                     'passing_checksum': {'checksum': checksum},
+                     'passing_container_format':
+                     {'container_format': container_format},
+                     'passing_created_at': {'created_at': created_at},
+                     'passing_disk_format': {'disk_format': disk_format},
+                     'passing_id': {'id_': id_},
+                     'passing_image_type': {'image_type': image_type},
+                     'passing_limit': {'limit': limit},
+                     'passing_marker': {'marker': marker},
+                     'passing_member_status': {'member_status': member_status,
+                                               'visibility': visibility},
+                     'passing_min_disk': {'min_disk': min_disk},
+                     'passing_min_ram': {'min_ram': min_ram},
+                     'passing_name': {'name': name},
+                     'passing_no_parameters': {},
+                     'passing_os_type': {'os_type': os_type},
+                     'passing_owner': {'owner': owner},
+                     'passing_protected': {'protected': protected},
+                     'passing_size': {'size': size},
+                     'passing_size_max': {'size_max': size_max},
+                     'passing_size_min': {'size_min': size_min},
+                     'passing_sort_dir': {'sort_dir': sort_dir},
+                     'passing_sort_key': {'sort_key': sort_key},
+                     'passing_status': {'status': status},
+                     'passing_tag': {'tag': tag},
+                     'passing_updated_at': {'updated_at': updated_at},
+                     'passing_user_id': {'user_id': user_id},
+                     'passing_visibility': {'visibility': visibility}}
 
         return build_basic_dataset(data_dict, 'params')
 
@@ -147,10 +220,39 @@ class ImagesDatasetListGenerator(object):
         @rtype: DatasetList
         """
 
-        data_dict = {'passing_invalid_limit': {'limit': 'invalid'},
-                     'passing_invalid_marker': {'marker': 'invalid'},
-                     'passing_invalid_sort_key': {'sort_key': 'invalid'},
-                     'passing_invalid_sort_dir': {'sort_dir': 'invalid'}}
+        additional_property = images.config.additional_property
+
+        data_dict = {'passing_additional_property':
+                     {additional_property: 'invalid'},
+                     'passing_auto_disk_config':
+                     {'auto_disk_config': 'invalid'},
+                     'passing_checksum': {'checksum': 'invalid'},
+                     'passing_container_format':
+                     {'container_format': 'invalid'},
+                     'passing_created_at': {'created_at': 'invalid'},
+                     'passing_disk_format': {'disk_format': 'invalid'},
+                     'passing_id': {'id': 'invalid'},
+                     'passing_image_type': {'image_type': 'invalid'},
+                     'passing_invalid_limit': {'limit': 'invalid'},
+                     'passing_marker': {'marker': 'invalid'},
+                     'passing_member_status': {'member_status': 'invalid',
+                                               'visibility': 'invalid'},
+                     'passing_min_disk': {'min_disk': 'invalid'},
+                     'passing_min_ram': {'min_ram': 'invalid'},
+                     'passing_name': {'name': 'invalid'},
+                     'passing_os_type': {'os_type': 'invalid'},
+                     'passing_owner': {'owner': 'invalid'},
+                     'passing_protected': {'protected': 'invalid'},
+                     'passing_size': {'size': 'invalid'},
+                     'passing_size_max': {'size_max': 'invalid'},
+                     'passing_size_min': {'size_min': 'invalid'},
+                     'passing_sort_dir': {'sort_dir': 'invalid'},
+                     'passing_sort_key': {'sort_key': 'invalid'},
+                     'passing_status': {'status': 'invalid'},
+                     'passing_tag': {'tag': 'invalid'},
+                     'passing_updated_at': {'updated_at': 'invalid'},
+                     'passing_user_id': {'user_id': 'invalid'},
+                     'passing_visibility': {'visibility': 'invalid'}}
 
         return build_basic_dataset(data_dict, 'prop')
 
