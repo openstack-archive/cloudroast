@@ -30,27 +30,27 @@ data_set_list = DatasetList()
 data_set_list.append_new_dataset(
     name='w_name',
     data_dict={"name": 'test_secgroup_create'},
-    tags=['smoke', 'post', 'positive', 'rbac_creator'])
+    tags=['sec_group', 'post', 'positive', 'rbac_creator'])
 data_set_list.append_new_dataset(
     name='w_long_name',
     data_dict={"name": '1234567890123456789012345678901234567890'},
-    tags=['smoke', 'post', 'positive', 'rbac_creator'])
+    tags=['sec_group', 'post', 'positive', 'rbac_creator'])
 data_set_list.append_new_dataset(
     name='w_none_name_and_description',
     data_dict={"name": None, "expected_name": '', "description": None,
                "expected_description": '', "tenant_id": None,
                "use_false_values": True},
-    tags=['smoke', 'post', 'positive', 'rbac_creator'])
+    tags=['sec_group', 'post', 'positive', 'rbac_creator'])
 data_set_list.append_new_dataset(
     name='w_blank_name_and_description',
     data_dict={"name": '', "expected_name": '', "description": '',
                "expected_description": '', "use_false_values": True},
-    tags=['smoke', 'post', 'positive', 'rbac_creator'])
+    tags=['sec_group', 'post', 'positive', 'rbac_creator'])
 data_set_list.append_new_dataset(
     name='w_description',
     data_dict={"name": 'test_secgroup_create', "description": (
         'Security Group Test text description')},
-    tags=['smoke', 'post', 'positive', 'rbac_creator'])
+    tags=['sec_group', 'post', 'positive', 'rbac_creator'])
 
 # Testing description limit of 255 chars
 data_set_list.append_new_dataset(
@@ -63,13 +63,13 @@ data_set_list.append_new_dataset(
         'Long Security Group Test text description'
         'Long Security Group Test text description'
         'Long Secu')},
-    tags=['smoke', 'post', 'positive', 'rbac_creator'])
+    tags=['sec_group', 'post', 'positive', 'rbac_creator'])
 
 # Testing with tenant_id in the request body
 data_set_list.append_new_dataset(
     name='w_tenant_id',
     data_dict={"name": 'test_secgroup_create', "tenant_id": True},
-    tags=['smoke', 'post', 'positive', 'rbac_creator'])
+    tags=['sec_group', 'post', 'positive', 'rbac_creator'])
 
 # Trimming should leave the name with 40 chars
 data_set_list.append_new_dataset(
@@ -89,14 +89,14 @@ data_set_list_negative.append_new_dataset(
     "http_status": 'BAD_REQUEST',
     "test_desc": 'with another tenant ID on the request body',
     "error_type": 'HTTP_BAD_REQUEST'},
-    tags=['smoke', 'post', 'negative', 'rbac_creator'])
+    tags=['sec_group', 'post', 'negative', 'rbac_creator'])
 data_set_list_negative.append_new_dataset(
     name='w_invalid_tenant_id',
     data_dict={"name": 'test_secgroup_create_neg', "tenant_id": '555555',
     "http_status": 'BAD_REQUEST',
     "test_desc": 'with invalid tenant ID on the request body',
     "error_type": 'HTTP_BAD_REQUEST'},
-    tags=['post', 'negative', 'rbac_creator'])
+    tags=['sec_group', 'post', 'negative', 'rbac_creator'])
 data_set_list_negative.append_new_dataset(
     name='w_blank_tenant_id',
     data_dict={"name": 'test_secgroup_create_neg', "tenant_id": '',
@@ -104,7 +104,7 @@ data_set_list_negative.append_new_dataset(
     "http_status": 'BAD_REQUEST',
     "test_desc": 'with invalid tenant ID on the request body',
     "error_type": 'HTTP_BAD_REQUEST'},
-    tags=['post', 'negative', 'rbac_creator'])
+    tags=['sec_group', 'post', 'negative', 'rbac_creator'])
 
 data_set_list_negative.append_new_dataset(
     name='w_long_description',

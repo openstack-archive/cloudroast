@@ -30,20 +30,128 @@ data_set_list = DatasetList()
 data_set_list.append_new_dataset(
     name='',
     data_dict={},
-    tags=['dev', 'post', 'positive', 'rbac_creator'])
+    tags=['sec_group', 'post', 'positive', 'rbac_creator'])
+data_set_list.append_new_dataset(
+    name='w_protocol_icmp',
+    data_dict={'protocol': 'icmp'},
+    tags=['sec_group', 'post', 'positive', 'rbac_creator'])
+data_set_list.append_new_dataset(
+    name='w_protocol_tcp',
+    data_dict={'protocol': 'tcp'},
+    tags=['sec_group', 'post', 'positive', 'rbac_creator'])
+data_set_list.append_new_dataset(
+    name='w_protocol_udp',
+    data_dict={'protocol': 'udp'},
+    tags=['sec_group', 'post', 'positive', 'rbac_creator'])
+data_set_list.append_new_dataset(
+    name='w_ethertype_ipv4',
+    data_dict={'ethertype': 'IPv4'},
+    tags=['sec_group', 'post', 'positive', 'rbac_creator'])
+data_set_list.append_new_dataset(
+    name='w_ethertype_ipv6',
+    data_dict={'ethertype': 'IPv6'},
+    tags=['sec_group', 'post', 'positive', 'rbac_creator'])
+data_set_list.append_new_dataset(
+    name='w_protocol_icmp_and_port_ranges',
+    data_dict={'protocol': 'icmp', 'port_range_min': 0,
+               'port_range_max': 255},
+    tags=['sec_group', 'post', 'positive', 'rbac_creator'])
+data_set_list.append_new_dataset(
+    name='w_protocol_tcp_and_port_ranges',
+    data_dict={'protocol': 'tcp', 'port_range_min': 0,
+               'port_range_max': 65535},
+    tags=['sec_group', 'post', 'positive', 'rbac_creator'])
+data_set_list.append_new_dataset(
+    name='w_protocol_udp_and_port_ranges',
+    data_dict={'protocol': 'udp', 'port_range_min': 0,
+               'port_range_max': 65535},
+    tags=['sec_group', 'post', 'positive', 'rbac_creator'])
+data_set_list.append_new_dataset(
+    name='w_remote_ip_prefix_ipv4',
+    data_dict={'remote_ip_prefix': '192.168.86.0/24'},
+    tags=['sec_group', 'post', 'positive', 'rbac_creator'])
+data_set_list.append_new_dataset(
+    name='w_remote_ip_prefix_ipv6',
+    data_dict={"ethertype": 'IPv6', "remote_ip_prefix": 'fd00:d9f1:d355::/64'},
+    tags=['sec_group', 'post', 'positive', 'rbac_creator'])
 
 
 # Data set for negative testing
 data_set_list_negative = DatasetList()
 
-# Testing with other tenant_id in the request body
 data_set_list_negative.append_new_dataset(
-    name='w_other_tenant_id',
-    data_dict={"name": 'test_secgroup_create_neg', "tenant_id": False,
+    name='w_direction_egress',
+    data_dict={'direction': 'egress',
     "http_status": 'BAD_REQUEST',
-    "test_desc": 'with another tenant ID on the request body',
+    "test_desc": 'Non-ingress rules are not currently supported (egress)',
+    "error_type": 'INVALID_INPUT'},
+    tags=['sec_group', 'post', 'negative', 'rbac_creator'])
+data_set_list_negative.append_new_dataset(
+    name='w_invalid_protocol',
+    data_dict={'protocol': 'invalid_protocol',
+    "http_status": 'BAD_REQUEST',
+    "test_desc": 'Protocol should be icmp, tcp or udp',
+    "error_type": 'SECURITY_GROUP_RULE_INVALID_PROTOCOL'},
+    tags=['sec_group', 'post', 'negative', 'rbac_creator'])
+data_set_list_negative.append_new_dataset(
+    name='w_invalid_ethertype',
+    data_dict={'ethertype': 'invalid_ethertype',
+    "http_status": 'BAD_REQUEST',
+    "test_desc": 'testing with invalid ethertype must be IPv4 or IPv6',
     "error_type": 'HTTP_BAD_REQUEST'},
-    tags=['smoke', 'post', 'negative', 'rbac_creator'])
+    tags=['sec_group', 'post', 'negative', 'rbac_creator'])
+data_set_list_negative.append_new_dataset(
+    name='w_port_ranges_and_protocol_missing',
+    data_dict={'port_range_min': 1, 'port_range_max': 255,
+    "http_status": 'BAD_REQUEST',
+    "test_desc": 'Must also specifiy protocol if port range is given',
+    "error_type": 'SECURITY_GROUP_PROTOCOL_REQUIRED_WITH_PORTS'},
+    tags=['sec_group', 'post', 'negative', 'rbac_creator'])
+data_set_list_negative.append_new_dataset(
+    name='w_protocol_icmp_and_port_max_out_of_range',
+    data_dict={"protocol": 'icmp', "port_range_min": 1,
+    "port_range_max": 65535,
+    "http_status": 'BAD_REQUEST',
+    "test_desc": 'Invalid value for ICMP port_range_max, must be 0 to 255',
+    "error_type": 'SECURITY_GROUP_INVALID_ICMP_VALUE'},
+    tags=['sec_group', 'post', 'negative', 'rbac_creator'])
+data_set_list_negative.append_new_dataset(
+    name='w_protocol_tcp_and_port_max_out_of_range',
+    data_dict={"protocol": 'tcp', "port_range_min": 1,
+    "port_range_max": 65536,
+    "http_status": 'BAD_REQUEST',
+    "test_desc": 'Invalid value for port',
+    "error_type": 'SECURITY_GROUP_INVALID_PORT_VALUE'},
+    tags=['sec_group', 'post', 'negative', 'rbac_creator'])
+data_set_list_negative.append_new_dataset(
+    name='w_protocol_udp_and_port_max_out_of_range',
+    data_dict={"protocol": 'udp', "port_range_min": 1,
+    "port_range_max": 65536,
+    "http_status": 'BAD_REQUEST',
+    "test_desc": 'Invalid value for port',
+    "error_type": 'SECURITY_GROUP_INVALID_PORT_VALUE'},
+    tags=['sec_group', 'post', 'negative', 'rbac_creator'])
+data_set_list_negative.append_new_dataset(
+    name='w_remote_ip_prefix_ipv6_and_ipv4_ethertype',
+    data_dict={"remote_ip_prefix": 'fd00:d9f1:d355::/64',
+    "http_status": 'BAD_REQUEST',
+    "test_desc": 'Etherytype IPv4 does not match remote_ip_prefix IPv6',
+    "error_type": 'INVALID_INPUT'},
+    tags=['sec_group', 'post', 'negative', 'rbac_creator'])
+data_set_list_negative.append_new_dataset(
+    name='w_remote_ip_prefix_ipv4_and_ipv6_ethertype',
+    data_dict={"ethertype": 'IPv6', "remote_ip_prefix": '192.168.86.0/24',
+    "http_status": 'BAD_REQUEST',
+    "test_desc": 'Etherytype IPv6 does not match remote_ip_prefix IPv4',
+    "error_type": 'INVALID_INPUT'},
+    tags=['sec_group', 'post', 'negative', 'rbac_creator'])
+data_set_list_negative.append_new_dataset(
+    name='w_remote_group_id',
+    data_dict={"remote_group_id": True,
+    "http_status": 'BAD_REQUEST',
+    "test_desc": 'Remote groups are not currently supported',
+    "error_type": 'INVALID_INPUT'},
+    tags=['dev', 'sec_group', 'post', 'negative', 'rbac_creator'])
 
 
 @DataDrivenFixture
@@ -65,20 +173,16 @@ class SecurityGroupRuleCreateTest(NetworkingSecurityGroupsFixture):
     def tearDown(self):
         self.secGroupCleanUp()
 
-    @tags('leosdev')
-    def test_secrule_dev(self):
-        print self.secgroup
-        print self.expected_secrule
-
     @data_driven_test(data_set_list)
-    def ddtest_security_group_rule_create(self, direction=None,
+    def ddtest_security_group_rule_create(self,
+                                     security_group_id=None,
+                                     direction=None,
                                      ethertype=None,
                                      port_range_min=None,
                                      port_range_max=None,
                                      protocol=None,
                                      remote_group_id=None,
                                      remote_ip_prefix=None,
-                                     tenant_id=None,
                                      use_false_values=False):
         """
         @summary: Creating a Security Group Rule
@@ -87,17 +191,32 @@ class SecurityGroupRuleCreateTest(NetworkingSecurityGroupsFixture):
         request_kwargs = dict(
             security_group_id=expected_secrule.security_group_id)
 
-#        if name or use_false_values:
-#            request_kwargs['name'] = name
-#            expected_secgroup.name = name
-#        if description or use_false_values:
-#            request_kwargs['description'] = description
-#            expected_secgroup.description = description
-#        if tenant_id == True:
-#            request_kwargs['tenant_id'] = self.user.tenant_id
-#        elif tenant_id or use_false_values:
-#            request_kwargs['tenant_id'] = None
-        print request_kwargs
+        if security_group_id is not None:
+            request_kwargs['security_group_id'] = security_group_id
+        if direction is not None:
+            request_kwargs['direction'] = direction
+            expected_secrule.direction = direction
+        if ethertype is not None:
+            request_kwargs['ethertype'] = ethertype
+            expected_secrule.ethertype = ethertype
+        if port_range_min is not None:
+            request_kwargs['port_range_min'] = port_range_min
+            expected_secrule.port_range_min = port_range_min
+        if port_range_max is not None:
+            request_kwargs['port_range_max'] = port_range_max
+            expected_secrule.port_range_max = port_range_max
+        if protocol is not None:
+            request_kwargs['protocol'] = protocol
+            expected_secrule.protocol = protocol.upper()
+        if remote_group_id is not None:
+            if remote_group_id == True:
+                remote_group_id = expected_secrule.security_group_id
+            request_kwargs['remote_group_id'] = remote_group_id
+            expected_secrule.remote_group_id = remote_group_id
+        if remote_ip_prefix is not None:
+            request_kwargs['remote_ip_prefix'] = remote_ip_prefix
+            expected_secrule.remote_ip_prefix = remote_ip_prefix
+
         resp = self.sec.behaviors.create_security_group_rule(**request_kwargs)
         if resp.response.entity and hasattr(resp.response.entity, 'id'):
             self.delete_secgroups_rules.append(resp.response.entity.id)
@@ -106,54 +225,57 @@ class SecurityGroupRuleCreateTest(NetworkingSecurityGroupsFixture):
         self.assertFalse(resp.failures)
         secrule = resp.response.entity
 
-#        if expected_name or use_false_values:
-#            expected_secgroup.name = expected_name
-#        if expected_description or use_false_values:
-#            expected_secgroup.description = expected_description
-
         # Check the Security Group Rule response
         self.assertSecurityGroupRuleResponse(expected_secrule, secrule)
 
-#    @data_driven_test(data_set_list_negative)
-#    def ddtest_security_group_create_negative(self, name=None,
-#                                              expected_name=None,
-#                                              description=None,
-#                                              expected_description=None,
-#                                              tenant_id=None,
-#                                              security_group_rules=None,
-#                                              use_false_values=False,
-#                                              http_status=None,
-#                                              test_desc=None,
-#                                              error_type=None):
-#        """
-#        @summary: Negative test creating a Security Group
-#        """
-#        secgroup_data = self.expected_secgroup
-#        request_kwargs = dict(
-#            name=secgroup_data.name,
-#            description=secgroup_data.description,
-#            raise_exception=False)
-#
-#        if name or use_false_values:
-#            request_kwargs['name'] = name
-#        if description or use_false_values:
-#            request_kwargs['description'] = description
-#        if tenant_id == False:
-#            request_kwargs['tenant_id'] = self.alt_user.tenant_id
-#        elif tenant_id or use_false_values:
-#            request_kwargs['tenant_id'] = tenant_id
-#        print request_kwargs
-#
-#        print secgroup_data
-#        resp = self.sec.behaviors.create_security_group(**request_kwargs)
-#        print resp
-#        # Security Group create should be unavailable
-#        msg = ('(negative) Creating a Security Group with '
-#               '{test_description}').format(test_description=test_desc)
-#        status_code = getattr(SecurityGroupsResponseCodes, http_status)
-#        if error_type:
-#            error_type = getattr(SecurityGroupsErrorTypes, error_type)
-#        self.assertNegativeResponse(
-#            resp=resp, status_code=status_code, msg=msg,
-#            delete_list=self.delete_secgroups,
-#            error_type=error_type)
+    @data_driven_test(data_set_list_negative)
+    def ddtest_security_group_rule_create_negative(self,
+                                                   security_group_id=None,
+                                                   direction=None,
+                                                   ethertype=None,
+                                                   port_range_min=None,
+                                                   port_range_max=None,
+                                                   protocol=None,
+                                                   remote_group_id=None,
+                                                   remote_ip_prefix=None,
+                                                   use_false_values=False,
+                                                   http_status=None,
+                                                   test_desc=None,
+                                                   error_type=None):
+        """
+        @summary: Negative test creating a Security Group Rule
+        """
+        expected_secrule_data = self.expected_secrule
+        request_kwargs = dict(
+            security_group_id=expected_secrule_data.security_group_id,
+            raise_exception=False)
+
+        if security_group_id is not None:
+            request_kwargs['security_group_id'] = security_group_id
+        if direction is not None:
+            request_kwargs['direction'] = direction
+        if ethertype is not None:
+            request_kwargs['ethertype'] = ethertype
+        if port_range_min is not None:
+            request_kwargs['port_range_min'] = port_range_min
+        if port_range_max is not None:
+            request_kwargs['port_range_max'] = port_range_max
+        if protocol or use_false_values:
+            request_kwargs['protocol'] = protocol
+        if remote_group_id is not None:
+            request_kwargs['remote_group_id'] = remote_group_id
+        if remote_ip_prefix is not None:
+            request_kwargs['remote_ip_prefix'] = remote_ip_prefix
+
+        resp = self.sec.behaviors.create_security_group_rule(**request_kwargs)
+
+        # Security Group create should be unavailable
+        msg = ('(negative) Creating a Security Group with '
+               '{test_description}').format(test_description=test_desc)
+        status_code = getattr(SecurityGroupsResponseCodes, http_status)
+        if error_type:
+            error_type = getattr(SecurityGroupsErrorTypes, error_type)
+        self.assertNegativeResponse(
+            resp=resp, status_code=status_code, msg=msg,
+            delete_list=self.delete_secgroups,
+            error_type=error_type)
