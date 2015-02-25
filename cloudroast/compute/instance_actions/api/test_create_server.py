@@ -19,7 +19,6 @@ import unittest
 
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.compute.common.types import ComputeHypervisors
-from cloudcafe.compute.common.types import NovaServerStatusTypes
 from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.compute.config import ComputeConfig
 from cloudcafe.compute.servers_api.config import ServersConfig
@@ -41,10 +40,16 @@ class CreateServerTest(object):
 
         self.assertTrue(self.server.id is not None,
                         msg="Server id was not set in the response")
-        self.assertTrue(self.server.admin_pass is not None,
-                        msg="Admin password was not set in the response")
         self.assertTrue(self.server.links is not None,
                         msg="Server links were not set in the response")
+
+    @unittest.skipIf(hypervisor in [ComputeHypervisors.IRONIC,
+                                    ComputeHypervisors.ON_METAL],
+                     'Admin Password not supported in current configuration.')
+    @tags(type='smoke', net='no')
+    def test_create_server_admin_password(self):
+        self.assertTrue(self.server.admin_pass is not None,
+                        msg="Admin password was not set in the response")
 
     @tags(type='smoke', net='no')
     def test_created_server_fields(self):
