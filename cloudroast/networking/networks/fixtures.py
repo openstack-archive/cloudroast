@@ -29,6 +29,10 @@ from cloudcafe.networking.networks.common.models.response.port \
     import Port
 from cloudcafe.networking.networks.composites import NetworkingComposite
 from cloudcafe.networking.networks.config import NetworkingSecondUserConfig
+from cloudcafe.networking.networks.extensions.security_groups_api.composites \
+    import SecurityGroupsComposite
+from cloudcafe.networking.networks.extensions.security_groups_api.models.\
+    response import SecurityGroup, SecurityGroupRule
 
 
 class NetworkingFixture(BaseTestFixture):
@@ -69,6 +73,13 @@ class NetworkingFixture(BaseTestFixture):
         cls.failed_subnets = []
         cls.delete_ports = []
         cls.failed_ports = []
+
+        # Getting user data for testing
+        cls.user = cls.net.networking_auth_composite()
+        cls.alt_user = NetworkingSecondUserConfig()
+
+        # Using the networkingCleanup method
+        cls.addClassCleanup(cls.networkingCleanUp)
 
         # For resources delete management like Compute, Images or alternative
         # to the networkingCleanUp
@@ -492,27 +503,21 @@ class NetworkingAPIFixture(NetworkingFixture):
         cls.network_data = dict(
             status='ACTIVE', subnets=[],
             name='test_api_net', admin_state_up=True,
-            tenant_id=cls.net.networking_auth_composite().tenant_id,
+            tenant_id=cls.user.tenant_id,
             shared=False)
 
         # Data for creating subnets and asserting responses
         cls.subnet_data = dict(
             name='test_api_subnet',
-            tenant_id=cls.net.networking_auth_composite().tenant_id,
+            tenant_id=cls.user.tenant_id,
             enable_dhcp=None, dns_nameservers=[], gateway_ip=None,
             host_routes=[])
 
         # Data for creating ports and asserting responses
         cls.port_data = dict(
             status='ACTIVE', name='test_api_port', admin_state_up=True,
-            tenant_id=cls.net.networking_auth_composite().tenant_id,
+            tenant_id=cls.user.tenant_id,
             device_owner=None, device_id='', security_groups=[])
-
-        # Getting second user data for negative testing
-        cls.alt_user = NetworkingSecondUserConfig()
-
-        # Using the networkingCleanup method
-        cls.addClassCleanup(cls.networkingCleanUp)
 
     @classmethod
     def get_expected_network_data(cls):
@@ -598,5 +603,198 @@ class NetworkingComputeFixture(NetworkingFixture):
         cls.flavor_ref = cls.flavors.config.primary_flavor
         cls.image_ref = cls.images.config.primary_image
 
-        # Using the networkingCleanup method
-        cls.addClassCleanup(cls.networkingCleanUp)
+
+class NetworkingSecurityGroupsFixture(NetworkingFixture):
+    """
+    @summary: fixture for networking security groups tests
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        super(NetworkingSecurityGroupsFixture, cls).setUpClass()
+        cls.sec = SecurityGroupsComposite()
+
+        # Data for creating security groups
+        cls.security_group_data = dict(
+            description='', security_group_rules=[], name='test_secgroup',
+            tenant_id=cls.user.tenant_id)
+
+        # Data for creating security group rules
+        cls.security_group_rule_data = dict(
+            remote_group_id=None, direction='ingress', remote_ip_prefix=None,
+            protocol=None, ethertype='IPv4', port_range_max=None,
+            port_range_min=None,
+            tenant_id=cls.user.tenant_id)
+
+        cls.delete_secgroups = []
+        cls.failed_secgroups = []
+        cls.delete_secgroups_rules = []
+        cls.failed_secgroups_rules = []
+
+        # Using the secGroupCleanup method
+        cls.addClassCleanup(cls.secGroupCleanUp)
+
+    @classmethod
+    def get_expected_secgroup_data(cls):
+        """Security Group object with default data"""
+        expected_secgroup = SecurityGroup(**cls.security_group_data)
+        return expected_secgroup
+
+    @classmethod
+    def get_expected_secrule_data(cls):
+        """Security Group Rule object with default data"""
+        expected_secrule = SecurityGroupRule(**cls.security_group_rule_data)
+        return expected_secrule
+
+    @classmethod
+    def secGroupCleanUp(cls):
+        """
+        @summary: Deletes security groups and rules using the keep_resources
+            and keep_resources_on_failure flags. Will be called after any
+            class tearDown or setUp failure.
+        """
+        cls.fixture_log.info('secGroupCleanUp: deleting groups and rules....')
+        cls.secRulesCleanUp()
+        cls.secGroupsCleanUp()
+
+    @classmethod
+    def secRulesCleanUp(cls):
+        """
+        @summary: Deletes security groups rules using the keep_resources
+            and keep_resources_on_failure flags
+        """
+        cls.fixture_log.info('secRulesCleanUp: deleting rules....')
+        if not cls.sec.config.keep_resources and cls.delete_secgroups_rules:
+            if cls.sec.config.keep_resources_on_failure:
+                cls.fixture_log.info('Keeping failed security rules...')
+                for failed_secrule in cls.failed_secgroups_rules:
+                    if failed_secrule in cls.delete_secgroups_rules:
+                        cls.delete_secgroups_rules.remove(failed_secrule)
+            cls.fixture_log.info('Deleting security group rules...')
+            cls.sec.behaviors.delete_security_group_rules(
+                security_group_rule_list=cls.delete_secgroups_rules)
+            cls.delete_secgroups_rules = []
+
+    @classmethod
+    def secGroupsCleanUp(cls):
+        """
+        @summary: Deletes security groups using the keep_resources
+            and keep_resources_on_failure flags
+        """
+        cls.fixture_log.info('secGroupsCleanUp: deleting groups....')
+        if not cls.sec.config.keep_resources and cls.delete_secgroups:
+            if cls.sec.config.keep_resources_on_failure:
+                cls.fixture_log.info('Keeping failed security groups...')
+                for failed_secgroup in cls.failed_secgroups:
+                    if failed_secgroup in cls.delete_secgroups:
+                        cls.delete_secgroups.remove(failed_secgroup)
+            cls.fixture_log.info('Deleting security groups...')
+            cls.sec.behaviors.delete_security_groups(
+                security_group_list=cls.delete_secgroups)
+            cls.delete_secgroups = []
+
+    def create_test_secgroup(self, expected_secgroup):
+        """
+        @summary: creating a test security group
+        @param expected_secgroup: security group object with expected params
+        @type expected_secgroup: models.response.SecurityGroup
+        @return: security group entity
+        @rtype: models.response.SecurityGroup
+        """
+        # ResourceBuildException will be raised if not created successfully
+        resp = self.sec.behaviors.create_security_group(
+            name=expected_secgroup.name,
+            description=expected_secgroup.description)
+
+        secgroup = resp.response.entity
+        self.delete_secgroups.append(secgroup.id)
+
+        # Check the Security Group response
+        self.assertSecurityGroupResponse(expected_secgroup, secgroup,
+                                         check_exact_name=False)
+        return secgroup
+
+    def assertSecurityGroupResponse(self, expected_secgroup, secgroup,
+                                    check_exact_name=True,
+                                    check_secgroup_rules=True):
+        """
+        @summary: compares two security group entity objects
+        """
+        self.fixture_log.info('asserting Security Group response ...')
+        msg = 'Expected {0} instead of {1}'
+
+        self.assertTrue(secgroup.id, 'Missing Security Group ID')
+
+        if check_exact_name:
+            self.assertEqual(expected_secgroup.name, secgroup.name,
+                msg.format(expected_secgroup.name, secgroup.name))
+        else:
+            start_name_msg = 'Expected {0} name to start with {1}'.format(
+                secgroup.name, expected_secgroup.name)
+            self.assertTrue(secgroup.name.startswith(expected_secgroup.name),
+                            start_name_msg)
+        self.assertEqual(
+            expected_secgroup.description, secgroup.description,
+            msg.format(expected_secgroup.description, secgroup.description))
+        self.assertEqual(
+            expected_secgroup.tenant_id, secgroup.tenant_id,
+            msg.format(expected_secgroup.tenant_id, secgroup.tenant_id))
+
+        if check_secgroup_rules:
+            self.assertEqual(
+                expected_secgroup.security_group_rules,
+                secgroup.security_group_rules,
+                    msg.format(expected_secgroup.security_group_rules,
+                               secgroup.security_group_rules))
+
+        if self.config.check_response_attrs:
+            msg = 'Unexpected Security Groups response attributes: {0}'.format(
+                secgroup.kwargs)
+            self.assertFalse(secgroup.kwargs, msg)
+
+    def assertSecurityGroupRuleResponse(self, expected_secrule, secrule):
+        """
+        @summary: compares two security group rule entity objects
+        """
+        self.fixture_log.info('asserting Security Group Rule response ...')
+        msg = 'Expected {0} instead of {1}'
+
+        self.assertTrue(secrule.id, 'Missing Security Group Rule ID')
+
+        self.assertEqual(
+            expected_secrule.remote_group_id, secrule.remote_group_id,
+            msg.format(expected_secrule.remote_group_id,
+                       secrule.remote_group_id))
+        self.assertEqual(
+            expected_secrule.direction, secrule.direction,
+            msg.format(expected_secrule.direction, secrule.direction))
+        self.assertEqual(
+            expected_secrule.remote_ip_prefix, secrule.remote_ip_prefix,
+            msg.format(expected_secrule.remote_ip_prefix,
+                       secrule.remote_ip_prefix))
+        self.assertEqual(
+            expected_secrule.protocol, secrule.protocol,
+            msg.format(expected_secrule.protocol, secrule.protocol))
+        self.assertEqual(
+            expected_secrule.ethertype, secrule.ethertype,
+            msg.format(expected_secrule.ethertype, secrule.ethertype))
+        self.assertEqual(
+            expected_secrule.port_range_max, secrule.port_range_max,
+            msg.format(expected_secrule.port_range_max,
+                       secrule.port_range_max))
+        self.assertEqual(
+            expected_secrule.security_group_id, secrule.security_group_id,
+            msg.format(expected_secrule.security_group_id,
+                       secrule.security_group_id))
+        self.assertEqual(
+            expected_secrule.port_range_min, secrule.port_range_min,
+            msg.format(expected_secrule.port_range_min,
+                       secrule.port_range_min))
+        self.assertEqual(
+            expected_secrule.tenant_id, secrule.tenant_id,
+            msg.format(expected_secrule.tenant_id, secrule.tenant_id))
+
+        if self.config.check_response_attrs:
+            msg = ('Unexpected Security Groups Rule response attributes: '
+                   '{0}').format(secrule.kwargs)
+            self.assertFalse(secrule.kwargs, msg)
