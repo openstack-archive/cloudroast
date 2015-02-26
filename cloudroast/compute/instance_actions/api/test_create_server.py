@@ -19,18 +19,17 @@ import unittest
 
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.compute.common.types import ComputeHypervisors
-from cloudcafe.compute.common.types import NovaServerStatusTypes
 from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.compute.config import ComputeConfig
 from cloudcafe.compute.servers_api.config import ServersConfig
 
 from cloudroast.compute.fixtures import ServerFromImageFixture
 
+compute_config = ComputeConfig()
+hypervisor = compute_config.hypervisor.lower()
+
 
 class CreateServerTest(object):
-
-    compute_config = ComputeConfig()
-    hypervisor = compute_config.hypervisor.lower()
 
     servers_config = ServersConfig()
     file_injection_enabled = servers_config.personality_file_injection_enabled
@@ -301,13 +300,20 @@ class ServerFromImageCreateServerTests(ServerFromImageFixture,
     @tags(type='smoke', net='yes')
     def test_created_server_primary_disk(self):
         """
-        Verify the size of the virtual disk matches the size
+        Verify the size of the virtual or physical disk matches the size
         set by the flavor
         """
         remote_client = self.server_behaviors.get_remote_instance_client(
             self.server, self.servers_config, key=self.key.private_key)
         disk_size = remote_client.get_disk_size(
             self.servers_config.instance_disk_path)
-        self.assertEqual(disk_size, self.flavor.disk,
-                         msg="Expected disk to be {0} GB, was {1} GB".format(
-                             self.flavor.disk, disk_size))
+        if hypervisor == ComputeHypervisors.ON_METAL:
+            self.assertAlmostEqual(
+                disk_size,
+                self.flavor.disk,
+                msg="Expected disk to be {0} GB, was {1} GB".format(
+                    self.flavor.disk, disk_size), delta=5)
+        else:
+            self.assertEqual(disk_size, self.flavor.disk,
+                             msg="Expected disk to be {0} GB, was {1} GB".format(
+                                 self.flavor.disk, disk_size))
