@@ -65,6 +65,7 @@ class ComputeFixture(BaseTestFixture):
             cls.servers_config.personality_file_injection_enabled
         cls.keep_resources_on_failure =\
             cls.servers_config.keep_resources_on_failure
+        cls.compute_exception_handler = ExceptionHandler()
 
         # Clients
         cls.flavors_client = cls.compute.flavors.client
@@ -84,14 +85,15 @@ class ComputeFixture(BaseTestFixture):
         cls.volume_server_behaviors = cls.compute.boot_from_volume.behaviors
         cls.image_behaviors = cls.compute.images.behaviors
         cls.config_drive_behaviors = cls.compute.config_drive.behaviors
-        cls.flavors_client.add_exception_handler(ExceptionHandler())
+        cls.flavors_client.add_exception_handler(cls.compute_exception_handler)
         cls.resources = ResourcePool()
         cls.addClassCleanup(cls.resources.release)
 
     @classmethod
     def tearDownClass(cls):
         super(ComputeFixture, cls).tearDownClass()
-        cls.flavors_client.delete_exception_handler(ExceptionHandler())
+        cls.flavors_client.delete_exception_handler(
+            cls.compute_exception_handler)
 
     def tearDown(self):
         super(ComputeFixture, self).tearDown()
