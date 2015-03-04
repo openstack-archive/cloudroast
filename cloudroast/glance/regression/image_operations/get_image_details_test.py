@@ -1,4 +1,3 @@
-
 """
 Copyright 2015 Rackspace
 
@@ -21,8 +20,8 @@ import time
 from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.glance.common.constants import Messages
 from cloudcafe.glance.common.types import (
-    ImageContainerFormat, ImageDiskFormat, ImageOSType, ImageStatus, ImageType,
-    ImageVisibility)
+    ImageContainerFormat, ImageDiskFormat, ImageMemberStatus, ImageOSType,
+    ImageStatus, ImageType, ImageVisibility)
 
 from cloudroast.glance.fixtures import ImagesFixture
 
@@ -42,8 +41,16 @@ class GetImageDetails(ImagesFixture):
         cls.images.client.create_image_member(
             cls.created_image.id_, member_id)
 
-        cls.alt_created_image = cls.images.behaviors.create_image_via_task()
-        cls.images.client.delete_image(cls.alt_created_image)
+        created_images = cls.images.behaviors.create_images_via_task(count=2)
+
+        cls.rejected_image = created_images.pop()
+        cls.images.client.create_image_member(
+            cls.rejected_image.id_, member_id)
+        cls.images_alt_one.client.update_image_member(
+            cls.rejected_image.id_, member_id, ImageMemberStatus.REJECTED)
+
+        cls.deleted_image = created_images.pop()
+        cls.images.client.delete_image(cls.deleted_image)
 
     @classmethod
     def tearDownClass(cls):
@@ -120,6 +127,29 @@ class GetImageDetails(ImagesFixture):
         self.assertEqual(resp.status_code, 404,
                          self.status_code_msg.format(404, resp.status_code))
 
+    def test_get_image_details_of_rejected_image(self):
+        """
+        @summary: Get image details of a rejected image
+
+        1) Get image details of a rejected image
+        2) Verify that the response code is 200
+        3) Verify that the returned image's properties are as expected
+        generically
+        """
+
+        resp = self.images_alt_one.client.get_image_details(
+            self.rejected_image.id_)
+        self.assertEqual(resp.status_code, 200,
+                         self.status_code_msg.format(200, resp.status_code))
+        get_image = resp.entity
+
+        errors = self.images.behaviors.validate_image(get_image)
+
+        self.assertEqual(
+            errors, [],
+            msg=('Unexpected error received. Expected: No errors '
+                 'Received: {0}').format(errors))
+
     def test_get_image_details_of_deleted_image(self):
         """
         @summary: Get image details of a deleted image
@@ -128,8 +158,8 @@ class GetImageDetails(ImagesFixture):
         2) Verify that the response code is 404
         """
 
-        resp = self.images_alt_two.client.get_image_details(
-            self.alt_created_image.id_)
+        resp = self.images_alt_one.client.get_image_details(
+            self.deleted_image.id_)
         self.assertEqual(resp.status_code, 404,
                          self.status_code_msg.format(404, resp.status_code))
 
