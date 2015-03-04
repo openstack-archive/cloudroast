@@ -21,7 +21,7 @@ from cafe.drivers.unittest.decorators import (
     data_driven_test, DataDrivenFixture)
 from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.glance.common.types import (
-    ImageStatus, ImageVisibility, SortDirection)
+    ImageMemberStatus, ImageStatus, ImageVisibility, SortDirection)
 
 from cloudroast.glance.fixtures import ImagesIntergrationFixture
 from cloudroast.glance.generators import ImagesDatasetListGenerator
@@ -34,17 +34,21 @@ class ListImages(ImagesIntergrationFixture):
     def setUpClass(cls):
         super(ListImages, cls).setUpClass()
 
-        member_id = cls.images_alt_one.auth.tenant_id
+        cls.alt_one_member = cls.images_alt_one.auth.tenant_id
 
         created_images = cls.images.behaviors.create_images_via_task(
-            image_properties={'name': rand_name('image')})
-        cls.created_image = created_images.pop()
+            image_properties={'name': rand_name('image')}, count=2)
 
+        cls.created_image = created_images.pop()
         cls.images.client.create_image_member(
-            cls.created_image.id_, member_id)
+            cls.created_image.id_, cls.alt_one_member)
         resp = cls.images.client.get_image_member(
-            cls.created_image.id_, member_id)
+            cls.created_image.id_, cls.alt_one_member)
         cls.created_image_member = resp.entity
+
+        cls.shared_image = created_images.pop()
+        cls.images.client.create_image_member(
+            cls.shared_image.id_, cls.alt_one_member)
 
     @classmethod
     def tearDownClass(cls):
@@ -134,6 +138,52 @@ class ListImages(ImagesIntergrationFixture):
                 msg=('Unexpected status for image {0} received. Expected: {1} '
                      'Received: {2}').format(image.id_,
                                              ImageStatus.ACTIVE, image.status))
+
+    def test_image_visibility_of_shared_images(self):
+        """
+        @summary: Image visibility of shared images
+
+        1) Using alt_one_member, list all images
+        2) Verify that shared_image is not present
+        3) Using alt_one_member, list all images passing visibility as shared
+        and member status as all
+        4) Verify that shared_image is now present
+        5) Using alt_one_member, update image member status to rejected
+        6) Verify that the response is ok
+        7) Using alt_one_member, list all images passing visibility as shared
+        and member status as all
+        8) Verify that shared_image is still present
+        """
+
+        listed_images = self.images_alt_one.behaviors.list_all_images()
+        self.assertNotIn(
+            self.shared_image, listed_images,
+            msg=('Unexpected images received. Expected: {0} to not be in list '
+                 'of images Received: {1}').format(self.shared_image,
+                                                   listed_images))
+
+        listed_images = self.images_alt_one.behaviors.list_all_images(
+            visibility=ImageVisibility.SHARED,
+            member_status=ImageMemberStatus.ALL)
+        self.assertIn(
+            self.shared_image, listed_images,
+            msg=('Unexpected images received. Expected: {0} to be in list of '
+                 'images Received: {1}').format(self.shared_image,
+                                                listed_images))
+
+        resp = self.images_alt_one.client.update_image_member(
+            self.shared_image.id_, self.alt_one_member,
+            ImageMemberStatus.REJECTED)
+        self.assertTrue(resp.ok, self.ok_resp_msg.format(resp.status_code))
+
+        listed_images = self.images_alt_one.behaviors.list_all_images(
+            visibility=ImageVisibility.SHARED,
+            member_status=ImageMemberStatus.ALL)
+        self.assertIn(
+            self.shared_image, listed_images,
+            msg=('Unexpected images received. Expected: {0} to be in list of '
+                 'images Received: {1}').format(self.shared_image,
+                                                listed_images))
 
     @data_driven_test(
         ImagesDatasetListGenerator.ListImagesFilters())
