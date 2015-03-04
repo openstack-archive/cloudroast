@@ -153,7 +153,7 @@ class ResizeDownConfirmBaseFixture(object):
 
 
 @unittest.skipUnless(
-    resize_enabled, 'Resize not enabled for this flavor class.')
+    can_resize, 'Resize not enabled due to the flavor class or hypervisor.')
 class ServerFromImageResizeServerDownConfirmTests(
         ServerFromImageFixture,
         ResizeServerDownConfirmTests,
