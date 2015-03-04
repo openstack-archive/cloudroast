@@ -16,6 +16,8 @@ limitations under the License.
 
 import unittest
 
+from cloudcafe.glance.common.types import ImageMemberStatus
+
 from cloudroast.glance.fixtures import ImagesFixture
 
 
@@ -27,11 +29,17 @@ class DeleteImageMember(ImagesFixture):
 
         cls.member_id = cls.images_alt_one.auth.tenant_id
 
-        created_images = cls.images.behaviors.create_images_via_task(count=2)
+        created_images = cls.images.behaviors.create_images_via_task(count=3)
 
         cls.shared_image = created_images.pop()
         cls.images.client.create_image_member(
             cls.shared_image.id_, cls.member_id)
+
+        cls.accepted_image = created_images.pop()
+        cls.images.client.create_image_member(
+            cls.accepted_image.id_, cls.member_id)
+        cls.images_alt_one.client.update_image_member(
+            cls.accepted_image.id_, cls.member_id, ImageMemberStatus.ACCEPTED)
 
         cls.alt_shared_image = created_images.pop()
         cls.images.client.create_image_member(
@@ -49,8 +57,10 @@ class DeleteImageMember(ImagesFixture):
         1) Delete image member
         2) Verify that the response code is 204
         3) Get image members
-        4) Verify that the response code is 200
+        4) Verify that the response is ok
         5) Verify that the image member is not in the list of image members
+        6) List images as member that was deleted
+        7) Verify that the image is no longer listed
         """
 
         resp = self.images.client.delete_image_member(
@@ -68,6 +78,50 @@ class DeleteImageMember(ImagesFixture):
                  'Expected: No members '
                  'Received: {1}').format(self.shared_image.id_, members))
 
+        listed_images = self.images_alt_one.behaviors.list_all_images()
+
+        self.assertNotIn(
+            self.shared_image, listed_images,
+            msg=('Unexpected images received. Expected: {0} not in list of '
+                 'images '
+                 'Received: {1}').format(self.shared_image, listed_images))
+
+    def test_delete_accepted_image_member(self):
+        """
+        @summary: Delete accepted image member
+
+        1) Delete accepted image member
+        2) Verify that the response code is 204
+        3) Get image members
+        4) Verify that the response is ok
+        5) Verify that the image member is not in the list of image members
+        6) List images as member that was deleted
+        7) Verify that the image is no longer listed
+        """
+
+        resp = self.images.client.delete_image_member(
+            self.accepted_image.id_, self.member_id)
+        self.assertEqual(resp.status_code, 204,
+                         self.status_code_msg.format(204, resp.status_code))
+
+        resp = self.images.client.list_image_members(self.accepted_image.id_)
+        self.assertTrue(resp.ok, self.ok_resp_msg.format(resp.status_code))
+        members = resp.entity
+
+        self.assertListEqual(
+            members, [],
+            msg=('Unexpected members received for image {0}. '
+                 'Expected: No members '
+                 'Received: {1}').format(self.accepted_image.id_, members))
+
+        listed_images = self.images_alt_one.behaviors.list_all_images()
+
+        self.assertNotIn(
+            self.accepted_image, listed_images,
+            msg=('Unexpected images received. Expected: {0} not in list of '
+                 'images '
+                 'Received: {1}').format(self.accepted_image, listed_images))
+
     def test_delete_image_member_as_member_forbidden(self):
         """
         @summary: Delete image member as member of the image
@@ -75,7 +129,7 @@ class DeleteImageMember(ImagesFixture):
         1) Delete image member as member of the image
         2) Verify that the response code is 403
         3) Get image members
-        4) Verify that the response code is 200
+        4) Verify that the response is ok
         5) Verify that the image member is not deleted
         """
 
