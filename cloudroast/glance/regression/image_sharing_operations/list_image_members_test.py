@@ -54,8 +54,6 @@ class ListImageMembers(ImagesFixture):
             cls.alt_shared_image.id_, cls.alt_two_member_id)
 
         cls.no_access_image = created_images.pop()
-        cls.images.client.create_image_member(
-            cls.alt_shared_image.id_, cls.alt_member_id)
 
         cls.delete_image = created_images.pop()
         cls.images.client.delete_image(cls.delete_image.id_)
@@ -230,10 +228,9 @@ class ListImageMembers(ImagesFixture):
         self.assertEqual(resp.status_code, 404,
                          self.status_code_msg.format(404, resp.status_code))
 
-        self.assertEqual(
-            resp.reason, 'Not Found',
-            msg='Unexpected image members returned. Expected: Not Found '
-                'Received: {0}'.format(resp.reason))
+        self.assertIsNone(resp.entity, msg='Unexpected image member returned. '
+                                           'Expected: None '
+                                           'Received: {0}'.format(resp.entity))
 
     def _validate_image_member(self, image_member):
         """
