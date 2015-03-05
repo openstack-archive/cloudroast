@@ -127,6 +127,10 @@ class GetImageDetails(ImagesFixture):
         self.assertEqual(resp.status_code, 404,
                          self.status_code_msg.format(404, resp.status_code))
 
+        self.assertIsNone(resp.entity, msg='Unexpected task returned. '
+                                           'Expected: None '
+                                           'Received: {0}'.format(resp.entity))
+
     def test_get_image_details_of_rejected_image(self):
         """
         @summary: Get image details of a rejected image
