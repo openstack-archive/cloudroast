@@ -13,6 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
+import operator
 
 from cafe.drivers.unittest.fixtures import BaseTestFixture
 from cloudcafe.common.resources import ResourcePool
@@ -72,7 +73,9 @@ class NetworkingFixture(BaseTestFixture):
         cls.delete_ports = []
         cls.failed_ports = []
         cls.delete_secgroups = []
+        cls.failed_secgroups = []
         cls.delete_secgroups_rules = []
+        cls.failed_secgroups_rules = []
 
         # Getting user data for testing
         cls.user = cls.net.networking_auth_composite()
@@ -231,7 +234,9 @@ class NetworkingFixture(BaseTestFixture):
         return port
 
     def assertNegativeResponse(self, resp, status_code, msg, delete_list=None,
-                               entity=None, error_type=None):
+                               entity=None, error_type=None,
+                               error_msg_label='NeutronError',
+                               not_in_error_msg=None):
         """
         @summary: negative or delete test response assertion
         @param resp: networking response
@@ -246,6 +251,10 @@ class NetworkingFixture(BaseTestFixture):
         @type entity: None or expected entity
         @param error_type: Neutron error type at common/constants
         @type error_type: string
+        @param error_msg_label: label where the error msg starts in the failure
+        @type error_msg_label: string
+        @param not_in_error_msg: Unexpected comment in error message
+        @type not_in_error_msg: string
         """
         # Just in case there is a resource that should be deleted
         if (delete_list is not None and resp.response.entity
@@ -273,6 +282,17 @@ class NetworkingFixture(BaseTestFixture):
             msg = ('Expected {0} error type in failure msg: {1}').format(
                 error_type, resp.failures[0])
             self.assertTrue(error_msg_check, msg)
+
+        # Check the error message does NOT has the given string
+        if not_in_error_msg:
+            msg_index = resp.failures[0].find(error_msg_label)
+            error_msg = resp.failures[0][msg_index:]
+            error_msg_check = not_in_error_msg in error_msg
+            print not_in_error_msg
+            print error_msg
+            msg = ('Unexpected {0} string in failure msg: {1}').format(
+                not_in_error_msg, error_msg)
+            self.assertFalse(error_msg_check, msg)
 
     def assertNetworkResponse(self, expected_network, network,
                               check_exact_name=True):
@@ -387,7 +407,7 @@ class NetworkingFixture(BaseTestFixture):
 
         for fixed_ip in fixed_ips:
             if fixed_ip['subnet_id'] != subnet_id:
-                failures.apppend(subnet_msg.format(fixed_ip=fixed_ip,
+                failures.append(subnet_msg.format(fixed_ip=fixed_ip,
                     subnet_id=subnet_id, port=port.id, fixed_ips=fixed_ips))
             fixed_ip_within_cidr = self.subnets.behaviors.verify_ip(
                 ip_cidr=fixed_ip['ip_address'], ip_range=cidr)
@@ -626,11 +646,6 @@ class NetworkingSecurityGroupsFixture(NetworkingFixture):
             port_range_min=None,
             tenant_id=cls.user.tenant_id)
 
-        cls.delete_secgroups = []
-        cls.failed_secgroups = []
-        cls.delete_secgroups_rules = []
-        cls.failed_secgroups_rules = []
-
         # Using the secGroupCleanup method
         cls.addClassCleanup(cls.secGroupCleanUp)
 
@@ -693,7 +708,7 @@ class NetworkingSecurityGroupsFixture(NetworkingFixture):
                 security_group_list=cls.delete_secgroups)
             cls.delete_secgroups = []
 
-    def create_test_secgroup(self, expected_secgroup):
+    def create_test_secgroup(self, expected_secgroup=None, delete=True):
         """
         @summary: creating a test security group
         @param expected_secgroup: security group object with expected params
@@ -701,18 +716,69 @@ class NetworkingSecurityGroupsFixture(NetworkingFixture):
         @return: security group entity
         @rtype: models.response.SecurityGroup
         """
+        if expected_secgroup:
+            expected_secgroup = expected_secgroup
+        else:
+            expected_secgroup = self.get_expected_secgroup_data()
+
+        request_kwargs = dict()
+        if expected_secgroup.name:
+            request_kwargs['name'] = expected_secgroup.name
+        if expected_secgroup.description:
+            request_kwargs['description'] = expected_secgroup.description
+
         # ResourceBuildException will be raised if not created successfully
-        resp = self.sec.behaviors.create_security_group(
-            name=expected_secgroup.name,
-            description=expected_secgroup.description)
+        resp = self.sec.behaviors.create_security_group(**request_kwargs)
 
         secgroup = resp.response.entity
-        self.delete_secgroups.append(secgroup.id)
+
+        if delete:
+            self.delete_secgroups.append(secgroup.id)
 
         # Check the Security Group response
         self.assertSecurityGroupResponse(expected_secgroup, secgroup,
                                          check_exact_name=False)
         return secgroup
+
+    def create_test_secrule(self, expected_secrule, delete=True):
+        """
+        @summary: creating a test security rule
+        @param secgroup: security group object
+        @type secgroup: models.response.SecurityGroup
+        @param expected_secrule: security rule object with expected params
+        @type expected_secrule: models.response.SecurityRule
+        @return: security group entity
+        @rtype: models.response.SecurityRule
+        """
+        request_kwargs = dict(
+            security_group_id=expected_secrule.security_group_id)
+        if expected_secrule.direction:
+            request_kwargs['direction'] = expected_secrule.direction
+        if expected_secrule.ethertype:
+            request_kwargs['ethertype'] = expected_secrule.ethertype
+        if expected_secrule.port_range_min:
+            request_kwargs['port_range_min'] = expected_secrule.port_range_min
+        if expected_secrule.port_range_max:
+            request_kwargs['port_range_max'] = expected_secrule.port_range_max
+        if expected_secrule.protocol:
+            request_kwargs['protocol'] = expected_secrule.protocol
+            expected_secrule.protocol = expected_secrule.protocol.upper()
+        if expected_secrule.remote_group_id:
+            request_kwargs['remote_group_id'] = expected_secrule.remote_group_id
+        if expected_secrule.remote_ip_prefix:
+            request_kwargs['remote_ip_prefix'] = expected_secrule.remote_ip_prefix
+
+        # ResourceBuildException will be raised if not created successfully
+        resp = self.sec.behaviors.create_security_group_rule(**request_kwargs)
+
+        secrule = resp.response.entity
+
+        if delete:
+            self.delete_secgroups_rules.append(secrule.id)
+
+        # Check the Security Group response
+        self.assertSecurityGroupRuleResponse(expected_secrule, secrule)
+        return secrule
 
     def assertSecurityGroupResponse(self, expected_secgroup, secgroup,
                                     check_exact_name=True,
@@ -741,6 +807,10 @@ class NetworkingSecurityGroupsFixture(NetworkingFixture):
             msg.format(expected_secgroup.tenant_id, secgroup.tenant_id))
 
         if check_secgroup_rules:
+            expected_secgroup.security_group_rules.sort(
+                key=operator.attrgetter('id'))
+            secgroup.security_group_rules.sort(
+                key=operator.attrgetter('id'))
             self.assertEqual(
                 expected_secgroup.security_group_rules,
                 secgroup.security_group_rules,
