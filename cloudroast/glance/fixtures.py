@@ -111,6 +111,7 @@ class ImagesIntergrationFixture(ComputeFixture, ImagesFixture,
     def setUpClass(cls):
         super(ImagesIntergrationFixture, cls).setUpClass()
         cls.object_storage_client = cls.client
+        cls.object_storage_behaviors = cls.behaviors
 
         # Work around to create compute/obj storage additional user composites
         auth_endpoint_config = UserAuthConfig()
