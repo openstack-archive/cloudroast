@@ -25,11 +25,12 @@ class AddImageTag(ImagesFixture):
     def setUpClass(cls):
         super(AddImageTag, cls).setUpClass()
 
-        created_images = cls.images.behaviors.create_images_via_task(count=4)
+        created_images = cls.images.behaviors.create_images_via_task(count=5)
 
         cls.created_image = created_images.pop()
         cls.single_tag_image = created_images.pop()
         cls.multiple_tags_image = created_images.pop()
+        cls.quota_image = created_images.pop()
         cls.duplicate_tag_image = created_images.pop()
 
     @classmethod
@@ -100,6 +101,50 @@ class AddImageTag(ImagesFixture):
                      'Expected: {1} in tags Received: {2} '
                      'not in tags').format(self.multiple_tags_image.id_, tag,
                                            get_image.tags))
+
+    def test_add_image_tag_quota_limit(self):
+        """
+        @summary: Validate add image tag quota limit
+
+        1) While the number of image tags is not equal to the add image tag
+        quota, add image tag
+        2) Verify that the response code is 204
+        3) When the number of image tags is equal to the add image tag quota,
+        create another image tag
+        4) Verify that the response code is 413
+        5) Get image details
+        6) Verify that the response is ok
+        7) Verify that the number of image tags matches the add image quota
+        limit
+        """
+
+        number_of_image_tags = 0
+        quota_limit = self.images.config.image_tags_limit
+
+        while number_of_image_tags != quota_limit:
+            tag = rand_name('tag')
+            resp = self.images.client.add_image_tag(self.quota_image.id_, tag)
+            self.assertEqual(resp.status_code, 204,
+                             self.status_code_msg.format(204,
+                                                         resp.status_code))
+            resp = self.images.client.get_image_details(self.quota_image.id_)
+            self.assertTrue(resp.ok, self.ok_resp_msg.format(resp.status_code))
+            get_image = resp.entity
+            number_of_image_tags = len(getattr(get_image, 'tags'))
+
+        tag = rand_name('tag')
+        resp = self.images.client.add_image_tag(self.quota_image.id_, tag)
+        self.assertEqual(resp.status_code, 413,
+                         self.status_code_msg.format(413, resp.status_code))
+        resp = self.images.client.get_image_details(self.quota_image.id_)
+        self.assertTrue(resp.ok, self.ok_resp_msg.format(resp.status_code))
+        get_image = resp.entity
+
+        self.assertEqual(
+            len(getattr(get_image, 'tags')), quota_limit,
+            msg='Unexpected number of image tags returned. Expected: {0} '
+                'Received: {1}'.format(quota_limit,
+                                       len(getattr(get_image, 'tags'))))
 
     def test_add_duplicate_image_tag(self):
         """
