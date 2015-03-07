@@ -30,9 +30,11 @@ class UpdateImage(ImagesFixture):
     @classmethod
     def setUpClass(cls):
         super(UpdateImage, cls).setUpClass()
-        created_images = cls.images.behaviors.create_images_via_task(count=2)
+        created_images = cls.images.behaviors.create_images_via_task(count=3)
+
         cls.created_image = created_images.pop()
         cls.alt_created_image = created_images.pop()
+        cls.quota_image = created_images.pop()
 
     @classmethod
     def tearDownClass(cls):
@@ -398,6 +400,64 @@ class UpdateImage(ImagesFixture):
                  'Expected: {0} '
                  'Received: {1}').format(new_prop_value,
                                          get_replaced_prop_value))
+
+    def test_update_image_property_quota_limit(self):
+        """
+        @summary: Validate image properties quota limit
+
+        1) While the number of image properties is not equal to the image
+        properties quota, update image adding a new image property
+        2) Verify that the response code is 200
+        3) When the number of image properties is equal to the image properties
+        quota, update image adding another new image property
+        4) Verify that the response code is 413
+        5) Get image details
+        6) Verify that the response is ok
+        7) Verify that the number of image properties matches the image
+        properties quota
+        """
+
+        number_of_image_properties = 0
+        additional_props = ['auto_disk_config', 'image_type', 'os_type',
+                            'user_id']
+        quota_limit = self.images.config.image_properties_limit
+
+        # Decrease quota limit for every property that image already contains
+        for prop in additional_props:
+            if hasattr(self.quota_image, prop):
+                quota_limit -= 1
+
+        while number_of_image_properties != quota_limit:
+            new_prop = rand_name('prop')
+            new_prop_value = rand_name('prop_value')
+            resp = self.images.client.update_image(
+                self.quota_image.id_, add={new_prop: new_prop_value})
+            self.assertEqual(resp.status_code, 200,
+                             self.status_code_msg.format(200,
+                                                         resp.status_code))
+            resp = self.images.client.get_image_details(self.quota_image.id_)
+            self.assertTrue(resp.ok, self.ok_resp_msg.format(resp.status_code))
+            get_image = resp.entity
+            number_of_image_properties = len(getattr(get_image,
+                                                     'additional_properties'))
+
+        new_prop = rand_name('prop')
+        new_prop_value = rand_name('prop_value')
+        resp = self.images.client.update_image(
+            self.quota_image.id_, add={new_prop: new_prop_value})
+        self.assertEqual(resp.status_code, 413,
+                         self.status_code_msg.format(413, resp.status_code))
+        resp = self.images.client.get_image_details(self.quota_image.id_)
+        self.assertTrue(resp.ok, self.ok_resp_msg.format(resp.status_code))
+        get_image = resp.entity
+
+        self.assertEqual(
+            len(getattr(get_image, 'additional_properties')), quota_limit,
+            msg='Unexpected number of image properties returned.'
+                'Expected: {0} '
+                'Received: {1}'.format(quota_limit,
+                                       len(getattr(get_image,
+                                                   'additional_properties'))))
 
     def test_update_image_using_blank_image_id(self):
         """
