@@ -15,16 +15,17 @@ limitations under the License.
 """
 
 import calendar
+import re
 import time
 
 from cloudcafe.common.tools.datagen import rand_name
-from cloudcafe.glance.common.constants import Messages
+from cloudcafe.glance.common.constants import ImageProperties, Messages
 from cloudcafe.glance.common.types import TaskStatus, TaskTypes
 
-from cloudroast.glance.fixtures import ImagesFixture
+from cloudroast.glance.fixtures import ImagesIntergrationFixture
 
 
-class TaskToImportImage(ImagesFixture):
+class TaskToImportImage(ImagesIntergrationFixture):
 
     def test_task_to_import_image(self):
         """
@@ -85,6 +86,110 @@ class TaskToImportImage(ImagesFixture):
             errors, [],
             msg=('Unexpected error received. Expected: No errors '
                  'Received: {0}').format(errors))
+
+    def test_task_to_import_image_states_success(self):
+        """
+        @summary: Validate task to import image states - pending, processing,
+        success
+
+        1) Create a task to import an image
+        2) Verify that the status of the task transitions from pending to
+        success
+        3) Verify that the expired at property is as expected
+        4) Verify that a result property with image_id is returned
+        5) Verify that a message property is not returned
+        """
+
+        id_regex = re.compile(ImageProperties.ID_REGEX)
+        errors = []
+
+        input_ = {'image_properties': {},
+                  'import_from': self.images.config.import_from}
+
+        task_creation_time_in_sec = calendar.timegm(time.gmtime())
+        task = self.images.behaviors.create_task_with_transitions(
+            input_, TaskTypes.IMPORT, TaskStatus.SUCCESS)
+
+        expires_at_delta = self.images.behaviors.get_time_delta(
+            task_creation_time_in_sec, task.expires_at)
+
+        if expires_at_delta > self.images.config.max_expires_at_delta:
+            errors.append(Messages.PROPERTY_MSG.format(
+                'expires_at delta', self.images.config.max_expires_at_delta,
+                expires_at_delta))
+        if id_regex.match(task.result.image_id) is None:
+            errors.append(self.Messages.PROPERTY_MSG.format(
+                'image_id', 'not None',
+                self.id_regex.match(task.result.image_id)))
+        if task.message != '':
+            errors.append(Messages.PROPERTY_MSG.format(
+                'message', 'Empty message', task.message))
+
+        self.assertListEqual(
+            errors, [], msg=('Unexpected error received. Expected: No errors '
+                             'Received: {0}').format(errors))
+
+    def test_task_to_import_image_states_failure(self):
+        """
+        @summary: Validate task to import image states - pending, processing,
+        failure
+
+        1) Create storage container
+        2) Copy the import_test_bootable file from the test_container to the
+        new storage container
+        3) Verify that the response is ok
+        4) Delete the copied over object to create stale data
+        5) Verify that the response is ok
+        6) Create import task
+        7) Verify that the status of the task transitions from pending to
+        failure
+        8) Verify that the expired at property is as expected
+        9) Verify that a result property is not returned
+        10) Verify that a message property with the proper error message is
+        returned
+        """
+
+        container_name = rand_name('container')
+        object_name = rand_name('object')
+        copy_from = self.images.config.import_from_bootable
+        headers = {'X-Copy-From': copy_from}
+        errors = []
+
+        self.object_storage_behaviors.create_container(container_name)
+
+        resp = self.object_storage_client.copy_object(
+            container_name, object_name, headers)
+        self.assertTrue(resp.ok, self.ok_resp_msg.format(resp.status_code))
+
+        import_from = '{0}/{1}'.format(container_name, object_name)
+        input_ = {'image_properties': {},
+                  'import_from': import_from}
+
+        resp = self.object_storage_client.delete_object(
+            container_name, object_name)
+        self.assertTrue(resp.ok, self.ok_resp_msg.format(resp.status_code))
+
+        task_creation_time_in_sec = calendar.timegm(time.gmtime())
+        task = self.images.behaviors.create_task_with_transitions(
+            input_, TaskTypes.IMPORT, TaskStatus.FAILURE)
+
+        expires_at_delta = self.images.behaviors.get_time_delta(
+            task_creation_time_in_sec, task.expires_at)
+
+        if expires_at_delta > self.images.config.max_expires_at_delta:
+            errors.append(Messages.PROPERTY_MSG.format(
+                'expires_at delta', self.images.config.max_expires_at_delta,
+                expires_at_delta))
+        if task.result is not None:
+            errors.append(Messages.PROPERTY_MSG.format(
+                'export_location', 'None', task.result))
+        if task.message != Messages.IMAGE_NOT_FOUND:
+            errors.append(Messages.PROPERTY_MSG.format(
+                'message', Messages.IMAGE_NOT_FOUND, task.message))
+
+        self.assertListEqual(
+            errors, [], msg=('Unexpected error received. Expected: No errors '
+                             'Received: {0}').format(errors))
 
     def test_task_to_import_image_duplicate(self):
         """
