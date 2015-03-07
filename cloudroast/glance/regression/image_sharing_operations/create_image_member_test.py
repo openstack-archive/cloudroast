@@ -15,9 +15,11 @@ limitations under the License.
 """
 
 import calendar
+import random
 import time
 import unittest
 
+from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.glance.common.constants import Messages
 from cloudcafe.glance.common.types import ImageMemberStatus
 
@@ -32,9 +34,10 @@ class CreateImageMember(ImagesFixture):
 
         cls.member_id = cls.images_alt_one.auth.tenant_id
 
-        created_images = cls.images.behaviors.create_images_via_task(count=3)
+        created_images = cls.images.behaviors.create_images_via_task(count=4)
 
         cls.created_image = created_images.pop()
+        cls.quota_image = created_images.pop()
         cls.alt_created_image = created_images.pop()
         cls.inaccessible_image = created_images.pop()
 
@@ -90,6 +93,53 @@ class CreateImageMember(ImagesFixture):
             msg=('Unexpected error received for image {0}. '
                  'Expected: No errors '
                  'Received: {1}').format(self.created_image.id_, errors))
+
+    @unittest.skip('Redmine bug #3707')
+    def test_create_image_member_quota_limit(self):
+        """
+        @summary: Validate create image member quota limit
+
+        1) While the number of image members is not equal to the create image
+        member quota, create image member
+        2) Verify that the response code is 200
+        3) When the number of image members is equal to the create image member
+        quota, create another image member
+        4) Verify that the response code is 413
+        5) List image members
+        6) Verify that the response is ok
+        7) Verify that the number of image members matches the create image
+        member quota limit
+        """
+
+        number_of_image_members = 0
+        quota_limit = self.images.config.image_members_limit
+
+        while number_of_image_members != quota_limit:
+            member_id = rand_name('member') + str(random.randint(9999, 100000))
+            resp = self.images.client.create_image_member(
+                self.quota_image.id_, member_id)
+            self.assertEqual(resp.status_code, 200,
+                             self.status_code_msg.format(200,
+                                                         resp.status_code))
+            resp = self.images.client.list_image_members(self.quota_image.id_)
+            self.assertTrue(resp.ok, self.ok_resp_msg.format(resp.status_code))
+            listed_members = resp.entity
+            number_of_image_members = len(listed_members)
+
+        member_id = rand_name('member') + str(random.randint(9999, 100000))
+        resp = self.images.client.create_image_member(
+            self.quota_image.id_, member_id)
+        self.assertEqual(resp.status_code, 413,
+                         self.status_code_msg.format(413, resp.status_code))
+
+        resp = self.images.client.list_image_members(self.quota_image.id_)
+        self.assertTrue(resp.ok, self.ok_resp_msg.format(resp.status_code))
+        listed_members = resp.entity
+
+        self.assertEqual(
+            len(listed_members), quota_limit,
+            msg='Unexpected number of image members returned. Expected: {0} '
+                'Received: {1}'.format(quota_limit, len(listed_members)))
 
     def test_create_image_member_using_tenant_without_access_to_image(self):
         """
