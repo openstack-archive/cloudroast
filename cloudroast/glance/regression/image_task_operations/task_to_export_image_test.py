@@ -30,9 +30,11 @@ class TaskToExportImage(ImagesIntergrationFixture):
     def setUpClass(cls):
         super(TaskToExportImage, cls).setUpClass()
 
-        created_images = cls.images.behaviors.create_images_via_task(count=4)
+        created_images = cls.images.behaviors.create_images_via_task(count=6)
 
         cls.export_image = created_images.pop()
+        cls.export_success_image = created_images.pop()
+        cls.export_failure_image = created_images.pop()
         cls.multiple_export_image = created_images.pop()
         cls.duplicate_export_image = created_images.pop()
         cls.container_dne_image = created_images.pop()
@@ -128,6 +130,89 @@ class TaskToExportImage(ImagesIntergrationFixture):
             errors, [],
             msg=('Unexpected error received. Expected: No errors '
                  'Received: {0}').format(errors))
+
+    def test_export_task_states_success(self):
+        """
+        @summary: Validate task to import image states - pending, processing,
+        success
+
+        1) Create a task to export an image
+        2) Verify that the status of the task transitions from pending to
+        success
+        3) Verify that the expired at property is as expected
+        4) Verify that a result property with export location is returned
+        5) Verify that a message property is not returned
+        """
+
+        input_ = {'image_uuid': self.export_success_image.id_,
+                  'receiving_swift_container': self.images.config.export_to}
+        expected_location = '{0}/{1}.vhd'.format(
+            self.images.config.export_to, self.export_success_image.id_)
+        errors = []
+
+        task_creation_time_in_sec = calendar.timegm(time.gmtime())
+        task = self.images.behaviors.create_task_with_transitions(
+            input_, TaskTypes.EXPORT, TaskStatus.SUCCESS)
+
+        expires_at_delta = self.images.behaviors.get_time_delta(
+            task_creation_time_in_sec, task.expires_at)
+
+        if expires_at_delta > self.images.config.max_expires_at_delta:
+            errors.append(Messages.PROPERTY_MSG.format(
+                'expires_at delta', self.images.config.max_expires_at_delta,
+                expires_at_delta))
+        if task.result.export_location != expected_location:
+            errors.append(Messages.PROPERTY_MSG.format(
+                'export_location', expected_location,
+                task.result.export_location))
+        if task.message != '':
+            errors.append(Messages.PROPERTY_MSG.format(
+                'message', 'Empty message', task.message))
+
+        self.assertListEqual(
+            errors, [], msg=('Unexpected error received. Expected: No errors '
+                             'Received: {0}').format(errors))
+
+    def test_export_task_states_failure(self):
+        """
+        @summary: Validate task to import image states - pending, processing,
+        failing
+
+        1) Create a task to export an image
+        2) Verify that the status of the task transitions from pending to
+        failure
+        3) Verify that the expired at property is as expected
+        4) Verify that a result property is not returned
+        5) Verify that a message property with the proper error message is
+        returned
+        """
+
+        input_ = {'image_uuid': self.export_failure_image.id_,
+                  'receiving_swift_container': 'container_dne'}
+        errors = []
+
+        task_creation_time_in_sec = calendar.timegm(time.gmtime())
+        task = self.images.behaviors.create_task_with_transitions(
+            input_, TaskTypes.EXPORT, TaskStatus.FAILURE)
+
+        expires_at_delta = self.images.behaviors.get_time_delta(
+            task_creation_time_in_sec, task.expires_at)
+
+        if expires_at_delta > self.images.config.max_expires_at_delta:
+            errors.append(Messages.PROPERTY_MSG.format(
+                'expires_at delta', self.images.config.max_expires_at_delta,
+                expires_at_delta))
+        if task.result is not None:
+            errors.append(Messages.PROPERTY_MSG.format(
+                'export_location', None, task.result))
+        if task.message != Messages.CONTAINER_DNE.format('container_dne'):
+            errors.append(Messages.PROPERTY_MSG.format(
+                'message', Messages.CONTAINER_DNE.format('container_dne'),
+                task.message))
+
+        self.assertListEqual(
+            errors, [], msg=('Unexpected error received. Expected: No errors '
+                             'Received: {0}').format(errors))
 
     def test_task_to_export_image_multiple_containers(self):
         """
