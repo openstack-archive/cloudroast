@@ -66,42 +66,9 @@ class ImagesFixture(BaseTestFixture):
 
         cls.addClassCleanup(cls.resources.release)
 
-    @classmethod
-    def get_comparison_data(cls, data_file):
-        """
-        @summary: Create comparison dictionary based on a given set of data
 
-        @param data_file: File containing data to compare
-        @param data_file: String
-        @return: Comparison_dict
-        @rtype: Dictionary
-        """
-
-        with open(data_file, "r") as DATA:
-            all_data = DATA.readlines()
-
-        comparison_dict = dict()
-        for line in all_data:
-            # Skip any comments or short lines
-            if line.startswith('#') or len(line) < 5:
-                continue
-            # Get the defined data
-            if line.startswith('+'):
-                line = line.replace('+', '')
-                data_columns = [x.strip().lower() for x in line.split('|')]
-                continue
-            # Process the data
-            each_data = dict()
-            data = [x.strip() for x in line.split("|")]
-            for x, y in zip(data_columns[1:], data[1:]):
-                each_data[x] = y
-            comparison_dict[data[0]] = each_data
-
-        return comparison_dict
-
-
-class ImagesIntergrationFixture(ComputeFixture, ImagesFixture,
-                                ObjectStorageFixture):
+class ImagesIntegrationFixture(ComputeFixture, ImagesFixture,
+                               ObjectStorageFixture):
     """
     @summary: Fixture for Compute API and Object Storage API integration
     with Images
@@ -109,7 +76,7 @@ class ImagesIntergrationFixture(ComputeFixture, ImagesFixture,
 
     @classmethod
     def setUpClass(cls):
-        super(ImagesIntergrationFixture, cls).setUpClass()
+        super(ImagesIntegrationFixture, cls).setUpClass()
         cls.object_storage_client = cls.client
         cls.object_storage_behaviors = cls.behaviors
 
