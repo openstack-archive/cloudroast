@@ -43,7 +43,7 @@ class ListVersions(ImagesFixture):
 
         errors = []
 
-        versions_data = self.get_comparison_data(
+        versions_data = self.images.behaviors.get_comparison_data(
             self.images.config.versions_data)
 
         resp = self.images.client.list_versions(url_addition)
