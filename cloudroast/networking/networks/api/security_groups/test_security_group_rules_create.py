@@ -57,6 +57,14 @@ data_set_list.append_new_dataset(
                'port_range_max': 255},
     tags=['sec_group', 'post', 'positive', 'rbac_creator'])
 data_set_list.append_new_dataset(
+    name='w_protocol_icmp',
+    data_dict={'protocol': 'icmp'},
+    tags=['sec_group', 'post', 'positive', 'rbac_creator'])
+data_set_list.append_new_dataset(
+    name='w_protocol_icmp_and_port_range_min',
+    data_dict={'protocol': 'icmp', 'port_range_min': 2},
+    tags=['sec_group', 'post', 'positive', 'rbac_creator'])
+data_set_list.append_new_dataset(
     name='w_protocol_tcp_and_port_ranges',
     data_dict={'protocol': 'tcp', 'port_range_min': 0,
                'port_range_max': 65535},
@@ -104,7 +112,7 @@ data_set_list_negative.append_new_dataset(
     name='w_port_ranges_and_protocol_missing',
     data_dict={'port_range_min': 1, 'port_range_max': 255,
     "http_status": 'BAD_REQUEST',
-    "test_desc": 'Must also specifiy protocol if port range is given',
+    "test_desc": 'Must also specify protocol if port range is given',
     "error_type": 'SECURITY_GROUP_PROTOCOL_REQUIRED_WITH_PORTS'},
     tags=['sec_group', 'post', 'negative', 'rbac_creator'])
 data_set_list_negative.append_new_dataset(
@@ -151,7 +159,16 @@ data_set_list_negative.append_new_dataset(
     "http_status": 'BAD_REQUEST',
     "test_desc": 'Remote groups are not currently supported',
     "error_type": 'INVALID_INPUT'},
-    tags=['dev', 'sec_group', 'post', 'negative', 'rbac_creator'])
+    tags=['sec_group', 'post', 'negative', 'rbac_creator'])
+
+# With bug, http response should be 400 instead of 500
+data_set_list_negative.append_new_dataset(
+    name='w_protocol_icmp_and_port_range_max',
+    data_dict={'protocol': 'icmp', 'port_range_max': 200,
+    "http_status": 'BAD_REQUEST',
+    "test_desc": 'ICMP requires port_range_min when port_range_max given',
+    "error_type": 'SECURITY_GROUP_INVALID_ICMP_VALUE'},
+    tags=['bug'])
 
 
 @DataDrivenFixture

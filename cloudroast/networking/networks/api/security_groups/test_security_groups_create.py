@@ -87,14 +87,14 @@ data_set_list_negative.append_new_dataset(
     name='w_other_tenant_id',
     data_dict={"name": 'test_secgroup_create_neg', "tenant_id": False,
     "http_status": 'BAD_REQUEST',
-    "test_desc": 'with another tenant ID on the request body',
+    "test_desc": 'another tenant ID on the request body',
     "error_type": 'HTTP_BAD_REQUEST'},
     tags=['sec_group', 'post', 'negative', 'rbac_creator'])
 data_set_list_negative.append_new_dataset(
     name='w_invalid_tenant_id',
     data_dict={"name": 'test_secgroup_create_neg', "tenant_id": '555555',
     "http_status": 'BAD_REQUEST',
-    "test_desc": 'with invalid tenant ID on the request body',
+    "test_desc": 'invalid tenant ID on the request body',
     "error_type": 'HTTP_BAD_REQUEST'},
     tags=['sec_group', 'post', 'negative', 'rbac_creator'])
 data_set_list_negative.append_new_dataset(
@@ -102,7 +102,7 @@ data_set_list_negative.append_new_dataset(
     data_dict={"name": 'test_secgroup_create_neg', "tenant_id": '',
     "use_false_values": True,
     "http_status": 'BAD_REQUEST',
-    "test_desc": 'with invalid tenant ID on the request body',
+    "test_desc": 'invalid tenant ID on the request body',
     "error_type": 'HTTP_BAD_REQUEST'},
     tags=['sec_group', 'post', 'negative', 'rbac_creator'])
 

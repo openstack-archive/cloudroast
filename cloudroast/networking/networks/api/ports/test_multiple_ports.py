@@ -112,10 +112,10 @@ class MultiplePortsTest(NetworkingAPIFixture):
             port = resp.response.entity
             self.assertPortResponse(expected_port, port, subnet=ipv6_subnet)
 
-    @unittest.skipIf(not PortsConfig().test_quotas,
-                     'Ports quotas test flag not set')
+    @unittest.skipIf(not PortsConfig().test_ports_per_network,
+                     'test_ports_per_network flag not set')
     @tags('quotas', 'creator')
-    def test_quotas_ipv4_ports_create(self):
+    def test_ipv4_ports_create_quotas(self):
         """
         @summary: Checking port create quotas
         """
@@ -157,10 +157,10 @@ class MultiplePortsTest(NetworkingAPIFixture):
             delete_list=self.delete_subnets,
             error_type=NeutronErrorTypes.OVER_QUOTA)
 
-    @unittest.skipIf(not PortsConfig().test_quotas,
-                     'Ports quotas test flag not set')
+    @unittest.skipIf(not PortsConfig().test_ports_per_network,
+                     'test_ports_per_network flag not set')
     @tags('quotas', 'creator')
-    def test_quotas_ipv6_ports_create(self):
+    def test_ipv6_ports_create_quotas(self):
         """
         @summary: Checking port create quotas
         """

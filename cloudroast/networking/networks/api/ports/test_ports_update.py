@@ -117,6 +117,153 @@ class PortUpdateTest(NetworkingAPIFixture):
         # Check the Port response
         self.assertPortResponse(expected_port, port, check_fixed_ips=True)
 
+    @tags('positive', 'creator')
+    def test_ipv4_port_update_deallocating_ips(self):
+        """
+        @summary: Testing IP deallocation and re-allocation on a port
+        """
+        expected_port = self.ipv4_port
+        initial_fixed_ips = expected_port.fixed_ips
+        fixed_ips_number = self.ports.config.fixed_ips_per_port
+        expected_port.fixed_ips = self.subnets.behaviors.get_fixed_ips(
+            self.ipv4_subnet, fixed_ips_number)
+
+        # Updating the port
+        resp = self.ports.behaviors.update_port(
+            port_id=expected_port.id,
+            fixed_ips=expected_port.fixed_ips)
+
+        # Fail the test if any failure is found
+        self.assertFalse(resp.failures)
+        port = resp.response.entity
+        self.assertPortResponse(expected_port, port, check_fixed_ips=True)
+
+        # Deallocate the IPs and re-allocate the initial IP
+        updated_fixed_ips = expected_port.fixed_ips
+        expected_port.fixed_ips = initial_fixed_ips
+
+        # Updating the port
+        resp = self.ports.behaviors.update_port(
+            port_id=expected_port.id,
+            fixed_ips=expected_port.fixed_ips)
+
+        # Fail the test if any failure is found
+        self.assertFalse(resp.failures)
+        port = resp.response.entity
+        self.assertPortResponse(expected_port, port, check_fixed_ips=True)
+
+        # Deallocate the IP and re-allocate the updated IPs
+        expected_port.fixed_ips = updated_fixed_ips
+
+        # Updating the port
+        resp = self.ports.behaviors.update_port(
+            port_id=expected_port.id,
+            fixed_ips=expected_port.fixed_ips)
+
+        # Fail the test if any failure is found
+        self.assertFalse(resp.failures)
+        port = resp.response.entity
+        self.assertPortResponse(expected_port, port, check_fixed_ips=True)
+
+    @tags('positive', 'creator')
+    def test_ipv6_port_update_deallocating_ips(self):
+        """
+        @summary: Testing IP deallocation and re-allocation on a port
+        """
+        expected_port = self.ipv6_port
+        expected_port.fixed_ips = self.ports.behaviors.format_fixed_ips(
+            expected_port.fixed_ips)
+        initial_fixed_ips = expected_port.fixed_ips
+        fixed_ips_number = self.ports.config.fixed_ips_per_port
+        expected_port.fixed_ips = self.subnets.behaviors.get_fixed_ips(
+            self.ipv6_subnet, fixed_ips_number)
+
+        # Updating the port
+        resp = self.ports.behaviors.update_port(
+            port_id=expected_port.id,
+            fixed_ips=expected_port.fixed_ips)
+
+        # Fail the test if any failure is found
+        self.assertFalse(resp.failures)
+        port = resp.response.entity
+        port.fixed_ips = self.ports.behaviors.format_fixed_ips(port.fixed_ips)
+        self.assertPortResponse(expected_port, port, check_fixed_ips=True)
+
+        # Deallocate the IPs and re-allocate the initial IP
+        updated_fixed_ips = expected_port.fixed_ips
+        expected_port.fixed_ips = initial_fixed_ips
+
+        # Updating the port
+        resp = self.ports.behaviors.update_port(
+            port_id=expected_port.id,
+            fixed_ips=expected_port.fixed_ips)
+
+        # Fail the test if any failure is found
+        self.assertFalse(resp.failures)
+        port = resp.response.entity
+        port.fixed_ips = self.ports.behaviors.format_fixed_ips(port.fixed_ips)
+        self.assertPortResponse(expected_port, port, check_fixed_ips=True)
+
+        # Deallocate the IP and re-allocate the updated IPs
+        expected_port.fixed_ips = updated_fixed_ips
+
+        # Updating the port
+        resp = self.ports.behaviors.update_port(
+            port_id=expected_port.id,
+            fixed_ips=expected_port.fixed_ips)
+
+        # Fail the test if any failure is found
+        self.assertFalse(resp.failures)
+        port = resp.response.entity
+        port.fixed_ips = self.ports.behaviors.format_fixed_ips(port.fixed_ips)
+        self.assertPortResponse(expected_port, port, check_fixed_ips=True)
+
+    @tags('quotas', 'creator')
+    def test_ipv4_fixed_ips_over_quota_port_update(self):
+        """
+        @summary: Updating an IPv4 port with fixed IPs over quotas
+        """
+        expected_port = self.ipv4_port
+
+        quota = self.ports.config.fixed_ips_per_port
+        expected_port.fixed_ips = self.subnets.behaviors.get_fixed_ips(
+            self.ipv4_subnet, quota + 1)
+
+        # Updating the port
+        resp = self.ports.behaviors.update_port(
+            port_id=expected_port.id,
+            fixed_ips=expected_port.fixed_ips)
+
+        msg = ('(negative) Updating an IPv4 port with fixed IPs over '
+            'the quota {0} limit').format(quota)
+        self.assertNegativeResponse(
+            resp=resp, status_code=NeutronResponseCodes.CONFLICT, msg=msg,
+            delete_list=self.delete_ports,
+            error_type=NeutronErrorTypes.OVER_QUOTA)
+
+    @tags('quotas', 'creator')
+    def test_ipv6_fixed_ips_over_quota_port_update(self):
+        """
+        @summary: Updating an IPv6 port with fixed IPs over quotas
+        """
+        expected_port = self.ipv6_port
+
+        quota = self.ports.config.fixed_ips_per_port
+        expected_port.fixed_ips = self.subnets.behaviors.get_fixed_ips(
+            self.ipv6_subnet, quota + 1)
+
+        # Updating the port
+        resp = self.ports.behaviors.update_port(
+            port_id=expected_port.id,
+            fixed_ips=expected_port.fixed_ips)
+
+        msg = ('(negative) Updating an IPv6 port with fixed IPs over '
+            'the quota {0} limit').format(quota)
+        self.assertNegativeResponse(
+            resp=resp, status_code=NeutronResponseCodes.CONFLICT, msg=msg,
+            delete_list=self.delete_ports,
+            error_type=NeutronErrorTypes.OVER_QUOTA)
+
     @tags('smoke', 'creator')
     def test_ipv4_port_update_w_long_name(self):
         """

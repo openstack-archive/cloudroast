@@ -15,6 +15,7 @@ limitations under the License.
 """
 
 import netaddr
+import operator
 
 from cafe.drivers.unittest.fixtures import BaseTestFixture
 from cloudcafe.common.resources import ResourcePool
@@ -387,7 +388,7 @@ class NetworkingFixture(BaseTestFixture):
 
         for fixed_ip in fixed_ips:
             if fixed_ip['subnet_id'] != subnet_id:
-                failures.apppend(subnet_msg.format(fixed_ip=fixed_ip,
+                failures.append(subnet_msg.format(fixed_ip=fixed_ip,
                     subnet_id=subnet_id, port=port.id, fixed_ips=fixed_ips))
             fixed_ip_within_cidr = self.subnets.behaviors.verify_ip(
                 ip_cidr=fixed_ip['ip_address'], ip_range=cidr)
@@ -693,7 +694,7 @@ class NetworkingSecurityGroupsFixture(NetworkingFixture):
                 security_group_list=cls.delete_secgroups)
             cls.delete_secgroups = []
 
-    def create_test_secgroup(self, expected_secgroup):
+    def create_test_secgroup(self, expected_secgroup, delete=True):
         """
         @summary: creating a test security group
         @param expected_secgroup: security group object with expected params
@@ -701,18 +702,66 @@ class NetworkingSecurityGroupsFixture(NetworkingFixture):
         @return: security group entity
         @rtype: models.response.SecurityGroup
         """
+        expected_secgroup = self.expected_secgroup
+        request_kwargs = dict()
+
+        if expected_secgroup.name:
+            request_kwargs['name'] = expected_secgroup.name
+        if expected_secgroup.description:
+            request_kwargs['description'] = expected_secgroup.description
+
         # ResourceBuildException will be raised if not created successfully
-        resp = self.sec.behaviors.create_security_group(
-            name=expected_secgroup.name,
-            description=expected_secgroup.description)
+        resp = self.sec.behaviors.create_security_group(**request_kwargs)
 
         secgroup = resp.response.entity
-        self.delete_secgroups.append(secgroup.id)
+
+        if delete:
+            self.delete_secgroups.append(secgroup.id)
 
         # Check the Security Group response
         self.assertSecurityGroupResponse(expected_secgroup, secgroup,
                                          check_exact_name=False)
         return secgroup
+
+    def create_test_secrule(self, expected_secrule, delete=True):
+        """
+        @summary: creating a test security rule
+        @param secgroup: security group object
+        @type secgroup: models.response.SecurityGroup
+        @param expected_secrule: security rule object with expected params
+        @type expected_secrule: models.response.SecurityRule
+        @return: security group entity
+        @rtype: models.response.SecurityRule
+        """
+        request_kwargs = dict(
+            security_group_id=expected_secrule.security_group_id)
+        if expected_secrule.direction:
+            request_kwargs['direction'] = expected_secrule.direction
+        if expected_secrule.ethertype:
+            request_kwargs['ethertype'] = expected_secrule.ethertype
+        if expected_secrule.port_range_min:
+            request_kwargs['port_range_min'] = expected_secrule.port_range_min
+        if expected_secrule.port_range_max:
+            request_kwargs['port_range_max'] = expected_secrule.port_range_max
+        if expected_secrule.protocol:
+            request_kwargs['protocol'] = expected_secrule.protocol
+            expected_secrule.protocol = expected_secrule.protocol.upper()
+        if expected_secrule.remote_group_id:
+            request_kwargs['remote_group_id'] = expected_secrule.remote_group_id
+        if expected_secrule.remote_ip_prefix:
+            request_kwargs['remote_ip_prefix'] = expected_secrule.remote_ip_prefix
+
+        # ResourceBuildException will be raised if not created successfully
+        resp = self.sec.behaviors.create_security_group_rule(**request_kwargs)
+
+        secrule = resp.response.entity
+
+        if delete:
+            self.delete_secgroups_rules.append(secrule.id)
+
+        # Check the Security Group response
+        self.assertSecurityGroupRuleResponse(expected_secrule, secrule)
+        return secrule
 
     def assertSecurityGroupResponse(self, expected_secgroup, secgroup,
                                     check_exact_name=True,
@@ -741,6 +790,10 @@ class NetworkingSecurityGroupsFixture(NetworkingFixture):
             msg.format(expected_secgroup.tenant_id, secgroup.tenant_id))
 
         if check_secgroup_rules:
+            expected_secgroup.security_group_rules.sort(
+                key=operator.attrgetter('id'))
+            secgroup.security_group_rules.sort(
+                key=operator.attrgetter('id'))
             self.assertEqual(
                 expected_secgroup.security_group_rules,
                 secgroup.security_group_rules,

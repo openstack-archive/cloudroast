@@ -488,10 +488,10 @@ class SubnetCreateTest(NetworkingAPIFixture):
             resp=resp, status_code=NeutronResponseCodes.BAD_REQUEST, msg=msg,
             delete_list=self.delete_subnets)
 
-    @tags('negative', 'creator', 'quark')
-    def test_ipv4_subnet_quota(self):
+    @tags('quotas', 'creator', 'quark')
+    def test_ipv4_subnet_per_network(self):
         """
-        @summary: Negative testing IPv4 subnets quotas limit
+        @summary: Testing IPv4 subnets per Network
         """
         quota = self.subnets.config.v4_subnets_per_network
 
@@ -529,10 +529,10 @@ class SubnetCreateTest(NetworkingAPIFixture):
             delete_list=self.delete_subnets,
             error_type=NeutronErrorTypes.OVER_QUOTA)
 
-    @tags('negative', 'creator', 'quark')
-    def test_ipv6_subnet_quota(self):
+    @tags('quotas', 'creator', 'quark')
+    def test_ipv6_subnet_per_network(self):
         """
-        @summary: Negative testing IPv6 subnets quotas limit
+        @summary: Testing IPv6 subnets per Network
         """
         quota = self.subnets.config.v6_subnets_per_network
 
@@ -575,10 +575,10 @@ class SubnetCreateTest(NetworkingAPIFixture):
             delete_list=self.delete_subnets,
             error_type=NeutronErrorTypes.OVER_QUOTA)
 
-    @tags('negative', 'creator', 'quark')
-    def test_ipv4_subnet_dns_nameservers_quota(self):
+    @tags('quotas', 'creator', 'quark')
+    def test_ipv4_subnet_dns_nameservers_per_subnet(self):
         """
-        @summary: Negative testing IPv4 dns nameservers per subnet quota limit
+        @summary: Testing IPv4 dns nameservers per subnet quota
         """
         quota = self.subnets.config.dns_nameservers_per_subnet
 
@@ -626,10 +626,10 @@ class SubnetCreateTest(NetworkingAPIFixture):
             delete_list=self.delete_subnets,
             error_type=NeutronErrorTypes.OVER_QUOTA)
 
-    @tags('negative', 'creator', 'quark')
-    def test_ipv6_subnet_dns_nameservers_quota(self):
+    @tags('quotas', 'creator', 'quark')
+    def test_ipv6_subnet_dns_nameservers_per_subnet(self):
         """
-        @summary: Negative testing IPv6 dns nameservers per subnet quota limit
+        @summary: Testing IPv6 dns nameservers per subnet quota
         """
         quota = self.subnets.config.dns_nameservers_per_subnet
 
@@ -687,11 +687,10 @@ class SubnetCreateTest(NetworkingAPIFixture):
             error_type=NeutronErrorTypes.OVER_QUOTA)
 
     @unittest.skip('Needs RM10109 fix')
-    @tags('negative', 'creator', 'quark')
-    def test_ipv4_subnet_allocation_pools_quota(self):
+    @tags('quotas', 'creator', 'quark')
+    def test_ipv4_subnet_allocation_pools_per_subnet(self):
         """
-        @summary: Negative testing IPv4 allocation pools per subnet
-            quota limit
+        @summary: Testing IPv4 allocation pools per subnet quota limit
         """
         quota = self.subnets.config.alloc_pools_per_subnet
 
@@ -749,11 +748,10 @@ class SubnetCreateTest(NetworkingAPIFixture):
             error_type=NeutronErrorTypes.OVER_QUOTA)
 
     @unittest.skip('Needs RM10109 fix')
-    @tags('negative', 'creator', 'quark')
-    def test_ipv6_subnet_allocation_pools_quota(self):
+    @tags('quotas', 'creator', 'quark')
+    def test_ipv6_subnet_allocation_pools_per_subnet(self):
         """
-        @summary: Negative testing IPv6 allocation pools per subnet
-            quota limit
+        @summary: Testing IPv6 allocation pools per subnet quota limit
         """
         quota = self.subnets.config.alloc_pools_per_subnet
 
@@ -815,11 +813,10 @@ class SubnetCreateTest(NetworkingAPIFixture):
             delete_list=self.delete_subnets,
             error_type=NeutronErrorTypes.OVER_QUOTA)
 
-    @tags('negative', 'creator', 'quark')
-    def test_ipv4_subnet_host_routes_quota(self):
+    @tags('quotas', 'creator', 'quark')
+    def test_ipv4_subnet_host_routes_per_subnet(self):
         """
-        @summary: Negative testing IPv4 host routes per subnet
-            quota limit
+        @summary: Testing IPv4 host routes per subnet quota limit
         """
         quota = self.subnets.config.routes_per_subnet
 
@@ -873,11 +870,10 @@ class SubnetCreateTest(NetworkingAPIFixture):
             delete_list=self.delete_subnets,
             error_type=NeutronErrorTypes.OVER_QUOTA)
 
-    @tags('negative', 'creator', 'quark')
-    def test_ipv6_subnet_host_routes_quota(self):
+    @tags('quotas', 'creator', 'quark')
+    def test_ipv6_subnet_host_routes_per_subnet(self):
         """
-        @summary: Negative testing IPv4 host routes per subnet
-            quota limit
+        @summary: Testing IPv4 host routes per subnet quota limit
         """
         quota = self.subnets.config.routes_per_subnet
 

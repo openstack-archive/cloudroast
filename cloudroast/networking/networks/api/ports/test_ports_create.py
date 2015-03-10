@@ -388,6 +388,58 @@ class PortCreateTest(NetworkingAPIFixture):
         # Check the Port response (Port expected on IPv4 Subnet
         self.assertPortResponse(expected_port, port, check_fixed_ips=True)
 
+    @unittest.skip('Needs RM11643 fix')
+    @tags('quotas')
+    def test_ipv4_fixed_ips_per_port(self):
+        """
+        @summary: Testing fixed IPs per port quotas with fixed IP over limit
+        """
+        quota = self.ports.config.fixed_ips_per_port
+        expected_port = self.expected_port
+        expected_port.name = 'test_ipv4_port_create_w_fixed_ip'
+        ipv4_subnet = self.add_subnet_to_network(self.expected_ipv4_subnet)
+        expected_port.fixed_ips = self.subnets.behaviors.get_fixed_ips(
+            ipv4_subnet, quota + 1)
+
+        # Port create should be unavailable with over quota limit for fixed IPs
+        resp = self.ports.behaviors.create_port(
+            network_id=expected_port.network_id, name=expected_port.name,
+            fixed_ips=expected_port.fixed_ips,
+            raise_exception=False, use_exact_name=True)
+
+        msg = ('(negative) Creating an IPv4 port with fixed IPs over '
+            'the quota {0} limit').format(quota)
+        self.assertNegativeResponse(
+            resp=resp, status_code=NeutronResponseCodes.CONFLICT, msg=msg,
+            delete_list=self.delete_ports,
+            error_type=NeutronErrorTypes.OVER_QUOTA)
+
+    @unittest.skip('Needs RM11643 fix')
+    @tags('quotas')
+    def test_ipv6_fixed_ips_per_port(self):
+        """
+        @summary: Testing fixed IPs per port quotas with fixed IP over limit
+        """
+        quota = self.ports.config.fixed_ips_per_port
+        expected_port = self.expected_port
+        expected_port.name = 'test_ipv6_port_create_w_fixed_ips'
+        ipv6_subnet = self.add_subnet_to_network(self.expected_ipv6_subnet)
+        expected_port.fixed_ips = self.subnets.behaviors.get_fixed_ips(
+            ipv6_subnet, quota + 1)
+
+        # Port create should be unavailable with over quota limit for fixed IPs
+        resp = self.ports.behaviors.create_port(
+            network_id=expected_port.network_id, name=expected_port.name,
+            fixed_ips=expected_port.fixed_ips,
+            raise_exception=False, use_exact_name=True)
+
+        msg = ('(negative) Creating an IPv6 port with fixed IPs over '
+            'the quota {0} limit').format(quota)
+        self.assertNegativeResponse(
+            resp=resp, status_code=NeutronResponseCodes.CONFLICT, msg=msg,
+            delete_list=self.delete_ports,
+            error_type=NeutronErrorTypes.OVER_QUOTA)
+
     @tags('smoke', 'creator')
     def test_ipv4_port_create_on_net_w_both_subnets(self):
         """
