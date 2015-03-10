@@ -18,10 +18,10 @@ from cloudcafe.glance.common.constants import Messages
 from cloudcafe.glance.common.types import (
     ImageMemberStatus, ImageType, TaskStatus, TaskTypes)
 
-from cloudroast.glance.fixtures import ImagesIntergrationFixture
+from cloudroast.glance.fixtures import ImagesIntegrationFixture
 
 
-class ImageSharing(ImagesIntergrationFixture):
+class ImageSharing(ImagesIntegrationFixture):
 
     @classmethod
     def setUpClass(cls):

@@ -21,10 +21,10 @@ from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.glance.common.constants import Messages
 from cloudcafe.glance.common.types import TaskStatus, TaskTypes
 
-from cloudroast.glance.fixtures import ImagesIntergrationFixture
+from cloudroast.glance.fixtures import ImagesIntegrationFixture
 
 
-class TaskToImportImage(ImagesIntergrationFixture):
+class TaskToImportImage(ImagesIntegrationFixture):
 
     @classmethod
     def setUpClass(cls):
