@@ -390,7 +390,7 @@ class PortCreateTest(NetworkingAPIFixture):
 
     @unittest.skip('Needs RM11643 fix')
     @tags('quotas')
-    def test_ipv4_fixed_ips_per_port(self):
+    def test_ipv4_fixed_ips_per_port_create(self):
         """
         @summary: Testing fixed IPs per port quotas with fixed IP over limit
         """
@@ -416,7 +416,7 @@ class PortCreateTest(NetworkingAPIFixture):
 
     @unittest.skip('Needs RM11643 fix')
     @tags('quotas')
-    def test_ipv6_fixed_ips_per_port(self):
+    def test_ipv6_fixed_ips_per_port_create(self):
         """
         @summary: Testing fixed IPs per port quotas with fixed IP over limit
         """
