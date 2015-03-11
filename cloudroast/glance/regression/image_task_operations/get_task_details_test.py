@@ -106,11 +106,11 @@ class GetTaskDetails(ImagesFixture):
                                            'Expected: None '
                                            'Received: {0}'.format(resp.entity))
 
-    def test_get_image_details_using_blank_task_id(self):
+    def test_get_task_details_using_blank_task_id(self):
         """
-        @summary: Get image details using a blank task id
+        @summary: Get task details using a blank task id
 
-        1) Get image details using a blank task id
+        1) Get task details using a blank task id
         2) Verify that the response code is 404
         """
 
@@ -118,11 +118,11 @@ class GetTaskDetails(ImagesFixture):
         self.assertEqual(resp.status_code, 404,
                          self.status_code_msg.format(404, resp.status_code))
 
-    def test_get_image_details_using_invalid_task_id(self):
+    def test_get_task_details_using_invalid_task_id(self):
         """
-        @summary: Get image details using a invalid task id
+        @summary: Get task details using a invalid task id
 
-        1) Get image details using a invalid task id
+        1) Get task details using a invalid task id
         2) Verify that the response code is 404
         """
 
