@@ -1,5 +1,5 @@
 """
-Copyright 2013 Rackspace
+Copyright 2015 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -24,6 +24,12 @@ class DeleteFlavorTest(ComputeAdminFixture):
 
     @classmethod
     def setUpClass(cls):
+        """
+        The following resources are created during this setup:
+            - A public flavor with a name starting with 'flavor', 64MB of RAM,
+              1 vcpu, 10GB disk space
+        The created flavor is then deleted.
+        """
         super(DeleteFlavorTest, cls).setUpClass()
         cls.flavor_name = rand_name('flavor')
         cls.flavor = cls.admin_flavors_client.create_flavor(
@@ -33,15 +39,35 @@ class DeleteFlavorTest(ComputeAdminFixture):
 
     @tags(type='positive', net='no')
     def test_get_deleted_flavor(self):
+        """
+        Validate that the detailed information of the flavor created and
+        deleted during setup can be accessed.
+        This test will be successful if:
+            - The test user can successfully retrieve the details of a deleted
+              instance
+        """
         self.admin_flavors_client.get_flavor_details(self.flavor.id)
 
     @tags(type='negative', net='no')
     def test_create_server_from_deleted_flavor(self):
+        """
+        Validate that you receive an 'Bad Request' error when a user attempts
+        to create an instance with a flavor created and deleted during setup.
+        This test will be successful if:
+            - The create instance requests raises a 'Bad Request' error
+        """
         with self.assertRaises(BadRequest):
             self.server_behaviors.create_active_server(
                 flavor_ref=self.flavor.id)
 
     @tags(type='negative', net='no')
     def test_delete_deleted_flavor_fails(self):
+        """
+        Validate that you receive an 'Item Not Found' error when a user
+        attempts to delete the flavor that was created and deleted during
+        setup.
+        This test will be successful if:
+            - The delete flavor requests raises a 'Item not Found' error
+        """
         with self.assertRaises(ItemNotFound):
             self.admin_flavors_client.delete_flavor(self.flavor.id)
