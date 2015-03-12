@@ -1,5 +1,5 @@
 """
-Copyright 2013 Rackspace
+Copyright 2015 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -21,9 +21,21 @@ from cloudroast.compute.fixtures import ComputeAdminFixture
 
 
 class PrivateFlavorTest(ComputeAdminFixture):
+    """
+    This class should contain tests that validate CRUD for private flavors.
+    These tests should validate that a user with that has been granted access to
+    the private flavor can view and use the flavor.
+    """
+
 
     @classmethod
     def setUpClass(cls):
+        """
+        The following resources are created during this setup:
+            - A private flavor with a name starting with 'flavor', 64MB of RAM,
+              1 vcpu, 10GB disk space
+        The configured tenant is granted access to the flavor.
+        """
         super(PrivateFlavorTest, cls).setUpClass()
         cls.flavor_name = rand_name('flavor')
         cls.flavor = cls.admin_flavors_client.create_flavor(
@@ -34,11 +46,21 @@ class PrivateFlavorTest(ComputeAdminFixture):
 
     @classmethod
     def tearDownClass(cls):
+        """
+        The following resources are deleted during this tear down:
+            - The private flavor created in the setup
+        """
         super(PrivateFlavorTest, cls).tearDownClass()
         cls.admin_flavors_client.delete_flavor(cls.flavor.id)
 
     @tags(type='positive', net='no')
     def test_create_server_with_private_flavor(self):
+        """
+        Create an instance using the private flavor id created during Setup.
+        Wait for that instance to become active.
+        This test will succeed if:
+            - An instance is successfully created on the private flavor
+        """
         resp = self.server_behaviors.create_active_server(
             flavor_ref=self.flavor.id)
         server = resp.entity
@@ -46,20 +68,47 @@ class PrivateFlavorTest(ComputeAdminFixture):
 
     @tags(type='positive', net='no')
     def test_list_private_flavor(self):
+        """
+        Get a list of flavors. Validate that the previously created flavor,
+        which should be private and the test user should have access to, is
+        listed.
+        This test will succeed if:
+            - The test user is able to receive a detailed list of flavors
+            - The private flavor created in setup is found in the list of
+              flavors
+        """
         response = self.flavors_client.list_flavors_with_detail()
         flavors = response.entity
         self.assertIn(self.flavor, flavors)
 
     @tags(type='positive', net='no')
     def test_get_private_flavor(self):
+        """
+        Validate that the detailed information of the private flavor created
+        during setup can be accessed.
+        This test will succeed if:
+            - The test user is able to receive details about the private flavor
+              created during setup.
+            - The status code of the request is 200
+        """
         response = self.flavors_client.get_flavor_details(self.flavor.id)
         self.assertEqual(response.status_code, 200)
 
 
 class PrivateFlavorNegativeTest(ComputeAdminFixture):
-
+    """
+    This class should contain tests that validate negative tests for a
+    private flavor. These tests should validate that a user with that has not
+    been granted access to the private flavor cannot view and use the flavor.
+    """
+    
     @classmethod
     def setUpClass(cls):
+        """
+        The following resources are created during this setup:
+            - A private flavor with a name starting with 'flavor', 64MB of RAM,
+              1 vcpu, 10GB disk space
+        """
         super(PrivateFlavorNegativeTest, cls).setUpClass()
         cls.flavor_name = rand_name('flavor')
         cls.flavor = cls.admin_flavors_client.create_flavor(
@@ -68,6 +117,12 @@ class PrivateFlavorNegativeTest(ComputeAdminFixture):
 
     @tags(type='negative', net='no')
     def test_create_server_without_flavor_permissions_fails(self):
+        """
+        Validate that you receive an 'Bad Request' error when you attempt
+        to create an instance with the flavor created and deleted during setup.
+        This test will succeed if:
+            - The create instance request raises a 'Bad Request' error
+        """
         with self.assertRaises(BadRequest):
             resp = self.server_behaviors.create_active_server(
                 flavor_ref=self.flavor.id)
@@ -76,11 +131,27 @@ class PrivateFlavorNegativeTest(ComputeAdminFixture):
 
     @tags(type='negative', net='no')
     def test_private_flavor_not_listed_without_permissions(self):
+        """
+        Get a list of servers. Validate that the previously created flavor,
+        which should be private and the test user should not have access to, is
+        not listed.
+        This test will succeed if:
+            - The test user is able to receive a detailed list of flavors
+            - The private flavor created in setup is not found in the list of
+              flavors
+        """
         response = self.flavors_client.list_flavors_with_detail()
         flavors = response.entity
         self.assertNotIn(self.flavor, flavors)
 
     @tags(type='negative', net='no')
     def test_get_private_flavor_fails_without_permissions(self):
+        """
+        Validate that you receive an 'Item Not Found' error when a user
+        attempts to access a private flavor on which they have not been
+        granted access.
+        This test will succeed if:
+            - The get flavor details request raises an 'Item Not Found' error
+        """
         with self.assertRaises(ItemNotFound):
             self.flavors_client.get_flavor_details(self.flavor.id)
