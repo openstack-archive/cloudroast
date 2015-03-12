@@ -23,12 +23,12 @@ from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.glance.common.types import (
     ImageMemberStatus, ImageStatus, ImageVisibility, SortDirection)
 
-from cloudroast.glance.fixtures import ImagesIntergrationFixture
+from cloudroast.glance.fixtures import ImagesIntegrationFixture
 from cloudroast.glance.generators import ImagesDatasetListGenerator
 
 
 @DataDrivenFixture
-class ListImages(ImagesIntergrationFixture):
+class ListImages(ImagesIntegrationFixture):
 
     @classmethod
     def setUpClass(cls):
