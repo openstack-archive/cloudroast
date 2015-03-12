@@ -1,5 +1,5 @@
 """
-Copyright 2013 Rackspace
+Copyright 2015 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -24,6 +24,11 @@ class CreateFlavorTest(ComputeAdminFixture):
 
     @classmethod
     def setUpClass(cls):
+        """
+        The following resources are created during this setup:
+            - A public flavor with a name starting with 'flavor', 64MB of RAM,
+              1 vcpu, 10GB disk space
+        """
         super(CreateFlavorTest, cls).setUpClass()
         cls.flavor_name = rand_name('flavor')
         cls.flavor = cls.admin_flavors_client.create_flavor(
@@ -37,6 +42,15 @@ class CreateFlavorTest(ComputeAdminFixture):
 
     @tags(type='positive', net='no')
     def test_create_server_from_new_flavor(self):
+        """
+        Create a server using the flavor id created during Setup. Wait for
+        that server to become active.
+        This test will fail if:
+            - The server fails to create
+            - The server enter ERROR state
+            - The server takes longer than the configured timeout for server
+              creation
+        """
         resp = self.server_behaviors.create_active_server(
             flavor_ref=self.flavor.id)
         server = resp.entity
@@ -44,6 +58,15 @@ class CreateFlavorTest(ComputeAdminFixture):
 
     @tags(type='negative', net='no')
     def test_create_flavor_with_duplicate_id(self):
+        """
+        Validate that you receive an 'Action in Progress' error when a user
+        attempts to create a flavor with a previously used ID value.
+        This test will fail if:
+            - The flavor is successfully created
+            - The flavor enter ERROR state
+            - An ERROR other than 'Action in Progress' is raised during the
+              flavor creation attempt
+        """
         with self.assertRaises(ActionInProgress):
             self.admin_flavors_client.create_flavor(
                 name=self.flavor_name, ram='64', vcpus='1', disk='10',
