@@ -1,5 +1,5 @@
 """
-Copyright 2013 Rackspace
+Copyright 2015 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -31,6 +31,13 @@ class HostActionsAdminTest(ComputeAdminFixture):
 
     @classmethod
     def setUpClass(cls):
+        """
+        Perform actions that setup the neccesary resources for testing
+
+        The following data is generated during this setup:
+            - A list of hosts
+            - The host name of a compute host
+        """
         super(HostActionsAdminTest, cls).setUpClass()
         cls.hosts = cls.admin_hosts_client.list_hosts().entity
         cls.compute_host_name = next(
@@ -38,6 +45,16 @@ class HostActionsAdminTest(ComputeAdminFixture):
             if host.service == HostServiceTypes.COMPUTE)
 
     def test_disable_host(self):
+        """
+        Test that an admin user can disable and enable a host
+
+        Disable the compute host identified during setup. Validate that
+        host becomes disabled. Re-enable the compute host. Validate that
+        the host becomes enabled.
+        This test will be successful if:
+            - The admin test user is able to set a host to disabled
+            - The admin test user is able to set a host to enabled
+        """
         host_response = self.admin_hosts_client.\
             update_host(self.compute_host_name, status="disable").entity
         self.assertEqual(host_response.status, "disabled")
