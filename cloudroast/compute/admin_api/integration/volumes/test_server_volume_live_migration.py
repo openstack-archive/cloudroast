@@ -1,5 +1,5 @@
 """
-Copyright 2013 Rackspace
+Copyright 2015 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -25,9 +25,26 @@ from cloudroast.compute.instance_actions.admin_api.test_server_live_migration im
 
 
 def load_tests(loader, standard_tests, pattern):
+    """
+    Generate a test suite of tests from several test classes.
+
+    Specifically:
+        - test_volume_attached_after_migration from
+            LiveMigratateServerWithVolumeTests
+        - test_format_and_mount_disks, test_live_migrate_server,
+          test_verify_ephemeral_disks_mounted from
+          LiveMigratateServerWithVolumeTests
+    These tests are added in order to the load_tests method in order to
+    enforce run order. This run order will ensure that the instance
+    generated during LiveMigratateServerWithVolumeTests setUpClass
+    is setup and then migrated in the appropriate order for these tests.
+    """
     suite = TestSuite()
+    # During the LiveMigratateServerWithVolumeTests setup an instance is
+    # created that will be used for the tests in this test module
     suite.addTest(LiveMigratateServerWithVolumeTests(
         "test_format_and_mount_disks"))
+    # This test performs a live migrate on the instance
     suite.addTest(LiveMigratateServerWithVolumeTests(
         "test_live_migrate_server"))
     suite.addTest(LiveMigratateServerWithVolumeTests(
@@ -41,6 +58,17 @@ class LiveMigratateServerWithVolumeTests(LiveMigratationServerTests):
 
     @classmethod
     def setUpClass(cls):
+        """
+        Perform actions that setup the neccesary resources for testing
+
+        The following resources are accessed from a parent class:
+            - An instance from LiveMigratationServerTests
+        The following resources are created during this setup:
+            - A volume with the minimum volume size and the volume
+              type from the test configuration
+            - An attachment between the create volume and the instance
+              from the parent class
+        """
         super(LiveMigratateServerWithVolumeTests, cls).setUpClass()
         cls.volumes = VolumesAutoComposite()
 
@@ -64,6 +92,12 @@ class LiveMigratateServerWithVolumeTests(LiveMigratationServerTests):
 
     @classmethod
     def tearDownClass(cls):
+        """
+        Perform actions that allow for the cleanup of any generated resources
+
+        The following resources are deleted during this tear down:
+            - The volume attachment created in the setup
+        """
         cls.volume_attachments_client.delete_volume_attachment(
             cls.volume.id_, cls.server.id)
         cls.volumes.behaviors.wait_for_volume_status(
@@ -73,6 +107,16 @@ class LiveMigratateServerWithVolumeTests(LiveMigratationServerTests):
 
     @tags(type='smoke', net='yes')
     def test_volume_attached_after_migration(self):
+        """
+        Test that a volume has the correct status
+
+        Get the details of the volume created and attached during the
+        setup. Validate that the status of the volume is 'in-use'.
+        This test will be successful if:
+            - The user is able to get information on the volume created
+              and attached during setup
+            - The volume status shows as 'in-use'
+        """
         volume_after_migration = self.volumes.client.get_volume_info(
             self.volume.id_).entity
         self.assertEqual(volume_after_migration.status, 'in-use')
