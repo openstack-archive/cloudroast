@@ -1,5 +1,5 @@
 """
-Copyright 2014 Rackspace
+Copyright 2015 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ from cafe.engine.config import EngineConfig
 from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.compute.common.types import InstanceAuthStrategies
 
-NAMES_PREFIX = 'l2_routes_gateway'
 PING_PACKET_LOSS_REGEX = '(\d{1,3})\.?\d*\%.*loss'
 
 
@@ -34,7 +33,7 @@ class Instance(object):
         self.remote_client = remote_client
 
 
-class L2HostroutesGatewayMixin(object):
+class ScenarioMixin(object):
 
     """
     This class provides utility methods for networking scenario tests
@@ -43,7 +42,7 @@ class L2HostroutesGatewayMixin(object):
     @classmethod
     def _create_network_with_subnet(cls, name, cidr, allocation_pools=None,
                                     gateway_ip=None):
-        create_name = '{}_{}'.format(rand_name(NAMES_PREFIX), name)
+        create_name = '{}_{}'.format(rand_name(cls.NAMES_PREFIX), name)
         network = cls.networks_behaviors.create_network(
             name=create_name,
             use_exact_name=True).response.entity
@@ -56,16 +55,20 @@ class L2HostroutesGatewayMixin(object):
         return network, subnet
 
     @classmethod
-    def _create_server(cls, name, isolated_networks_to_connect,
-                       public_and_service=True):
+    def _create_server(cls, name, isolated_networks_to_connect=None,
+                       public_and_service=True, security_groups=None):
+        isolated_networks_to_connect = isolated_networks_to_connect or []
+        security_groups = security_groups or []
         networks = [{'uuid': net.id} for net in isolated_networks_to_connect]
         if public_and_service:
             networks.append({'uuid': cls.public_network_id})
             networks.append({'uuid': cls.service_network_id})
+        nova_secgroups = [{"name": secgroup.name} for secgroup in
+                          security_groups]
         server = cls.server_behaviors.create_active_server(
-            name='{}_{}'.format(rand_name(NAMES_PREFIX), name),
-            key_name=cls.keypair.name,
-            networks=networks).entity
+            name='{}_{}'.format(rand_name(cls.NAMES_PREFIX), name),
+            key_name=cls.keypair.name, networks=networks,
+            security_groups=nova_secgroups).entity
         cls.resources.add(server.id, cls.servers_client.delete_server)
         isolated_ips = cls._get_server_isolated_ips(
             server, isolated_networks_to_connect)
@@ -81,7 +84,7 @@ class L2HostroutesGatewayMixin(object):
 
     @classmethod
     def _create_keypair(cls):
-        name = rand_name(NAMES_PREFIX)
+        name = rand_name(cls.NAMES_PREFIX)
         cls.keypair = cls.keypairs_client.create_keypair(name).entity
         cls.resources.add(name, cls.keypairs_client.delete_keypair)
 

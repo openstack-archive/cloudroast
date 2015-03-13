@@ -1,5 +1,5 @@
 """
-Copyright 2014 Rackspace
+Copyright 2015 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -22,14 +22,13 @@ from cafe.drivers.unittest.decorators import tags
 from cloudcafe.common.tools.datagen import rand_name
 from cloudroast.networking.networks.fixtures import NetworkingComputeFixture
 from cloudroast.networking.networks.scenario.common import \
-    L2HostroutesGatewayMixin
+    ScenarioMixin
 
-NAMES_PREFIX = 'l2_routes_gateway'
 PING_PACKET_LOSS_REGEX = '(\d{1,3})\.?\d*\%.*loss'
 
 
 class L2HostroutesGatewayTest(NetworkingComputeFixture,
-                              L2HostroutesGatewayMixin):
+                              ScenarioMixin):
 
     """
     This test verifies that host routes specified for Neutron subnets allow
@@ -114,7 +113,7 @@ class L2HostroutesGatewayTest(NetworkingComputeFixture,
         # Attach router to a port in the destination network
         port = self.ports_behaviors.create_port(
             self.destination_network.id,
-            name='{}_{}'.format(rand_name(NAMES_PREFIX), 'attached_port'),
+            name='{}_{}'.format(rand_name(self.NAMES_PREFIX), 'attached_port'),
             device_id=self.router.entity.id,
             use_exact_name=True).response.entity
         self.delete_ports.append(port.id)
@@ -266,6 +265,7 @@ class L2HostroutesGatewayTestIPv4(L2HostroutesGatewayTest):
     SSH_COMMAND = ('ssh -o UserKnownHostsFile=/dev/null '
                    '-o StrictHostKeyChecking=no -o ConnectTimeout=60 '
                    '-i {} root@{} {}')
+    NAMES_PREFIX = 'routes_gateway_IPv4'
 
     @classmethod
     def setUpClass(cls):
@@ -283,7 +283,7 @@ class L2HostroutesGatewayTestIPv4(L2HostroutesGatewayTest):
 
 
 class GatewayPoliciesTest(NetworkingComputeFixture,
-                          L2HostroutesGatewayMixin):
+                          ScenarioMixin):
 
     """
     This class tests several Neutron policies regarding the assignment of
@@ -292,6 +292,8 @@ class GatewayPoliciesTest(NetworkingComputeFixture,
     one policy. Please refer to the docstring in each method for a description
     of the tested policy
     """
+
+    NAMES_PREFIX = 'gateway_policies'
 
     @classmethod
     def setUpClass(cls):
@@ -511,6 +513,7 @@ class L2HostroutesGatewayTestIPv6(L2HostroutesGatewayTest):
     SSH_COMMAND = ('ssh -6 -o UserKnownHostsFile=/dev/null '
                    '-o StrictHostKeyChecking=no -o ConnectTimeout=60 '
                    '-i {} root@{} {}')
+    NAMES_PREFIX = 'routes_gateway_IPv6'
 
     @classmethod
     def setUpClass(cls):
