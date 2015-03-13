@@ -1,5 +1,5 @@
 """
-Copyright 2013 Rackspace
+Copyright 2015 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -24,6 +24,13 @@ class QuotasAdminTest(ComputeAdminFixture):
 
     @classmethod
     def setUpClass(cls):
+        """
+        Perform actions that setup the neccesary resources for testing
+
+        The following resources are created during this setup:
+            - An instance is created using the tenant identified in
+              the test config
+        """
         super(QuotasAdminTest, cls).setUpClass()
         cls.tenant_id = UserConfig().tenant_id
         cls.default_quota_set = DefaultQuotaSetConfig()
@@ -34,6 +41,23 @@ class QuotasAdminTest(ComputeAdminFixture):
 
     @tags(type='smoke', net='no')
     def test_get_default_quota_set(self):
+        """
+        Test that an admin user can get the quota values for a tenant
+
+        As an admin test user get the default quota values for the tenant
+        identified during setup. Validate that this quota is not empty
+        and that the RAM and Core values for the quote match the expected
+        default values set during test configuration.
+
+        This test will be successful if:
+            - The admin test user is able to get the default quota values
+              for the tenant identified during setup
+            - The quota values are populated
+            - The RAM quota value for the tenant matches the expected
+              default values set during test configuration
+            - The Cores quota value for the tenant matches the expected
+              default values set during test configuration
+        """
         quota = self.admin_quotas_client.get_default_quota(
             self.tenant_id).entity
         self.assertIsNotNone(quota, "Default quota is none.")
@@ -45,6 +69,19 @@ class QuotasAdminTest(ComputeAdminFixture):
 
     @tags(type='smoke', net='no')
     def test_update_quota(self):
+        """
+        Test that an admin user can change the quota values for a tenant
+
+        As an admin test user change the instances quota value for the tenant
+        identified during setup from the current value to 20 instances.
+        Ensure that the API returns the correct updated instances quota value.
+
+        This test will be successful if:
+            - The admin user is able to change the instances quota value for
+              the tenant identified in the setup
+            - The API shows that the instances quota values has been updated to
+              show an instance quota value of 20 instances
+        """
         self.admin_quotas_client.update_quota(
             self.tenant_id, instances=20)
         quota = self.admin_quotas_client.get_quota(
@@ -54,6 +91,25 @@ class QuotasAdminTest(ComputeAdminFixture):
 
     @tags(type='smoke', net='no')
     def test_delete_quota(self):
+        """
+        Test that an admin user can delete the quota values for a tenant
+
+        As an admin test user change the instances quota value for the tenant
+        identified during setup from the default value to 20 instances.
+        Confirm that the instances quota value has updated to 20 instances.
+        Delete the quota values, the instances quota value should now
+        return to the default value. Validate that the quota is not None and
+        that the instances quota value matches the default instances quota
+        value set during test configuration.
+
+        This test will be successful if:
+            - The admin test user is able to change the instances quota value
+              for the tenant identified in the setup to 20 instances
+            - The admin user is able to delete the quota values for the tenant
+            - The API shows that the quota is populated
+            - The API shows that the instances quota value has returned to the
+              default values set during test configuration
+        """
         self.admin_quotas_client.update_quota(
             self.tenant_id, instances=20)
         quota = self.admin_quotas_client.get_quota(
@@ -71,8 +127,22 @@ class QuotasAdminTest(ComputeAdminFixture):
 
     @tags(type='negative', net='no')
     def test_admin_quota_is_not_checked_on_resizing_user_server_by_admin(self):
-        """Verify the admin quota is not checked while resizing."""
+        """
+        Test that changing the quota values does not affect instance resizes
 
+        As an admin test user change the RAM quota value for the tenant
+        identified during setup to 0. Resize the instance created during setup
+        and confirm that the resize was succeful. The updated quota value
+        should not affect the resize.
+
+        This test will be successful if:
+            - The admin user is able to change the RAM quota value for the
+              tenant identified in the setup to 0
+            - The admin user is able to resize the instance created during
+              setup to the alternative flavor set during test configuration.
+            - The resized server's flavor id matches the alt flavor id set
+              during test configuration
+        """
         self._update_admin_ram_quota_to(0)
         self.admin_server_behaviors.resize_and_confirm(
             self.server_to_resize.id,
@@ -88,6 +158,14 @@ class QuotasAdminTest(ComputeAdminFixture):
 
     @classmethod
     def tearDownClass(cls):
+        """
+        Perform actions that allow for the cleanup of any generated resources
+
+        The following actions are performed during this tear down:
+            - The RAM and Instances quota for the tenant identified during
+              the setup are set to the default values set during test
+              configuration
+        """
         cls.admin_quotas_client.update_quota(
             cls.user_config.tenant_id,
             ram=cls.default_quota_set.ram,
