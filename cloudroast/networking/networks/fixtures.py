@@ -14,8 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import netaddr
-
 from cafe.drivers.unittest.fixtures import BaseTestFixture
 from cloudcafe.common.resources import ResourcePool
 from cloudcafe.compute.composites import ComputeComposite
@@ -73,6 +71,8 @@ class NetworkingFixture(BaseTestFixture):
         cls.failed_subnets = []
         cls.delete_ports = []
         cls.failed_ports = []
+        cls.delete_secgroups = []
+        cls.delete_secgroups_rules = []
 
         # Getting user data for testing
         cls.user = cls.net.networking_auth_composite()
