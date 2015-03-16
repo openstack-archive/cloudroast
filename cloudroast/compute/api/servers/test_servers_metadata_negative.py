@@ -1,5 +1,5 @@
 """
-Copyright 2013 Rackspace
+Copyright 2015 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -25,6 +25,13 @@ class ServerMetadataTest(ComputeFixture):
 
     @classmethod
     def setUpClass(cls):
+        """
+        Perform actions that setup the necessary resources for negative testing of metadata services
+
+        The following resources are created/defined during the setup
+            - Uses server behaviors to create active server 
+            - Adds server id to resources wit the function to delete_server
+        """
         super(ServerMetadataTest, cls).setUpClass()
         server_response = cls.server_behaviors.create_active_server()
         cls.server = server_response.entity
