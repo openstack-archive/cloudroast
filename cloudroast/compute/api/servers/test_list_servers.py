@@ -1,5 +1,5 @@
 """
-Copyright 2013 Rackspace
+Copyright 2015 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -25,6 +25,15 @@ class ServerListTest(ComputeFixture):
 
     @classmethod
     def setUpClass(cls):
+        """
+        Perform actions that setup the necessary resources for testing
+
+        The following resources are created/defined during the setup
+            - Networking, default network from ComputeFixture
+            - 2 servers waits for server to be active
+            - Image creation fro servers (waits for active)
+            - 3rd server from image created in ste above
+        """
         super(ServerListTest, cls).setUpClass()
 
         networks = None
@@ -72,7 +81,16 @@ class ServerListTest(ComputeFixture):
 
     @tags(type='smoke', net='no')
     def test_get_server(self):
-        """Return the full details of a single server"""
+        """
+        Return the full details of a single server
+
+        It will take the first serve created in setup and pulls the server details back
+        Nothing is modified during this test
+        It will assert on following actions
+            - 200 status code from http call
+            - Image id is as expected
+            - Flavor id is as expected
+        """
         server_info_response = self.servers_client.get_server(self.server.id)
         server_info = server_info_response.entity
         self.assertEqual(200, server_info_response.status_code)
@@ -85,7 +103,12 @@ class ServerListTest(ComputeFixture):
 
     @tags(type='smoke', net='no')
     def test_list_servers(self):
-        """All servers should be returned"""
+        """
+        All 3 servers created in setup should be returned
+
+        The assertions are on that the min_details on all three servers are in the returned list
+        from the list_servers call.
+        """
         list_servers_response = self.servers_client.list_servers()
         servers_list = list_servers_response.entity
         self.assertEqual(200, list_servers_response.status_code)
@@ -95,7 +118,17 @@ class ServerListTest(ComputeFixture):
 
     @tags(type='smoke', net='no')
     def test_list_servers_with_detail(self):
-        """Return a detailed list of all servers"""
+        """
+        Return a detailed list of the 3 servers and verify their ids are in the list returned
+
+        After the list_servers_with_details is called and returned it grabs the entity, then iterates through the details
+        and puts all the server ids into an array which then will look for the server ids in the list.
+        The following assertions occur
+            - 200 status code from the http call
+            - Server 1 id is contained in the list
+            - Server 2 id is contained in the list
+            - Server 3 id is contained in the list
+        """
         list_response = self.servers_client.list_servers_with_detail()
         list_servers_detail = list_response.entity
         self.assertEqual(200, list_response.status_code)
@@ -108,7 +141,16 @@ class ServerListTest(ComputeFixture):
 
     @tags(type='positive', net='no')
     def test_list_server_details_using_marker(self):
-        """The list of servers should start from the provided marker"""
+        """
+        The list of servers should start from the provided marker (server id) which shouldn't be returned in the list
+
+        This gets all servers current in then compute instance with the call list_serveris_with_details.
+        Grabs the first item in the list, takes the id and then calls the same list server with details with parameters
+        being the id of the first server it just returned to ensure that the same server is not returned
+        The following assertions occur
+            - 200 status code from the http call
+            - The first server originally returned is not in the new list of entities from the second.
+        """
         list_response = self.servers_client.list_servers_with_detail()
         list_server_detail = list_response.entity
         first_server = list_server_detail[0]
@@ -122,7 +164,16 @@ class ServerListTest(ComputeFixture):
 
     @tags(type='positive', net='no')
     def test_list_servers_using_marker(self):
-        """The list of servers should start from the provided marker"""
+        """
+        The list of servers should start from the provided marker (server id) which shouldn't be returned in the list
+
+        This gets all servers current in then compute instance with the call list_servers.
+        Grabs the first item in the list, takes the id and then calls the same list server with details with parameters
+        being the id of the first server it just returned to ensure that the same server is not returned
+        The following assertions occur
+            - 200 status code from the http call
+            - The first server originally returned is not in the new list of entities from the second.
+        """
         list_server_info_response = self.servers_client.list_servers()
         list_server_info = list_server_info_response.entity
         first_server = list_server_info[0]
@@ -136,7 +187,14 @@ class ServerListTest(ComputeFixture):
 
     @tags(type='positive', net='no')
     def test_list_server_with_detail_limit_results(self):
-        """Verify the expected number of servers are returned with details"""
+        """
+        Verify the expected number of servers (1) are returned with list servers with detail call,
+
+        This will call the list_servers_with_detail with a parameter of an 1(integer) being passed into the limit param
+        This should return only 1 entry in the list
+        The following assertions occur
+            - The len of the list returned is equal to the limit defined in code, 1
+        """
         limit = 1
         params = limit
         response = self.servers_client.list_servers_with_detail(limit=params)
@@ -148,7 +206,15 @@ class ServerListTest(ComputeFixture):
 
     @tags(type='positive', net='no')
     def test_list_servers_filter_by_image(self):
-        """Filter the list of servers by image"""
+        """
+        Filter the list of servers by image that created the first 2 servers
+
+        This will call the list_servers with the image which is the primary image in the setup.
+        The following assertions occur
+            - 200 status code from the http call
+            - Server 1 and 2 are in the list
+            - Server 3 is NOT in the list
+        """
         params = self.image_ref
         list_servers_response = self.servers_client.list_servers(image=params)
         servers_list = list_servers_response.entity
@@ -160,7 +226,15 @@ class ServerListTest(ComputeFixture):
 
     @tags(type='positive', net='no')
     def test_list_servers_filter_by_flavor(self):
-        """Filter the list of servers by flavor"""
+        """
+        Filter the list of servers by flavor that created the 3rd server
+
+        This will call the list_servers with the alternate flavor that created the third server.
+        The following assertions occur
+            - 200 status code from the http call
+            - Server 1 and 2 are not in the list
+            - Server 3 is in the list
+        """
         params = self.flavor_ref_alt
         list_servers_response = self.servers_client.list_servers(flavor=params)
         servers_list = list_servers_response.entity
@@ -172,7 +246,15 @@ class ServerListTest(ComputeFixture):
 
     @tags(type='positive', net='no')
     def test_list_servers_filter_by_server_name(self):
-        """ Filter the list of servers by name """
+        """
+        Filter the list of servers by name, using server 1's name as the parameter
+
+        This will call the list_servers with the server name that was created at startup
+        The following assertions occur
+            - 200 status code from the http call
+            - Server 1 is in the list
+            - Server 2 and 3 are not in the list
+        """
         params = self.server.name
         list_servers_response = self.servers_client.list_servers(name=params)
         servers_list = list_servers_response.entity
@@ -183,7 +265,14 @@ class ServerListTest(ComputeFixture):
 
     @tags(type='positive', net='no')
     def test_list_servers_filter_by_server_status(self):
-        """ Filter the list of servers by server status """
+        """
+        Filter the list of servers by server status of active
+
+        This will call the list_servers with the status of active expecting all servers to be returned.
+        The following assertions occur
+            - 200 status code from the http call
+            - Server 1, 2 and 3 are in the list
+        """
         params = 'active'
         list_servers_response = self.servers_client.list_servers(status=params)
         list_servers = list_servers_response.entity
@@ -194,7 +283,15 @@ class ServerListTest(ComputeFixture):
 
     @tags(type='positive', net='no')
     def test_list_servers_filter_by_changes_since(self):
-        """Filter the list of servers by changes-since"""
+        """
+        Filter the list of servers by changes-since using the first server's creation
+
+        This will call the list_servers with the expectation of all servers being returned in the list.
+        The list will be of all servers but will go through then entries and pull the id into a list to compare against.
+        The following assertions occur
+            - 200 status code from the http call
+            - Server 1, 2 and 3's ids are in the generated list
+        """
         params = self.server.created
 
         servers = self.servers_client.list_servers(changes_since=params)
@@ -208,7 +305,15 @@ class ServerListTest(ComputeFixture):
 
     @tags(type='positive', net='no')
     def test_list_servers_detailed_filter_by_image(self):
-        """Filter the detailed list of servers by image"""
+        """
+        Filter the list of servers with details by image that created the first 2 servers
+
+        This will call the list_servers_with_detail with the image which is the primary image in the setup.
+        The following assertions occur
+            - 200 status code from the http call
+            - Server 1 and 2 are in the list
+            - Server 3 is NOT in the list
+        """
         params = self.image_ref
         list_response = self.servers_client.list_servers_with_detail(
             image=params)
@@ -222,7 +327,15 @@ class ServerListTest(ComputeFixture):
 
     @tags(type='positive', net='no')
     def test_list_servers_detailed_filter_by_flavor(self):
-        """Filter the detailed list of servers by flavor"""
+        """
+        Filter the list of servers with details by flavor that created the 3rd server
+
+        This will call the list_servers_with_detail with the alternate flavor that created the third server.
+        The following assertions occur
+            - 200 status code from the http call
+            - Server 1 and 2 are not in the list
+            - Server 3 is in the list
+        """
         params = self.flavor_ref_alt
         list_response = self.servers_client.list_servers_with_detail(
             flavor=params)
@@ -235,7 +348,15 @@ class ServerListTest(ComputeFixture):
 
     @tags(type='positive', net='no')
     def test_list_servers_detailed_filter_by_server_name(self):
-        """Filter the detailed list of servers by server name"""
+        """
+        Filter the list of servers with detail by name, using server 1's name as the parameter
+
+        This will call the list_servers_with_details with the server name that was created at startup
+        The following assertions occur
+            - 200 status code from the http call
+            - Server 1 is in the list
+            - Server 2 and 3 are not in the list
+        """
         params = self.server.name
         list_response = self.servers_client.list_servers_with_detail(
             name=params)
@@ -248,7 +369,14 @@ class ServerListTest(ComputeFixture):
 
     @tags(type='positive', net='no')
     def test_list_servers_detailed_filter_by_server_status(self):
-        """Filter the detailed list of servers by server status"""
+        """
+        Filter the list of servers with details by server status of active
+
+        This will call the list_servers_with_detail with the status of active expecting all servers to be returned.
+        The following assertions occur
+            - 200 status code from the http call
+            - Server 1, 2 and 3 are in the list
+        """
         params = 'active'
         list_response = self.servers_client.list_servers_with_detail(
             status=params)
@@ -263,7 +391,15 @@ class ServerListTest(ComputeFixture):
 
     @tags(type='positive', net='no')
     def test_list_servers_detailed_filter_by_changes_since(self):
-        """Filter the detailed servers list with the changes-since filter"""
+        """
+        Filter the list of servers with details by changes-since using the first server's creation
+
+        This will call the list_servers_with_detail with the expectation of all servers being returned in the list.
+        The list will be of all servers but will go through then entries and pull the id into a list to compare against.
+        The following assertions occur
+            - 200 status code from the http call
+            - Server 1, 2 and 3's ids are in the generated list
+        """
         params = self.server.created
 
         # Filter the detailed list of servers by changes-since
