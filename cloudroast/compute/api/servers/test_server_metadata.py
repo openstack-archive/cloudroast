@@ -1,5 +1,5 @@
 """
-Copyright 2013 Rackspace
+Copyright 2015 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -22,12 +22,27 @@ class ServerMetadataTest(ComputeFixture):
 
     @classmethod
     def setUpClass(cls):
+        """
+        Perform actions that setup the necessary resources for testing
+
+        The following resources are created/defined during the setup
+            - Uses server behaviors to create active server
+            - Adds server id to resources with the function to delete_server
+        """
         super(ServerMetadataTest, cls).setUpClass()
         server_response = cls.server_behaviors.create_active_server()
         cls.server = server_response.entity
         cls.resources.add(cls.server.id, cls.servers_client.delete_server)
 
     def setUp(self):
+        """
+        Create a dictionary of metadata and sets it to the server.
+
+        The following calls the BaseTestFixture setUp and then using
+        cloudcafe's server_client, sets the server that was created in the
+        setUpClass with the metadata keys meta_key_1 and meta_key_2 with
+        values meta_value_1 and meta_value_2 respectively.
+        """
         super(ServerMetadataTest, self).setUp()
         self.meta = {'meta_key_1': 'meta_value_1',
                      'meta_key_2': 'meta_value_2'}
@@ -35,7 +50,15 @@ class ServerMetadataTest(ComputeFixture):
 
     @tags(type='positive', net='no')
     def test_list_server_metadata(self):
-        """All metadata key/value pairs for a server should be returned"""
+        """
+        All metadata key/value pairs for a server should be returned.
+
+        This will call the list_server_metadata passing in the server id.
+        The following assertions occur:
+            - 200 status code from the http call.
+            - meta_key_1 key has meta_value_1 for value.
+            - meat_key_2 key has meta_value_2 for value.
+        """
         metadata_response = self.servers_client.list_server_metadata(
             self.server.id)
         metadata = metadata_response.entity
@@ -45,7 +68,23 @@ class ServerMetadataTest(ComputeFixture):
 
     @tags(type='positive', net='no')
     def test_set_server_metadata(self):
-        """The server's metadata should be replaced with the provided values"""
+        """
+        Create a server with metadata, sets server metadata with new values
+
+        Will create a new active server with a server_behaviors, passing in
+        metadata. Then will call set_server_metadata with a completely new
+        set, pull the response and making sure the new values are there and
+        the old values are not. Lastly will call list_server_metadata and
+        be sure the same holds true.
+        The following assertions occur:
+            - 200 status on the set_server_metadata.
+            - meta2 key in set_server_metadata result has data2.
+            - meta3 key in set_server_metadata result has data3.
+            - meta1 isn't in the set_server_metadata result.
+            - meta2 key in list_server_metadata result has data2.
+            - meta3 key in list_server_metadata result has data3.
+            - meta1 isn't in the list_server_metadata result.
+        """
         meta = {'meta1': 'data1'}
         server_response = self.server_behaviors.create_active_server(
             metadata=meta)
@@ -72,7 +111,23 @@ class ServerMetadataTest(ComputeFixture):
 
     @tags(type='positive', net='no')
     def test_update_server_metadata(self):
-        """The server's metadata should be updated to the provided values"""
+        """
+        Update server metadata validating new and existing values.
+
+        Will use the existing server created in setup to add new and update
+        meta_key_1 key to value alt3. Calling the update_server_metadata from
+        cloudcafe's server client and then list_server_metadata to validate.
+        The following assertions occur:
+            - 200 status on the update_server_metadata.
+            - key1 key in update_server_metadata result has alt1.
+            - key2 key in update_server_metadata result has alt2.
+            - meta_key_1 key in update_server_metadata result has alt3.
+            - meta_key_2 key in update_server_metadata result has meta_value_2
+            - key1 key in list_server_metadata result has alt1.
+            - key2 key in list_server_metadata result has alt2.
+            - meta_key_1 key in list_server_metadata result has alt3.
+            - meta_key_2 key in list_server_metadata result has meta_value_2.
+        """
         meta = {'key1': 'alt1', 'key2': 'alt2', 'meta_key_1': 'alt3'}
         metadata_response = self.servers_client.update_server_metadata(
             self.server.id, meta)
@@ -94,7 +149,14 @@ class ServerMetadataTest(ComputeFixture):
 
     @tags(type='positive', net='no')
     def test_get_server_metadata_item(self):
-        """The value for a specific metadata key should be returned"""
+        """
+        Calling get server metadata providing it meta_key_1.
+
+        Calling get_server_metadata_item from cloudcafe's server client
+        providing it meta_key_1 as the only parameter.
+        The following assertions occur:
+            - meta_key_1 key has meta_value_1 value.
+        """
         metadata_response = self.servers_client.get_server_metadata_item(
             self.server.id, 'meta_key_1')
         metadata = metadata_response.entity
@@ -102,7 +164,18 @@ class ServerMetadataTest(ComputeFixture):
 
     @tags(type='positive', net='no')
     def test_set_server_metadata_item(self):
-        """The value provided for the given meta item should be updated"""
+        """
+        Set server metadata item call using meta_key_2 key setting it to nova
+
+        Will call the set_server_metadata_item from cloudcafe's server client
+        passing in the server's id created in setup with meta_key_2 as the
+        meta data key and nova as the metadata value.
+        The following assertions occur:
+            - 200 status on the set_server_metadata_item.
+            - meta_key_2 key in set_server_metadata_item result has nova.
+            - meta_key_2 key in list_server_metadata result has nova.
+            - meta_key_1 key in list_server_metadata result has meta_value_1.
+        """
         metadata_response = self.servers_client.set_server_metadata_item(
             self.server.id, 'meta_key_2', 'nova')
         metadata = metadata_response.entity
@@ -117,7 +190,19 @@ class ServerMetadataTest(ComputeFixture):
 
     @tags(type='positive', net='no')
     def test_add_new_server_metadata_item(self):
-        """ The metadata item should be added to the server"""
+        """
+        Set server metadata item using meta_key_3 to set value meta_value_3.
+
+        Will call the set_server_metadata_item from cloudcafe's server client
+        passing in the server's id created in setup with meta_key_3 as the
+        meta data key and meta_value_3 as the metadata value.
+        The following assertions occur:
+            - 200 status on the set_server_metadata_item.
+            - meta_key_3 key in set_server_metadata_item has meta_value_3.
+            - meta_key_3 key in list_server_metadata has meta_value_3.
+            - meta_key_2 key in list_server_metadata has meta_value_2.
+            - meta_key_1 key in list_server_metadata has meta_value_1.
+        """
         metadata_response = self.servers_client.set_server_metadata_item(
             self.server.id, 'meta_key_3', 'meta_value_3')
         metadata = metadata_response.entity
@@ -133,7 +218,16 @@ class ServerMetadataTest(ComputeFixture):
 
     @tags(type='positive', net='no')
     def test_delete_server_metadata_item(self):
-        """The metadata value/key pair should be deleted from the server"""
+        """
+        The metadata value/key pair with key meta_key_1 will be deleted
+
+        Will call the delete_server_metadata_item from cloudcafe's server
+        client passing in the server's id created in setup with meta_key_1
+        as the meta data key.
+        The following assertions occur:
+            - 204 status on the delete_server_metadata_item.
+            - meta_key_1 key not in list_server_metadata result.
+        """
 
         response = self.servers_client.delete_server_metadata_item(
             self.server.id, 'meta_key_1')
