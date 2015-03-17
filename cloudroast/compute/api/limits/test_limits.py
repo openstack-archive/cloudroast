@@ -1,5 +1,5 @@
 """
-Copyright 2013 Rackspace
+Copyright 2015 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -22,5 +22,12 @@ class LimitsTest(ComputeFixture):
 
     @tags(type='smoke', net='no')
     def test_list_limits(self):
+        """
+        This will call the get limits and sure a successful call
+
+        Will call get_limits from cloudcafe's limits_client
+        The following assertions occur
+            - 200 status code from the http call
+        """
         response = self.limits_client.get_limits()
         self.assertEqual(response.status_code, 200)
