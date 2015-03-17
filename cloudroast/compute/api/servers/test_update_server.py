@@ -1,5 +1,5 @@
 """
-Copyright 2013 Rackspace
+Copyright 2015 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -24,6 +24,15 @@ class UpdateServerTest(ComputeFixture):
 
     @classmethod
     def setUpClass(cls):
+        """
+        Perform actions that setup the necessary resources for testing.
+
+        The following resources are created during the setup:
+            - Networking, default network from ComputeFixture.
+            - 1 Server via create_active_server.
+            - Server gets updated with AccessIPv4, AccessIPv6 and name.
+            - Uses the get_server call to set member variable.
+        """
         super(UpdateServerTest, cls).setUpClass()
         create_response = cls.server_behaviors.create_active_server()
         cls.original_server = create_response.entity
@@ -44,6 +53,17 @@ class UpdateServerTest(ComputeFixture):
 
     @tags(type='smoke', net='no')
     def test_update_server_response(self):
+        """
+        Will ensure that the server was updated, using the server response.
+
+        This will validate the values defined during setup of the test.
+
+        The following assertions occur:
+            - Server name is equal to the new name.
+            - AccessIPv4 address is equal to the new address (192.168.32.16).
+            - AccessIPv6 address is equal to the new address
+              (3ffe:1900:4545:3:200:f8ff:fe21:67cf).
+        """
         updated_server = self.resp.entity
         self.assertEqual(updated_server.name, self.new_name,
                          msg="The name was not updated")
@@ -54,6 +74,20 @@ class UpdateServerTest(ComputeFixture):
 
     @tags(type='smoke', net='no')
     def test_updated_server_details(self):
+        """
+        Will ensure that the server was updated, using the server response.
+
+        This will validate the values set on the server after a get server
+        details call is made.
+
+        The following assertions occur:
+            - Server name is equal to the new name.
+            - AccessIPv4 address is equal to the new address (192.168.32.16).
+            - AccessIPv6 address is equal to the new address
+              (3ffe:1900:4545:3:200:f8ff:fe21:67cf).
+            - Created date is equal to the original (didn't change).
+            - Updated is not equal to the original (did change w/ update).
+        """
         self.assertEqual(self.server.name, self.new_name,
                          msg="The name was not updated")
         self.assertEqual(self.accessIPv4, self.server.accessIPv4,
