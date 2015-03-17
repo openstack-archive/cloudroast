@@ -1,5 +1,5 @@
 """
-Copyright 2013 Rackspace
+Copyright 2015 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -25,6 +25,13 @@ class CreateKeypairTest(ComputeFixture):
 
     @classmethod
     def setUpClass(cls):
+        """
+        Perform actions that setup the necessary resources for testing.
+
+        The following resources are created during the setup:
+            - Uses keypairs client to create a new keypair.
+            - Uses keypairs client to get keypair by name.
+        """
         super(CreateKeypairTest, cls).setUpClass()
         cls.name = rand_name("key")
         cls.create_resp = cls.keypairs_client.create_keypair(cls.name)
@@ -34,7 +41,17 @@ class CreateKeypairTest(ComputeFixture):
 
     @tags(type='positive', net='no')
     def test_create_keypair_response(self):
-        """Verify the response code and contents are correct"""
+        """
+        Verify the response code and contents are correct.
+
+        Pulling the response entity and interrogating the object.
+
+         The following assertions occur:
+            - 200 status code from the http call.
+            - keypair's name is the same as given.
+            - keypair's public key is not empty.
+            - keypair's fingerprint is not empty.
+        """
 
         # Get the keypair from the original response
         keypair = self.create_resp.entity
@@ -46,7 +63,16 @@ class CreateKeypairTest(ComputeFixture):
 
     @tags(type='positive', net='no')
     def test_created_keypair_listed(self):
-        """Verify the new key appears in list of keypairs"""
+        """
+        Verify the new key appears in list of keypairs.
+
+        Using list_keypairs from cloudcafe's keypairs client,
+        it pulls list from the response and then iterates through the
+        list to find a keypair with the same name.
+
+         The following assertions occur:
+            - True if any keypair in the list has the same name.
+        """
 
         keypairs_list = self.keypairs_client.list_keypairs().entity
 
@@ -57,13 +83,33 @@ class CreateKeypairTest(ComputeFixture):
 
     @tags(type='negative', net='no')
     def test_cannot_create_duplicate_keypair(self):
-        """Verify a duplicate keypair cannot be created"""
+        """
+        Verify a duplicate keypair cannot be created.
+
+        Using create_keypair from cloudcafe's keypairs client,
+        it will try the same call as in setup with the same name
+        but its expecting ActionInProgress exception.
+
+         The following assertions occur:
+            - Expecting the ActionInProgress Exception to be raised.
+        """
         with self.assertRaises(ActionInProgress):
             self.keypairs_client.create_keypair(self.name)
 
     @tags(type='positive', net='yes')
     def test_created_server_has_new_keypair(self):
-        """Verify the key is injected into a built server"""
+        """
+        Verify the key is injected into a built server.
+
+        Will create a new server with the keypair name defined
+        in setup.  After, calling to get the remote instance to validate
+        authorized_keys in the home directory is present and contains
+        the keypair's public key.
+
+         The following assertions occur:
+            - True if ~/.ssh/authorized_keys is present.
+            - If the keypair's public key is in the file contents.
+        """
         server = self.server_behaviors.create_active_server(
             key_name=self.name).entity
         self.resources.add(server.id, self.servers_client.delete_server)
