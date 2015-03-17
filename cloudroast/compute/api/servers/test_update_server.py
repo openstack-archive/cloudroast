@@ -24,6 +24,18 @@ class UpdateServerTest(ComputeFixture):
 
     @classmethod
     def setUpClass(cls):
+        """
+        Perform actions that setup the necessary resources for testing
+
+        The following resources are accessed from a parent class:
+            - An instance from ComputeFixture
+
+        The following resources are created during the setup:
+            - Networking, default network from ComputeFixture
+            - 1 Server via create_active_server
+            - Server gets updated with IPv4, IPv6 and name
+            - Uses the get_server call to set member variable.
+        """
         super(UpdateServerTest, cls).setUpClass()
         create_response = cls.server_behaviors.create_active_server()
         cls.original_server = create_response.entity
@@ -44,6 +56,16 @@ class UpdateServerTest(ComputeFixture):
 
     @tags(type='smoke', net='no')
     def test_update_server_response(self):
+        """
+        Will ensure that the server was updated off the update response
+
+        This will just assert off the data gathered in the setup.
+
+        This test will be successful if:
+            - Server name is equal
+            - IPv4 address is equal
+            - IPv6 address is equal
+        """
         updated_server = self.resp.entity
         self.assertEqual(updated_server.name, self.new_name,
                          msg="The name was not updated")
@@ -54,6 +76,19 @@ class UpdateServerTest(ComputeFixture):
 
     @tags(type='smoke', net='no')
     def test_updated_server_details(self):
+        """
+        Will ensure that the server was updated off the get response
+
+        This will just assert off the data gathered in the setup from the
+        get server details call.
+
+        This test will be successful if:
+            - Server name is equal
+            - IPv4 address is equal
+            - IPv6 address is equal
+            - Created date is equal (didn't change)
+            - Updated is not equal (did change auotmagically)
+        """
         self.assertEqual(self.server.name, self.new_name,
                          msg="The name was not updated")
         self.assertEqual(self.accessIPv4, self.server.accessIPv4,
