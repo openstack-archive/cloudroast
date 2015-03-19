@@ -24,9 +24,9 @@ class ServerMissingParameterTests(ComputeFixture):
     @classmethod
     def setUpClass(cls):
         """
-        Perform actions that setup the necessary resources for testing
+        Perform actions that setup the necessary resources for testing.
 
-        The following resources are created/defined during the setup:
+        The following resources are created during the setup:
             - Uses server behaviors to create active server.
             - Adds server id to resources with the function to delete_server.
         """
@@ -42,6 +42,7 @@ class ServerMissingParameterTests(ComputeFixture):
 
         This will call the create_server through the cloudcafe's server client
         without a name parameter.
+
         The following assertions occur:
             - Expecting the BadRequest Exception to be raised.
         """
@@ -56,6 +57,7 @@ class ServerMissingParameterTests(ComputeFixture):
 
         This will call the create_server through the cloudcafe's server client
         without a image parameter.
+
         The following assertions occur:
             - Expecting the BadRequest Exception to be raised.
         """
@@ -69,6 +71,7 @@ class ServerMissingParameterTests(ComputeFixture):
 
         This will call the create_server through the cloudcafe's server client
         without a flavor parameter.
+
         The following assertions occur:
             - Expecting the BadRequest Exception to be raised
         """
@@ -82,6 +85,7 @@ class ServerMissingParameterTests(ComputeFixture):
 
         This will call the create_server through the cloudcafe's server client
         without a password parameter.
+
         The following assertions occur:
             - Expecting the BadRequest Exception to be raised.
         """
@@ -96,7 +100,9 @@ class ServerMissingParameterTests(ComputeFixture):
         This will call the reboot through cloudcafe's server client
         without a reboot type. This will expect a BadRequest or ComputeFault
         or set fail with an exception message.
-        No assertions are invoked
+
+        The following assertions occur:
+            - Expecting the BadRequest Exception to be raised and caught.
         """
         try:
             self.servers_client.reboot(self.server.id, None)
@@ -115,6 +121,7 @@ class ServerMissingParameterTests(ComputeFixture):
 
         This will call the rebuild through cloudcafe's server client
         without a name and expect a BadRequest to raised.
+
         The following assertions occur:
             - Expecting the BadRequest Exception to be raised.
         """
@@ -128,6 +135,7 @@ class ServerMissingParameterTests(ComputeFixture):
 
         This will call the rebuild through cloudcafe's server client
         without an image and expect a BadRequest to raised.
+
         The following assertions occur:
             - Expecting the BadRequest Exception to be raised.
         """
@@ -141,6 +149,7 @@ class ServerMissingParameterTests(ComputeFixture):
 
         This will call the resize through the cloudcafe's server client
         without a flavor parameter.
+
         The following assertions occur:
             - Expecting the BadRequest Exception to be raised.
         """
@@ -154,6 +163,7 @@ class ServerMissingParameterTests(ComputeFixture):
 
         This will call the create_image through the cloudcafe's server client
         without a name parameter.
+
         The following assertions occur:
             - Expecting the BadRequest Exception to be raised.
         """

@@ -23,11 +23,11 @@ class ServerMetadataTest(ComputeFixture):
     @classmethod
     def setUpClass(cls):
         """
-        Perform actions that setup the necessary resources for testing
+        Perform actions that setup the necessary resources for testing.
 
         The following resources are created/defined during the setup
-            - Uses server behaviors to create active server
-            - Adds server id to resources with the function to delete_server
+            - Uses server behaviors to create active server.
+            - Adds server id to resources with the function to delete_server.
         """
         super(ServerMetadataTest, cls).setUpClass()
         server_response = cls.server_behaviors.create_active_server()
@@ -54,6 +54,7 @@ class ServerMetadataTest(ComputeFixture):
         All metadata key/value pairs for a server should be returned.
 
         This will call the list_server_metadata passing in the server id.
+
         The following assertions occur:
             - 200 status code from the http call.
             - meta_key_1 key has meta_value_1 for value.
@@ -76,6 +77,7 @@ class ServerMetadataTest(ComputeFixture):
         set, pull the response and making sure the new values are there and
         the old values are not. Lastly will call list_server_metadata and
         be sure the same holds true.
+
         The following assertions occur:
             - 200 status on the set_server_metadata.
             - meta2 key in set_server_metadata result has data2.
@@ -117,6 +119,7 @@ class ServerMetadataTest(ComputeFixture):
         Will use the existing server created in setup to add new and update
         meta_key_1 key to value alt3. Calling the update_server_metadata from
         cloudcafe's server client and then list_server_metadata to validate.
+
         The following assertions occur:
             - 200 status on the update_server_metadata.
             - key1 key in update_server_metadata result has alt1.
@@ -154,6 +157,7 @@ class ServerMetadataTest(ComputeFixture):
 
         Calling get_server_metadata_item from cloudcafe's server client
         providing it meta_key_1 as the only parameter.
+
         The following assertions occur:
             - meta_key_1 key has meta_value_1 value.
         """
@@ -165,11 +169,12 @@ class ServerMetadataTest(ComputeFixture):
     @tags(type='positive', net='no')
     def test_set_server_metadata_item(self):
         """
-        Set server metadata item call using meta_key_2 key setting it to nova
+        Set server metadata item call using meta_key_2 key setting it to nova.
 
         Will call the set_server_metadata_item from cloudcafe's server client
         passing in the server's id created in setup with meta_key_2 as the
         meta data key and nova as the metadata value.
+
         The following assertions occur:
             - 200 status on the set_server_metadata_item.
             - meta_key_2 key in set_server_metadata_item result has nova.
@@ -196,6 +201,7 @@ class ServerMetadataTest(ComputeFixture):
         Will call the set_server_metadata_item from cloudcafe's server client
         passing in the server's id created in setup with meta_key_3 as the
         meta data key and meta_value_3 as the metadata value.
+
         The following assertions occur:
             - 200 status on the set_server_metadata_item.
             - meta_key_3 key in set_server_metadata_item has meta_value_3.
@@ -219,11 +225,12 @@ class ServerMetadataTest(ComputeFixture):
     @tags(type='positive', net='no')
     def test_delete_server_metadata_item(self):
         """
-        The metadata value/key pair with key meta_key_1 will be deleted
+        The metadata value/key pair with key meta_key_1 will be deleted.
 
         Will call the delete_server_metadata_item from cloudcafe's server
         client passing in the server's id created in setup with meta_key_1
         as the meta data key.
+
         The following assertions occur:
             - 204 status on the delete_server_metadata_item.
             - meta_key_1 key not in list_server_metadata result.

@@ -42,7 +42,8 @@ class ServersTest(ComputeFixture):
         oldslice129690TuG72Bgj2.  Calls cloudcafe's server behaviors get
         remote instance client with the password to validate that it can
         authenticate wth password.
-        The following assertions occur:
+
+        TThe following assertions occur:
             - Defined password is the same as the admin password.
             - get_remote_instance_client has a true value for can_authenticate
         """
@@ -71,6 +72,7 @@ class ServersTest(ComputeFixture):
         ipv6 address 3ffe:1900:4545:3:200:f8ff:fe21:67cf and then waiting for
         the server to make it to active status. Calling get_server to validate
         the updates occurred correctly
+
         The following assertions occur:
             - Server name was updated with new random name.
             - Server's IPV4 address is 192.168.32.16.
