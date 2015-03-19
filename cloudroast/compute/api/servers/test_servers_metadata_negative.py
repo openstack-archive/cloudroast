@@ -28,6 +28,9 @@ class ServerMetadataTest(ComputeFixture):
         """
         Perform actions that setup the necessary resources.
 
+        The following resources are accessed from a parent class:
+            - An instance from ComputeFixture
+
         The following resources are created/defined during the setup.
             - Uses server behaviors to create active server.
             - Adds server id to resources wit the function to delete_server.
@@ -44,7 +47,8 @@ class ServerMetadataTest(ComputeFixture):
 
         Using the delete_server_metadata_item call from servers client,
         passing in the "meta_key_5" for the key and expecting ItemNotFound.
-        The following assertions occur:
+
+        This test will be successful if:
             - Expecting the ItemNotFound Exception to be raised.
         """
         with self.assertRaises(ItemNotFound):
@@ -58,7 +62,8 @@ class ServerMetadataTest(ComputeFixture):
 
         Using the get_server_metadata_item call from servers client,
         passing in the "meta_key_5" for the key and expecting ItemNotFound.
-        The following assertions occur:
+
+        This test will be successful if:
             - Expecting the ItemNotFound Exception to be raised.
         """
         with self.assertRaises(ItemNotFound):
@@ -72,7 +77,8 @@ class ServerMetadataTest(ComputeFixture):
 
         Using the create_server call from servers client,
         passing in blank key and value and expecting BadRequest.
-        The following assertions occur:
+
+        This test will be successful if:
             - Expecting the BadRequest Exception to be raised.
         """
         blank_meta = {'': ''}
@@ -88,7 +94,8 @@ class ServerMetadataTest(ComputeFixture):
 
         Using the get_server_metadata_item call from servers client,
         passing in 999 as the server id and expecting ItemNotFound.
-        The following assertions occur:
+
+        This test will be successful if:
             - Expecting the ItemNotFound Exception to be raised.
         """
         with self.assertRaises(ItemNotFound):
@@ -101,7 +108,8 @@ class ServerMetadataTest(ComputeFixture):
 
         Using the list_server_metadata call from servers client,
         passing in 999 as the server id and expecting ItemNotFound.
-        The following assertions occur:
+
+        This test will be successful if:
             - Expecting the ItemNotFound Exception to be raised.
         """
         with self.assertRaises(ItemNotFound):
@@ -114,7 +122,8 @@ class ServerMetadataTest(ComputeFixture):
 
         Using the set_server_metadata call from servers client,
         passing in 999 as the server id and expecting ItemNotFound.
-        The following assertions occur:
+
+        This test will be successful if:
             - Expecting the ItemNotFound Exception to be raised.
         """
         meta = {'meta1': 'data1'}
@@ -129,7 +138,8 @@ class ServerMetadataTest(ComputeFixture):
 
         Using the update_server_metadata call from servers client,
         passing in 999 as the server id and expecting ItemNotFound.
-        The following assertions occur:
+
+        This test will be successful if:
             - Expecting the ItemNotFound Exception to be raised.
         """
         meta = {'key1': 'value1', 'key2': 'value2'}
@@ -143,7 +153,8 @@ class ServerMetadataTest(ComputeFixture):
 
         Using the delete_server_metadata_item call from servers client,
         passing in 999 as the server id and expecting ItemNotFound.
-        The following assertions occur:
+
+        This test will be successful if:
             - Expecting the ItemNotFound Exception to be raised.
         """
         with self.assertRaises(ItemNotFound):

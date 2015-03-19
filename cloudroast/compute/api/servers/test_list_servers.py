@@ -28,7 +28,10 @@ class ServerListTest(ComputeFixture):
         """
         Perform actions that setup the necessary resources for testing
 
-        The following resources are created/defined during the setup
+        The following resources are accessed from a parent class:
+            - An instance from ComputeFixture
+
+        The following resources are created during the setup
             - Networking, default network from ComputeFixture
             - 2 servers with the same configuration (waits for active)
             - Image creation from first server (waits for active)
@@ -86,7 +89,8 @@ class ServerListTest(ComputeFixture):
 
         It will take the first server created in setup and pulls the server
         details back; nothing is modified during this test.
-        The following assertions occur:
+
+        This test will be successful if:
             - 200 status code from http call.
             - Server name matches config.
             - Image id matches config.
@@ -107,8 +111,9 @@ class ServerListTest(ComputeFixture):
         """
         All 3 servers created in setup should be returned
 
-        The assertions are on that the min_details on all three servers are in the returned list
-        from the list_servers call.
+        This test will be successful if:
+            - 200 status code from http call.
+            - Server 1,2 and 3 are in the list returned in the response.
         """
         list_servers_response = self.servers_client.list_servers()
         servers_list = list_servers_response.entity
@@ -125,7 +130,8 @@ class ServerListTest(ComputeFixture):
         After the list_servers_with_details is called, it grabs the entity,
         then iterates through the details and puts all the server ids into an
         array which then will look for the server ids in the list.
-        The following assertions occur:
+
+        This test will be successful if:
             - 200 status code from the http call.
             - Server 1 id is contained in the list.
             - Server 2 id is contained in the list.
@@ -151,7 +157,8 @@ class ServerListTest(ComputeFixture):
         the id and then calls the same list server with details with
         parameters being the id of the first server it just returned to
         ensure that the same server is not returned.
-        The following assertions occur:
+
+        This test will be successful if:
             - 200 status code from the http call.
             - The first server returned is not in the new list of entities.
         """
@@ -176,7 +183,8 @@ class ServerListTest(ComputeFixture):
         calls the same list server with details with parameters being the id
         of the first server it just returned to ensure that the same server
         is not returned.
-        The following assertions occur:
+
+        This test will be successful if:
             - 200 status code from the http call.
             - The first server returned is not in the new list of entities.
         """
@@ -199,7 +207,8 @@ class ServerListTest(ComputeFixture):
         This will call the list_servers_with_detail with a parameter of an
         1 (integer) being passed into the limit param. This should return
         only 1 entry in the list.
-        The following assertions occur:
+
+        This test will be successful if:
             - The len of the list returned is equal to the limit (1).
         """
         limit = 1
@@ -218,7 +227,8 @@ class ServerListTest(ComputeFixture):
 
         This will call the list_servers with the image which is the primary
         image in the setup.
-        The following assertions occur:
+
+        This test will be successful if:
             - 200 status code from the http call.
             - Server 1 and 2 are in the list.
             - Server 3 is NOT in the list.
@@ -239,7 +249,8 @@ class ServerListTest(ComputeFixture):
 
         This will call the list_servers with the alternate flavor that created
         the third server.
-        The following assertions occur:
+
+        This test will be successful if:
             - 200 status code from the http call.
             - Server 1 and 2 are not in the list.
             - Server 3 is in the list.
@@ -260,7 +271,8 @@ class ServerListTest(ComputeFixture):
 
         This will call the list_servers with the server name that was created
         at startup.
-        The following assertions occur:
+
+        This test will be successful if:
             - 200 status code from the http call.
             - Server 1 is in the list.
             - Server 2 and 3 are not in the list.
@@ -280,7 +292,8 @@ class ServerListTest(ComputeFixture):
 
         This will call the list_servers with the status of active expecting
         all servers to be returned.
-        The following assertions occur:
+
+        This test will be successful if:
             - 200 status code from the http call.
             - Server 1, 2 and 3 are in the list.
         """
@@ -300,7 +313,8 @@ class ServerListTest(ComputeFixture):
         This will call the list_servers with the expectation of all servers
         being returned in the list. The list will be of all servers but will
         go through then entries and pull the id into a list to compare against.
-        The following assertions occur:
+
+        This test will be successful if:
             - 200 status code from the http call.
             - Server 1, 2 and 3's ids are in the generated list.
         """
@@ -322,7 +336,8 @@ class ServerListTest(ComputeFixture):
 
         This will call the list_servers_with_detail with the image which is
         the primary image in the setup.
-        The following assertions occur:
+
+        This test will be successful if:
             - 200 status code from the http call.
             - Server 1 and 2 are in the list.
             - Server 3 is NOT in the list.
@@ -345,7 +360,8 @@ class ServerListTest(ComputeFixture):
 
         This will call the list_servers_with_detail with the alternate flavor
         that created the third server.
-        The following assertions occur:
+
+        This test will be successful if:
             - 200 status code from the http call.
             - Server 1 and 2 are not in the list.
             - Server 3 is in the list.
@@ -367,7 +383,8 @@ class ServerListTest(ComputeFixture):
 
         This will call the list_servers_with_details with the server name that
         was created at startup.
-        The following assertions occur:
+
+        This test will be successful if:
             - 200 status code from the http call.
             - Server 1 is in the list.
             - Server 2 and 3 are not in the list.
@@ -389,7 +406,8 @@ class ServerListTest(ComputeFixture):
 
         This will call the list_servers_with_detail with the status of active
         expecting all servers to be returned.
-        The following assertions occur:
+
+        This test will be successful if:
             - 200 status code from the http call.
             - Server 1, 2 and 3 are in the list.
         """
@@ -414,7 +432,8 @@ class ServerListTest(ComputeFixture):
         all servers being returned in the list. The list will be of all
         servers but will go through the entries and pull the id into a list
         to compare against.
-        The following assertions occur:
+
+        This test will be successful if:
             - 200 status code from the http call.
             - Server 1, 2 and 3's ids are in the generated list.
         """
