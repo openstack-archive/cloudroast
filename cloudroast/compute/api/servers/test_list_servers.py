@@ -26,9 +26,9 @@ class ServerListTest(ComputeFixture):
     @classmethod
     def setUpClass(cls):
         """
-        Perform actions that setup the necessary resources for testing
+        Perform actions that setup the necessary resources for testing.
 
-        The following resources are created/defined during the setup
+        The following resources are created during the setup
             - Networking, default network from ComputeFixture
             - 2 servers with the same configuration (waits for active)
             - Image creation from first server (waits for active)
@@ -86,6 +86,7 @@ class ServerListTest(ComputeFixture):
 
         It will take the first server created in setup and pulls the server
         details back; nothing is modified during this test.
+
         The following assertions occur:
             - 200 status code from http call.
             - Server name matches config.
@@ -105,10 +106,11 @@ class ServerListTest(ComputeFixture):
     @tags(type='smoke', net='no')
     def test_list_servers(self):
         """
-        All 3 servers created in setup should be returned
+        All 3 servers created in setup should be returned.
 
-        The assertions are on that the min_details on all three servers are in the returned list
-        from the list_servers call.
+        The following assertions occur:
+            - 200 status code from http call.
+            - Server 1,2 and 3 are in the list returned in the response.
         """
         list_servers_response = self.servers_client.list_servers()
         servers_list = list_servers_response.entity
@@ -120,11 +122,12 @@ class ServerListTest(ComputeFixture):
     @tags(type='smoke', net='no')
     def test_list_servers_with_detail(self):
         """
-        Details list of servers and verify they are in the list returned
+        Details list of servers and verify they are in the list returned.
 
         After the list_servers_with_details is called, it grabs the entity,
         then iterates through the details and puts all the server ids into an
         array which then will look for the server ids in the list.
+
         The following assertions occur:
             - 200 status code from the http call.
             - Server 1 id is contained in the list.
@@ -144,13 +147,14 @@ class ServerListTest(ComputeFixture):
     @tags(type='positive', net='no')
     def test_list_server_details_using_marker(self):
         """
-        The list of servers should start from the provided marker (server id)
+        The list of servers should start from the provided marker (server id).
 
         This gets all servers current in then compute instance with the call
         list_serveris_with_details. Grabs the first item in the list, takes
         the id and then calls the same list server with details with
         parameters being the id of the first server it just returned to
         ensure that the same server is not returned.
+
         The following assertions occur:
             - 200 status code from the http call.
             - The first server returned is not in the new list of entities.
@@ -169,13 +173,14 @@ class ServerListTest(ComputeFixture):
     @tags(type='positive', net='no')
     def test_list_servers_using_marker(self):
         """
-        The list of servers should start from the provided marker (server id)
+        The list of servers should start from the provided marker (server id).
 
         This gets all servers current in then compute instance with the call
         list_servers. Grabs the first item in the list, takes the id and then
         calls the same list server with details with parameters being the id
         of the first server it just returned to ensure that the same server
         is not returned.
+
         The following assertions occur:
             - 200 status code from the http call.
             - The first server returned is not in the new list of entities.
@@ -199,6 +204,7 @@ class ServerListTest(ComputeFixture):
         This will call the list_servers_with_detail with a parameter of an
         1 (integer) being passed into the limit param. This should return
         only 1 entry in the list.
+
         The following assertions occur:
             - The len of the list returned is equal to the limit (1).
         """
@@ -214,10 +220,11 @@ class ServerListTest(ComputeFixture):
     @tags(type='positive', net='no')
     def test_list_servers_filter_by_image(self):
         """
-        Filter the list of servers by image that created the first 2 servers
+        Filter the list of servers by image that created the first 2 servers.
 
         This will call the list_servers with the image which is the primary
         image in the setup.
+
         The following assertions occur:
             - 200 status code from the http call.
             - Server 1 and 2 are in the list.
@@ -235,10 +242,11 @@ class ServerListTest(ComputeFixture):
     @tags(type='positive', net='no')
     def test_list_servers_filter_by_flavor(self):
         """
-        Filter the list of servers by flavor that created the 3rd server
+        Filter the list of servers by flavor that created the 3rd server.
 
         This will call the list_servers with the alternate flavor that created
         the third server.
+
         The following assertions occur:
             - 200 status code from the http call.
             - Server 1 and 2 are not in the list.
@@ -256,10 +264,11 @@ class ServerListTest(ComputeFixture):
     @tags(type='positive', net='no')
     def test_list_servers_filter_by_server_name(self):
         """
-        Filter the list of servers by name, using server 1's name
+        Filter the list of servers by name, using server 1's name.
 
         This will call the list_servers with the server name that was created
         at startup.
+
         The following assertions occur:
             - 200 status code from the http call.
             - Server 1 is in the list.
@@ -276,10 +285,11 @@ class ServerListTest(ComputeFixture):
     @tags(type='positive', net='no')
     def test_list_servers_filter_by_server_status(self):
         """
-        Filter the list of servers by server status of active
+        Filter the list of servers by server status of active.
 
         This will call the list_servers with the status of active expecting
         all servers to be returned.
+
         The following assertions occur:
             - 200 status code from the http call.
             - Server 1, 2 and 3 are in the list.
@@ -300,6 +310,7 @@ class ServerListTest(ComputeFixture):
         This will call the list_servers with the expectation of all servers
         being returned in the list. The list will be of all servers but will
         go through then entries and pull the id into a list to compare against.
+
         The following assertions occur:
             - 200 status code from the http call.
             - Server 1, 2 and 3's ids are in the generated list.
@@ -322,6 +333,7 @@ class ServerListTest(ComputeFixture):
 
         This will call the list_servers_with_detail with the image which is
         the primary image in the setup.
+
         The following assertions occur:
             - 200 status code from the http call.
             - Server 1 and 2 are in the list.
@@ -345,6 +357,7 @@ class ServerListTest(ComputeFixture):
 
         This will call the list_servers_with_detail with the alternate flavor
         that created the third server.
+
         The following assertions occur:
             - 200 status code from the http call.
             - Server 1 and 2 are not in the list.
@@ -367,6 +380,7 @@ class ServerListTest(ComputeFixture):
 
         This will call the list_servers_with_details with the server name that
         was created at startup.
+
         The following assertions occur:
             - 200 status code from the http call.
             - Server 1 is in the list.
@@ -385,10 +399,11 @@ class ServerListTest(ComputeFixture):
     @tags(type='positive', net='no')
     def test_list_servers_detailed_filter_by_server_status(self):
         """
-        Filter the list of servers with details by server status of active
+        Filter the list of servers with details by server status of active.
 
         This will call the list_servers_with_detail with the status of active
         expecting all servers to be returned.
+
         The following assertions occur:
             - 200 status code from the http call.
             - Server 1, 2 and 3 are in the list.
@@ -414,6 +429,7 @@ class ServerListTest(ComputeFixture):
         all servers being returned in the list. The list will be of all
         servers but will go through the entries and pull the id into a list
         to compare against.
+
         The following assertions occur:
             - 200 status code from the http call.
             - Server 1, 2 and 3's ids are in the generated list.

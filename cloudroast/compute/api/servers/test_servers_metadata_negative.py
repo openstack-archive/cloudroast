@@ -44,6 +44,7 @@ class ServerMetadataTest(ComputeFixture):
 
         Using the delete_server_metadata_item call from servers client,
         passing in the "meta_key_5" for the key and expecting ItemNotFound.
+
         The following assertions occur:
             - Expecting the ItemNotFound Exception to be raised.
         """
@@ -58,6 +59,7 @@ class ServerMetadataTest(ComputeFixture):
 
         Using the get_server_metadata_item call from servers client,
         passing in the "meta_key_5" for the key and expecting ItemNotFound.
+
         The following assertions occur:
             - Expecting the ItemNotFound Exception to be raised.
         """
@@ -72,6 +74,7 @@ class ServerMetadataTest(ComputeFixture):
 
         Using the create_server call from servers client,
         passing in blank key and value and expecting BadRequest.
+
         The following assertions occur:
             - Expecting the BadRequest Exception to be raised.
         """
@@ -88,6 +91,7 @@ class ServerMetadataTest(ComputeFixture):
 
         Using the get_server_metadata_item call from servers client,
         passing in 999 as the server id and expecting ItemNotFound.
+
         The following assertions occur:
             - Expecting the ItemNotFound Exception to be raised.
         """
@@ -101,6 +105,7 @@ class ServerMetadataTest(ComputeFixture):
 
         Using the list_server_metadata call from servers client,
         passing in 999 as the server id and expecting ItemNotFound.
+
         The following assertions occur:
             - Expecting the ItemNotFound Exception to be raised.
         """
@@ -114,6 +119,7 @@ class ServerMetadataTest(ComputeFixture):
 
         Using the set_server_metadata call from servers client,
         passing in 999 as the server id and expecting ItemNotFound.
+
         The following assertions occur:
             - Expecting the ItemNotFound Exception to be raised.
         """
@@ -129,6 +135,7 @@ class ServerMetadataTest(ComputeFixture):
 
         Using the update_server_metadata call from servers client,
         passing in 999 as the server id and expecting ItemNotFound.
+
         The following assertions occur:
             - Expecting the ItemNotFound Exception to be raised.
         """
@@ -143,6 +150,7 @@ class ServerMetadataTest(ComputeFixture):
 
         Using the delete_server_metadata_item call from servers client,
         passing in 999 as the server id and expecting ItemNotFound.
+
         The following assertions occur:
             - Expecting the ItemNotFound Exception to be raised.
         """
