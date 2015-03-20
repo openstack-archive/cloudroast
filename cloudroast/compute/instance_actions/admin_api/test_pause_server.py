@@ -1,5 +1,5 @@
 """
-Copyright 2014 Rackspace
+Copyright 2015 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -31,11 +31,24 @@ class PauseServerTests(object):
     @tags(type='smoke', net='yes')
     def test_pause_unpause_server(self):
         """
-        Verify that a server can be paused and then unpaused successfully
+        Verify that a server can be paused and then unpaused successfully.
+
         First step is getting the IP address for communication based on the
         configuration, after that we pause the instance making sure that
         there is no connectivity. After that we check what happens when we
-        unpause the instance and making sure the connectivity is restored
+        unpause the instance and making sure the connectivity is restored.
+
+        This test will be successful if:
+            - Create a server.
+            - Pauses server.
+            - Ensures a 202 response is returned from the pause call.
+            - Pings the server expecting an unreachable destination.
+            - Unpauses server.
+            - Ensures a 202 response is returned from the unpause call.
+            - Pings the server expecting a reachable destination.
+            - Get the remote instance of the server and then makes sure the
+              server config is the same as configured.
+
         """
 
         self.ping_ip = self.get_ip_address_for_live_communication(self.server)
@@ -71,7 +84,23 @@ class NegativePauseServerTests(object):
 
     @tags(type='smoke', net='yes')
     def test_pause_reboot_server(self):
-        """Verify that a server reboot during pause does not restore it"""
+        """
+        Verify that a server reboot during pause does not restore it.
+
+        First step is getting the IP address for communication based on the
+        configuration, after that we pause the instance making sure that
+        there is no connectivity. After that we check what happens when we
+        reboot the instance and expecting a "Forbidden" exception  and finally
+        making sure the connectivity is still down.
+
+        This test will be successful if:
+            - Create a server.
+            - Pauses server.
+            - Ensures a 202 response is returned from the pause call.
+            - Pings the server expecting an unreachable destination.
+            - Reboots the server hard.
+            - Pings the server expecting an unreachable destination.
+        """
 
         self.ping_ip = self.get_ip_address_for_live_communication(self.server)
 
@@ -98,6 +127,17 @@ class ServerFromImagePauseTests(ServerFromImageFixture,
 
     @classmethod
     def setUpClass(cls):
+        """
+        Perform actions that setup the necessary resources for testing.
+
+        The following resources are accessed from a parent class:
+            - An instance from ServerFromImagePauseTests.
+
+        The following resources are created during this setup:
+            - Create a server from server behaviors.
+            - Initializes compute admin.
+            - Initializes server behaviors.
+        """
         super(ServerFromImagePauseTests, cls).setUpClass()
         cls.compute_admin = ComputeAdminComposite()
         cls.admin_servers_client = cls.compute_admin.servers.client
