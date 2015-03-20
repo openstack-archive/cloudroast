@@ -1,5 +1,5 @@
 """
-Copyright 2013 Rackspace
+Copyright 2015 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -24,7 +24,17 @@ class MigrateServerTest(object):
 
     @tags(type='smoke', net='no')
     def test_migrate_server(self):
-        """Verify that a server can be migrated successfully"""
+        """
+        Verify that a server can be migrated successfully.
+
+        Get the server that was created in setup and use it to call migrate
+        server and waits for status verify resize, once it confirms
+        the resize, it will see if the original host is different from the current.
+
+        This test will be successful if:
+            - The list flavors with detail request raises a 'Bad Request'
+              error when given an invalid value for the minimum disk size.
+        """
 
         # Get Admin Server details before migrate
         server_before_migrate = self.admin_servers_client.get_server(
@@ -52,6 +62,18 @@ class ServerFromImageMigrateTests(ServerFromImageFixture,
 
     @classmethod
     def setUpClass(cls):
+        """
+        Perform actions that setup the necessary resources for testing.
+
+        The following resources are accessed from a parent class:
+            - An instance from ServerFromImageMigrateTests.
+
+        The following resources are created during this setup:
+            - Create a server from server behaviors.
+            - Initializes compute admin
+            - Initializes server behaviors
+
+        """
         super(ServerFromImageMigrateTests, cls).setUpClass()
         cls.compute_admin = ComputeAdminComposite()
         cls.admin_servers_client = cls.compute_admin.servers.client
