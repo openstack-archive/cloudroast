@@ -23,6 +23,14 @@ class DeleteServerAsAdminTests(ComputeAdminFixture,
                                DeleteServersTest):
     @classmethod
     def setUpClass(cls):
+        """
+        Perform actions that setup the neccesary resources for testing.
+
+        The following resources are created during this setup:
+            - Create a server from server behaviors.
+            - Deletes the same server in setup.
+
+        """
         super(DeleteServerAsAdminTests, cls).setUpClass()
 
         # Create Active server as standard User
