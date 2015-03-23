@@ -30,6 +30,7 @@ class ImageSharing(ImagesIntegrationFixture):
         cls.alt_one_member_id = cls.images_alt_one.auth.tenant_id
         cls.alt_two_member_id = cls.images_alt_two.auth.tenant_id
 
+        # Count set to number of images required for this module
         created_images = cls.images.behaviors.create_images_via_task(count=4)
 
         cls.single_member_image = created_images.pop()
@@ -100,15 +101,16 @@ class ImageSharing(ImagesIntegrationFixture):
 
         resp = self.images.client.get_image_member(
             self.delete_access_image.id_, self.alt_one_member_id)
-        self.assertTrue(resp.ok, self.ok_resp_msg.format(resp.status_code))
+        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
         get_member = resp.entity
 
         self.assertEqual(get_member.status, ImageMemberStatus.PENDING)
 
         resp = self.images_alt_one.client.delete_image(
             self.delete_access_image.id_)
-        self.assertEqual(resp.status_code, 403,
-                         self.status_code_msg.format(403, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 403,
+            Messages.STATUS_CODE_MSG.format(403, resp.status_code))
 
         resp = self.images_alt_one.client.update_image_member(
             self.delete_access_image.id_, self.alt_one_member_id,
@@ -119,17 +121,19 @@ class ImageSharing(ImagesIntegrationFixture):
 
         resp = self.images_alt_one.client.delete_image(
             self.delete_access_image.id_)
-        self.assertEqual(resp.status_code, 403,
-                         self.status_code_msg.format(403, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 403,
+            Messages.STATUS_CODE_MSG.format(403, resp.status_code))
 
         resp = self.images.client.delete_image(
             self.delete_access_image.id_)
-        self.assertTrue(resp.ok, self.ok_resp_msg.format(resp.status_code))
+        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
 
         resp = self.images_alt_one.client.get_image_details(
             self.delete_access_image.id_)
-        self.assertEqual(resp.status_code, 404,
-                         self.status_code_msg.format(404, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 404,
+            Messages.STATUS_CODE_MSG.format(404, resp.status_code))
 
     def test_share_image_with_single_member(self):
         """
@@ -171,7 +175,7 @@ class ImageSharing(ImagesIntegrationFixture):
 
         resp = self.images.client.get_image_details(
             self.single_member_image.id_)
-        self.assertTrue(resp.ok, self.ok_resp_msg.format(resp.status_code))
+        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
         get_image_as_owner = resp.entity
 
         errors = self.images.behaviors.validate_image(get_image_as_owner)
@@ -183,8 +187,9 @@ class ImageSharing(ImagesIntegrationFixture):
 
         resp = self.images_alt_one.client.get_image_details(
             self.single_member_image.id_)
-        self.assertEqual(resp.status_code, 404,
-                         self.status_code_msg.format(404, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 404,
+            Messages.STATUS_CODE_MSG.format(404, resp.status_code))
 
         listed_images = self.images_alt_one.behaviors.list_all_images()
         self.assertNotIn(
@@ -194,14 +199,14 @@ class ImageSharing(ImagesIntegrationFixture):
 
         resp = self.images.client.create_image_member(
             self.single_member_image.id_, self.alt_one_member_id)
-        self.assertTrue(resp.ok, self.ok_resp_msg.format(resp.status_code))
+        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
         member = resp.entity
 
         self.assertEqual(member.status, ImageMemberStatus.PENDING)
 
         resp = self.images_alt_one.client.get_image_details(
             self.single_member_image.id_)
-        self.assertTrue(resp.ok, self.ok_resp_msg.format(resp.status_code))
+        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
         get_image_as_member = resp.entity
 
         self.assertEqual(
@@ -226,7 +231,7 @@ class ImageSharing(ImagesIntegrationFixture):
 
         resp = self.images_alt_one.client.get_image_details(
             self.single_member_image.id_)
-        self.assertTrue(resp.ok, self.ok_resp_msg.format(resp.status_code))
+        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
         get_image_as_member_updated = resp.entity
 
         self.assertEqual(
@@ -245,7 +250,7 @@ class ImageSharing(ImagesIntegrationFixture):
 
         resp = self.images.client.list_image_members(
             self.single_member_image.id_)
-        self.assertTrue(resp.ok, self.ok_resp_msg.format(resp.status_code))
+        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
         listed_image_members = resp.entity
 
         self.assertEqual(
@@ -316,8 +321,9 @@ class ImageSharing(ImagesIntegrationFixture):
 
         resp = self.images_alt_one.client.get_image_details(
             self.multiple_members_image.id_)
-        self.assertEqual(resp.status_code, 404,
-                         self.status_code_msg.format(404, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 404,
+            Messages.STATUS_CODE_MSG.format(404, resp.status_code))
 
         listed_images = self.images_alt_one.behaviors.list_all_images()
         self.assertNotIn(
@@ -327,8 +333,9 @@ class ImageSharing(ImagesIntegrationFixture):
 
         resp = self.images_alt_two.client.get_image_details(
             self.multiple_members_image.id_)
-        self.assertEqual(resp.status_code, 404,
-                         self.status_code_msg.format(404, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 404,
+            Messages.STATUS_CODE_MSG.format(404, resp.status_code))
 
         listed_images = self.images_alt_two.behaviors.list_all_images()
         self.assertNotIn(
@@ -338,14 +345,14 @@ class ImageSharing(ImagesIntegrationFixture):
 
         resp = self.images.client.create_image_member(
             self.multiple_members_image.id_, self.alt_one_member_id)
-        self.assertTrue(resp.ok, self.ok_resp_msg.format(resp.status_code))
+        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
         member = resp.entity
 
         self.assertEqual(member.status, ImageMemberStatus.PENDING)
 
         resp = self.images_alt_one.client.get_image_details(
             self.multiple_members_image.id_)
-        self.assertTrue(resp.ok, self.ok_resp_msg.format(resp.status_code))
+        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
 
         listed_images = self.images_alt_one.behaviors.list_all_images()
         self.assertNotIn(
@@ -355,14 +362,14 @@ class ImageSharing(ImagesIntegrationFixture):
 
         resp = self.images.client.create_image_member(
             self.multiple_members_image.id_, self.alt_two_member_id)
-        self.assertTrue(resp.ok, self.ok_resp_msg.format(resp.status_code))
+        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
         member = resp.entity
 
         self.assertEqual(member.status, ImageMemberStatus.PENDING)
 
         resp = self.images_alt_two.client.get_image_details(
             self.multiple_members_image.id_)
-        self.assertTrue(resp.ok, self.ok_resp_msg.format(resp.status_code))
+        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
 
         listed_images = self.images_alt_two.behaviors.list_all_images()
         self.assertNotIn(
@@ -379,7 +386,7 @@ class ImageSharing(ImagesIntegrationFixture):
 
         resp = self.images_alt_one.client.get_image_details(
             self.multiple_members_image.id_)
-        self.assertTrue(resp.ok, self.ok_resp_msg.format(resp.status_code))
+        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
 
         listed_images = self.images_alt_one.behaviors.list_all_images()
         self.assertIn(
@@ -397,7 +404,7 @@ class ImageSharing(ImagesIntegrationFixture):
 
         resp = self.images_alt_two.client.get_image_details(
             self.multiple_members_image.id_)
-        self.assertTrue(resp.ok, self.ok_resp_msg.format(resp.status_code))
+        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
 
         listed_images = self.images_alt_two.behaviors.list_all_images()
         self.assertIn(
@@ -408,7 +415,7 @@ class ImageSharing(ImagesIntegrationFixture):
 
         resp = self.images.client.list_image_members(
             self.multiple_members_image.id_)
-        self.assertTrue(resp.ok, self.ok_resp_msg.format(resp.status_code))
+        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
         listed_image_members = resp.entity
 
         self.assertEqual(
@@ -446,7 +453,7 @@ class ImageSharing(ImagesIntegrationFixture):
 
         resp = self.compute_alt_one_servers_behaviors.create_active_server(
             image_ref=self.imported_image.id_)
-        self.assertTrue(resp.ok, self.ok_resp_msg.format(resp.status_code))
+        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
         server = resp.entity
 
         self.resources.add(
@@ -490,7 +497,7 @@ class ImageSharing(ImagesIntegrationFixture):
 
         resp = self.images_alt_one.client.task_to_export_image(
             input_=input_, type_=TaskTypes.EXPORT)
-        self.assertTrue(resp.ok, self.ok_resp_msg.format(resp.status_code))
+        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
         task_id = resp.entity.id_
 
         task = self.images_alt_one.behaviors.wait_for_task_status(
@@ -504,11 +511,11 @@ class ImageSharing(ImagesIntegrationFixture):
         resp = self.images_alt_one.client.update_image_member(
             self.no_export_image.id_, self.alt_one_member_id,
             ImageMemberStatus.ACCEPTED)
-        self.assertTrue(resp.ok, self.ok_resp_msg.format(resp.status_code))
+        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
 
         resp = self.images_alt_one.client.task_to_export_image(
             input_=input_, type_=TaskTypes.EXPORT)
-        self.assertTrue(resp.ok, self.ok_resp_msg.format(resp.status_code))
+        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
         task_id = resp.entity.id_
 
         task = self.images_alt_one.behaviors.wait_for_task_status(
@@ -522,11 +529,11 @@ class ImageSharing(ImagesIntegrationFixture):
         resp = self.images_alt_one.client.update_image_member(
             self.no_export_image.id_, self.alt_one_member_id,
             ImageMemberStatus.REJECTED)
-        self.assertTrue(resp.ok, self.ok_resp_msg.format(resp.status_code))
+        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
 
         resp = self.images_alt_one.client.task_to_export_image(
             input_=input_, type_=TaskTypes.EXPORT)
-        self.assertTrue(resp.ok, self.ok_resp_msg.format(resp.status_code))
+        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
         task_id = resp.entity.id_
 
         task = self.images_alt_one.behaviors.wait_for_task_status(
@@ -539,7 +546,7 @@ class ImageSharing(ImagesIntegrationFixture):
 
         resp = self.object_storage_alt_one_client.list_objects(
             self.images.config.export_to)
-        self.assertTrue(resp.ok, self.ok_resp_msg.format(resp.status_code))
+        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
         objects = resp.entity
 
         exported_image_names = [obj.name for obj in objects]
@@ -572,7 +579,7 @@ class ImageSharing(ImagesIntegrationFixture):
 
         resp = self.images_alt_one.client.get_image_details(
             created_snapshot.id)
-        self.assertTrue(resp.ok, self.ok_resp_msg.format(resp.status_code))
+        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
         get_image = resp.entity
 
         errors = self.images_alt_one.behaviors.validate_image(get_image)
@@ -606,7 +613,7 @@ class ImageSharing(ImagesIntegrationFixture):
 
         resp = self.images_alt_one.client.task_to_export_image(
             input_=input_, type_=TaskTypes.EXPORT)
-        self.assertTrue(resp.ok, self.ok_resp_msg.format(resp.status_code))
+        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
         task_id = resp.entity.id_
 
         self.images_alt_one.behaviors.wait_for_task_status(
@@ -614,7 +621,7 @@ class ImageSharing(ImagesIntegrationFixture):
 
         resp = self.object_storage_alt_one_client.list_objects(
             self.images.config.export_to)
-        self.assertTrue(resp.ok, self.ok_resp_msg.format(resp.status_code))
+        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
         files = resp.entity
 
         errors, file_names = (

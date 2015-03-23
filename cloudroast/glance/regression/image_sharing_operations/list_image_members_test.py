@@ -37,6 +37,7 @@ class ListImageMembers(ImagesFixture):
         cls.alt_member_id = cls.images_alt_one.auth.tenant_id
         cls.alt_two_member_id = cls.images_alt_two.auth.tenant_id
 
+        # Count set to number of images required for this module
         created_images = cls.images.behaviors.create_images_via_task(count=4)
 
         cls.shared_image = created_images.pop()
@@ -80,8 +81,9 @@ class ListImageMembers(ImagesFixture):
 
         resp = self.images.client.list_image_members(
             self.shared_image.id_)
-        self.assertEqual(resp.status_code, 200,
-                         self.status_code_msg.format(200, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 200,
+            Messages.STATUS_CODE_MSG.format(200, resp.status_code))
         listed_image_members = resp.entity
 
         self.assertEqual(
@@ -128,8 +130,9 @@ class ListImageMembers(ImagesFixture):
 
         resp = self.images.client.list_image_members(
             image_id=self.shared_image.id_, params=status)
-        self.assertEqual(resp.status_code, 200,
-                         self.status_code_msg.format(200, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 200,
+            Messages.STATUS_CODE_MSG.format(200, resp.status_code))
         listed_image_members = resp.entity
 
         self.assertEqual(
@@ -161,12 +164,13 @@ class ListImageMembers(ImagesFixture):
         resp = self.images_alt_one.client.update_image_member(
             self.alt_shared_image.id_, self.alt_member_id,
             status.get('member_status'))
-        self.assertTrue(resp.ok, self.ok_resp_msg.format(resp.status_code))
+        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
 
         resp = self.images.client.list_image_members(
             image_id=self.alt_shared_image.id_, params=status)
-        self.assertEqual(resp.status_code, 200,
-                         self.status_code_msg.format(200, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 200,
+            Messages.STATUS_CODE_MSG.format(200, resp.status_code))
         listed_image_members = resp.entity
 
         for image_member in listed_image_members:
@@ -187,8 +191,9 @@ class ListImageMembers(ImagesFixture):
         """
 
         resp = self.images.client.list_image_members(image_id='invalid')
-        self.assertEqual(resp.status_code, 404,
-                         self.status_code_msg.format(404, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 404,
+            Messages.STATUS_CODE_MSG.format(404, resp.status_code))
 
     def test_list_image_members_using_blank_image_id(self):
         """
@@ -199,8 +204,9 @@ class ListImageMembers(ImagesFixture):
         """
 
         resp = self.images.client.list_image_members(image_id='')
-        self.assertEqual(resp.status_code, 404,
-                         self.status_code_msg.format(404, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 404,
+            Messages.STATUS_CODE_MSG.format(404, resp.status_code))
 
     def test_list_image_members_using_deleted_image(self):
         """
@@ -211,8 +217,9 @@ class ListImageMembers(ImagesFixture):
         """
 
         resp = self.images.client.list_image_members(self.delete_image.id_)
-        self.assertEqual(resp.status_code, 404,
-                         self.status_code_msg.format(404, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 404,
+            Messages.STATUS_CODE_MSG.format(404, resp.status_code))
 
     def test_list_image_members_as_tenant_without_access_to_image(self):
         """
@@ -225,8 +232,9 @@ class ListImageMembers(ImagesFixture):
 
         resp = self.images_alt_two.client.list_image_members(
             self.no_access_image.id_)
-        self.assertEqual(resp.status_code, 404,
-                         self.status_code_msg.format(404, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 404,
+            Messages.STATUS_CODE_MSG.format(404, resp.status_code))
 
         self.assertIsNone(resp.entity, msg='Unexpected image member returned. '
                                            'Expected: None '

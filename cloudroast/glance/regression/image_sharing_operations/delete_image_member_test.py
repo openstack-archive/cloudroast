@@ -16,6 +16,7 @@ limitations under the License.
 
 import unittest
 
+from cloudcafe.glance.common.constants import Messages
 from cloudcafe.glance.common.types import ImageMemberStatus
 
 from cloudroast.glance.fixtures import ImagesFixture
@@ -29,6 +30,7 @@ class DeleteImageMember(ImagesFixture):
 
         cls.member_id = cls.images_alt_one.auth.tenant_id
 
+        # Count set to number of images required for this module
         created_images = cls.images.behaviors.create_images_via_task(count=3)
 
         cls.shared_image = created_images.pop()
@@ -65,11 +67,12 @@ class DeleteImageMember(ImagesFixture):
 
         resp = self.images.client.delete_image_member(
             self.shared_image.id_, self.member_id)
-        self.assertEqual(resp.status_code, 204,
-                         self.status_code_msg.format(204, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 204,
+            Messages.STATUS_CODE_MSG.format(204, resp.status_code))
 
         resp = self.images.client.list_image_members(self.shared_image.id_)
-        self.assertTrue(resp.ok, self.ok_resp_msg.format(resp.status_code))
+        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
         members = resp.entity
 
         self.assertListEqual(
@@ -101,11 +104,12 @@ class DeleteImageMember(ImagesFixture):
 
         resp = self.images.client.delete_image_member(
             self.accepted_image.id_, self.member_id)
-        self.assertEqual(resp.status_code, 204,
-                         self.status_code_msg.format(204, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 204,
+            Messages.STATUS_CODE_MSG.format(204, resp.status_code))
 
         resp = self.images.client.list_image_members(self.accepted_image.id_)
-        self.assertTrue(resp.ok, self.ok_resp_msg.format(resp.status_code))
+        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
         members = resp.entity
 
         self.assertListEqual(
@@ -135,11 +139,12 @@ class DeleteImageMember(ImagesFixture):
 
         resp = self.images_alt_one.client.delete_image_member(
             self.alt_shared_image.id_, self.member_id)
-        self.assertEqual(resp.status_code, 403,
-                         self.status_code_msg.format(403, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 403,
+            Messages.STATUS_CODE_MSG.format(403, resp.status_code))
 
         resp = self.images.client.list_image_members(self.alt_shared_image.id_)
-        self.assertTrue(resp.ok, self.ok_resp_msg.format(resp.status_code))
+        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
         members = resp.entity
 
         self.assertEqual(
@@ -165,8 +170,9 @@ class DeleteImageMember(ImagesFixture):
 
         resp = self.images_alt_one.client.delete_image_member(
             image_id='', member_id=self.member_id)
-        self.assertEqual(resp.status_code, 404,
-                         self.status_code_msg.format(404, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 404,
+            Messages.STATUS_CODE_MSG.format(404, resp.status_code))
 
     def test_delete_image_member_using_invalid_image_id(self):
         """
@@ -178,8 +184,9 @@ class DeleteImageMember(ImagesFixture):
 
         resp = self.images_alt_one.client.delete_image_member(
             image_id='invalid', member_id=self.member_id)
-        self.assertEqual(resp.status_code, 404,
-                         self.status_code_msg.format(404, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 404,
+            Messages.STATUS_CODE_MSG.format(404, resp.status_code))
 
     @unittest.skip('Redmine bug #11534')
     def test_delete_image_member_using_blank_member_id(self):
@@ -192,8 +199,9 @@ class DeleteImageMember(ImagesFixture):
 
         resp = self.images_alt_one.client.delete_image_member(
             image_id=self.shared_image, member_id='')
-        self.assertEqual(resp.status_code, 404,
-                         self.status_code_msg.format(404, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 404,
+            Messages.STATUS_CODE_MSG.format(404, resp.status_code))
 
     @unittest.skip('Redmine bug #11534')
     def test_delete_image_member_using_invalid_member_id(self):
@@ -206,5 +214,6 @@ class DeleteImageMember(ImagesFixture):
 
         resp = self.images_alt_one.client.delete_image_member(
             image_id=self.shared_image, member_id='invalid')
-        self.assertEqual(resp.status_code, 404,
-                         self.status_code_msg.format(404, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 404,
+            Messages.STATUS_CODE_MSG.format(404, resp.status_code))
