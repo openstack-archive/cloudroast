@@ -17,6 +17,7 @@ limitations under the License.
 from cafe.drivers.unittest.decorators import (
     data_driven_test, DataDrivenFixture)
 from cloudcafe.common.tools.datagen import rand_name
+from cloudcafe.glance.common.constants import Messages
 
 from cloudroast.glance.fixtures import ImagesFixture
 from cloudroast.glance.generators import ImagesDatasetListGenerator
@@ -28,7 +29,10 @@ class ImageOperationsSmoke(ImagesFixture):
     @classmethod
     def setUpClass(cls):
         super(ImageOperationsSmoke, cls).setUpClass()
+
+        # Count set to number of images required for this module
         created_images = cls.images.behaviors.create_images_via_task(count=2)
+
         cls.image = created_images.pop()
         cls.alt_image = created_images.pop()
 
@@ -50,8 +54,9 @@ class ImageOperationsSmoke(ImagesFixture):
         """
 
         resp = self.images.client.list_images(params)
-        self.assertEqual(resp.status_code, 200,
-                         self.status_code_msg.format(200, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 200,
+            Messages.STATUS_CODE_MSG.format(200, resp.status_code))
 
     @data_driven_test(
         ImagesDatasetListGenerator.ListImagesInvalidParameters())
@@ -70,8 +75,9 @@ class ImageOperationsSmoke(ImagesFixture):
 
         # Invalid parameters should be ignored, the response code should be 200
         resp = self.images.client.list_images(params)
-        self.assertEqual(resp.status_code, 200,
-                         self.status_code_msg.format(200, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 200,
+            Messages.STATUS_CODE_MSG.format(200, resp.status_code))
 
     def test_get_image_details(self):
         """
@@ -82,8 +88,9 @@ class ImageOperationsSmoke(ImagesFixture):
         """
 
         resp = self.images.client.get_image_details(self.image.id_)
-        self.assertEqual(resp.status_code, 200,
-                         self.status_code_msg.format(200, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 200,
+            Messages.STATUS_CODE_MSG.format(200, resp.status_code))
 
     def test_update_image(self):
         """
@@ -97,8 +104,9 @@ class ImageOperationsSmoke(ImagesFixture):
 
         resp = self.images.client.update_image(
             self.image.id_, replace={'name': updated_name})
-        self.assertEqual(resp.status_code, 200,
-                         self.status_code_msg.format(200, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 200,
+            Messages.STATUS_CODE_MSG.format(200, resp.status_code))
 
     def test_delete_image(self):
         """
@@ -109,5 +117,6 @@ class ImageOperationsSmoke(ImagesFixture):
         """
 
         resp = self.images.client.delete_image(self.alt_image.id_)
-        self.assertEqual(resp.status_code, 204,
-                         self.status_code_msg.format(204, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 204,
+            Messages.STATUS_CODE_MSG.format(204, resp.status_code))

@@ -15,6 +15,7 @@ limitations under the License.
 """
 
 from cloudcafe.common.tools.datagen import rand_name
+from cloudcafe.glance.common.constants import Messages
 
 from cloudroast.glance.fixtures import ImagesFixture
 
@@ -24,8 +25,16 @@ class ImageTagOperationsSmoke(ImagesFixture):
     @classmethod
     def setUpClass(cls):
         super(ImageTagOperationsSmoke, cls).setUpClass()
-        cls.created_images = cls.images.behaviors.create_images_via_task(
-            count=2)
+
+        cls.tag = rand_name('tag')
+
+        # Count set to number of images required for this module
+        created_images = cls.images.behaviors.create_images_via_task(count=2)
+
+        cls.add_tag_image = created_images.pop()
+
+        cls.delete_tag_image = created_images.pop()
+        cls.images.client.add_image_tag(cls.delete_tag_image.id_, cls.tag)
 
     @classmethod
     def tearDownClass(cls):
@@ -40,30 +49,22 @@ class ImageTagOperationsSmoke(ImagesFixture):
         2) Verify the response status code is 204
         """
 
-        image = self.created_images.pop()
-        tag = rand_name('tag')
-
-        resp = self.images.client.add_image_tag(image.id_, tag)
-        self.assertEqual(resp.status_code, 204,
-                         self.status_code_msg.format(204, resp.status_code))
+        resp = self.images.client.add_image_tag(
+            self.add_tag_image.id_, self.tag)
+        self.assertEqual(
+            resp.status_code, 204,
+            Messages.STATUS_CODE_MSG.format(204, resp.status_code))
 
     def test_delete_image_tag(self):
         """
         @summary: Delete an image tag
 
-        1) Add an image tag passing in an image id and tag
-        2) Verify the response status code is 204
-        3) Delete an image tag passing in an image id and tag
-        4) Verify that the response code is 204
+        1) Delete an image tag passing in an image id and tag
+        2) Verify that the response code is 204
         """
 
-        image = self.created_images.pop()
-        tag = rand_name('tag')
-
-        resp = self.images.client.add_image_tag(image.id_, tag)
-        self.assertEqual(resp.status_code, 204,
-                         self.status_code_msg.format(204, resp.status_code))
-
-        resp = self.images.client.delete_image_tag(image.id_, tag)
-        self.assertEqual(resp.status_code, 204,
-                         self.status_code_msg.format(204, resp.status_code))
+        resp = self.images.client.delete_image_tag(
+            self.delete_tag_image.id_, self.tag)
+        self.assertEqual(
+            resp.status_code, 204,
+            Messages.STATUS_CODE_MSG.format(204, resp.status_code))
