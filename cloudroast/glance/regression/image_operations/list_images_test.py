@@ -20,15 +20,16 @@ import unittest
 from cafe.drivers.unittest.decorators import (
     data_driven_test, DataDrivenFixture)
 from cloudcafe.common.tools.datagen import rand_name
+from cloudcafe.glance.common.constants import Messages
 from cloudcafe.glance.common.types import (
     ImageMemberStatus, ImageStatus, ImageVisibility, SortDirection)
 
-from cloudroast.glance.fixtures import ImagesIntegrationFixture
+from cloudroast.glance.fixtures import ImagesIntergrationFixture
 from cloudroast.glance.generators import ImagesDatasetListGenerator
 
 
 @DataDrivenFixture
-class ListImages(ImagesIntegrationFixture):
+class ListImages(ImagesIntergrationFixture):
 
     @classmethod
     def setUpClass(cls):
@@ -36,6 +37,7 @@ class ListImages(ImagesIntegrationFixture):
 
         cls.alt_one_member = cls.images_alt_one.auth.tenant_id
 
+        # Count set to number of images required for this module
         created_images = cls.images.behaviors.create_images_via_task(
             image_properties={'name': rand_name('image')}, count=2)
 
@@ -76,7 +78,7 @@ class ListImages(ImagesIntegrationFixture):
 
         resp = self.images.client.list_images(
             params={'limit': 100, 'visibility': ImageVisibility.PUBLIC})
-        self.assertTrue(resp.ok, self.ok_resp_msg.format(resp.status_code))
+        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
 
         glance_image_names = [image.name for image in resp.entity]
         self.assertIsNotNone(
@@ -86,7 +88,7 @@ class ListImages(ImagesIntegrationFixture):
 
         resp = self.compute.images.client.list_images_with_detail(
             limit=100, image_type='base')
-        self.assertTrue(resp.ok, self.ok_resp_msg.format(resp.status_code))
+        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
 
         nova_image_names = [image.name for image in resp.entity]
         self.assertIsNotNone(
@@ -174,7 +176,7 @@ class ListImages(ImagesIntegrationFixture):
         resp = self.images_alt_one.client.update_image_member(
             self.shared_image.id_, self.alt_one_member,
             ImageMemberStatus.REJECTED)
-        self.assertTrue(resp.ok, self.ok_resp_msg.format(resp.status_code))
+        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
 
         listed_images = self.images_alt_one.behaviors.list_all_images(
             visibility=ImageVisibility.SHARED,
@@ -286,7 +288,8 @@ class ListImages(ImagesIntegrationFixture):
         for image in listed_images:
             image_member_statuses = []
             resp = self.images.client.list_image_members(image.id_)
-            self.assertTrue(resp.ok, self.ok_resp_msg.format(resp.status_code))
+            self.assertTrue(resp.ok,
+                            Messages.OK_RESP_MSG.format(resp.status_code))
             list_image_members = resp.entity
             for member in list_image_members:
                 image_member_statuses.append(member.status)
@@ -431,7 +434,7 @@ class ListImages(ImagesIntegrationFixture):
         """
 
         resp = self.images.client.list_images(params={'limit': 1})
-        self.assertTrue(resp.ok, self.ok_resp_msg.format(resp.status_code))
+        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
 
         listed_images = resp.entity
         self.assertEqual(
@@ -449,7 +452,7 @@ class ListImages(ImagesIntegrationFixture):
         """
 
         resp = self.images.client.list_images(params={'limit': 0})
-        self.assertTrue(resp.ok, self.ok_resp_msg.format(resp.status_code))
+        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
 
         listed_images = resp.entity
         self.assertEqual(
@@ -477,7 +480,7 @@ class ListImages(ImagesIntegrationFixture):
         resp = self.images.client.list_images(
             params={'limit': 1, 'name': self.created_image.name,
                     'owner': self.images.auth.tenant_id})
-        self.assertTrue(resp.ok, self.ok_resp_msg.format(resp.status_code))
+        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
 
         listed_image = resp.entity
         self.assertEqual(
@@ -491,7 +494,7 @@ class ListImages(ImagesIntegrationFixture):
             params={'limit': 1, 'marker': marker,
                     'name': self.created_image.name,
                     'owner': self.images.auth.tenant_id})
-        self.assertTrue(resp.ok, self.ok_resp_msg.format(resp.status_code))
+        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
 
         next_listed_image = resp.entity
         self.assertEqual(

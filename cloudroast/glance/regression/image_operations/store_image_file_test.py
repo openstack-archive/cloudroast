@@ -35,6 +35,7 @@ class StoreImageFile(ImagesFixture):
     def setUpClass(cls):
         super(StoreImageFile, cls).setUpClass()
 
+        # Count set to number of images required for this module
         reg_images = cls.images.behaviors.register_new_images(count=3)
         cls.reg_image = reg_images.pop()
         cls.duplicate_reg_image = reg_images.pop()
@@ -60,11 +61,12 @@ class StoreImageFile(ImagesFixture):
 
         resp = self.images.client.store_image_file(
             self.reg_image.id_, self.images.config.test_file)
-        self.assertEqual(resp.status_code, 204,
-                         self.status_code_msg.format(204, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 204,
+            Messages.STATUS_CODE_MSG.format(204, resp.status_code))
 
         resp = self.images.client.get_image_details(self.reg_image.id_)
-        self.assertTrue(resp.ok, self.ok_resp_msg.format(resp.status_code))
+        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
         get_image = resp.entity
 
         if get_image.checksum is None:
@@ -94,13 +96,15 @@ class StoreImageFile(ImagesFixture):
 
         resp = self.images.client.store_image_file(
             self.duplicate_reg_image.id_, self.images.config.test_file)
-        self.assertEqual(resp.status_code, 204,
-                         self.status_code_msg.format(204, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 204,
+            Messages.STATUS_CODE_MSG.format(204, resp.status_code))
 
         resp = self.images.client.store_image_file(
             self.duplicate_reg_image.id_, self.images.config.test_file)
-        self.assertEqual(resp.status_code, 409,
-                         self.status_code_msg.format(409, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 409,
+            Messages.STATUS_CODE_MSG.format(409, resp.status_code))
 
     def test_store_image_file_using_invalid_content_type(self):
         """
@@ -118,12 +122,13 @@ class StoreImageFile(ImagesFixture):
         resp = self.images.client.store_image_file(
             self.content_type_reg_image.id_, self.images.config.test_file,
             content_type="invalid_content_type")
-        self.assertEqual(resp.status_code, 415,
-                         self.status_code_msg.format(415, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 415,
+            Messages.STATUS_CODE_MSG.format(415, resp.status_code))
 
         resp = self.images.client.get_image_details(
             self.content_type_reg_image.id_)
-        self.assertTrue(resp.ok, self.ok_resp_msg.format(resp.status_code))
+        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
         get_image = resp.entity
 
         if get_image.checksum is not None:
@@ -150,8 +155,9 @@ class StoreImageFile(ImagesFixture):
 
         resp = self.images.client.store_image_file(
             image_id='', file_data=self.images.config.test_file)
-        self.assertEqual(resp.status_code, 400,
-                         self.status_code_msg.format(400, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 400,
+            Messages.STATUS_CODE_MSG.format(400, resp.status_code))
 
     def test_store_image_file_using_invalid_image_id(self):
         """
@@ -163,5 +169,6 @@ class StoreImageFile(ImagesFixture):
 
         resp = self.images.client.store_image_file(
             image_id='invalid', file_data=self.images.config.test_file)
-        self.assertEqual(resp.status_code, 404,
-                         self.status_code_msg.format(404, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 404,
+            Messages.STATUS_CODE_MSG.format(404, resp.status_code))

@@ -14,6 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+from cloudcafe.glance.common.constants import Messages
+
 from cloudroast.glance.fixtures import ImagesFixture
 
 
@@ -25,6 +27,7 @@ class DeleteImage(ImagesFixture):
 
         member_id = cls.images_alt_one.auth.tenant_id
 
+        # Count set to number of images required for this module
         created_images = cls.images.behaviors.create_images_via_task(count=5)
 
         cls.created_image = created_images.pop()
@@ -60,12 +63,14 @@ class DeleteImage(ImagesFixture):
         """
 
         resp = self.images.client.delete_image(self.created_image.id_)
-        self.assertEqual(resp.status_code, 204,
-                         self.status_code_msg.format(204, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 204,
+            Messages.STATUS_CODE_MSG.format(204, resp.status_code))
 
         resp = self.images.client.get_image_details(self.created_image.id_)
-        self.assertEqual(resp.status_code, 404,
-                         self.status_code_msg.format(404, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 404,
+            Messages.STATUS_CODE_MSG.format(404, resp.status_code))
 
     def test_delete_shared_image(self):
         """
@@ -78,13 +83,15 @@ class DeleteImage(ImagesFixture):
         """
 
         resp = self.images.client.delete_image(self.shared_created_image.id_)
-        self.assertEqual(resp.status_code, 204,
-                         self.status_code_msg.format(204, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 204,
+            Messages.STATUS_CODE_MSG.format(204, resp.status_code))
 
         resp = self.images_alt_one.client.get_image_details(
             self.created_image.id_)
-        self.assertEqual(resp.status_code, 404,
-                         self.status_code_msg.format(404, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 404,
+            Messages.STATUS_CODE_MSG.format(404, resp.status_code))
 
     def test_delete_image_using_blank_image_id(self):
         """
@@ -95,8 +102,9 @@ class DeleteImage(ImagesFixture):
         """
 
         resp = self.images.client.delete_image(image_id='')
-        self.assertEqual(resp.status_code, 404,
-                         self.status_code_msg.format(404, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 404,
+            Messages.STATUS_CODE_MSG.format(404, resp.status_code))
 
     def test_delete_image_using_invalid_image_id(self):
         """
@@ -107,8 +115,9 @@ class DeleteImage(ImagesFixture):
         """
 
         resp = self.images.client.delete_image(image_id='invalid')
-        self.assertEqual(resp.status_code, 404,
-                         self.status_code_msg.format(404, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 404,
+            Messages.STATUS_CODE_MSG.format(404, resp.status_code))
 
     def test_delete_image_that_is_already_deleted(self):
         """
@@ -121,12 +130,14 @@ class DeleteImage(ImagesFixture):
         """
 
         resp = self.images.client.delete_image(self.alt_created_image.id_)
-        self.assertEqual(resp.status_code, 204,
-                         self.status_code_msg.format(204, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 204,
+            Messages.STATUS_CODE_MSG.format(204, resp.status_code))
 
         resp = self.images.client.delete_image(self.alt_created_image.id_)
-        self.assertEqual(resp.status_code, 404,
-                         self.status_code_msg.format(404, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 404,
+            Messages.STATUS_CODE_MSG.format(404, resp.status_code))
 
     def test_delete_image_that_is_protected(self):
         """
@@ -140,12 +151,13 @@ class DeleteImage(ImagesFixture):
 
         resp = self.images.client.delete_image(
             self.protected_created_image.id_)
-        self.assertEqual(resp.status_code, 403,
-                         self.status_code_msg.format(403, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 403,
+            Messages.STATUS_CODE_MSG.format(403, resp.status_code))
 
         resp = self.images.client.get_image_details(
             self.protected_created_image.id_)
-        self.assertTrue(resp.ok, self.ok_resp_msg.format(resp.status_code))
+        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
 
     def test_delete_shared_image_as_member(self):
         """
@@ -159,9 +171,10 @@ class DeleteImage(ImagesFixture):
 
         resp = self.images_alt_one.client.delete_image(
             self.alt_shared_created_image.id_)
-        self.assertEqual(resp.status_code, 403,
-                         self.status_code_msg.format(403, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 403,
+            Messages.STATUS_CODE_MSG.format(403, resp.status_code))
 
         resp = self.images.client.get_image_details(
             self.alt_shared_created_image.id_)
-        self.assertTrue(resp.ok, self.ok_resp_msg.format(resp.status_code))
+        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))

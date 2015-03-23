@@ -1,4 +1,3 @@
-
 """
 Copyright 2015 Rackspace
 
@@ -17,6 +16,7 @@ limitations under the License.
 
 import unittest
 
+from cloudcafe.glance.common.constants import Messages
 from cloudcafe.glance.composite import ImagesComposite, ImagesAuthComposite
 
 from cloudroast.glance.fixtures import ImagesFixture
@@ -36,6 +36,7 @@ class GetImageFile(ImagesFixture):
 
         member_id = cls.images_alt_one.auth.tenant_id
 
+        # Count set to number of images required for this module
         reg_images = cls.images.behaviors.register_new_images(count=3)
 
         cls.reg_image = reg_images.pop()
@@ -65,8 +66,10 @@ class GetImageFile(ImagesFixture):
         """
 
         resp = self.images.client.get_image_file(self.reg_image.id_)
-        self.assertEqual(resp.status_code, 200,
-                         self.status_code_msg.format(200, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 200,
+            Messages.STATUS_CODE_MSG.format(200, resp.status_code))
+
         self.assertEqual(
             resp.content, self.images.config.test_file,
             msg='Unexpected file content. Expected: {0} '
@@ -84,8 +87,9 @@ class GetImageFile(ImagesFixture):
 
         resp = self.images_alt_one.client.get_image_file(
             self.shared_reg_image.id_)
-        self.assertEqual(resp.status_code, 200,
-                         self.status_code_msg.format(200, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 200,
+            Messages.STATUS_CODE_MSG.format(200, resp.status_code))
 
         self.assertEqual(
             resp.content, self.images.config.test_file,
@@ -103,8 +107,9 @@ class GetImageFile(ImagesFixture):
         """
 
         resp = self.images.client.get_image_file(self.empty_reg_image.id_)
-        self.assertEqual(resp.status_code, 404,
-                         self.status_code_msg.format(404, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 404,
+            Messages.STATUS_CODE_MSG.format(404, resp.status_code))
 
     def test_get_image_file_as_tenant_without_access_to_image(self):
         """
@@ -116,8 +121,9 @@ class GetImageFile(ImagesFixture):
 
         resp = self.images_alt_two.client.get_image_file(
             self.shared_reg_image.id_)
-        self.assertEqual(resp.status_code, 404,
-                         self.status_code_msg.format(404, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 404,
+            Messages.STATUS_CODE_MSG.format(404, resp.status_code))
 
         self.assertNotEqual(
             resp.content, self.images.config.test_file,
@@ -133,8 +139,9 @@ class GetImageFile(ImagesFixture):
         """
 
         resp = self.images.client.get_image_file(image_id='')
-        self.assertEqual(resp.status_code, 404,
-                         self.status_code_msg.format(404, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 404,
+            Messages.STATUS_CODE_MSG.format(404, resp.status_code))
 
     def test_get_image_file_using_invalid_image_id(self):
         """
@@ -145,5 +152,6 @@ class GetImageFile(ImagesFixture):
         """
 
         resp = self.images.client.get_image_file(image_id='invalid')
-        self.assertEqual(resp.status_code, 404,
-                         self.status_code_msg.format(404, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 404,
+            Messages.STATUS_CODE_MSG.format(404, resp.status_code))
