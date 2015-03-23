@@ -15,6 +15,7 @@ limitations under the License.
 """
 
 from cloudcafe.common.tools.datagen import rand_name
+from cloudcafe.glance.common.constants import Messages
 
 from cloudroast.glance.fixtures import ImagesFixture
 
@@ -25,6 +26,7 @@ class AddImageTag(ImagesFixture):
     def setUpClass(cls):
         super(AddImageTag, cls).setUpClass()
 
+        # Count set to number of images required for this module
         created_images = cls.images.behaviors.create_images_via_task(count=5)
 
         cls.created_image = created_images.pop()
@@ -52,11 +54,12 @@ class AddImageTag(ImagesFixture):
         tag = rand_name('tag')
 
         resp = self.images.client.add_image_tag(self.single_tag_image.id_, tag)
-        self.assertEqual(resp.status_code, 204,
-                         self.status_code_msg.format(204, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 204,
+            Messages.STATUS_CODE_MSG.format(204, resp.status_code))
 
         resp = self.images.client.get_image_details(self.single_tag_image.id_)
-        self.assertTrue(resp.ok, self.ok_resp_msg.format(resp.status_code))
+        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
         get_image = resp.entity
 
         self.assertIn(
@@ -85,13 +88,13 @@ class AddImageTag(ImagesFixture):
         for tag in tags_to_add:
             resp = self.images.client.add_image_tag(
                 self.multiple_tags_image.id_, tag)
-            self.assertEqual(resp.status_code, 204,
-                             self.status_code_msg.format(
-                                 204, resp.status_code))
+            self.assertEqual(
+                resp.status_code, 204,
+                Messages.STATUS_CODE_MSG.format(204, resp.status_code))
 
         resp = self.images.client.get_image_details(
             self.multiple_tags_image.id_)
-        self.assertTrue(resp.ok, self.ok_resp_msg.format(resp.status_code))
+        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
         get_image = resp.entity
 
         for tag in tags_to_add:
@@ -123,21 +126,28 @@ class AddImageTag(ImagesFixture):
 
         while number_of_image_tags != quota_limit:
             tag = rand_name('tag')
+
             resp = self.images.client.add_image_tag(self.quota_image.id_, tag)
-            self.assertEqual(resp.status_code, 204,
-                             self.status_code_msg.format(204,
-                                                         resp.status_code))
+            self.assertEqual(
+                resp.status_code, 204,
+                Messages.STATUS_CODE_MSG.format(204, resp.status_code))
+
             resp = self.images.client.get_image_details(self.quota_image.id_)
-            self.assertTrue(resp.ok, self.ok_resp_msg.format(resp.status_code))
+            self.assertTrue(resp.ok,
+                            Messages.OK_RESP_MSG.format(resp.status_code))
             get_image = resp.entity
+
             number_of_image_tags = len(getattr(get_image, 'tags'))
 
         tag = rand_name('tag')
+
         resp = self.images.client.add_image_tag(self.quota_image.id_, tag)
-        self.assertEqual(resp.status_code, 413,
-                         self.status_code_msg.format(413, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 413,
+            Messages.STATUS_CODE_MSG.format(413, resp.status_code))
+
         resp = self.images.client.get_image_details(self.quota_image.id_)
-        self.assertTrue(resp.ok, self.ok_resp_msg.format(resp.status_code))
+        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
         get_image = resp.entity
 
         self.assertEqual(
@@ -166,13 +176,13 @@ class AddImageTag(ImagesFixture):
         for x in range(number_of_tags):
             resp = self.images.client.add_image_tag(
                 self.duplicate_tag_image.id_, tag_to_add)
-            self.assertEqual(resp.status_code, 204,
-                             self.status_code_msg.format(
-                                 204, resp.status_code))
+            self.assertEqual(
+                resp.status_code, 204,
+                Messages.STATUS_CODE_MSG.format(204, resp.status_code))
 
         resp = self.images.client.get_image_details(
             self.duplicate_tag_image.id_)
-        self.assertTrue(resp.ok, self.ok_resp_msg.format(resp.status_code))
+        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
         get_image = resp.entity
 
         [matched_tags.append(tag)
@@ -196,8 +206,9 @@ class AddImageTag(ImagesFixture):
         tag = rand_name('tag')
 
         resp = self.images.client.add_image_tag(image_id='', tag=tag)
-        self.assertEqual(resp.status_code, 404,
-                         self.status_code_msg.format(404, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 404,
+            Messages.STATUS_CODE_MSG.format(404, resp.status_code))
 
     def test_add_image_tag_using_invalid_image_id(self):
         """
@@ -210,8 +221,9 @@ class AddImageTag(ImagesFixture):
         tag = rand_name('tag')
 
         resp = self.images.client.add_image_tag(image_id='invalid', tag=tag)
-        self.assertEqual(resp.status_code, 404,
-                         self.status_code_msg.format(404, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 404,
+            Messages.STATUS_CODE_MSG.format(404, resp.status_code))
 
     def test_add_image_tag_using_blank_image_tag(self):
         """
@@ -223,11 +235,12 @@ class AddImageTag(ImagesFixture):
 
         resp = self.images.client.add_image_tag(
             image_id=self.created_image.id_, tag='')
-        self.assertEqual(resp.status_code, 404,
-                         self.status_code_msg.format(404, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 404,
+            Messages.STATUS_CODE_MSG.format(404, resp.status_code))
 
         resp = self.images.client.get_image_details(self.created_image.id_)
-        self.assertTrue(resp.ok, self.ok_resp_msg.format(resp.status_code))
+        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
         get_image = resp.entity
 
         self.assertNotIn(
@@ -246,11 +259,12 @@ class AddImageTag(ImagesFixture):
 
         resp = self.images.client.add_image_tag(
             image_id=self.created_image.id_, tag='/?:*#@!')
-        self.assertEqual(resp.status_code, 404,
-                         self.status_code_msg.format(404, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 404,
+            Messages.STATUS_CODE_MSG.format(404, resp.status_code))
 
         resp = self.images.client.get_image_details(self.created_image.id_)
-        self.assertTrue(resp.ok, self.ok_resp_msg.format(resp.status_code))
+        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
         get_image = resp.entity
 
         self.assertNotIn(
