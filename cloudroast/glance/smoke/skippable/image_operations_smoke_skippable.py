@@ -17,6 +17,7 @@ limitations under the License.
 import unittest
 
 from cloudcafe.glance.config import ImagesConfig
+from cloudcafe.glance.common.constants import Messages
 
 from cloudroast.glance.fixtures import ImagesFixture
 
@@ -30,8 +31,18 @@ class ImageOperationsSmokeSkippable(ImagesFixture):
     @classmethod
     def setUpClass(cls):
         super(ImageOperationsSmokeSkippable, cls).setUpClass()
-        cls.registered_images = cls.images.behaviors.register_new_images(
-            count=2)
+
+        cls.file_data = cls.images.behaviors.read_data_file(
+            cls.images.config.test_file)
+
+        # Count set to number of images required for this module
+        registered_images = cls.images.behaviors.register_new_images(count=2)
+
+        cls.registered_image = registered_images.pop()
+
+        cls.alt_registered_image = registered_images.pop()
+        cls.images.client.store_image_file(
+            cls.alt_registered_image.id_, cls.file_data)
 
     def test_register_image(self):
         """
@@ -43,9 +54,11 @@ class ImageOperationsSmokeSkippable(ImagesFixture):
         """
 
         resp = self.images.client.register_image()
-        self.assertEqual(resp.status_code, 201,
-                         self.status_code_msg.format(201, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 201,
+            Messages.STATUS_CODE_MSG.format(201, resp.status_code))
         image = resp.entity
+
         self.resources.add(image.id_, self.images.client.delete_image)
 
     @unittest.skipUnless(images_config.allow_put_image_file,
@@ -58,13 +71,11 @@ class ImageOperationsSmokeSkippable(ImagesFixture):
         2) Verify that the response code is 204
         """
 
-        image = self.registered_images.pop()
-        file_data = self.images.behaviors.read_data_file(
-            self.images.config.test_file)
-
-        resp = self.images.client.store_image_file(image.id_, file_data)
-        self.assertEqual(resp.status_code, 204,
-                         self.status_code_msg.format(204, resp.status_code))
+        resp = self.images.client.store_image_file(
+            self.registered_image.id_, self.file_data)
+        self.assertEqual(
+            resp.status_code, 204,
+            Messages.STATUS_CODE_MSG.format(204, resp.status_code))
 
     @unittest.skipUnless(images_config.allow_put_image_file and
                          images_config.allow_get_image_file,
@@ -73,20 +84,11 @@ class ImageOperationsSmokeSkippable(ImagesFixture):
         """
         @summary: Get an image file data
 
-        1) Store an image file data passing the image id and file data
-        2) Verify that the response code is 204
-        3) Get the image file data passing the image id
-        4) Verify that the response code is 200
+        1) Get the image file data passing the image id
+        2) Verify that the response code is 200
         """
 
-        image = self.registered_images.pop()
-        file_data = self.images.behaviors.read_data_file(
-            self.images.config.test_file)
-
-        resp = self.images.client.store_image_file(image.id_, file_data)
-        self.assertEqual(resp.status_code, 204,
-                         self.status_code_msg.format(204, resp.status_code))
-
-        resp = self.images.client.get_image_file(image.id_)
-        self.assertEqual(resp.status_code, 200,
-                         self.status_code_msg.format(200, resp.status_code))
+        resp = self.images.client.get_image_file(self.alt_registered_image.id_)
+        self.assertEqual(
+            resp.status_code, 200,
+            Messages.STATUS_CODE_MSG.format(200, resp.status_code))
