@@ -24,12 +24,33 @@ class DeleteServersTest(object):
 
     @tags(type='smoke', net='no')
     def test_delete_server_response(self):
-        """The response code for a delete server request should be 204."""
+        """
+        The response code for a delete server request should be 204.
+
+    	Validate that the response to the delete server request in the test set
+        up has a status code of 204.
+
+        The following assertions occur:
+            - The response code is equal to 204
+        """
         self.assertEqual(204, self.resp.status_code)
 
     @tags(type='smoke', net='no')
     def test_deleted_server_not_listed(self):
-        """A deleted server should not be included in the list of servers."""
+        """
+        A deleted server should not be included in the list of servers.
+
+        As the test user, get a list of servers. Validate that the server
+        deleted during test set up is not found in that list. As the test user,
+        get a detailed list of servers. Validate that the server deleted during
+        test set up is not found in that detailed list.
+
+        The following assertions will occur:
+            - The server deleted during test set up should not be in a list of
+              servers
+            - The server deleted during test setup should not be in a detailed
+              list of servers
+        """
         servers = self.servers_client.list_servers().entity
         self.assertNotIn(self.server, servers)
 
@@ -39,8 +60,21 @@ class DeleteServersTest(object):
     @tags(type='positive', net='no')
     def test_deleted_server_listed_with_changes_since(self):
         """
-        A deleted server should be included in the list of servers if
-        the changes-since parameter is a time before the server was deleted
+        A server list using the changes since value should show a deleted server
+
+        A deleted server should be included in the list of servers if the
+        changes-since parameter is a time before the server was deleted. As a
+        test user get a list of servers using the server created value of the
+        server deleted during test set up. Validate that the deleted server is
+        in this list. As a test user get a detailed list of servers using the
+        server created value of the server deleted during test set up. Validate
+        that the deleted server is in this detailed list.
+
+        The following assertions will occur:
+            - The id of the server deleted during test set up will be in a list
+              of servers gotten using the 'changes_since' parameter
+            - The id of the server deleted during test set up will be in a
+              detailed list of servers gotten using the 'changes_since' parameter
         """
 
         servers = self.servers_client.list_servers(
@@ -55,49 +89,122 @@ class DeleteServersTest(object):
 
     @tags(type='negative', net='no')
     def test_get_deleted_server_fails(self):
-        """A get server request for a deleted server should fail."""
+        """
+        A get server request for a deleted server should fail.
+
+        Attempt to get the details of the server deleted during test set up.
+        The request should raise an 'ItemNotFound error.'
+
+        The following assertions will occur:
+            - A request to get the details of the server deleted during test
+              set up will result in an 'ItemNotFound' error
+        """
         with self.assertRaises(ItemNotFound):
             self.servers_client.get_server(self.server.id)
 
     @tags(type='negative', net='no')
     def test_update_deleted_server_fails(self):
-        """An update server request for a deleted server should fail."""
+        """
+        An update server request for a deleted server should fail.
+
+        Attempt to change the name of the server deleted during test set up to
+        'newname' using the update_server method. The request should raise an
+        'ItemNotFound error.'
+
+        The following assertions will occur:
+            - A request to update the name of a server deleted during test set
+              up will result in an 'ItemNotFound' error
+        """
         with self.assertRaises(ItemNotFound):
             self.servers_client.update_server(self.server.id, name='newname')
 
     @tags(type='negative', net='no')
     def test_delete_deleted_server_fails(self):
-        """A delete server request for a deleted server should fail."""
+        """
+        A delete request for a deleted server should fail.
+
+        Attempt to delete the server deleted during test set up. The request
+        should raise an 'ItemNotFound error.'
+
+        The following assertions will occur:
+            - A request to delete the server deleted during test set up
+              will result in an 'ItemNotFound' error
+        """
         with self.assertRaises(ItemNotFound):
             self.servers_client.delete_server(self.server.id)
 
     @tags(type='negative', net='no')
     def test_change_password_for_deleted_server_fails(self):
-        """A change password request for a deleted server should fail."""
+        """
+        A change password request for a deleted server should fail.
+
+        Attempt to change the password of the server deleted during test set up.
+        The request should raise an 'ItemNotFound error.'
+
+        The following assertions will occur:
+            - A request to change the password of the server deleted during test
+              set up will result in an 'ItemNotFound' error
+        """
         with self.assertRaises(ItemNotFound):
             self.servers_client.change_password(self.server.id, 'newP@ssw0rd')
 
     @tags(type='negative', net='no')
     def test_reboot_deleted_server_fails(self):
-        """A reboot request for a deleted server should fail."""
+        """
+        A hard reboot request for a deleted server should fail.
+
+        Attempt to hard reboot the server deleted during test set up. The request
+        should raise an 'ItemNotFound error.'
+
+        The following assertions will occur:
+            - A request to hard reboot the server deleted during test set up
+              will result in an 'ItemNotFound' error
+        """
         with self.assertRaises(ItemNotFound):
             self.servers_client.reboot(self.server.id, 'HARD')
 
     @tags(type='negative', net='no')
     def test_rebuild_deleted_server_fails(self):
-        """A rebuild request for a deleted server should fail."""
+        """
+        A rebuild request for a deleted server should fail.
+
+        Attempt to rebuild the server deleted during test set up. The request
+        should raise an 'ItemNotFound error.'
+
+        The following assertions will occur:
+            - A request to rebuild the server deleted during test set up will
+              result in an 'ItemNotFound' error
+        """
         with self.assertRaises(ItemNotFound):
             self.servers_client.rebuild(self.server.id, self.image_ref_alt)
 
     @tags(type='negative', net='no')
     def test_resize_deleted_server_fails(self):
-        """A resize request for a deleted server should fail."""
+        """
+        A resize request for a deleted server should fail.
+
+        Attempt to resize the server deleted during test set up. The request
+        should raise an 'ItemNotFound error.'
+
+        The following assertions will occur:
+            - A request to resize the server deleted during test set up will
+              result in an 'ItemNotFound' error
+        """
         with self.assertRaises(ItemNotFound):
             self.servers_client.resize(self.server.id, self.flavor_ref_alt)
 
     @tags(type='negative', net='no')
     def test_create_image_for_deleted_server_fails(self):
-        """A create image request for a deleted server should fail."""
+        """
+        A create image request for a deleted server should fail.
+
+        Attempt to create a image snapshot using the id of the server deleted
+        during test set up. The request should raise an 'ItemNotFound error.'
+
+        The following assertions will occur:
+            - A request to create an image from a deleted server will result
+              in an 'ItemNotFound' error
+        """
         with self.assertRaises(ItemNotFound):
             self.servers_client.create_image(self.server.id, 'backup')
 
@@ -107,6 +214,15 @@ class ServerFromImageDeleteServerTests(ServerFromImageFixture,
 
     @classmethod
     def setUpClass(cls):
+        """
+        Perform actions that setup the neccesary resources for testing
+
+        The following resources are created during this setup:
+            - A server with values from the test configuration
+
+        The following actions are performed during this setup:
+            - The server created during setup is deleted
+        """
         super(ServerFromImageDeleteServerTests, cls).setUpClass()
         cls.create_server()
         cls.resp = cls.servers_client.delete_server(cls.server.id)
