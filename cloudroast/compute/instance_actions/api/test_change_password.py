@@ -34,11 +34,30 @@ class ChangeServerPasswordTests(object):
 
     @tags(type='smoke', net='no')
     def test_change_password_response(self):
+        """
+        The response to a change password request should be 202
+
+        Validate that the response to the change password request in the setup
+        has a status code of 202.
+
+        The following assertions occur:
+            - The response code is equal to 202
+        """
         self.assertEqual(202, self.resp.status_code)
 
     @tags(type='smoke', net='yes')
     def test_can_log_in_with_new_password(self):
-        """Verify the admin user can log in with the new password"""
+        """
+        The admin user should be able to log in with the new password
+
+        As the test user get the details of the server created during test set
+        up. Using the new_password value set during setup and the public IP
+        address of the server get a remote instance client for the server.
+        Validate that the remote client can authenticate to the server.
+
+        The following assertions occur:
+            - The attempt to authenticate to the server is successful
+        """
 
         # Get server details
         server = self.servers_client.get_server(self.server.id).entity
@@ -61,6 +80,18 @@ class ChangeServerPasswordTests(object):
     def test_password_changed_server_instance_actions(self):
         """
         Verify the correct actions are logged during a password change.
+
+        Get the list of all actions that the server has taken from the Nova API.
+        Filter the list so that only the actions 'changePassword' remain.
+        Validate that the list of filtered actions has a length of 1 (that only
+        1 changePassword action has been performed.) Validate that the values of
+        the identified changePassword action match the values returned in the
+        change password response received during test setup.
+
+        The following assertions occur:
+            - The list of actions that match 'changePassword' has only one item
+            - The values for the changePassword action match the values received
+              in response to the change password request
         """
 
         actions = self.servers_client.get_instance_actions(
@@ -83,8 +114,14 @@ class ChangePasswordBaseFixture(object):
 
     @classmethod
     def change_password(self):
+        """
+        Change password and wait for server to return to active state
+
+        Change the password to a server to 'newslice129690TuG72Bgj2' and then
+        wait for the server to return to state 'ACTIVE'.
+        """
+
         self.new_password = "newslice129690TuG72Bgj2"
-        # Change password and wait for server to return to active state
         self.resp = self.servers_client.change_password(
             self.server.id,
             self.new_password)
@@ -99,6 +136,17 @@ class ServerFromImageChangePasswordTests(ServerFromImageFixture,
 
     @classmethod
     def setUpClass(cls):
+        """
+        Perform actions that setup the necessary resources for testing
+
+        The following resources are created during this setup:
+            - A server with values from the test configuration
+
+        The following actions are performed during this setup:
+            - The password to the server is changed to "newslice129690TuG72Bgj2"
+              using the 'change_password' method in the
+              ChangePasswordBaseFixture class
+        """
         super(ServerFromImageChangePasswordTests, cls).setUpClass()
         cls.create_server()
         cls.change_password()
