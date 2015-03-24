@@ -1,5 +1,5 @@
 """
-Copyright 2013 Rackspace
+Copyright 2015 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -26,7 +26,22 @@ class RebootServerSoftTests(object):
 
     @tags(type='smoke', net='yes')
     def test_reboot_server_soft(self):
-        """ The server should be signaled to reboot gracefully """
+        """
+        A server should be able to successfully be soft rebooted
+
+        Get a remote instance client for the server identified during test set
+        up. Get the uptime value for the OS on the server. Request a soft
+        reboot of the server. Time the reboot. Once the reboot completes get a
+        new remote instance client for the server and use it to get the uptime
+        of the server after the soft reboot. Validate that the uptime of the
+        server post soft reboot is less than the uptime prior to the reboot
+        plus the time it took for the reboot to complete.
+
+        The following assertions will occur:
+            - The value of uptime after the soft reboot will be less that the
+              uptime of the uptime from before the reboot plus the amount of
+              time it takes for the reboot to occur.
+        """
         remote_instance = self.server_behaviors.get_remote_instance_client(
             self.server, config=self.servers_config, key=self.key.private_key)
         uptime_start = remote_instance.get_uptime()
@@ -46,6 +61,14 @@ class ServerFromImageRebootServerSoftTests(ServerFromImageFixture,
 
     @classmethod
     def setUpClass(cls):
+        """
+        Perform actions that setup the neccesary resources for testing
+
+        The following resources are created during this setup:
+            - A keypair with a random name starting with 'key'
+            - A server using the created keypair and values from the test
+              configuration
+        """
         super(ServerFromImageRebootServerSoftTests, cls).setUpClass()
         cls.key = cls.keypairs_client.create_keypair(rand_name("key")).entity
         cls.resources.add(cls.key.name,
