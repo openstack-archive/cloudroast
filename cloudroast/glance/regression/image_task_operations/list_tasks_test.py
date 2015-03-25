@@ -48,8 +48,9 @@ class ListTasks(ImagesFixture):
         errors = []
 
         resp = self.images.client.list_tasks()
-        self.assertEqual(resp.status_code, 200,
-                         self.status_code_msg.format(200, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 200,
+            Messages.STATUS_CODE_MSG.format(200, resp.status_code))
         listed_tasks = resp.entity
 
         self.assertNotEqual(
@@ -96,8 +97,9 @@ class ListTasks(ImagesFixture):
         errors = []
 
         resp = self.images.client.list_tasks(params={'type': TaskTypes.IMPORT})
-        self.assertEqual(resp.status_code, 200,
-                         self.status_code_msg.format(200, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 200,
+            Messages.STATUS_CODE_MSG.format(200, resp.status_code))
         listed_tasks = resp.entity
 
         self.assertNotEqual(

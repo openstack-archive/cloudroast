@@ -14,6 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+from cloudcafe.glance.common.constants import Messages
+
 from cloudroast.glance.fixtures import ImagesFixture
 
 
@@ -43,11 +45,12 @@ class DeleteTask(ImagesFixture):
         """
 
         resp = self.images.client.delete_task(self.created_task.id_)
-        self.assertEqual(resp.status_code, 405,
-                         self.status_code_msg.format(405, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 405,
+            Messages.STATUS_CODE_MSG.format(405, resp.status_code))
 
         resp = self.images.client.get_task_details(self.created_task.id_)
-        self.assertTrue(resp.ok, self.ok_resp_msg.format(resp.status_code))
+        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
         get_task_details = resp.entity
 
         errors = self.images.behaviors.validate_task(get_task_details)
