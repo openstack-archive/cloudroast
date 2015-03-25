@@ -1,5 +1,5 @@
 """
-Copyright 2013 Rackspace
+Copyright 2015 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -25,6 +25,35 @@ class ImageListTest(ComputeFixture):
 
     @classmethod
     def setUpClass(cls):
+        """
+        Perform actions that setup the necessary resources for testing
+
+        The following data is generated during this setup:
+            - A name value that is a random name starting with the word 'server'
+            - A image1_name value that is a random name starting with the word
+              'testimage'
+            - A image1_name value that is a random name starting with the word
+              'testimage'
+
+
+        The following resources are created during this setup:
+            - A server using the name value, and remaining required values for
+              a server create request from test configuration. This server is
+              referred to as server1.
+            - A server using the name value, and remaining required values for
+              a server create request from test configuration. This server is
+              referred to as sever2.
+            - An image created using the image_1 name value and the server id
+              of server1
+            - An image created using the image_2 name value and the server id
+              of server2
+
+        The following assertions occur:
+            - The status code of the create image response for image_1 is equal
+              to 202
+            - The status code of the create image response for image_2 is equal
+              to 202
+        """
         super(ImageListTest, cls).setUpClass()
 
         networks = None
@@ -224,6 +253,19 @@ class ImageListTest(ComputeFixture):
         """
         The list of images should contain images with the specified status
         """
+        """
+        A filtered list of list of images should respect image status value
+
+        Request a list of images using the 'ACTIVE' status value as the image
+        status value. Validate that the image ids of image1 and image2, images
+        created during test set up, are in the list of images.
+
+        The following assertions occur:
+            - The image id for image1 is found in the list of images filtered
+              by image status value of 'ACTIVE'
+            - The image id for image2 is found in the list of images filtered
+              by image status value of 'ACTIVE'
+        """
         imageStatus = NovaImageStatusTypes.ACTIVE
         images = self.images_client.list_images(status=imageStatus)
         filtered_images = [image.id for image in images.entity]
@@ -232,7 +274,21 @@ class ImageListTest(ComputeFixture):
 
     @tags(type='positive', net='no')
     def test_list_images_filter_by_name(self):
-        """The list of images should contain images filtered by name"""
+        """
+        A filtered list of list of images should respect image name value
+
+        Request a list of images using the name of image1 created during test
+        set up as the image name value. Validate that the image id of image1
+        created during test set up is in the list of images. Validate that the
+        image id of image2 created during test set up is not in the list of
+        images.
+
+        The following assertions occur:
+            - The image id for image1 is found in the list of images filtered
+              by image name value of the name of image1
+            - The image if for image2 is not found in the list of images
+              filtered by image name value of the name of image1
+        """
         imageName = self.image_1.name
         images = self.images_client.list_images(image_name=imageName)
         filtered_images = [image.id for image in images.entity]
@@ -241,8 +297,22 @@ class ImageListTest(ComputeFixture):
 
     @tags(type='positive', net='no')
     def test_list_images_filter_by_server_ref(self):
-        """List of all images should contain the expected images
-        filtered by server_id of the image"""
+        """
+        A filtered list of list of images should respect server ref value
+
+        Request a list of images using the server id of the server id of image1
+        created during test set up as the server ref filter value. Validate
+        that the image id of image1 created during test set up is in the list of
+        images. Validate that the image if of image2 created during set up is
+        not in the list of images.
+
+        The following assertions occur:
+            - The image id for image1 is found in the list of images filtered
+              by server ref value of the server value of image1
+            - The image if for image2 is not found in the list of images
+              filtered by server ref value of the server value of image1
+        """
+
         server_ref = self.image_1.server.links.self
         images = self.images_client.list_images(server_ref=server_ref)
         filtered_images = [image.id for image in images.entity]
@@ -251,8 +321,21 @@ class ImageListTest(ComputeFixture):
 
     @tags(type='positive', net='no')
     def test_list_images_filter_by_server_id(self):
-        """List of all images should contain the expected images filtered
-        by server id from which the image was created"""
+        """
+        A filtered list of list of images should respect server ref value
+
+        Request a list of images using the server id of server1 created during
+        test set up as the server ref filter value. Validate that the image
+        id of image1 created during test set up is in the list of images.
+        Validate that the image if of image2 created during set up is not in
+        the list of images.
+
+        The following assertions occur:
+            - The image id for image1 is found in the list of images filtered
+              by server ref value of server1
+            - The image if for image2 is not found in the list of images
+              filtered by server ref value of server1
+        """
         server_id = self.server1_id
         images = self.images_client.list_images(server_ref=server_id)
         filtered_images = [image.id for image in images.entity]
@@ -261,7 +344,22 @@ class ImageListTest(ComputeFixture):
 
     @tags(type='positive', net='no')
     def test_list_images_filter_by_type(self):
-        """The list of images should be filtered by image type"""
+        """
+        A filtered list of list of images should respect iamge type value
+
+        Request  a list of images using the image type value of
+        'snapshot'. Validate that the images id of image1 and image2 created
+        during test set up are in the list of images. Validate that the image
+        ref from test configuration is not in the list of images.
+
+        The following validations occur:
+            - The image1 id of the image created during test set up is in the
+              list of images filtered by image type 'snapshot'
+            - The image1 id of the image created during test set up is in the
+              list of images filtered by image type 'snapshot'
+            - The image id of the image ref from test configuration is not in
+              the list of images filtered by image type 'snapshot'
+        """
         type = 'snapshot'
         images = self.images_client.list_images(image_type=type)
         image3_id = self.image_ref
