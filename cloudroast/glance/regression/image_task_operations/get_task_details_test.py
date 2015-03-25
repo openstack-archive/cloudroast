@@ -50,8 +50,9 @@ class GetTaskDetails(ImagesFixture):
         """
 
         resp = self.images.client.get_task_details(self.created_task.id_)
-        self.assertEqual(resp.status_code, 200,
-                         self.status_code_msg.format(200, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 200,
+            Messages.STATUS_CODE_MSG.format(200, resp.status_code))
         get_task_details = resp.entity
 
         errors = self.images.behaviors.validate_task(get_task_details)
@@ -99,12 +100,13 @@ class GetTaskDetails(ImagesFixture):
 
         resp = self.images_alt_one.client.get_task_details(
             self.created_task.id_)
-        self.assertEqual(resp.status_code, 404,
-                         self.status_code_msg.format(404, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 404,
+            Messages.STATUS_CODE_MSG.format(404, resp.status_code))
 
-        self.assertIsNone(resp.entity, msg='Unexpected task returned. '
-                                           'Expected: None '
-                                           'Received: {0}'.format(resp.entity))
+        self.assertIsNone(
+            resp.entity, msg=('Unexpected task returned. Expected: None '
+                              'Received: {0}').format(resp.entity))
 
     def test_get_task_details_using_blank_task_id(self):
         """
@@ -115,8 +117,9 @@ class GetTaskDetails(ImagesFixture):
         """
 
         resp = self.images.client.get_task_details(task_id='')
-        self.assertEqual(resp.status_code, 404,
-                         self.status_code_msg.format(404, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 404,
+            Messages.STATUS_CODE_MSG.format(404, resp.status_code))
 
     def test_get_task_details_using_invalid_task_id(self):
         """
@@ -127,5 +130,6 @@ class GetTaskDetails(ImagesFixture):
         """
 
         resp = self.images.client.get_task_details(task_id='invalid')
-        self.assertEqual(resp.status_code, 404,
-                         self.status_code_msg.format(404, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 404,
+            Messages.STATUS_CODE_MSG.format(404, resp.status_code))

@@ -64,8 +64,9 @@ class TaskToImportImage(ImagesIntegrationFixture):
 
         resp = self.images.client.task_to_import_image(
             input_, TaskTypes.IMPORT)
-        self.assertEqual(resp.status_code, 201,
-                         self.status_code_msg.format(201, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 201,
+            Messages.STATUS_CODE_MSG.format(201, resp.status_code))
         task_id = resp.entity.id_
 
         task_creation_time_in_sec = calendar.timegm(time.gmtime())
@@ -170,7 +171,7 @@ class TaskToImportImage(ImagesIntegrationFixture):
 
         resp = self.object_storage_client.delete_object(
             self.container_name, self.object_name)
-        self.assertTrue(resp.ok, self.ok_resp_msg.format(resp.status_code))
+        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
 
         task_creation_time_in_sec = calendar.timegm(time.gmtime())
         task = self.images.behaviors.create_task_with_transitions(
@@ -216,9 +217,9 @@ class TaskToImportImage(ImagesIntegrationFixture):
         for i in range(2):
             resp = self.images.client.task_to_import_image(
                 input_, TaskTypes.IMPORT)
-            self.assertEqual(resp.status_code, 201,
-                             self.status_code_msg.format(201,
-                                                         resp.status_code))
+            self.assertEqual(
+                resp.status_code, 201,
+                Messages.STATUS_CODE_MSG.format(201, resp.status_code))
             task_id = resp.entity.id_
 
             task = self.images.behaviors.wait_for_task_status(
@@ -251,9 +252,9 @@ class TaskToImportImage(ImagesIntegrationFixture):
         for i in range(5):
             resp = self.images.client.task_to_import_image(
                 input_, TaskTypes.IMPORT)
-            self.assertEqual(resp.status_code, 201,
-                             self.status_code_msg.format(201,
-                                                         resp.status_code))
+            self.assertEqual(
+                resp.status_code, 201,
+                Messages.STATUS_CODE_MSG.format(201, resp.status_code))
             tasks.append(resp.entity)
 
         for task in tasks:
@@ -292,8 +293,9 @@ class TaskToImportImage(ImagesIntegrationFixture):
 
         resp = self.images.client.task_to_import_image(
             input_, TaskTypes.IMPORT)
-        self.assertEqual(resp.status_code, 201,
-                         self.status_code_msg.format(201, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 201,
+            Messages.STATUS_CODE_MSG.format(201, resp.status_code))
         task_id = resp.entity.id_
 
         task = self.images.behaviors.wait_for_task_status(
@@ -302,7 +304,7 @@ class TaskToImportImage(ImagesIntegrationFixture):
         errors = self.images.behaviors.validate_task(task)
 
         resp = self.images.client.get_image_details(task.result.image_id)
-        self.assertTrue(resp.ok, self.ok_resp_msg.format(resp.status_code))
+        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
         get_image = resp.entity
 
         if get_image.name != name:
@@ -330,8 +332,9 @@ class TaskToImportImage(ImagesIntegrationFixture):
 
         resp = self.images.client.task_to_import_image(
             input_, TaskTypes.IMPORT)
-        self.assertEqual(resp.status_code, 201,
-                         self.status_code_msg.format(201, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 201,
+            Messages.STATUS_CODE_MSG.format(201, resp.status_code))
         task_id = resp.entity.id_
 
         task = self.images.behaviors.wait_for_task_status(

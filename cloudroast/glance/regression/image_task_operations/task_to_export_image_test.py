@@ -30,6 +30,7 @@ class TaskToExportImage(ImagesIntegrationFixture):
     def setUpClass(cls):
         super(TaskToExportImage, cls).setUpClass()
 
+        # Count set to number of images required for this module
         created_images = cls.images.behaviors.create_images_via_task(count=6)
 
         cls.export_image = created_images.pop()
@@ -82,8 +83,9 @@ class TaskToExportImage(ImagesIntegrationFixture):
 
         resp = self.images.client.task_to_export_image(
             input_, TaskTypes.EXPORT)
-        self.assertEqual(resp.status_code, 201,
-                         self.status_code_msg.format(201, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 201,
+            Messages.STATUS_CODE_MSG.format(201, resp.status_code))
         task_id = resp.entity.id_
 
         task_creation_time_in_sec = calendar.timegm(time.gmtime())
@@ -240,9 +242,9 @@ class TaskToExportImage(ImagesIntegrationFixture):
 
             resp = self.images.client.task_to_export_image(
                 input_, TaskTypes.EXPORT)
-            self.assertEqual(resp.status_code, 201,
-                             self.status_code_msg.format(201,
-                                                         resp.status_code))
+            self.assertEqual(
+                resp.status_code, 201,
+                Messages.STATUS_CODE_MSG.format(201, resp.status_code))
             task_id = resp.entity.id_
 
             self.images.behaviors.wait_for_task_status(
@@ -250,7 +252,8 @@ class TaskToExportImage(ImagesIntegrationFixture):
 
             resp = self.object_storage_client.list_objects(
                 self.images.config.export_to)
-            self.assertTrue(resp.ok, self.ok_resp_msg.format(resp.status_code))
+            self.assertTrue(resp.ok,
+                            Messages.OK_RESP_MSG.format(resp.status_code))
             files = resp.entity
 
             errors, file_names = self.images.behaviors.validate_exported_files(
@@ -293,16 +296,18 @@ class TaskToExportImage(ImagesIntegrationFixture):
 
         resp = self.images.client.task_to_export_image(
             input_, TaskTypes.EXPORT)
-        self.assertEqual(resp.status_code, 201,
-                         self.status_code_msg.format(201, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 201,
+            Messages.STATUS_CODE_MSG.format(201, resp.status_code))
         task_id = resp.entity.id_
 
         self.images.behaviors.wait_for_task_status(task_id, TaskStatus.SUCCESS)
 
         resp = self.images.client.task_to_export_image(
             input_, TaskTypes.EXPORT)
-        self.assertEqual(resp.status_code, 201,
-                         self.status_code_msg.format(201, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 201,
+            Messages.STATUS_CODE_MSG.format(201, resp.status_code))
         task_id = resp.entity.id_
 
         task = self.images.behaviors.wait_for_task_status(
@@ -315,7 +320,7 @@ class TaskToExportImage(ImagesIntegrationFixture):
 
         resp = self.object_storage_client.list_objects(
             self.images.config.export_to)
-        self.assertTrue(resp.ok, self.ok_resp_msg.format(resp.status_code))
+        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
         files = resp.entity
 
         errors, file_names = self.images.behaviors.validate_exported_files(
@@ -350,8 +355,9 @@ class TaskToExportImage(ImagesIntegrationFixture):
 
         resp = self.images.client.task_to_export_image(
             input_, TaskTypes.EXPORT)
-        self.assertEqual(resp.status_code, 201,
-                         self.status_code_msg.format(201, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 201,
+            Messages.STATUS_CODE_MSG.format(201, resp.status_code))
         task_id = resp.entity.id_
 
         task = self.images.behaviors.wait_for_task_status(
@@ -384,8 +390,9 @@ class TaskToExportImage(ImagesIntegrationFixture):
 
         resp = self.images.client.task_to_export_image(
             input_, TaskTypes.EXPORT)
-        self.assertEqual(resp.status_code, 201,
-                         self.status_code_msg.format(201, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 201,
+            Messages.STATUS_CODE_MSG.format(201, resp.status_code))
         task_id = resp.entity.id_
 
         self.images.behaviors.wait_for_task_status(
@@ -393,7 +400,7 @@ class TaskToExportImage(ImagesIntegrationFixture):
 
         resp = self.object_storage_client.list_objects(
             self.images.config.export_to)
-        self.assertTrue(resp.ok, self.ok_resp_msg.format(resp.status_code))
+        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
         files = resp.entity
 
         errors, file_names = self.images.behaviors.validate_exported_files(
