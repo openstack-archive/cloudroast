@@ -24,6 +24,16 @@ class DeleteImageTest(ComputeFixture):
 
     @classmethod
     def setUpClass(cls):
+        """
+        Perform actions that setup the neccesary resources for testing
+
+        The following resources are created during this setup:
+            - A server with values pulled from the test configuration
+            - An image created from the server
+
+        The following resources are deleted during this setup:
+            - The image created previously in the setup
+        """
         super(DeleteImageTest, cls).setUpClass()
         cls.server = cls.server_behaviors.create_active_server().entity
         cls.image = cls.image_behaviors.create_active_image(
@@ -33,12 +43,31 @@ class DeleteImageTest(ComputeFixture):
 
     @tags(type='smoke', net='no')
     def test_delete_image_response_code(self):
-        """The response code for a delete image request should be 204."""
+        """
+        The response code for a delete image request should be 204.
+
+        The following assertions occur:
+            - The response code to the image deleted during setup is equal to
+              204
+        """
         self.assertEqual(self.resp.status_code, 204)
 
     @tags(type='smoke', net='no')
     def test_deleted_image_not_listed(self):
-        """A deleted image should not be included in the list of images."""
+        """
+        A deleted image should not be included in the list of images.
+
+        Request a detailed list of images. Ensure that the image id of the image
+        created and deleted during setup is not found in the detailed list.
+        Request a list of images. Ensure that the  image id of the image created
+        and deleted during setup is not found in the list.
+
+        The following assertions occur:
+            - The image id of the image created and deleted during setup is not
+              in a detailed list of images
+            - The image id of the image created and deleted during setup is not
+              in a list of images
+        """
         images = self.images_client.list_images_with_detail()
         image_ids = [image.id for image in images.entity]
         self.assertNotIn(self.image.id, image_ids)
@@ -50,6 +79,7 @@ class DeleteImageTest(ComputeFixture):
     @tags(type='positive', net='no')
     def test_deleted_image_listed_with_changes_since(self):
         """
+        A deleted image should be in the list of images if the
         A deleted image should be included in the list of images if
         the changes-since parameter is a time before the image was deleted
         """
