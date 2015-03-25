@@ -41,6 +41,7 @@ class GetImageDetails(ImagesFixture):
         cls.images.client.create_image_member(
             cls.created_image.id_, member_id)
 
+        # Count set to number of images required for this module
         created_images = cls.images.behaviors.create_images_via_task(count=2)
 
         cls.rejected_image = created_images.pop()
@@ -70,8 +71,9 @@ class GetImageDetails(ImagesFixture):
         """
 
         resp = self.images.client.get_image_details(self.created_image.id_)
-        self.assertEqual(resp.status_code, 200,
-                         self.status_code_msg.format(200, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 200,
+            Messages.STATUS_CODE_MSG.format(200, resp.status_code))
 
         get_image = resp.entity
 
@@ -98,8 +100,9 @@ class GetImageDetails(ImagesFixture):
 
         resp = self.images_alt_one.client.get_image_details(
             self.created_image.id_)
-        self.assertEqual(resp.status_code, 200,
-                         self.status_code_msg.format(200, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 200,
+            Messages.STATUS_CODE_MSG.format(200, resp.status_code))
 
         get_image = resp.entity
 
@@ -124,8 +127,9 @@ class GetImageDetails(ImagesFixture):
 
         resp = self.images_alt_two.client.get_image_details(
             self.created_image.id_)
-        self.assertEqual(resp.status_code, 404,
-                         self.status_code_msg.format(404, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 404,
+            Messages.STATUS_CODE_MSG.format(404, resp.status_code))
 
         self.assertIsNone(
             resp.entity,
@@ -144,8 +148,9 @@ class GetImageDetails(ImagesFixture):
 
         resp = self.images.client.get_image_details(
             self.rejected_image.id_)
-        self.assertEqual(resp.status_code, 200,
-                         self.status_code_msg.format(200, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 200,
+            Messages.STATUS_CODE_MSG.format(200, resp.status_code))
         get_image = resp.entity
 
         errors = self.images.behaviors.validate_image(get_image)
@@ -165,8 +170,9 @@ class GetImageDetails(ImagesFixture):
 
         resp = self.images.client.get_image_details(
             self.deleted_image.id_)
-        self.assertEqual(resp.status_code, 404,
-                         self.status_code_msg.format(404, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 404,
+            Messages.STATUS_CODE_MSG.format(404, resp.status_code))
 
     def test_get_image_details_using_blank_image_id(self):
         """
@@ -178,8 +184,9 @@ class GetImageDetails(ImagesFixture):
 
         resp = self.images.client.get_image_details(
             image_id='')
-        self.assertEqual(resp.status_code, 404,
-                         self.status_code_msg.format(404, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 404,
+            Messages.STATUS_CODE_MSG.format(404, resp.status_code))
 
     def test_get_image_details_using_invalid_image_id(self):
         """
@@ -191,8 +198,9 @@ class GetImageDetails(ImagesFixture):
 
         resp = self.images.client.get_image_details(
             image_id='invalid')
-        self.assertEqual(resp.status_code, 404,
-                         self.status_code_msg.format(404, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 404,
+            Messages.STATUS_CODE_MSG.format(404, resp.status_code))
 
     def _validate_image(self, get_image):
         """

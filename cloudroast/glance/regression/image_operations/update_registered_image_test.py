@@ -18,6 +18,7 @@ import unittest
 
 from cafe.drivers.unittest.decorators import (
     data_driven_test, DataDrivenFixture)
+from cloudcafe.glance.common.constants import Messages
 from cloudcafe.glance.common.types import ImageStatus
 from cloudcafe.glance.composite import ImagesComposite, ImagesAuthComposite
 
@@ -36,6 +37,7 @@ class UpdateRegisteredImage(ImagesFixture):
     @classmethod
     def setUpClass(cls):
         super(UpdateRegisteredImage, cls).setUpClass()
+
         cls.reg_image = cls.images.behaviors.register_new_image()
 
     @classmethod
@@ -68,8 +70,9 @@ class UpdateRegisteredImage(ImagesFixture):
 
         resp = self.images.client.update_image(
             self.reg_image.id_, replace={prop_key: prop_val})
-        self.assertEqual(resp.status_code, 200,
-                         self.status_code_msg.format(200, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 200,
+            Messages.STATUS_CODE_MSG.format(200, resp.status_code))
         updated_image = resp.entity
 
         self.assertEqual(
@@ -79,7 +82,7 @@ class UpdateRegisteredImage(ImagesFixture):
                                          getattr(updated_image, prop_key)))
 
         resp = self.images.client.get_image_details(self.reg_image.id_)
-        self.assertTrue(resp.ok, self.ok_resp_msg.format(resp.status_code))
+        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
         get_image = resp.entity
 
         self.assertEqual(

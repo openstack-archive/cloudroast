@@ -1,4 +1,3 @@
-
 """
 Copyright 2015 Rackspace
 
@@ -17,6 +16,7 @@ limitations under the License.
 
 import unittest
 
+from cloudcafe.glance.common.constants import Messages
 from cloudcafe.glance.common.types import ImageStatus, ImageVisibility
 from cloudcafe.glance.composite import ImagesComposite, ImagesAuthComposite
 
@@ -66,7 +66,7 @@ class DeleteRegisteredImage(ImagesFixture):
         test_file = self.images.config.test_file
 
         resp = self.images.client.get_image_details(self.reg_image.id_)
-        self.assertTrue(resp.ok, self.ok_resp_msg.format(resp.status_code))
+        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
         get_image = resp.entity
 
         self.assertIsNotNone(get_image.checksum,
@@ -79,12 +79,14 @@ class DeleteRegisteredImage(ImagesFixture):
                                                      get_image.size)))
 
         resp = self.images.client.delete_image(get_image.id_)
-        self.assertEqual(resp.status_code, 204,
-                         self.status_code_msg.format(204, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 204,
+            Messages.STATUS_CODE_MSG.format(204, resp.status_code))
 
         resp = self.images.client.get_image_details(get_image.id_)
-        self.assertEqual(resp.status_code, 404,
-                         self.status_code_msg.format(404, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 404,
+            Messages.STATUS_CODE_MSG.format(404, resp.status_code))
 
     @unittest.skipUnless(images.config.allow_public_images_crud,
                          'Endpoint has incorrect access')
@@ -100,11 +102,12 @@ class DeleteRegisteredImage(ImagesFixture):
         """
 
         resp = self.images_alt_one.client.delete_image(self.alt_reg_image.id_)
-        self.assertEqual(resp.status_code, 403,
-                         self.status_code_msg.format(403, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 403,
+            Messages.STATUS_CODE_MSG.format(403, resp.status_code))
 
         resp = self.images.client.get_image_details(self.alt_reg_image.id_)
-        self.assertTrue(resp.ok, self.ok_resp_msg.format(resp.status_code))
+        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
         get_image = resp.entity
 
         self.assertEqual(get_image.status, ImageStatus.ACTIVE,

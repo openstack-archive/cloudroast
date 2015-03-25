@@ -19,6 +19,7 @@ import sys
 from cafe.drivers.unittest.decorators import (
     data_driven_test, DataDrivenFixture)
 from cloudcafe.common.tools.datagen import rand_name
+from cloudcafe.glance.common.constants import Messages
 
 from cloudroast.glance.fixtures import ImagesFixture
 from cloudroast.glance.generators import ImagesDatasetListGenerator
@@ -30,6 +31,8 @@ class UpdateImage(ImagesFixture):
     @classmethod
     def setUpClass(cls):
         super(UpdateImage, cls).setUpClass()
+
+        # Count set to number of images required for this module
         created_images = cls.images.behaviors.create_images_via_task(count=3)
 
         cls.created_image = created_images.pop()
@@ -68,8 +71,9 @@ class UpdateImage(ImagesFixture):
 
         resp = self.images.client.update_image(
             self.created_image.id_, replace={prop_key: prop_val})
-        self.assertEqual(resp.status_code, 200,
-                         self.status_code_msg.format(200, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 200,
+            Messages.STATUS_CODE_MSG.format(200, resp.status_code))
         updated_image = resp.entity
 
         self.assertEqual(
@@ -79,7 +83,7 @@ class UpdateImage(ImagesFixture):
                                          getattr(updated_image, prop_key)))
 
         resp = self.images.client.get_image_details(self.created_image.id_)
-        self.assertTrue(resp.ok, self.ok_resp_msg.format(resp.status_code))
+        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
         get_image = resp.entity
 
         self.assertEqual(
@@ -113,8 +117,9 @@ class UpdateImage(ImagesFixture):
 
         resp = self.images.client.update_image(
             self.alt_created_image.id_, replace={prop_key: prop_val})
-        self.assertEqual(resp.status_code, 403,
-                         self.status_code_msg.format(403, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 403,
+            Messages.STATUS_CODE_MSG.format(403, resp.status_code))
 
     @data_driven_test(
         ImagesDatasetListGenerator.UpdateRegisterImageRestricted())
@@ -143,11 +148,12 @@ class UpdateImage(ImagesFixture):
 
         resp = self.images.client.update_image(
             self.alt_created_image.id_, replace={prop_key: prop_val})
-        self.assertEqual(resp.status_code, 403,
-                         self.status_code_msg.format(403, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 403,
+            Messages.STATUS_CODE_MSG.format(403, resp.status_code))
 
         resp = self.images.client.get_image_details(self.alt_created_image.id_)
-        self.assertTrue(resp.ok, self.ok_resp_msg.format(resp.status_code))
+        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
         get_image = resp.entity
 
         prop_key = self._check_prop_key(prop_key)
@@ -187,11 +193,12 @@ class UpdateImage(ImagesFixture):
 
         resp = self.images.client.update_image(
             self.alt_created_image.id_, add={prop_key: prop_val})
-        self.assertEqual(resp.status_code, 403,
-                         self.status_code_msg.format(403, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 403,
+            Messages.STATUS_CODE_MSG.format(403, resp.status_code))
 
         resp = self.images.client.get_image_details(self.alt_created_image.id_)
-        self.assertTrue(resp.ok, self.ok_resp_msg.format(resp.status_code))
+        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
         get_image = resp.entity
 
         prop_key = self._check_prop_key(prop_key)
@@ -237,11 +244,12 @@ class UpdateImage(ImagesFixture):
 
         resp = self.images.client.update_image(
             self.alt_created_image.id_, remove={prop_key: prop_val})
-        self.assertEqual(resp.status_code, 403,
-                         self.status_code_msg.format(403, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 403,
+            Messages.STATUS_CODE_MSG.format(403, resp.status_code))
 
         resp = self.images.client.get_image_details(self.alt_created_image.id_)
-        self.assertTrue(resp.ok, self.ok_resp_msg.format(resp.status_code))
+        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
         get_image = resp.entity
 
         prop_key = self._check_prop_key(prop_key)
@@ -273,8 +281,9 @@ class UpdateImage(ImagesFixture):
 
         resp = self.images.client.update_image(
             self.created_image.id_, add={new_prop: new_prop_value})
-        self.assertEqual(resp.status_code, 200,
-                         self.status_code_msg.format(200, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 200,
+            Messages.STATUS_CODE_MSG.format(200, resp.status_code))
         updated_image = resp.entity
 
         added_prop_value = (
@@ -286,7 +295,7 @@ class UpdateImage(ImagesFixture):
                  'Received: {1}').format(new_prop_value, added_prop_value))
 
         resp = self.images.client.get_image_details(self.created_image.id_)
-        self.assertTrue(resp.ok, self.ok_resp_msg.format(resp.status_code))
+        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
         get_image = resp.entity
 
         get_added_prop_value = (
@@ -318,13 +327,15 @@ class UpdateImage(ImagesFixture):
 
         resp = self.images.client.update_image(
             self.created_image.id_, add={new_prop: new_prop_value})
-        self.assertEqual(resp.status_code, 200,
-                         self.status_code_msg.format(200, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 200,
+            Messages.STATUS_CODE_MSG.format(200, resp.status_code))
 
         response = self.images.client.update_image(
             self.created_image.id_, remove={new_prop: new_prop_value})
-        self.assertEqual(resp.status_code, 200,
-                         self.status_code_msg.format(200, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 200,
+            Messages.STATUS_CODE_MSG.format(200, resp.status_code))
         updated_image = response.entity
 
         self.assertNotIn(
@@ -335,7 +346,7 @@ class UpdateImage(ImagesFixture):
                                          updated_image.additional_properties))
 
         resp = self.images.client.get_image_details(self.created_image.id_)
-        self.assertTrue(resp.ok, self.ok_resp_msg.format(resp.status_code))
+        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
         get_image = resp.entity
 
         self.assertNotIn(
@@ -367,14 +378,16 @@ class UpdateImage(ImagesFixture):
 
         resp = self.images.client.update_image(
             self.created_image.id_, add={new_prop: new_prop_value})
-        self.assertEqual(resp.status_code, 200,
-                         self.status_code_msg.format(200, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 200,
+            Messages.STATUS_CODE_MSG.format(200, resp.status_code))
 
         resp = self.images.client.update_image(
             self.created_image.id_,
             replace={new_prop: updated_prop_value})
-        self.assertEqual(resp.status_code, 200,
-                         self.status_code_msg.format(200, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 200,
+            Messages.STATUS_CODE_MSG.format(200, resp.status_code))
         updated_image = resp.entity
 
         replaced_prop_value = (
@@ -388,7 +401,7 @@ class UpdateImage(ImagesFixture):
                                          replaced_prop_value))
 
         resp = self.images.client.get_image_details(self.created_image.id_)
-        self.assertTrue(resp.ok, self.ok_resp_msg.format(resp.status_code))
+        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
         get_image = resp.entity
 
         get_replaced_prop_value = (
@@ -430,25 +443,32 @@ class UpdateImage(ImagesFixture):
         while number_of_image_properties != quota_limit:
             new_prop = rand_name('prop')
             new_prop_value = rand_name('prop_value')
+
             resp = self.images.client.update_image(
                 self.quota_image.id_, add={new_prop: new_prop_value})
-            self.assertEqual(resp.status_code, 200,
-                             self.status_code_msg.format(200,
-                                                         resp.status_code))
+            self.assertEqual(
+                resp.status_code, 200,
+                Messages.STATUS_CODE_MSG.format(200, resp.status_code))
+
             resp = self.images.client.get_image_details(self.quota_image.id_)
-            self.assertTrue(resp.ok, self.ok_resp_msg.format(resp.status_code))
+            self.assertTrue(resp.ok,
+                            Messages.OK_RESP_MSG.format(resp.status_code))
             get_image = resp.entity
+
             number_of_image_properties = len(getattr(get_image,
                                                      'additional_properties'))
 
         new_prop = rand_name('prop')
         new_prop_value = rand_name('prop_value')
+
         resp = self.images.client.update_image(
             self.quota_image.id_, add={new_prop: new_prop_value})
-        self.assertEqual(resp.status_code, 413,
-                         self.status_code_msg.format(413, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 413,
+            Messages.STATUS_CODE_MSG.format(413, resp.status_code))
+
         resp = self.images.client.get_image_details(self.quota_image.id_)
-        self.assertTrue(resp.ok, self.ok_resp_msg.format(resp.status_code))
+        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
         get_image = resp.entity
 
         self.assertEqual(
@@ -469,8 +489,9 @@ class UpdateImage(ImagesFixture):
 
         resp = self.images.client.update_image(
             image_id='', add={'new_prop': rand_name('new_prop_value')})
-        self.assertEqual(resp.status_code, 404,
-                         self.status_code_msg.format(404, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 404,
+            Messages.STATUS_CODE_MSG.format(404, resp.status_code))
 
     def test_update_image_using_invalid_image_id(self):
         """
@@ -482,8 +503,9 @@ class UpdateImage(ImagesFixture):
 
         resp = self.images.client.update_image(
             image_id='invalid', add={'new_prop': rand_name('new_prop_value')})
-        self.assertEqual(resp.status_code, 404,
-                         self.status_code_msg.format(404, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 404,
+            Messages.STATUS_CODE_MSG.format(404, resp.status_code))
 
     def _check_prop_key(self, prop_key):
         """

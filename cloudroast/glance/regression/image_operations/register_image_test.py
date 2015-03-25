@@ -62,8 +62,9 @@ class RegisterImage(ImagesFixture):
 
         resp = self.images.client.register_image()
         image_created_at_time_in_sec = calendar.timegm(time.gmtime())
-        self.assertEqual(resp.status_code, 201,
-                         self.status_code_msg.format(201, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 201,
+            Messages.STATUS_CODE_MSG.format(201, resp.status_code))
         reg_image = resp.entity
 
         self.resources.add(reg_image.id_, self.images.client.delete_image)
@@ -186,8 +187,9 @@ class RegisterImage(ImagesFixture):
             id_=id_, image_type=image_type, min_disk=min_disk, min_ram=min_ram,
             name=name, os_type=os_type, protected=protected, tags=tags,
             user_id=user_id, additional_properties=additional_properties)
-        self.assertEqual(resp.status_code, 201,
-                         self.status_code_msg.format(201, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 201,
+            Messages.STATUS_CODE_MSG.format(201, resp.status_code))
         reg_image = resp.entity
 
         self.resources.add(
@@ -266,8 +268,9 @@ class RegisterImage(ImagesFixture):
             prop = {'{0}_'.format(prop_key): prop_val}
 
         resp = self.images.client.register_image(**prop)
-        self.assertEqual(resp.status_code, 403,
-                         self.status_code_msg.format(403, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 403,
+            Messages.STATUS_CODE_MSG.format(403, resp.status_code))
 
     def test_register_two_images_same_name(self):
         """
@@ -285,15 +288,17 @@ class RegisterImage(ImagesFixture):
         name = rand_name('image')
 
         resp = self.images.client.register_image(name=name)
-        self.assertEqual(resp.status_code, 201,
-                         self.status_code_msg.format(201, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 201,
+            Messages.STATUS_CODE_MSG.format(201, resp.status_code))
         reg_image = resp.entity
 
         self.resources.add(reg_image.id_, self.images.client.delete_image)
 
         resp = self.images.client.register_image(name=name)
-        self.assertEqual(resp.status_code, 201,
-                         self.status_code_msg.format(201, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 201,
+            Messages.STATUS_CODE_MSG.format(201, resp.status_code))
         alt_reg_image = resp.entity
 
         self.resources.add(alt_reg_image.id_, self.images.client.delete_image)
@@ -324,8 +329,9 @@ class RegisterImage(ImagesFixture):
             return
 
         resp = self.images.client.register_image(**prop)
-        self.assertEqual(resp.status_code, 400,
-                         self.status_code_msg.format(400, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 400,
+            Messages.STATUS_CODE_MSG.format(400, resp.status_code))
 
     def test_register_public_image(self):
         """
@@ -346,9 +352,9 @@ class RegisterImage(ImagesFixture):
             name=name, visibility=ImageVisibility.PUBLIC)
 
         if self.images.config.allow_public_images_crud:
-            self.assertEqual(resp.status_code, 201,
-                             self.status_code_msg.format(201,
-                                                         resp.status_code))
+            self.assertEqual(
+                resp.status_code, 201,
+                Messages.STATUS_CODE_MSG.format(201, resp.status_code))
             reg_image = resp.entity
 
             self.resources.add(reg_image.id_, self.images.client.delete_image)
@@ -362,6 +368,6 @@ class RegisterImage(ImagesFixture):
                      'Received: Was not present').format(name, image_names))
 
         else:
-            self.assertEqual(resp.status_code, 403,
-                             self.status_code_msg.format(403,
-                                                         resp.status_code))
+            self.assertEqual(
+                resp.status_code, 403,
+                Messages.STATUS_CODE_MSG.format(403, resp.status_code))
