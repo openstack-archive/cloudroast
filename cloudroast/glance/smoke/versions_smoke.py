@@ -16,6 +16,7 @@ limitations under the License.
 
 from cafe.drivers.unittest.decorators import (
     data_driven_test, DataDrivenFixture)
+from cloudcafe.glance.common.constants import Messages
 
 from cloudroast.glance.fixtures import ImagesFixture
 from cloudroast.glance.generators import ImagesDatasetListGenerator
@@ -37,5 +38,6 @@ class VersionsSmoke(ImagesFixture):
         """
 
         resp = self.images.client.list_versions(url_addition)
-        self.assertEqual(resp.status_code, 300,
-                         self.status_code_msg.format(300, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 300,
+            Messages.STATUS_CODE_MSG.format(300, resp.status_code))

@@ -14,6 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+from cloudcafe.glance.common.constants import Messages
+
 from cloudroast.glance.fixtures import ImagesFixture
 
 
@@ -28,8 +30,9 @@ class JsonSchemaOperationsSmoke(ImagesFixture):
         """
 
         resp = self.images.client.get_images_schema()
-        self.assertEqual(resp.status_code, 200,
-                         self.status_code_msg.format(200, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 200,
+            Messages.STATUS_CODE_MSG.format(200, resp.status_code))
 
     def test_get_image_schema(self):
         """
@@ -40,8 +43,9 @@ class JsonSchemaOperationsSmoke(ImagesFixture):
         """
 
         resp = self.images.client.get_image_schema()
-        self.assertEqual(resp.status_code, 200,
-                         self.status_code_msg.format(200, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 200,
+            Messages.STATUS_CODE_MSG.format(200, resp.status_code))
 
     def test_get_image_members_schema(self):
         """
@@ -52,8 +56,9 @@ class JsonSchemaOperationsSmoke(ImagesFixture):
         """
 
         resp = self.images.client.get_image_members_schema()
-        self.assertEqual(resp.status_code, 200,
-                         self.status_code_msg.format(200, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 200,
+            Messages.STATUS_CODE_MSG.format(200, resp.status_code))
 
     def test_get_image_member_schema(self):
         """
@@ -64,8 +69,9 @@ class JsonSchemaOperationsSmoke(ImagesFixture):
         """
 
         resp = self.images.client.get_image_member_schema()
-        self.assertEqual(resp.status_code, 200,
-                         self.status_code_msg.format(200, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 200,
+            Messages.STATUS_CODE_MSG.format(200, resp.status_code))
 
     def test_get_tasks_schema(self):
         """
@@ -76,17 +82,19 @@ class JsonSchemaOperationsSmoke(ImagesFixture):
         """
 
         resp = self.images.client.get_tasks_schema()
-        self.assertEqual(resp.status_code, 200,
-                         self.status_code_msg.format(200, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 200,
+            Messages.STATUS_CODE_MSG.format(200, resp.status_code))
 
     def test_get_task_schema(self):
         """
         @summary: Get task json schema
 
-        1) Get tasks json schema
+        1) Get task json schema
         2) Verify the response status code is 200
         """
 
         resp = self.images.client.get_task_schema()
-        self.assertEqual(resp.status_code, 200,
-                         self.status_code_msg.format(200, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 200,
+            Messages.STATUS_CODE_MSG.format(200, resp.status_code))

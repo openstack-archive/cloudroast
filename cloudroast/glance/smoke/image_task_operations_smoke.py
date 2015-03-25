@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+from cloudcafe.glance.common.constants import Messages
 from cloudcafe.glance.common.types import TaskTypes
 
 from cloudroast.glance.fixtures import ImagesFixture
@@ -24,8 +25,14 @@ class ImageTaskOperationsSmoke(ImagesFixture):
     @classmethod
     def setUpClass(cls):
         super(ImageTaskOperationsSmoke, cls).setUpClass()
-        cls.created_tasks = cls.images.behaviors.create_new_tasks(count=2)
-        cls.image = cls.images.behaviors.create_image_via_task()
+
+        # Count set to number of tasks required for this module
+        created_tasks = cls.images.behaviors.create_new_tasks(count=2)
+
+        cls.created_task = created_tasks.pop()
+        cls.alt_created_task = created_tasks.pop()
+
+        cls.created_image = cls.images.behaviors.create_image_via_task()
 
     @classmethod
     def tearDownClass(cls):
@@ -41,8 +48,9 @@ class ImageTaskOperationsSmoke(ImagesFixture):
         """
 
         resp = self.images.client.list_tasks()
-        self.assertEqual(resp.status_code, 200,
-                         self.status_code_msg.format(200, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 200,
+            Messages.STATUS_CODE_MSG.format(200, resp.status_code))
 
     def test_get_task_details(self):
         """
@@ -52,11 +60,10 @@ class ImageTaskOperationsSmoke(ImagesFixture):
         2) Verify the response status code is 200
         """
 
-        task = self.created_tasks.pop()
-
-        resp = self.images.client.get_task_details(task.id_)
-        self.assertEqual(resp.status_code, 200,
-                         self.status_code_msg.format(200, resp.status_code))
+        resp = self.images.client.get_task_details(self.created_task.id_)
+        self.assertEqual(
+            resp.status_code, 200,
+            Messages.STATUS_CODE_MSG.format(200, resp.status_code))
 
     def test_task_to_import_image(self):
         """
@@ -72,8 +79,9 @@ class ImageTaskOperationsSmoke(ImagesFixture):
 
         resp = self.images.client.task_to_import_image(
             input_=input_, type_=TaskTypes.IMPORT)
-        self.assertEqual(resp.status_code, 201,
-                         self.status_code_msg.format(201, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 201,
+            Messages.STATUS_CODE_MSG.format(201, resp.status_code))
 
     def test_task_to_export_image(self):
         """
@@ -84,13 +92,14 @@ class ImageTaskOperationsSmoke(ImagesFixture):
         2) Verify the response status code is 201
         """
 
-        input_ = {'image_uuid': self.image.id_,
+        input_ = {'image_uuid': self.created_image.id_,
                   'receiving_swift_container': self.images.config.export_to}
 
         resp = self.images.client.task_to_export_image(
             input_=input_, type_=TaskTypes.EXPORT)
-        self.assertEqual(resp.status_code, 201,
-                         self.status_code_msg.format(201, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 201,
+            Messages.STATUS_CODE_MSG.format(201, resp.status_code))
 
     def test_delete_task(self):
         """
@@ -100,8 +109,7 @@ class ImageTaskOperationsSmoke(ImagesFixture):
         2) Verify the response status code is 405
         """
 
-        task = self.created_tasks.pop()
-
-        resp = self.images.client.delete_task(task.id_)
-        self.assertEqual(resp.status_code, 405,
-                         self.status_code_msg.format(405, resp.status_code))
+        resp = self.images.client.delete_task(self.alt_created_task.id_)
+        self.assertEqual(
+            resp.status_code, 405,
+            Messages.STATUS_CODE_MSG.format(405, resp.status_code))
