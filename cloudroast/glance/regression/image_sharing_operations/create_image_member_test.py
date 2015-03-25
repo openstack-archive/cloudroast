@@ -34,6 +34,7 @@ class CreateImageMember(ImagesFixture):
 
         cls.member_id = cls.images_alt_one.auth.tenant_id
 
+        # Count set to number of images required for this module
         created_images = cls.images.behaviors.create_images_via_task(count=4)
 
         cls.created_image = created_images.pop()
@@ -60,8 +61,9 @@ class CreateImageMember(ImagesFixture):
         resp = self.images.client.create_image_member(
             self.created_image.id_, self.member_id)
         image_member_created_at_time_in_sec = calendar.timegm(time.gmtime())
-        self.assertEqual(resp.status_code, 200,
-                         self.status_code_msg.format(200, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 200,
+            Messages.STATUS_CODE_MSG.format(200, resp.status_code))
         image_member = resp.entity
 
         created_at_delta = self.images.behaviors.get_time_delta(
@@ -160,8 +162,9 @@ class CreateImageMember(ImagesFixture):
 
         resp = self.images_alt_one.client.create_image_member(
             self.inaccessible_image.id_, self.member_id)
-        self.assertEqual(resp.status_code, 404,
-                         self.status_code_msg.format(404, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 404,
+            Messages.STATUS_CODE_MSG.format(404, resp.status_code))
 
         self.assertEqual(
             resp.reason, 'Not Found',
@@ -170,8 +173,9 @@ class CreateImageMember(ImagesFixture):
 
         resp = self.images.client.get_image_member(
             self.inaccessible_image.id_, self.member_id)
-        self.assertEqual(resp.status_code, 404,
-                         self.status_code_msg.format(404, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 404,
+            Messages.STATUS_CODE_MSG.format(404, resp.status_code))
 
         self.assertEqual(
             resp.reason, 'Not Found',
@@ -180,8 +184,9 @@ class CreateImageMember(ImagesFixture):
 
         resp = self.images_alt_one.client.get_image_member(
             self.inaccessible_image.id_, self.member_id)
-        self.assertEqual(resp.status_code, 404,
-                         self.status_code_msg.format(404, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 404,
+            Messages.STATUS_CODE_MSG.format(404, resp.status_code))
 
         self.assertEqual(
             resp.reason, 'Not Found',
@@ -199,8 +204,9 @@ class CreateImageMember(ImagesFixture):
 
         resp = self.images.client.create_image_member(
             image_id='', member_id=self.member_id)
-        self.assertEqual(resp.status_code, 404,
-                         self.status_code_msg.format(404, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 404,
+            Messages.STATUS_CODE_MSG.format(404, resp.status_code))
 
     def test_create_image_member_using_invalid_image_id(self):
         """
@@ -212,8 +218,9 @@ class CreateImageMember(ImagesFixture):
 
         resp = self.images.client.create_image_member(
             image_id='invalid', member_id=self.member_id)
-        self.assertEqual(resp.status_code, 404,
-                         self.status_code_msg.format(404, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 404,
+            Messages.STATUS_CODE_MSG.format(404, resp.status_code))
 
     @unittest.skip('Redmine bug #11500')
     def test_create_image_member_using_blank_member_id(self):
@@ -226,8 +233,9 @@ class CreateImageMember(ImagesFixture):
 
         resp = self.images.client.create_image_member(
             image_id=self.alt_created_image.id_, member_id='')
-        self.assertEqual(resp.status_code, 404,
-                         self.status_code_msg.format(404, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 404,
+            Messages.STATUS_CODE_MSG.format(404, resp.status_code))
 
     @unittest.skip('Redmine bug #11501')
     def test_create_image_member_using_invalid_member_id(self):
@@ -240,5 +248,6 @@ class CreateImageMember(ImagesFixture):
 
         resp = self.images.client.create_image_member(
             image_id=self.alt_created_image.id_, member_id='invalid')
-        self.assertEqual(resp.status_code, 404,
-                         self.status_code_msg.format(404, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 404,
+            Messages.STATUS_CODE_MSG.format(404, resp.status_code))

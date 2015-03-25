@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+from cloudcafe.glance.common.constants import Messages
 from cloudcafe.glance.common.types import ImageMemberStatus
 
 from cloudroast.glance.fixtures import ImagesFixture
@@ -27,6 +28,7 @@ class GetImageMember(ImagesFixture):
 
         cls.member_id = cls.images_alt_one.auth.tenant_id
 
+        # Count set to number of images required for this module
         created_images = cls.images.behaviors.create_images_via_task(count=4)
 
         cls.not_shared_image = created_images.pop()
@@ -67,8 +69,9 @@ class GetImageMember(ImagesFixture):
 
         resp = self.images.client.get_image_member(
             self.shared_image.id_, self.member_id)
-        self.assertEqual(resp.status_code, 200,
-                         self.status_code_msg.format(200, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 200,
+            Messages.STATUS_CODE_MSG.format(200, resp.status_code))
         get_member = resp.entity
 
         errors = self._validate_get_image_member(
@@ -92,8 +95,9 @@ class GetImageMember(ImagesFixture):
 
         resp = self.images_alt_one.client.get_image_member(
             self.shared_image.id_, self.member_id)
-        self.assertEqual(resp.status_code, 200,
-                         self.status_code_msg.format(200, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 200,
+            Messages.STATUS_CODE_MSG.format(200, resp.status_code))
         get_member = resp.entity
 
         errors = self._validate_get_image_member(
@@ -117,8 +121,9 @@ class GetImageMember(ImagesFixture):
 
         resp = self.images.client.get_image_member(
             self.accepted_image.id_, self.member_id)
-        self.assertEqual(resp.status_code, 200,
-                         self.status_code_msg.format(200, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 200,
+            Messages.STATUS_CODE_MSG.format(200, resp.status_code))
         get_member = resp.entity
 
         errors = self._validate_get_image_member(
@@ -142,8 +147,9 @@ class GetImageMember(ImagesFixture):
 
         resp = self.images.client.get_image_member(
             self.rejected_image.id_, self.member_id)
-        self.assertEqual(resp.status_code, 200,
-                         self.status_code_msg.format(200, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 200,
+            Messages.STATUS_CODE_MSG.format(200, resp.status_code))
         get_member = resp.entity
 
         errors = self._validate_get_image_member(
@@ -167,8 +173,9 @@ class GetImageMember(ImagesFixture):
 
         resp = self.images_alt_two.client.get_image_member(
             self.shared_image.id_, self.member_id)
-        self.assertEqual(resp.status_code, 404,
-                         self.status_code_msg.format(404, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 404,
+            Messages.STATUS_CODE_MSG.format(404, resp.status_code))
 
         self.assertEqual(
             resp.reason, 'Not Found',
@@ -185,8 +192,9 @@ class GetImageMember(ImagesFixture):
 
         resp = self.images.client.get_image_member(
             self.not_shared_image.id_, self.member_id)
-        self.assertEqual(resp.status_code, 404,
-                         self.status_code_msg.format(404, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 404,
+            Messages.STATUS_CODE_MSG.format(404, resp.status_code))
 
     def test_get_image_member_using_blank_image_id(self):
         """
@@ -198,8 +206,9 @@ class GetImageMember(ImagesFixture):
 
         resp = self.images.client.get_image_member(
             image_id='', member_id=self.member_id)
-        self.assertEqual(resp.status_code, 404,
-                         self.status_code_msg.format(404, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 404,
+            Messages.STATUS_CODE_MSG.format(404, resp.status_code))
 
     def test_get_image_member_using_invalid_image_id(self):
         """
@@ -211,8 +220,9 @@ class GetImageMember(ImagesFixture):
 
         resp = self.images.client.get_image_member(
             image_id='invalid', member_id=self.member_id)
-        self.assertEqual(resp.status_code, 404,
-                         self.status_code_msg.format(404, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 404,
+            Messages.STATUS_CODE_MSG.format(404, resp.status_code))
 
     def test_get_image_member_using_blank_member_id(self):
         """
@@ -224,8 +234,9 @@ class GetImageMember(ImagesFixture):
 
         resp = self.images.client.get_image_member(
             image_id=self.shared_image.id_, member_id='')
-        self.assertEqual(resp.status_code, 404,
-                         self.status_code_msg.format(404, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 404,
+            Messages.STATUS_CODE_MSG.format(404, resp.status_code))
 
     def test_get_image_member_using_invalid_member_id(self):
         """
@@ -237,8 +248,9 @@ class GetImageMember(ImagesFixture):
 
         resp = self.images.client.get_image_member(
             image_id=self.shared_image.id_, member_id='invalid')
-        self.assertEqual(resp.status_code, 404,
-                         self.status_code_msg.format(404, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 404,
+            Messages.STATUS_CODE_MSG.format(404, resp.status_code))
 
     def _validate_get_image_member(self, get_member, created_member):
         """

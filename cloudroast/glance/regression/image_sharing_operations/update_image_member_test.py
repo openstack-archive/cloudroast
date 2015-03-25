@@ -30,6 +30,7 @@ class UpdateImageMember(ImagesFixture):
 
         cls.member_id = cls.images_alt_one.auth.tenant_id
 
+        # Count set to number of images required for this module
         created_images = cls.images.behaviors.create_images_via_task(count=2)
 
         cls.shared_image = created_images.pop()
@@ -60,8 +61,9 @@ class UpdateImageMember(ImagesFixture):
 
         resp = self.images_alt_one.client.update_image_member(
             self.shared_image.id_, self.member_id, ImageMemberStatus.ACCEPTED)
-        self.assertEqual(resp.status_code, 200,
-                         self.status_code_msg.format(200, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 200,
+            Messages.STATUS_CODE_MSG.format(200, resp.status_code))
         updated_member = resp.entity
 
         if updated_member.created_at != self.created_member.created_at:
@@ -109,12 +111,13 @@ class UpdateImageMember(ImagesFixture):
         resp = self.images.client.update_image_member(
             self.alt_shared_image.id_, self.member_id,
             ImageMemberStatus.ACCEPTED)
-        self.assertEqual(resp.status_code, 403,
-                         self.status_code_msg.format(403, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 403,
+            Messages.STATUS_CODE_MSG.format(403, resp.status_code))
 
         resp = self.images.client.get_image_member(
             self.alt_shared_image.id_, self.member_id)
-        self.assertTrue(resp.ok, self.ok_resp_msg.format(resp.status_code))
+        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
         get_member = resp.entity
 
         if get_member.created_at != self.alt_created_member.created_at:
@@ -157,8 +160,9 @@ class UpdateImageMember(ImagesFixture):
         resp = self.images_alt_one.client.update_image_member(
             image_id='', member_id=self.member_id,
             status=ImageMemberStatus.ACCEPTED)
-        self.assertEqual(resp.status_code, 404,
-                         self.status_code_msg.format(404, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 404,
+            Messages.STATUS_CODE_MSG.format(404, resp.status_code))
 
     def test_update_image_member_using_invalid_image_id(self):
         """
@@ -171,8 +175,9 @@ class UpdateImageMember(ImagesFixture):
         resp = self.images_alt_one.client.update_image_member(
             image_id='invalid', member_id=self.member_id,
             status=ImageMemberStatus.ACCEPTED)
-        self.assertEqual(resp.status_code, 404,
-                         self.status_code_msg.format(404, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 404,
+            Messages.STATUS_CODE_MSG.format(404, resp.status_code))
 
     @unittest.skip('Redmine bug #11535')
     def test_update_image_member_using_blank_member_id(self):
@@ -186,8 +191,9 @@ class UpdateImageMember(ImagesFixture):
         resp = self.images_alt_one.client.update_image_member(
             image_id=self.shared_image, member_id='',
             status=ImageMemberStatus.ACCEPTED)
-        self.assertEqual(resp.status_code, 404,
-                         self.status_code_msg.format(404, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 404,
+            Messages.STATUS_CODE_MSG.format(404, resp.status_code))
 
     @unittest.skip('Redmine bug #11535')
     def test_update_image_member_using_invalid_member_id(self):
@@ -201,8 +207,9 @@ class UpdateImageMember(ImagesFixture):
         resp = self.images_alt_one.client.update_image_member(
             image_id=self.shared_image, member_id='invalid',
             status=ImageMemberStatus.ACCEPTED)
-        self.assertEqual(resp.status_code, 404,
-                         self.status_code_msg.format(404, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 404,
+            Messages.STATUS_CODE_MSG.format(404, resp.status_code))
 
     @unittest.skip('Redmine bug #11535')
     def test_update_image_member_using_blank_status(self):
@@ -216,8 +223,9 @@ class UpdateImageMember(ImagesFixture):
         resp = self.images_alt_one.client.update_image_member(
             image_id=self.shared_image, member_id=self.member_id,
             status='')
-        self.assertEqual(resp.status_code, 404,
-                         self.status_code_msg.format(404, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 404,
+            Messages.STATUS_CODE_MSG.format(404, resp.status_code))
 
     @unittest.skip('Redmine bug #11535')
     def test_update_image_member_using_invalid_status(self):
@@ -231,5 +239,6 @@ class UpdateImageMember(ImagesFixture):
         resp = self.images_alt_one.client.update_image_member(
             image_id=self.shared_image, member_id=self.member_id,
             status='invalid')
-        self.assertEqual(resp.status_code, 404,
-                         self.status_code_msg.format(404, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 404,
+            Messages.STATUS_CODE_MSG.format(404, resp.status_code))
