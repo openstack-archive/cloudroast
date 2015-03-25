@@ -1,5 +1,5 @@
 """
-Copyright 2013 Rackspace
+Copyright 2015 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -24,24 +24,56 @@ class ImagesTest(ComputeFixture):
 
     @classmethod
     def setUpClass(cls):
+        """
+        Perform actions that setup the necessary resources for testing
+
+        The following resources are created during this setup:
+            - A server using the values from test configuration
+        """
         super(ImagesTest, cls).setUpClass()
         cls.server = cls.server_behaviors.create_active_server().entity
 
     @tags(type='negative', net='no')
     def test_create_image_invalid_server_id(self):
-        """Image creation should fail if the server id does not exist"""
+        """
+        Image creation should fail if the server id does not exist
+
+        Attempting to create an image from a server with an id of 999 should
+        result in an 'ItemNotFound' error.
+
+        The following assertions occur:
+            - Create an image from a server with an id of 999 should raise an
+              'ItemNotFound error'
+        """
         with self.assertRaises(ItemNotFound):
             self.servers_client.create_image(999, 'test_neg')
 
     @tags(type='negative', net='no')
     def test_delete_image_invalid_id(self):
-        """Image deletion should fail if the image id does not exist"""
+        """
+        Image deletion should fail if the image id does not exist
+
+        Attempting to delete an image with an id of 999 should result in an
+        'ItemNotFound' error.
+
+        The following assertions occur:
+            - Deleting an image with id of 999 should raise an 'ItemNotFound
+             error'
+        """
         with self.assertRaises(ItemNotFound):
             self.images_client.delete_image(999)
 
     @tags(type='negative', net='no')
     def test_create_image_invalid_server_name(self):
-        """Image creation should fail if the image name is blank"""
+        """
+        Image creation should fail if the image name is blank
+
+        Attempt to create an image using the id of the server created during
+        test set up and a 'blank' name. If the create image request recieves any
+        errors the test will complete. If the create image request does not
+        recieve an error, parse the response for the image_id, wait for the
+        image to achieve 'ACTIVE' status, delete the image and fail the test.
+        """
         try:
             image_resp = self.servers_client.create_image(self.server.id, '')
         except:
