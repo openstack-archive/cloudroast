@@ -14,6 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+from cloudcafe.glance.common.constants import Messages
+
 from cloudroast.glance.fixtures import ImagesFixture
 
 
@@ -34,7 +36,8 @@ class GetImageSchema(ImagesFixture):
             self.images.config.image_schema_json)
 
         resp = self.images.client.get_image_schema()
-        self.assertEqual(resp.status_code, 200,
-                         self.status_code_msg.format(200, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 200,
+            Messages.STATUS_CODE_MSG.format(200, resp.status_code))
 
         self.assertEqual(resp.content, image_schema_resp)
