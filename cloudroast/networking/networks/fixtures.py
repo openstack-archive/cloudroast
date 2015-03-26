@@ -288,9 +288,8 @@ class NetworkingFixture(BaseTestFixture):
             msg_index = resp.failures[0].find(error_msg_label)
             error_msg = resp.failures[0][msg_index:]
             error_msg_check = not_in_error_msg in error_msg
-            print not_in_error_msg
-            print error_msg
-            msg = ('Unexpected {0} string in failure msg: {1}').format(
+
+            msg = 'Unexpected {0} string in failure msg: {1}'.format(
                 not_in_error_msg, error_msg)
             self.assertFalse(error_msg_check, msg)
 
@@ -716,10 +715,8 @@ class NetworkingSecurityGroupsFixture(NetworkingFixture):
         @return: security group entity
         @rtype: models.response.SecurityGroup
         """
-        if expected_secgroup:
-            expected_secgroup = expected_secgroup
-        else:
-            expected_secgroup = self.get_expected_secgroup_data()
+        expected_secgroup = (expected_secgroup or
+                             self.get_expected_secgroup_data())
 
         request_kwargs = dict()
         if expected_secgroup.name:
@@ -752,21 +749,20 @@ class NetworkingSecurityGroupsFixture(NetworkingFixture):
         """
         request_kwargs = dict(
             security_group_id=expected_secrule.security_group_id)
-        if expected_secrule.direction:
-            request_kwargs['direction'] = expected_secrule.direction
-        if expected_secrule.ethertype:
-            request_kwargs['ethertype'] = expected_secrule.ethertype
-        if expected_secrule.port_range_min:
-            request_kwargs['port_range_min'] = expected_secrule.port_range_min
-        if expected_secrule.port_range_max:
-            request_kwargs['port_range_max'] = expected_secrule.port_range_max
+        property_list = ['direction', 'ethertype', 'port_range_min',
+                         'port_range_max', 'remote_group_ip',
+                         'remote_ip_prefix']
+        false_values = [None, '']
+        for prop in property_list:
+            if (hasattr(expected_secrule, prop)  and getattr(expected_secrule,
+                prop) not in false_values):
+                request_kwargs[prop] = getattr(expected_secrule, prop)
+
+        # The one exception to the simplification. The request can take upper
+        # or lower case but the expected response is in upper case.
         if expected_secrule.protocol:
             request_kwargs['protocol'] = expected_secrule.protocol
             expected_secrule.protocol = expected_secrule.protocol.upper()
-        if expected_secrule.remote_group_id:
-            request_kwargs['remote_group_id'] = expected_secrule.remote_group_id
-        if expected_secrule.remote_ip_prefix:
-            request_kwargs['remote_ip_prefix'] = expected_secrule.remote_ip_prefix
 
         # ResourceBuildException will be raised if not created successfully
         resp = self.sec.behaviors.create_security_group_rule(**request_kwargs)
@@ -807,6 +803,8 @@ class NetworkingSecurityGroupsFixture(NetworkingFixture):
             msg.format(expected_secgroup.tenant_id, secgroup.tenant_id))
 
         if check_secgroup_rules:
+            # Rules within an expected security groups object and the API
+            # response object may be in different order
             expected_secgroup.security_group_rules.sort(
                 key=operator.attrgetter('id'))
             secgroup.security_group_rules.sort(
