@@ -32,8 +32,8 @@ class GetImagesSchema(ImagesFixture):
         compared to the images schema json file
         """
 
-        images_schema_resp = self.images.behaviors.read_data_file(
-            self.images.config.images_schema_json)
+        with open(self.images.config.images_schema_json, 'r') as DATA:
+            images_schema_resp = DATA.read().rstrip()
 
         resp = self.images.client.get_images_schema()
         self.assertEqual(

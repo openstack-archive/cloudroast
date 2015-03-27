@@ -32,8 +32,8 @@ class GetTaskSchema(ImagesFixture):
         compared to the task schema json file
         """
 
-        task_schema_resp = self.images.behaviors.read_data_file(
-            self.images.config.task_schema_json)
+        with open(self.images.config.task_schema_json, 'r') as DATA:
+            task_schema_resp = DATA.read().rstrip()
 
         resp = self.images.client.get_task_schema()
         self.assertEqual(

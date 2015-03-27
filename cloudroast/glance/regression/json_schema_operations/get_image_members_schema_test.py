@@ -32,8 +32,8 @@ class GetImageMembersSchema(ImagesFixture):
         schema as compared to the image members schema json file
         """
 
-        image_members_schema_resp = self.images.behaviors.read_data_file(
-            self.images.config.image_members_schema_json)
+        with open(self.images.config.image_members_schema_json, 'r') as DATA:
+            image_members_schema_resp = DATA.read().rstrip()
 
         resp = self.images.client.get_image_members_schema()
         self.assertEqual(
