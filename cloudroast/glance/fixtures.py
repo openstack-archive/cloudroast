@@ -27,7 +27,6 @@ from cloudcafe.compute.images_api.client import (
 from cloudcafe.compute.servers_api.behaviors import ServerBehaviors
 from cloudcafe.compute.servers_api.client import ServersClient
 from cloudcafe.compute.servers_api.config import ServersConfig
-from cloudcafe.glance.common.constants import Messages
 from cloudcafe.glance.composite import (
     ImagesComposite, ImagesAuthComposite, ImagesAuthCompositeAltOne,
     ImagesAuthCompositeAltTwo)
@@ -60,9 +59,6 @@ class ImagesFixture(BaseTestFixture):
         cls.images = ImagesComposite(cls.user_one)
         cls.images_alt_one = ImagesComposite(cls.user_two)
         cls.images_alt_two = ImagesComposite(cls.user_three)
-
-        cls.status_code_msg = Messages.STATUS_CODE_MSG
-        cls.ok_resp_msg = Messages.OK_RESP_MSG
 
         cls.addClassCleanup(cls.resources.release)
 
