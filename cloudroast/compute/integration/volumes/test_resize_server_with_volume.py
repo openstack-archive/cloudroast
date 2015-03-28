@@ -1,5 +1,5 @@
 """
-Copyright 2013 Rackspace
+Copyright 2015 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -44,6 +44,14 @@ class ResizeServerVolumeIntegrationTest(BlockstorageIntegrationFixture):
 
     @classmethod
     def setUpClass(cls):
+        """
+        Perform actions that setup the necessary resources for testing.
+
+        The following resources are created during this setup:
+            - Create a server from server behaviors.
+            - Deletes the same server in setup.
+
+        """
         super(ResizeServerVolumeIntegrationTest, cls).setUpClass()
         cls.key = cls.keypairs_client.create_keypair(rand_name("key")).entity
         cls.resources.add(cls.key.name,
@@ -67,6 +75,12 @@ class ResizeServerVolumeIntegrationTest(BlockstorageIntegrationFixture):
 
     @classmethod
     def tearDownClass(cls):
+        """
+        Perform actions that teardown the necessary resources for testing.
+
+        The following resources are released during this teardown:
+            - Deletes the volume attached to the server.
+        """
         cls.volume_attachments_client.delete_volume_attachment(
             cls.volume.id_, cls.server.id)
         cls.blockstorage_behavior.wait_for_volume_status(
@@ -76,6 +90,13 @@ class ResizeServerVolumeIntegrationTest(BlockstorageIntegrationFixture):
 
     @tags(type='smoke', net='no')
     def test_resize_server_and_confirm(self):
+        """
+        Verify that you can resize the server.
+
+        Will resize the server with the alternate flavor and waits for
+        the server to reach a "VERIFY_RESIZE" state.  Then will call confirm
+        resize and waits for the server to be in an "ACTIVE" state.
+        """
         self.resize_resp = self.servers_client.resize(
             self.server.id, self.flavor_ref_alt)
         self.server_behaviors.wait_for_server_status(
@@ -88,6 +109,15 @@ class ResizeServerVolumeIntegrationTest(BlockstorageIntegrationFixture):
 
     @tags(type='smoke', net='no')
     def test_volume_attached_after_resize(self):
+        """
+        Verify that you can attach a volume to the server after resize.
+
+        Will get the volume info by volume id and then verify that the
+        volume is an "in-use" state.
+
+        The following assertions occur:
+            - The volume status is "in-use".
+        """
         volume_after_rebuild = self.blockstorage_client.get_volume_info(
             self.volume.id_).entity
         self.assertEqual(volume_after_rebuild.status, 'in-use')
