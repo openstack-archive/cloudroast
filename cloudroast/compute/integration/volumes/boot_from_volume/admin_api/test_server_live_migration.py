@@ -1,5 +1,5 @@
 """
-Copyright 2013 Rackspace
+Copyright 2015 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -22,7 +22,16 @@ class LiveMigratationServerTests(object):
 
     @tags(type='smoke', net='yes')
     def test_live_migrate_server(self):
-        """Verify live migrate instance action on instance"""
+        """
+        Verify live migrate instance action on instance.
+
+        Will get the server then call the live migrate server and wait
+        for the status to be active again.  Following that it will validate
+        that it is on a different host then it was originally.
+
+        The following assertions occur:
+            - The host is different after the migration.  
+        """
 
         # Get Admin Server details before migrate
         server_before_migrate = self.admin_servers_client.get_server(
