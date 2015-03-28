@@ -1,5 +1,5 @@
 """
-Copyright 2013 Rackspace
+Copyright 2015 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -26,6 +26,12 @@ class StopServerTests(ComputeAdminFixture):
 
     @classmethod
     def setUpClass(cls):
+        """
+        Perform actions that setup the necessary resources for testing.
+
+        The following resources are created during the setup:
+            - Create a server in active state.
+        """
         super(StopServerTests, cls).setUpClass()
         cls.server = cls.server_behaviors.create_active_server().entity
         cls.resources.add(cls.server.id, cls.servers_client.delete_server)
@@ -36,7 +42,19 @@ class StopServerTests(ComputeAdminFixture):
 
     @tags(type='smoke', net='no')
     def test_stop_start_server(self):
-        """Verify that a server can be stopped and then started"""
+        """
+        Verify that a server can be stopped and then started.
+
+        Will stop the server and waits for a the server state to be shutoff
+        followed by pinging the ip until its unreachable.  Start the server
+        back up and wait for the server state to be active followed by
+        pinging the server until its reachable.  Then retrieve the instance.
+
+        The following assertions occur:
+            - 202 status code response from the stop server call.
+            - 202 status code response from the start server call.
+            - Get remote instance client returns true (successful connection).
+        """
 
         response = self.admin_servers_client.stop_server(self.server.id)
         self.assertEqual(response.status_code, 202)
