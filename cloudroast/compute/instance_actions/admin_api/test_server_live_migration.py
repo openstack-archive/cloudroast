@@ -1,5 +1,5 @@
 """
-Copyright 2013 Rackspace
+Copyright 2015 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -38,6 +38,13 @@ class LiveMigratationServerTests(ComputeAdminFixture):
 
     @classmethod
     def setUpClass(cls):
+        """
+        Perform actions that setup the necessary resources for testing.
+
+        The following resources are created during the setup:
+            - Create a server in active state.
+            - Initialize the test directories to an empty list.
+        """
         super(LiveMigratationServerTests, cls).setUpClass()
         cls.server = cls.server_behaviors.create_active_server().entity
         cls.resources.add(cls.server.id, cls.servers_client.delete_server)
@@ -45,7 +52,13 @@ class LiveMigratationServerTests(ComputeAdminFixture):
 
     @tags(type='smoke', net='yes')
     def test_format_and_mount_disks(self):
-        """Format and mount ephemeral disks, if any."""
+        """
+        Format and mount ephemeral disks, if any.
+
+        Will get the instance of the server and get all disks and removes the
+        primary disk from the list and then formats and mounts each of the
+        ephemeral disks.
+        """
         remote_client = self.server_behaviors.get_remote_instance_client(
             self.server, self.servers_config)
 
@@ -65,7 +78,14 @@ class LiveMigratationServerTests(ComputeAdminFixture):
 
     @tags(type='smoke', net='no')
     def test_live_migrate_server(self):
-        """Verify the server completes the live migration."""
+        """
+        Verify the server completes the live migration.
+
+        Will invoke a live migration of the server with the block migration
+        flag set to true and the disk over commit flag to false.  Will
+        continue to wait until the server reaches an active state or a
+        timeout has been reached.
+        """
         self.admin_servers_client.live_migrate_server(
             self.server.id, block_migration=True, disk_over_commit=False)
         self.admin_server_behaviors.wait_for_server_status(
@@ -73,7 +93,16 @@ class LiveMigratationServerTests(ComputeAdminFixture):
 
     @tags(type='smoke', net='yes')
     def test_verify_ephemeral_disks_mounted(self):
-        """Verify the server's ephemeral disks are still attached."""
+        """
+        Verify the server's ephemeral disks are still attached.
+
+        Will get the instance of the server and then go through each
+        directory in the list of test directories and make sure
+        each directory is present and reachable.
+
+        The following assertions occur:
+            - Directory Present call returns true.
+        """
         remote_client = self.server_behaviors.get_remote_instance_client(
             self.server, self.servers_config)
         for directory in self.test_directories:
