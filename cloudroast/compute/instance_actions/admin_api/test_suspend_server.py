@@ -1,5 +1,5 @@
 """
-Copyright 2014 Rackspace
+Copyright 2015 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -31,7 +31,19 @@ class SuspendServerTests(object):
 
     @tags(type='smoke', net='yes')
     def test_suspend_resume_server(self):
-        """Verify that a server can be suspended and then resumed"""
+        """
+        Verify that a server can be suspended and then resumed.
+
+        Will suspend the server and waits for a the server state to be
+        suspended followed by pinging the ip until its unreachable.  Resumes
+        the server and wait for the server state to be active followed
+        by pinging the server until its reachable. Then retrieve the instance.
+
+        The following assertions occur:
+            - 202 status code response from the stop server call.
+            - 202 status code response from the start server call.
+            - Get remote instance client returns true (successful connection).
+        """
 
         self.ping_ip = self.get_accessible_ip_address(self.server)
 
@@ -62,7 +74,19 @@ class NegativeSuspendServerTests(object):
 
     @tags(type='smoke', net='yes')
     def test_reboot_hard_suspended_server(self):
-        """Verify that a server reboot after suspend does not restore it"""
+        """
+        Verify that a server reboot after suspend does not restore it.
+
+        Will suspend the server and waits for a the server state to be
+        suspended followed by pinging the ip until its unreachable.  Tries to
+        reboot the server and expects a "Forbidden" exception to be raised.
+        Then will ping until its unreachable again.
+
+        The following assertions occur:
+            - 202 status code response from the stop server call.
+            - 202 status code response from the start server call.
+            - Get remote instance client returns true (successful connection).
+        """
 
         self.ping_ip = self.get_accessible_ip_address(self.server)
 
@@ -88,6 +112,12 @@ class ServerFromImageSuspendTests(ServerFromImageFixture,
 
     @classmethod
     def setUpClass(cls):
+        """
+        Perform actions that setup the necessary resources for testing.
+
+        The following resources are created during the setup:
+            - Create a server in active state.
+        """
         super(ServerFromImageSuspendTests, cls).setUpClass()
         cls.compute_admin = ComputeAdminComposite()
         cls.admin_servers_client = cls.compute_admin.servers.client
@@ -101,6 +131,12 @@ class ServerFromImageNegativeSuspendTests(ServerFromImageFixture,
 
     @classmethod
     def setUpClass(cls):
+        """
+        Perform actions that setup the necessary resources for testing.
+
+        The following resources are created during the setup:
+            - Create a server in active state.
+        """
         super(ServerFromImageNegativeSuspendTests, cls).setUpClass()
         cls.compute_admin = ComputeAdminComposite()
         cls.admin_servers_client = cls.compute_admin.servers.client
