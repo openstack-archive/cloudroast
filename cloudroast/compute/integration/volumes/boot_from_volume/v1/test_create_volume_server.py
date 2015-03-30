@@ -1,5 +1,5 @@
 """
-Copyright 2014 Rackspace
+Copyright 2015 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -31,6 +31,15 @@ class ServerFromVolumeV1CreateServerTests(ServerFromVolumeV1Fixture,
 
     @classmethod
     def setUpClass(cls):
+        """
+        Perform actions that setup the necessary resources for testing.
+
+        The following resources are created during this setup:
+            - Creates a keypair.
+            - Creates an available volume.
+            - Creates block device mapping.
+            - Creates an active server.
+        """
         super(ServerFromVolumeV1CreateServerTests, cls).setUpClass()
         # Initialzing instance name, metadata, files, keys, networking
         cls.name = rand_name("server")
