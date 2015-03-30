@@ -333,6 +333,7 @@ class ImagesDatasetListGenerator(object):
         checksum = random_string()
         created_at = str(datetime.now())
         file_ = '/v2/images/00000000-0000-0000-0000-000000000000/file'
+        location = '/v2/images/00000000-0000-0000-0000-000000000000'
         schema = Schemas.IMAGE_MEMBER_SCHEMA
         self_ = '/v2/images/00000000-0000-0000-0000-000000000000'
         size = random_int(0, 9999999)
@@ -353,6 +354,7 @@ class ImagesDatasetListGenerator(object):
             'passing_checksum': {'checksum': checksum},
             'passing_created_at': {'created_at': created_at},
             'passing_file': {'file': file_},
+            'passing_location': {'location': location},
             'passing_schema': {'schema': schema},
             'passing_self': {'self': self_}, 'passing_size': {'size': size},
             'passing_status': {'status': status},
