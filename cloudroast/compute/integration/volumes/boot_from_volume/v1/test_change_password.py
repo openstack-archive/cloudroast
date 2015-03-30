@@ -1,5 +1,5 @@
 """
-Copyright 2013 Rackspace
+Copyright 2015 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -25,6 +25,13 @@ class ServerFromVolumeV1ChangePasswordTests(ServerFromVolumeV1Fixture,
 
     @classmethod
     def setUpClass(cls):
+        """
+        Perform actions that setup the necessary resources for testing.
+
+        The following resources are created during this setup:
+            - Create an active server.
+            - Changes password.
+        """
         super(ServerFromVolumeV1ChangePasswordTests, cls).setUpClass()
         cls.create_server()
         cls.change_password()
