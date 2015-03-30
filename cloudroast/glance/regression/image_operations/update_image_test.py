@@ -186,7 +186,7 @@ class UpdateImage(ImagesFixture):
         # Each prop passed in only has one key-value pair
         prop_key, prop_val = prop.popitem()
 
-        # # This is a temporary workaround for skips in ddtests
+        # This is a temporary workaround for skips in ddtests
         if prop_key == 'id':
             sys.stderr.write('skipped \'Redmine bug #11398\' ... ')
             return
@@ -232,14 +232,9 @@ class UpdateImage(ImagesFixture):
         prop_key, prop_val = prop.popitem()
 
         # This is a temporary workaround for skips in ddtests
-        if prop_key == 'id':
-            sys.stderr.write('skipped \'Redmine bug #11398\' ... ')
-            return
-        if prop_key == 'file' or prop_key == 'schema' or prop_key == 'self':
-            sys.stderr.write('skipped \'Redmine bug #11403\' ... ')
-            return
-        if prop_key == 'location':
-            sys.stderr.write('skipped \'Redmine bug #11\' ... ')
+        failure_prop_list = ['id', 'file', 'schema', 'self']
+        if prop_key in failure_prop_list:
+            sys.stderr.write('skipped \'Launchpad bug #1438826\' ... ')
             return
 
         resp = self.images.client.update_image(
