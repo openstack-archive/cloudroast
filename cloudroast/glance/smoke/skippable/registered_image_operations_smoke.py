@@ -26,11 +26,11 @@ images_config = ImagesConfig()
 
 @unittest.skipUnless(images_config.allow_post_images,
                      'Functionality disabled with provided endpoint')
-class ImageOperationsSmokeSkippable(ImagesFixture):
+class RegisteredImageOperationsSmoke(ImagesFixture):
 
     @classmethod
     def setUpClass(cls):
-        super(ImageOperationsSmokeSkippable, cls).setUpClass()
+        super(RegisteredImageOperationsSmoke, cls).setUpClass()
 
         cls.file_data = cls.images.behaviors.read_data_file(
             cls.images.config.test_file)

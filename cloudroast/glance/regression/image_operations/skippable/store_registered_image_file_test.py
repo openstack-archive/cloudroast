@@ -29,11 +29,11 @@ images = ImagesComposite(user_one)
 @unittest.skipUnless(
     images.config.allow_post_images and images.config.allow_put_image_file,
     'Endpoint has incorrect access')
-class StoreImageFile(ImagesFixture):
+class StoreRegisteredImageFile(ImagesFixture):
 
     @classmethod
     def setUpClass(cls):
-        super(StoreImageFile, cls).setUpClass()
+        super(StoreRegisteredImageFile, cls).setUpClass()
 
         # Count set to number of images required for this module
         reg_images = cls.images.behaviors.register_new_images(count=3)
@@ -44,7 +44,7 @@ class StoreImageFile(ImagesFixture):
     @classmethod
     def tearDownClass(cls):
         cls.images.behaviors.resources.release()
-        super(StoreImageFile, cls).tearDownClass()
+        super(StoreRegisteredImageFile, cls).tearDownClass()
 
     def test_store_image_file(self):
         """
