@@ -55,12 +55,12 @@ class CloudInitMimeGzipTest(ComputeFixture):
             destination_path=self.config_drive_config.base_path_to_mount)
         remote_client = self.server_behaviors.get_remote_instance_client(
             self.server, self.servers_config, key=self.key.private_key)
-        instanse_user_data = remote_client.get_file_details(
+        instance_user_data = remote_client.get_file_details(
             self.user_data_filepath)
-        self.assertEqual(instanse_user_data.content,
+        self.assertEqual(instance_user_data.content,
                          self.user_data_contents,
                          msg=message.format('Script do not match',
-                                            instanse_user_data.content,
+                                            instance_user_data.content,
                                             self.user_data_contents))
         # Verification of Configuration part of mime
         dir_cloud_config_present = self.config_drive_behaviors.\

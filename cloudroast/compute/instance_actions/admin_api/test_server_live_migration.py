@@ -25,20 +25,20 @@ from cloudroast.compute.fixtures import ComputeAdminFixture
 
 def load_tests(loader, standard_tests, pattern):
     suite = TestSuite()
-    suite.addTest(LiveMigratationServerTests(
+    suite.addTest(LiveMigrationServerTests(
         "test_format_and_mount_disks"))
-    suite.addTest(LiveMigratationServerTests(
+    suite.addTest(LiveMigrationServerTests(
         "test_live_migrate_server"))
-    suite.addTest(LiveMigratationServerTests(
+    suite.addTest(LiveMigrationServerTests(
         "test_verify_ephemeral_disks_mounted"))
     return suite
 
 
-class LiveMigratationServerTests(ComputeAdminFixture):
+class LiveMigrationServerTests(ComputeAdminFixture):
 
     @classmethod
     def setUpClass(cls):
-        super(LiveMigratationServerTests, cls).setUpClass()
+        super(LiveMigrationServerTests, cls).setUpClass()
         cls.server = cls.server_behaviors.create_active_server().entity
         cls.resources.add(cls.server.id, cls.servers_client.delete_server)
         cls.test_directories = []

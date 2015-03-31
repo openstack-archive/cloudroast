@@ -103,7 +103,7 @@ class ServersNegativeTest(ComputeFixture):
             self.servers_client.list_addresses_by_network(server.id, 999)
 
     @tags(type='negative', net='no')
-    def test_list_addresses_by_network_for_nonexistant_server_fails(self):
+    def test_list_addresses_by_network_for_nonexistent_server_fails(self):
         """
         List addresses by network for a server that does not exist should fail
         """

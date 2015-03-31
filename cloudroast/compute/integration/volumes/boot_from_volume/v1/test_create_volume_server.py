@@ -32,7 +32,7 @@ class ServerFromVolumeV1CreateServerTests(ServerFromVolumeV1Fixture,
     @classmethod
     def setUpClass(cls):
         super(ServerFromVolumeV1CreateServerTests, cls).setUpClass()
-        # Initialzing instance name, metadata, files, keys, networking
+        # Initializing instance name, metadata, files, keys, networking
         cls.name = rand_name("server")
 
         cls.metadata = {'meta_key_1': 'meta_value_1',

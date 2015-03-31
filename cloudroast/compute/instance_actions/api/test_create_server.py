@@ -119,12 +119,12 @@ class CreateServerTest(object):
         network in the expected networks dictionary check to see if the test was
         configured to expect an IPv4 address for that network, if yes validate
         that there is a network of the same name with an IPv4 address. If that
-        network is expected to not have an IPv4 addressm validate that there is
+        network is expected to not have an IPv4 address validate that there is
         a a network with that name that does not have an IPv4 address. For each
         network in the expected networks dictionary check to see if the test was
         configured to expect an IPv6 address for that network, if yes validate
         that there is a network of the same name with an IPv6 address. If that
-        network is expected to not have an IPv6 addressm validate that there is
+        network is expected to not have an IPv6 address validate that there is
         a a network with that name that does not have an IPv6 address.
 
         The following assertions occur:

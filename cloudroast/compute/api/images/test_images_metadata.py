@@ -53,7 +53,7 @@ class ImagesMetadataTest(ComputeFixture):
         self.images_client.update_image_metadata(self.image.id, meta)
 
     @tags(type='negative', net='no')
-    def test_delete_nonexistant_image_metadata_item(self):
+    def test_delete_nonexistent_image_metadata_item(self):
         """User should not be able to delete a key which does not exist"""
         with self.assertRaises(ItemNotFound):
             self.images_client.delete_image_metadata_item(

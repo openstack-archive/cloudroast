@@ -215,7 +215,7 @@ class ServerFromImageDeleteServerTests(ServerFromImageFixture,
     @classmethod
     def setUpClass(cls):
         """
-        Perform actions that set up the neccesary resources for testing
+        Perform actions that set up the necessary resources for testing
 
         The following resources are created during this set up:
             - A server with values from the test configuration

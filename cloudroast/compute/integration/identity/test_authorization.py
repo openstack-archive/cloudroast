@@ -95,7 +95,7 @@ class AuthorizationTests(ComputeFixture):
     def test_list_server_addresses_by_network_with_invalid_token(self):
         with self.assertRaises(ItemNotFound):
             self.servers_client.list_addresses_by_network(
-                self.server.id, 'prviate')
+                self.server.id, 'private')
 
     @tags(type='negative', net='no')
     def test_delete_server_unauthorized(self):

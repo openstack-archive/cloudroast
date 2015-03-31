@@ -57,11 +57,11 @@ def _pinger(ip, delta, conn_flag, connection_timeout):
         delta.put(0)
 
 
-class LiveMigratation(ComputeAdminFixture):
+class LiveMigration(ComputeAdminFixture):
 
     @classmethod
     def setUpClass(cls):
-        super(LiveMigratation, cls).setUpClass()
+        super(LiveMigration, cls).setUpClass()
         cls.fixture_log.debug("Multiprocessing Live Migrate Test started")
         cls.delta = Queue()
         cls.conn_flag = Queue()

@@ -21,7 +21,7 @@ from cloudcafe.blockstorage.composites import VolumesAutoComposite
 from cloudcafe.blockstorage.volumes_api.v1.models import statuses
 
 from cloudroast.compute.instance_actions.admin_api.test_server_live_migration import \
-    LiveMigratationServerTests
+    LiveMigrationServerTests
 
 
 def load_tests(loader, standard_tests, pattern):
@@ -56,7 +56,7 @@ def load_tests(loader, standard_tests, pattern):
     return suite
 
 
-class LiveMigratateServerWithVolumeTests(LiveMigratationServerTests):
+class LiveMigratateServerWithVolumeTests(LiveMigrationServerTests):
 
     @classmethod
     def setUpClass(cls):

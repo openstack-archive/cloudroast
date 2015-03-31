@@ -18,7 +18,7 @@ from cafe.drivers.unittest.decorators import tags
 from cloudcafe.compute.common.types import NovaServerStatusTypes
 
 
-class LiveMigratationServerTests(object):
+class LiveMigrationServerTests(object):
 
     @tags(type='smoke', net='yes')
     def test_live_migrate_server(self):

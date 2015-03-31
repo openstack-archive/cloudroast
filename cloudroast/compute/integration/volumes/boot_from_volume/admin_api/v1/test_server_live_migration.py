@@ -17,11 +17,11 @@ limitations under the License.
 from cloudcafe.compute.composites import ComputeAdminComposite
 from cloudroast.compute.fixtures import ServerFromVolumeV1Fixture
 from cloudroast.compute.integration.volumes.boot_from_volume.admin_api \
-    .test_server_live_migration import LiveMigratationServerTests
+    .test_server_live_migration import LiveMigrationServerTests
 
 
 class ServerFromImageLiveMigrateTests(ServerFromVolumeV1Fixture,
-                                      LiveMigratationServerTests):
+                                      LiveMigrationServerTests):
 
     @classmethod
     def setUpClass(cls):
