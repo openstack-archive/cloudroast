@@ -1,5 +1,5 @@
 """
-Copyright 2014 Rackspace
+Copyright 2015 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -24,6 +24,16 @@ class ServerRHELActivationTests(object):
 
     @tags(type='smoke', net='yes')
     def test_check_rhel_activation(self):
+        """
+        Every 'Red Hat' server should have completed RHEL activation
+
+        For every server in the list of servers created during test set up, get
+        a remote instance client and validate that the instance has completed
+        Red Hat Linux activation.
+
+        The following assertions occur:
+            - Each server has completed Red Hat Linux activation
+        """
         # Get an instance of the remote client
         if not self.server_list:
             self.fail("No Servers created for the activation test")
@@ -42,6 +52,20 @@ class ServerFromImageRHELActivationTests(ServerFromImageFixture,
 
     @classmethod
     def setUpClass(cls):
+        """
+        Perform actions that setup the necessary resources for testing
+
+        The following data is generated during this setup:
+            - A list of images with 'Red Hat' in the name
+
+        The following resources are created during this setup:
+            - A keypair with a random name starting with 'key'
+            - A list of servers created with the following values:
+                - An image id from the list of 'Red Hat' image ids previously
+                  generated
+                - Remaining values required for creating a server will come
+                  from test configuration.
+        """
         super(ServerFromImageRHELActivationTests, cls).setUpClass()
         key_response = cls.keypairs_client.create_keypair(rand_name("key"))
 
