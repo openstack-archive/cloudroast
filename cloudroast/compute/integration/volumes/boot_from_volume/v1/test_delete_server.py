@@ -1,5 +1,5 @@
 """
-Copyright 2014 Rackspace
+Copyright 2015 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -28,7 +28,15 @@ class AutoDeleteVolumeServersTest(object):
 
     @tags(type='smoke', net='no')
     def test_volume_deleted_after_server_deletion_by_default(self):
-        """Verify the volume is deleted automatically after server deletion"""
+        """
+        Verify the volume is deleted automatically after server deletion.
+
+        Will try and delete a non existing volume expecting a "ItemNotFound"
+        exception to be raised.
+
+        The following assertions occur:
+            - Expecting the ItemNotFound Exception to be raised.
+        """
         with self.assertRaises(ItemNotFound):
             self.blockstorage_behavior.client.delete_volume(self.volume.id_)
 
@@ -37,8 +45,17 @@ class PersistentDeleteVolumeServersTest(object):
 
     @tags(type='smoke', net='no')
     def test_volume_not_deleted_after_server_deletion(self):
-        """Verify that a volume is not deleted after server is deleted when
-        delete_on_termination is set to False"""
+        """
+        Verify that a volume is not deleted after server is deleted.
+
+        Will verify the volume is available and then create a server with
+        the that volume.  The volume is defined with delete_on_termination
+        being set to False.  Following that the server will be deleted and
+        then the volume expecting a true response from teh delete call.
+
+        The following assertions occur:
+            - The result of the delete volume is True (Successful).
+        """
         # Verify the Volume is preserved and in available status
         self.blockstorage_behavior.wait_for_volume_status(
             self.volume.id_, statuses.Volume.AVAILABLE,
@@ -68,6 +85,12 @@ class ServerFromVolumeV1AutoDeleteServerTests(
 
     @classmethod
     def setUpClass(cls):
+        """
+        Perform actions that setup the necessary resources for testing.
+
+        The following resources are created during this setup:
+            - Creates an active server.
+        """
         super(ServerFromVolumeV1AutoDeleteServerTests, cls).setUpClass()
         cls.create_server()
         cls.resp = cls.servers_client.delete_server(cls.server.id)
@@ -80,6 +103,14 @@ class ServerFromVolumeV1PersistentDeleteServerTests(
 
     @classmethod
     def setUpClass(cls):
+        """
+        Perform actions that setup the necessary resources for testing.
+
+        The following resources are created during this setup:
+            - Creates an available volume.
+            - Creates a block device mapping.
+            - Creates an active server.
+        """
         super(ServerFromVolumeV1PersistentDeleteServerTests, cls).setUpClass()
         # Creating a volume for the block device mapping
         cls.volume = cls.blockstorage_behavior.create_available_volume(
