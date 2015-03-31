@@ -34,7 +34,32 @@ class ServerRescueTests(object):
 
     @tags(type='smoke', net='yes')
     def test_rescue_and_unrescue_server_test(self):
-        """Verify that a server can enter and exit rescue mode"""
+        """
+        Verify that a server can enter and exit rescue mode
+
+        Get a remote client for the server created during test set up. Use the
+        remote client to get a list of all disks on the server. Rescue the
+        server and validate that the response status code is 202 and that the
+        password to access the server has changed. Wait for the server to
+        achieve 'RESCUE' status. If the server is not a Windows server, get a
+        remote client for the rescued server and validate that the number of
+        disks on the server is equal to one plus the number of disks originally
+        on the server. Unrescue the server and once it reaches 'ACTIVE' status
+        get a remote client for the server and validate that the number of
+        disks on the server after being rescued and unrescued is equal to the
+        number of disks originally on the server.
+
+        The following assertions occur:
+            - The response status code of a rescue request is equal to 200
+            - The server password is different after the server rescue request
+            - If the image os_type metadata type is not windows, the number of
+              disks on the rescued server should be equal to one plus the
+              number of disks originally on the server
+            - The response status code of an unrescue request is equal to 202
+            - When the server has exited RESCUE statue the number of disks on
+              the server should be equal to the number of disks originally on
+              the server
+        """
 
         # Get the number of disks the server has
         remote_client = self.server_behaviors.get_remote_instance_client(
@@ -81,9 +106,27 @@ class ServerRescueTests(object):
     @tags(type='smoke', net='yes')
     def test_rescue_with_image_change_server_test(self):
         """
-        @summary: Verify that a server can enter and exit rescue mode when an image is
+        A server can be rescued using a specified image id
+
+        Verify that a server can enter and exit rescue mode when an image is
         supplied to the rescue request. This test will execute only if the
-        extension is enable. This is determined automatically.
+        extension is enabled. This is determined automatically. Create a server
+        using the key created during test set up. Get the distro of the created
+        server. Rescue the server using the alt image ref value from test
+        configuration as the rescue image ref value. Wait for the server to
+        reach 'RESCUE' status. Get a remote instance client for the server and
+        use it to get the distro of the rescued server. Validate that if the
+        distro should be different, it is different.
+
+        The following assertions occur:
+            - The response status code of a rescue request is equal to 200
+            - If the image id and the alt image id in test configuration are
+              different, the distro of the server before rescue and the distro
+              after rescue should be different.
+            - If the image id and the alt image id in test configuration are
+              the same, the distro of the server before rescue and the distro
+              after rescue should be the same.
+            - The response status code of an unrescue request is equal to 202
         """
         server = self.create_server(key_name=self.key.name)
         remote_client = self.server_behaviors.get_remote_instance_client(
@@ -129,6 +172,16 @@ class ServerFromImageRescueTests(ServerFromImageFixture,
 
     @classmethod
     def setUpClass(cls):
+        """
+        Perform actions that set up the necessary resources for testing
+
+        The following resources are created during this set up:
+            - A keypair with a random name starting with 'key'
+            - A server with the following settings:
+                - The keypair previously created
+                - Remaining values required for creating a server will come
+                  from test configuration.
+        """
         super(ServerFromImageRescueTests, cls).setUpClass()
         cls.key = cls.keypairs_client.create_keypair(rand_name("key")).entity
         cls.resources.add(cls.key.name,
