@@ -1,5 +1,5 @@
 """
-Copyright 2013 Rackspace
+Copyright 2015 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -29,6 +29,14 @@ class ServerFromVolumeV1ResizeDownConfirmTests(ServerFromVolumeV1Fixture,
 
     @classmethod
     def setUpClass(cls):
+        """
+        Perform actions that setup the necessary resources for testing.
+
+        The following resources are created during this setup:
+            - Creates a keypair.
+            - Creates an active server.
+            - Resizes the server.
+        """
         super(ServerFromVolumeV1ResizeDownConfirmTests, cls).setUpClass()
         cls.key = cls.keypairs_client.create_keypair(rand_name("key")).entity
         cls.resources.add(cls.key.name,
