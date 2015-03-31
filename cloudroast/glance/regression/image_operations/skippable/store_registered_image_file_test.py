@@ -16,6 +16,7 @@ limitations under the License.
 
 import unittest
 
+from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.glance.common.constants import Messages
 from cloudcafe.glance.common.types import ImageStatus
 from cloudcafe.glance.composite import ImagesComposite, ImagesAuthComposite
@@ -36,7 +37,8 @@ class StoreRegisteredImageFile(ImagesFixture):
         super(StoreRegisteredImageFile, cls).setUpClass()
 
         # Count set to number of images required for this module
-        reg_images = cls.images.behaviors.register_new_images(count=3)
+        reg_images = cls.images.behaviors.register_new_images(
+            name=rand_name('store_registered_image_file'), count=3)
         cls.reg_image = reg_images.pop()
         cls.duplicate_reg_image = reg_images.pop()
         cls.content_type_reg_image = reg_images.pop()

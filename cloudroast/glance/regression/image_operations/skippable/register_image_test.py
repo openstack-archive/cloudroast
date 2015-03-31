@@ -173,7 +173,7 @@ class RegisterImage(ImagesFixture):
         image_type = ImageType.IMPORT
         min_disk = images.config.min_disk
         min_ram = images.config.min_ram
-        name = rand_name('image')
+        name = rand_name('register_image')
         os_type = ImageOSType.LINUX
         protected = False
         tags = [rand_name('tag1')]
@@ -270,7 +270,8 @@ class RegisterImage(ImagesFixture):
         if prop_key == 'file' or prop_key == 'self':
             prop = {'{0}_'.format(prop_key): prop_val}
 
-        resp = self.images.client.register_image(**prop)
+        resp = self.images.client.register_image(
+            name=rand_name('register_image'), **prop)
         self.assertEqual(
             resp.status_code, 403,
             Messages.STATUS_CODE_MSG.format(403, resp.status_code))
@@ -288,7 +289,7 @@ class RegisterImage(ImagesFixture):
         7) Verify that the image ids are not the equal
         """
 
-        name = rand_name('image')
+        name = rand_name('register_image')
 
         resp = self.images.client.register_image(name=name)
         self.assertEqual(
@@ -331,7 +332,8 @@ class RegisterImage(ImagesFixture):
             sys.stderr.write('skipped \'Redmine bug #11438\' ... ')
             return
 
-        resp = self.images.client.register_image(**prop)
+        resp = self.images.client.register_image(
+            name=rand_name('register_image'), **prop)
         self.assertEqual(
             resp.status_code, 400,
             Messages.STATUS_CODE_MSG.format(400, resp.status_code))
@@ -350,7 +352,7 @@ class RegisterImage(ImagesFixture):
         the image is present.
         """
 
-        name = rand_name('image')
+        name = rand_name('register_image')
         resp = self.images.client.register_image(
             name=name, visibility=ImageVisibility.PUBLIC)
 

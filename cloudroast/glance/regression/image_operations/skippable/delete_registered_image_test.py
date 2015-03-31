@@ -16,6 +16,7 @@ limitations under the License.
 
 import unittest
 
+from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.glance.common.constants import Messages
 from cloudcafe.glance.common.types import ImageStatus, ImageVisibility
 from cloudcafe.glance.composite import ImagesComposite, ImagesAuthComposite
@@ -35,7 +36,9 @@ class DeleteRegisteredImage(ImagesFixture):
     def setUpClass(cls):
         super(DeleteRegisteredImage, cls).setUpClass()
 
-        cls.reg_image = cls.images.behaviors.register_new_image()
+        cls.reg_image = cls.images.behaviors.register_new_image(
+            name=rand_name('delete_registered_image')
+        )
 
         cls.images.client.store_image_file(
             cls.reg_image.id_, cls.images.config.test_file)
