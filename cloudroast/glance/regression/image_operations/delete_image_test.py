@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.glance.common.constants import Messages
 
 from cloudroast.glance.fixtures import ImagesFixture
@@ -28,7 +29,8 @@ class DeleteImage(ImagesFixture):
         member_id = cls.images_alt_one.auth.tenant_id
 
         # Count set to number of images required for this module
-        created_images = cls.images.behaviors.create_images_via_task(count=5)
+        created_images = cls.images.behaviors.create_images_via_task(
+            image_properties={'name': rand_name('delete_image')}, count=5)
 
         cls.created_image = created_images.pop()
         cls.alt_created_image = created_images.pop()
