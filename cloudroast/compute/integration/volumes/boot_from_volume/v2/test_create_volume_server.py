@@ -1,5 +1,5 @@
 """
-Copyright 2014 Rackspace
+Copyright 2015 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -29,7 +29,13 @@ class CreateVolumeServerTest(object):
 
     @tags(type='smoke', net='no')
     def test_attach_volume_to_server_from_volume(self):
-        """Verify volume attachment works for servers from volume"""
+        """
+        Verify volume attachment works for servers from volume.
+
+        Will create an available volume to be used in attaching the
+        volume to a server and then waiting for the volume status to
+        become "in-use" or timeout.
+        """
         # Create Attach-able Volume
         self.volume = self.blockstorage_behavior.create_available_volume(
             size=self.volume_size,
@@ -50,8 +56,13 @@ class CreateVolumeServerTest(object):
     @tags(type='smoke', net='yes')
     def test_volume_server_primary_disk(self):
         """
-        Verify the size of the virtual disk matches the size
-        set by the volume size at creation time
+        Verify the size of the virtual disk matches the size defined at setup.
+
+        Will get the remote instance of the server and then verify the size
+        of the disk is as expected.
+
+        The following assertions occur:
+            - The size of the volume is equal to the defined size in setup.
         """
         remote_client = self.server_behaviors.get_remote_instance_client(
             self.server, self.servers_config, key=self.key.private_key)
@@ -68,6 +79,15 @@ class ServerFromVolumeV2CreateServerTests(ServerFromVolumeV2Fixture,
 
     @classmethod
     def setUpClass(cls):
+        """	34
+        Perform actions that setup the necessary resources for testing.
+
+        The following resources are created during this setup:
+            - Creates a keypair.
+            - Creates an available volume.
+            - Creates block device mapping.
+            - Creates an active server.
+        """
         super(ServerFromVolumeV2CreateServerTests, cls).setUpClass()
         # Initialzing instance name, metadata, files, keys, networking
         cls.name = rand_name("server")
