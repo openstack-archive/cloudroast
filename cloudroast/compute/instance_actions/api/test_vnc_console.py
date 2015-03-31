@@ -1,5 +1,5 @@
 """
-Copyright 2013 Rackspace
+Copyright 2015 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -33,6 +33,16 @@ class ServerVncConsoleTests(object):
 
     @tags(type='smoke', net='no')
     def test_get_xvpvnc_console(self):
+        """
+        A user should be able to get the XVPVNC console for a server
+
+        Validate that the test user can get the XVPVNC VNC console
+
+        The following assertions occur:
+            - The response status code to the get vnc request is equal to 200
+            - The type of the console returned is 'XVPVNC'
+            - The url of the console returned is not None
+        """
         resp = self.vnc_client.get_vnc_console(
             self.server.id, VncConsoleTypes.XVPVNC)
         self.assertEqual(resp.status_code, 200)
@@ -43,6 +53,16 @@ class ServerVncConsoleTests(object):
 
     @tags(type='smoke', net='no')
     def test_get_novnc_console(self):
+        """
+        A user should be able to get the NOVNC console for a server
+
+        Validate that the test user can get the NOVNC VNC console
+
+        The following assertions occur:
+            - The response status code to the get vnc request is equal to 200
+            - The type of the console returned is 'NOVNC'
+            - The url of the console returned is not None
+        """
         resp = self.vnc_client.get_vnc_console(
             self.server.id, VncConsoleTypes.NOVNC)
         self.assertEqual(resp.status_code, 200)
@@ -57,5 +77,13 @@ class ServerFromImageVncConsoleTests(ServerFromImageFixture,
 
     @classmethod
     def setUpClass(cls):
+        """
+        Perform actions that set up the necessary resources for testing
+
+        The following resources are created during this set up:
+            - A server with the following settings:
+                - Values required for creating a server will come from test
+                  configuration.
+        """
         super(ServerFromImageVncConsoleTests, cls).setUpClass()
         cls.create_server()
