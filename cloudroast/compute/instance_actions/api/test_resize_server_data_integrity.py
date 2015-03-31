@@ -42,10 +42,19 @@ class ResizeServerDataIntegrityTests(object):
     @tags(type='smoke', net='yes')
     def test_active_file_inject_during_resize(self):
         """
-        At time of Start Resize snapshot is being made that snapshots the VDI
-        At time resize ends a second snapshot with delta time between start
-        and finish is being made after that both snapshots are united in
-        order to guarantee data integrity
+        Injecting a file during a resize should be successful.
+
+        Resize a server and wait until it enters tast state 'resize_migrating'.
+        Get a remote instance client for the server and use it to inject a file
+        with the name 'tst.txt' and the content 'content'. Confirm the resize by
+        waiting for it to reach status 'VERIFY_RESIZE'. Wait for the server to
+        enter 'ACTIVE' state. Get a remote client for the server, validate
+        that the file injected during resize exists on the server and has the
+        correct contents.
+
+        The following assertions occur:
+            - The file injected while the server was resizing is found on the
+              server and has the expected contents.
         """
         server_to_resize = self.server
         # resize server and wait for task resize migrate
@@ -86,6 +95,16 @@ class ServerFromImageResizeServerUpConfirmTests(ServerFromImageFixture,
 
     @classmethod
     def setUpClass(cls):
+        """
+        Perform actions that set up the necessary resources for testing
+
+        The following resources are created during this set up:
+            - A keypair with a random name starting with 'key'
+            - A server with  with the following settings:
+                - The keypair previously created
+                - Remaining values required for creating a server will come
+                  from test configuration.
+        """
         super(ServerFromImageResizeServerUpConfirmTests, cls).setUpClass()
         cls.key = cls.keypairs_client.create_keypair(rand_name("key")).entity
         cls.resources.add(cls.key.name,
