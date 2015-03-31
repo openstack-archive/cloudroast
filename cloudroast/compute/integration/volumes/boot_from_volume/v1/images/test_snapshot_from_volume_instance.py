@@ -1,5 +1,5 @@
 """
-Copyright 2013 Rackspace
+Copyright 2015 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -25,6 +25,12 @@ class ServerFromVolumeV1CreateImageTests(ServerFromVolumeV1Fixture):
 
     @classmethod
     def setUpClass(cls):
+        """
+        Perform actions that setup the necessary resources for testing.
+
+        The following resources are created during this setup:
+            - Creates an active server.
+        """
         super(ServerFromVolumeV1CreateImageTests, cls).setUpClass()
         cls.create_server()
         cls.image_name = rand_name('image')
@@ -33,7 +39,15 @@ class ServerFromVolumeV1CreateImageTests(ServerFromVolumeV1Fixture):
 
     @tags(type='smoke', net='no')
     def test_verify_create_glance_snapshot_is_disabled(self):
-        """Verify a user can not take glance snapshot on BFV instance"""
+        """
+        Verify a user can not take glance snapshot on BFV instance.
+
+        Will try to create an image from the server and is expecting a
+        "Forbidden" exception to be raised.
+
+        The following assertions occur:
+            - Expecting the Forbidden Exception to be raised.
+        """
         with self.assertRaises(Forbidden):
             self.servers_client.create_image(
                 self.server.id, self.image_name, metadata=self.metadata)
