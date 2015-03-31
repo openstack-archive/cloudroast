@@ -1,5 +1,5 @@
 """
-Copyright 2013 Rackspace
+Copyright 2015 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -43,16 +43,35 @@ class ResizeServerDownConfirmTests(object):
 
     @tags(type='positive', net='no')
     def test_verify_confirm_resize_response(self):
+        """
+        This test will pass
+        """
         pass
 
     @tags(type='positive', net='no')
     def test_server_properties_after_resize(self):
+        """
+        The flavor id of the resized server should be equal to the resize flavor
+
+        The following assertions occur:
+            - The flavor id from test configuration is equal to the flavor
+              id of the resized server
+        """
         self.assertEqual(self.server.flavor.id, self.resized_flavor.id)
 
     @tags(type='positive', net='yes')
     def test_resized_server_vcpus(self):
-        """Verify the number of vCPUs matches the value of the new flavor"""
+        """
+        vCPUs of resized server should be equal to the server's flavor's vCPUs
 
+        Get a remote client for the server resized during test set up. Use the
+        remote client to get the number of CPUs for the server. Validate that
+        this value is equal to the vCPUs of the flavor from test configuration.
+
+        The following validations occur:
+            - The vCPUs value of the flavor from test configuration is equal
+              to the number of CPUs on the server resized during test set up
+        """
         remote_client = self.server_behaviors.get_remote_instance_client(
             self.server, config=self.servers_config, key=self.key.private_key)
         server_actual_vcpus = remote_client.get_number_of_cpus()
@@ -66,7 +85,19 @@ class ResizeServerDownConfirmTests(object):
         hypervisor == ComputeHypervisors.KVM,
         'Disks do resize down for KVM.')
     def test_created_server_disk_size(self):
-        """Verify the size of the virtual disk matches that of the flavor"""
+        """
+        Disk size of resized server should be match the flavor's disk size
+
+        The virtual disk size of a resized server should be equal to the disk
+        size of the flavor used to resize the server. Get a remote client for
+        the server resized during test setup. Use the remote client to get the
+        disk size of the server. Validate that the disk size of the server is
+        equal to the disk size of the flavor from test configuration.
+
+        The following assertions occur:
+            - The disk size of the server created during test set up is equal
+              to the disk size of the flavor from test configuration.
+        """
         remote_client = self.server_behaviors.get_remote_instance_client(
             self.server, config=self.servers_config, key=self.key.private_key)
         disk_size = remote_client.get_disk_size(
@@ -77,7 +108,16 @@ class ResizeServerDownConfirmTests(object):
 
     @tags(type='positive', net='yes')
     def test_can_log_into_resized_server(self):
-        """Tests that we can log into the server after resizing"""
+        """
+        Resized server should be accessible using a remote instance client
+
+        Get a remote instance client for the server resized during test set up.
+        Validate that the remote instance client can authenticate to the server.
+
+        The following assertions occur:
+            - The remote client for the server resized during test set up
+              can authenticate to the server
+        """
         remote_client = self.server_behaviors.get_remote_instance_client(
             self.server, config=self.servers_config, key=self.key.private_key)
         self.assertTrue(remote_client.can_authenticate(),
@@ -85,8 +125,22 @@ class ResizeServerDownConfirmTests(object):
 
     @tags(type='positive', net='yes')
     def test_server_ram_after_resize(self):
-        """The server's RAM and should be modified to that of the new flavor"""
+        """
+        RAM of a resized server should be equal to the server's flavor's RAM
 
+        Get a remote instance client for the instance resized during test set
+        up. Calculate the minimum acceptable RAM value, this is 90% of the
+        RAM value of the flavor from test configuration. Validate that the
+        RAM of the server is equal to the RAM value of the flavor from the
+        test configuration or greater than/equal to the minimum RAM value
+        previously calculated.
+
+        The following assertions occur:
+            - The RAM value of the server resized during test set up is equal
+              to the RAM value of the flavor from test configuration or
+              greater than/equal to a value that is 90% of the RAM value of the
+              flavor from test configuration
+        """
         remote_instance = self.server_behaviors.get_remote_instance_client(
             self.server, self.servers_config, key=self.key.private_key)
         margin = (int(self.resized_flavor.ram) * .1)
@@ -100,8 +154,29 @@ class ResizeServerDownConfirmTests(object):
 
     @tags(type='positive', net='no')
     def test_resized_server_instance_actions(self):
-        """Verify the correct actions are logged during a confirmed resize."""
+        """
+        Verify the correct actions are logged during a server resize.
 
+        Get the list of all actions that the server has taken from the Nova API.
+        Filter the list so that only the actions 'resize' remain. Validate that
+        the list of filtered actions has a length of 1 (that only 1 resize
+        action has been performed.) Validate that the values of the identified
+        create action match the values returned in the create server response
+        received during test setup. Filter the list so that only the actions
+        'confirmResize' remain. Validate that the list of filtered actions has a
+        length of 1 (that only 1 confirmResize action has been performed.)
+        Validate that the values of the identified create action match the
+        values returned in the create server response received during test
+        setup.
+
+        The following assertions occur:
+            - The list of actions that match 'resize' has only one item
+            - The values for the resize action match the values received in
+              response to the create request
+            - The list of actions that match 'confirmResize' has only one item
+            - The values for the confirmResize action match the values received
+              in response to the resize request
+        """
         actions = self.servers_client.get_instance_actions(
             self.server.id).entity
 
@@ -132,6 +207,12 @@ class ResizeDownConfirmBaseFixture(object):
 
     @classmethod
     def resize_down_and_confirm(self):
+        """
+        Resize a server and wait for it to become active
+
+        Resize the server created during test setup using the flavor from
+        test configurations. Wait for the server to become ACTIVE.
+        """
         server_to_resize = self.server
         # resize server and confirm
         self.resize_resp = self.servers_client.resize(
@@ -161,6 +242,20 @@ class ServerFromImageResizeServerDownConfirmTests(
 
     @classmethod
     def setUpClass(cls):
+        """
+        Perform actions that set up the necessary resources for testing
+
+        The following resources are created during this set up:
+            - A keypair with a random name starting with 'key'
+            - A server with  with the following settings:
+                - The keypair previously created
+                - The alt flavor id from test configuration
+                - Remaining values required for creating a server will come
+                  from test configuration.
+
+        The following actions are performed during this set up:
+            - The server is resized
+        """
         super(ServerFromImageResizeServerDownConfirmTests, cls).setUpClass()
         cls.key = cls.keypairs_client.create_keypair(rand_name("key")).entity
         cls.resources.add(cls.key.name,
