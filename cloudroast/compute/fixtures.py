@@ -219,6 +219,7 @@ class ComputeAdminFixture(ComputeFixture):
         super(ComputeAdminFixture, cls).setUpClass()
         cls.compute_admin = ComputeAdminComposite()
 
+        cls.admin_rescue_client = cls.compute_admin.rescue.client
         cls.admin_flavors_client = cls.compute_admin.flavors.client
         cls.admin_servers_client = cls.compute_admin.servers.client
         cls.admin_images_client = cls.compute_admin.images.client
