@@ -1,5 +1,5 @@
 """
-Copyright 2013 Rackspace
+Copyright 2015 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -24,6 +24,12 @@ class DeleteKeypairTest(ComputeFixture):
 
     @classmethod
     def setUpClass(cls):
+        """
+        Perform actions that setup the necessary resources for testing keypair.
+
+        The following resources are created during the setup.
+            - Uses keypairs client to create a new keypair.
+        """
         super(DeleteKeypairTest, cls).setUpClass()
         cls.name = rand_name("key")
         cls.keypair = cls.keypairs_client.create_keypair(cls.name).entity
@@ -31,19 +37,54 @@ class DeleteKeypairTest(ComputeFixture):
 
     @tags(type='positive', net='no')
     def test_delete_keypair_response(self):
+        """
+        Verify the response code of the delete call.
+
+        Pulling the response and interrogating the object.
+
+         The following assertions occur:
+            - 202 status code from the http call.
+        """
         self.assertEqual(self.delete_resp.status_code, 202)
 
     @tags(type='positive', net='no')
     def test_deleted_keypair_not_listed(self):
+        """
+        Verify the keypair is no longer returned in the lists.
+
+        Using list_keypairs from the keypairs client,
+        it will validate the keypair is no longer returned in the list.
+
+         The following assertions occur:
+            - keypair object is not in the list returned
+        """
         keypairs_list = self.keypairs_client.list_keypairs().entity
         self.assertNotIn(self.keypair, keypairs_list)
 
     @tags(type='negative', net='no')
     def test_get_deleted_keypair_fails(self):
+        """
+        Verify that get keypair by name doesn't work.
+
+        Using the get_keypair call from keypair client,
+        passing in the name as the parameter and expecting ItemNotFound.
+
+         The following assertions occur:
+            - Expecting the ItemNotFound Exception to be raised
+        """
         with self.assertRaises(ItemNotFound):
             self.keypairs_client.get_keypair(self.name)
 
     @tags(type='negative', net='no')
     def test_delete_deleted_keypair_fails(self):
+        """
+        Verify that delete keypair by name doesn't work.
+
+        Using the delete_keypair call from keypair client,
+        passing in the name as the parameter and expecting ItemNotFound.
+
+         The following assertions occur:
+            - Expecting the ItemNotFound Exception to be raised
+        """
         with self.assertRaises(ItemNotFound):
             self.keypairs_client.delete_keypair(self.name)
