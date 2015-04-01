@@ -25,6 +25,17 @@ class ConfigDriveFilesTest(ComputeFixture):
 
     @classmethod
     def setUpClass(cls):
+        """
+        Perform actions that setup the necessary resources for testing
+
+        The following resources are created during this set up:
+            - A keypair with a random name starting with 'key'
+            - A server with  with the following settings:
+                - config_drive set to True
+                - The keypair previously created
+                - Remaining values required for creating a server will come
+                  from test configuration.
+        """
         super(ConfigDriveFilesTest, cls).setUpClass()
         cls.key = cls.keypairs_client.create_keypair(rand_name("key")).entity
         cls.resources.add(cls.key.name,
@@ -45,7 +56,18 @@ class ConfigDriveFilesTest(ComputeFixture):
 
     @tags(type='smoke', net='yes')
     def test_config_drive_network_metadata_dns_services(self):
-        """Verify Services of vendor networking metadata on config drive"""
+        """
+        Verify Services of vendor networking metadata on config drive
+
+        Validate that there is at least one network information service in the
+        vendor metadata. Attempt to ping every service IP address in the network
+        information service(s). Validate that none of the ping attempts failed.
+
+        The following assertions occur:
+            - The number of network information services on the server is
+              greater than or equal to 1
+            - The list of failed ping attempts is empty.
+        """
         self.assertGreaterEqual(len(self.vendor_meta.network_info.services), 1,
                                 msg='Expected config drive to have at least 1'
                                 ' network dns service configured')
@@ -63,8 +85,17 @@ class ConfigDriveFilesTest(ComputeFixture):
 
     @tags(type='smoke', net='yes')
     def test_config_drive_network_metadata_networks(self):
-        """Verify the information of the vendor networking metadata matches
-        the server's addresses"""
+        """
+        Vendor networking metadata should match the server's addresses
+
+        Validate that every IP address on the server is found in the network
+        information in the vendor metadata for the server created during test
+        set up.
+
+        The following assertions occur:
+            - The list of ips that are found on the server but not found in the
+              vendor metadata networks information is empty.
+        """
         expected_addresses = []
         addresses = self.server.addresses
 
@@ -86,7 +117,19 @@ class ConfigDriveFilesTest(ComputeFixture):
 
     @tags(type='smoke', net='yes')
     def test_config_drive_network_metadata_file_links_structure(self):
-        """Verify File structure of vendor metadata on config drive"""
+        """
+        Verify File structure of vendor metadata on config drive
+
+        Validate that there is at least one network information link. Validate
+        that the last link in the list has values for the attributes 'mtu',
+        'id', or 'vif_id'.
+
+        The following assertions occur:
+            - The number of network information links on the server is
+              greater than or equal to 1
+            - The last link in the list of links in vendor metadata has values
+              for the attributes 'mtu', 'id', and 'vif_id'
+        """
         self.assertGreaterEqual(len(self.vendor_meta.network_info.links), 1,
                                 msg='Expected config drive to have at least 1'
                                 ' hardware link configured')
@@ -98,7 +141,22 @@ class ConfigDriveFilesTest(ComputeFixture):
 
     @tags(type='smoke', net='yes')
     def test_config_drive_network_metadata_file_network_structure(self):
-        """Verify File structure of vendor metadata on config drive"""
+        """
+        Verify File structure of vendor metadata on config drive
+
+        Validate that the last network in the network list from the network
+        information in vendor metadata on the server created during test set up
+        has values for the 'type', 'netmask', 'link', 'routes', 'id'. There is a
+        value for the IP whitelist for the last network in the network
+        information from the vendor metadata.
+
+        The following assertions occur:
+            - The last network in the network information in the vendor metadata
+              has values for the attributes 'type', 'netmask', 'link', 'routes',
+              and 'id'
+            - The ip whitelist for the last network in the network information
+              is not None
+        """
 
         for network in self.vendor_meta.network_info.networks:
             bad_attrs = [attr for attr in ['type',

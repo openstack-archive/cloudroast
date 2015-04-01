@@ -1,5 +1,5 @@
 """
-Copyright 2013 Rackspace
+Copyright 2015 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -25,6 +25,27 @@ class ConfigDriveFilesTest(ComputeFixture):
 
     @classmethod
     def setUpClass(cls):
+        """
+        Perform actions that setup the necessary resources for testing
+
+        The following data is generated during this set up:
+            - A dictionary of metadata with the values:
+                {'user_key1': 'value1',
+                 'user_key2': 'value2'}
+            - If default file injection is enabled, a file path for a file path
+             '/test.txt' with the contents 'This is a config drive test file.'
+
+        The following resources are created during this set up:
+            - A keypair with a random name starting with 'key'
+            - A server with  with the following settings:
+                - config_drive set to True
+                - The keypair previously created
+                - Files to be injected at server creation including the
+                  '/test.txt' data previously generated
+                - The metadata previously created
+                - Remaining values required for creating a server will come
+                  from test configuration.
+        """
         super(ConfigDriveFilesTest, cls).setUpClass()
         cls.metadata = {'meta_key_1': 'meta_value_1',
                         'meta_key_2': 'meta_value_2'}
@@ -47,7 +68,32 @@ class ConfigDriveFilesTest(ComputeFixture):
 
     @tags(type='smoke', net='yes')
     def test_config_drive_openstack_metadata(self):
-        """Verify openstack metadata on config drive"""
+        """
+        Verify openstack metadata on config drive
+
+        Mount the config drive on the server. Get the Openstack metadata on the
+        server and validate that the values of the openstack metadata match the
+        expected values.
+
+        The following assertions occur:
+            - The server's admin password is equal to the admin password in the
+              openstack metadata
+            - The availability_zone value in the openstack metadata is not None
+            - The path of the first file in the openstack metadata files is
+              equal to the file path set during test set up.
+            - The hostname value in the openstack metadata is not None
+            - The launch_index value in the openstack metadata is not None
+            - The name in the openstack metadata is equal to the name of the
+              server created during test set up
+            - The value of 'meta_key_1' in the openstack metadata is equal to
+              'meta_value_1'
+            - The value of 'meta_key_2' in the openstack metadata is equal to
+              'meta_value_2'
+            - The public key in the openstack metadata is equal to the public
+              key created during test set up.
+            - The uuid in the openstack metadata is equal to the id of the
+              server created during test set up
+        """
         message = "Expected {0} to be {1}, was {2}."
         self.config_drive_behaviors.mount_config_drive(
             server=self.server, servers_config=self.servers_config,
@@ -91,7 +137,29 @@ class ConfigDriveFilesTest(ComputeFixture):
 
     @tags(type='smoke', net='yes')
     def test_config_drive_ec2_metadata(self):
-        """Verify ec2 metadata on config drive"""
+        """
+        Verify ec2 metadata on config drive
+
+        Mount the config drive on the server. Get the ec2 metadata on the
+        server and validate that the values of the ec2 metadata match the
+        expected values.
+
+        The following assertions occur:
+            - The ami id in the ec2 metadata is not None
+            - The ami launch index in the ec2 metadata is not None
+            - The ami manifest path in the ec2 metadata is not None
+            - The block device mapping in the ec2 metadata is not None
+            - The hostname in the ec2 metadata is not None
+            - The instance action in the ec2 metadata is not None
+            - The instance id in the ec2 metadata is not None
+            - The instance type in the ec2 metadata is equal to the name of the
+              flavor set during test configuration.
+            - The local host name in the ec2 metadata is not None
+            - The meta placement in the ec2 metadata is not None
+            - The public IPv4 in the ec2 metadata is not None
+            - The 'openssh-key' public key in the ec2 metadata is equal to the
+              public key created during test set up.
+        """
         message = "Expected {0} to be {1}, was {2}."
         self.config_drive_behaviors.mount_config_drive(
             server=self.server, servers_config=self.servers_config,

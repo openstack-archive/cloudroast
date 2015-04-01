@@ -1,5 +1,5 @@
 """
-Copyright 2013 Rackspace
+Copyright 2015 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -26,6 +26,28 @@ class ConfigDriveDirectoryTest(ComputeFixture):
 
     @classmethod
     def setUpClass(cls):
+        """
+        Perform actions that setup the necessary resources for testing
+
+        The following data is generated during this set up:
+            - A name value that is a random name starting with the word 'server'
+            - A dictionary of metadata with the values:
+                {'user_key1': 'value1',
+                 'user_key2': 'value2'}
+            - If default file injection is enabled, a file path for a file path
+             '/test.txt' with the contents 'This is a config drive test file.'
+
+        The following resources are created during this set up:
+            - A keypair with a random name starting with 'key'
+            - A server with  with the following settings:
+                - config_drive set to True
+                - The keypair previously created
+                - Files to be injected at server creation including the
+                  '/test.txt' data previously generated
+                - The metadata previously created
+                - Remaining values required for creating a server will come
+                  from test configuration.
+        """
         super(ConfigDriveDirectoryTest, cls).setUpClass()
         cls.metadata = {'meta_key_1': 'meta_value_1',
                         'meta_key_2': 'meta_value_2'}
@@ -47,7 +69,19 @@ class ConfigDriveDirectoryTest(ComputeFixture):
 
     @tags(type='smoke', net='yes')
     def test_create_server_config_drive_openstack_directory(self):
-        """Verify that config drive can be mounted"""
+        """
+        A server with config drive enabled should have openstack directories
+
+        Get a remote instance client for the server created during test set up.
+        Mount the config drive on the server. Use the remote client to validate
+        that the '/openstack/latest' directory and the /openstack/latest
+        directory are at the base path to mount directory set during test
+        configuration.
+
+        The following assertions occur:
+            - The '/openstack/latest' directory is present in the config drive
+            - The '/openstack/content' directory is present in the config drive
+        """
         remote_client = self.server_behaviors.get_remote_instance_client(
             self.server, self.servers_config, key=self.key.private_key)
         self.config_drive_behaviors.mount_config_drive(
@@ -68,7 +102,17 @@ class ConfigDriveDirectoryTest(ComputeFixture):
 
     @tags(type='smoke', net='yes')
     def test_create_server_config_drive_ec2_directory(self):
-        """Verify that config drive can be mounted"""
+        """
+        A server with config drive enabled should have ec2 directories
+
+        Get a remote instance client for the server created during test set up.
+        Mount the config drive on the server. Use the remote client to validate
+        that the '/ec2/latest' directory is at the base path to mount directory
+        set during test configuration.
+
+        The following assertions occur:
+            - The '/ec2/latest' directory is present in the config drive
+        """
         remote_client = self.server_behaviors.get_remote_instance_client(
             self.server, self.servers_config, key=self.key.private_key)
         self.config_drive_behaviors.mount_config_drive(
@@ -84,7 +128,19 @@ class ConfigDriveDirectoryTest(ComputeFixture):
 
     @tags(type='smoke', net='yes')
     def test_create_server_config_drive_user_data_not_present(self):
-        """Verify that user_data is empty as expected"""
+        """
+        User data should not be present unless it was set during server creation
+
+        Get a remote instance client for the server created during test set up.
+        Mount the config drive on the server. Attempting to use the remote client
+        to get the details of the config drive user data should result in a
+        'FileNotFound' error.
+
+        The following assertions occur:
+            - Attempting to get the file contents of the user data file on
+              the server created during set up should raise a 'FileNotFound'
+              error
+        """
         remote_client = self.server_behaviors.get_remote_instance_client(
             self.server, self.servers_config, key=self.key.private_key)
         self.config_drive_behaviors.mount_config_drive(
