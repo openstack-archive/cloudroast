@@ -17,6 +17,7 @@ limitations under the License.
 import calendar
 import time
 
+from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.glance.common.constants import Messages
 from cloudcafe.glance.common.types import TaskStatus
 
@@ -29,7 +30,10 @@ class GetTaskDetails(ImagesFixture):
     def setUpClass(cls):
         super(GetTaskDetails, cls).setUpClass()
 
-        cls.created_task = cls.images.behaviors.create_new_task()
+        input_ = {'image_properties': {'name': rand_name('get_task')},
+                  'import_from': cls.images.config.import_from}
+
+        cls.created_task = cls.images.behaviors.create_new_task(input_)
         cls.task_created_at_time_in_sec = calendar.timegm(time.gmtime())
 
     @classmethod
