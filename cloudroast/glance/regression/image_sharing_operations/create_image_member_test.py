@@ -119,25 +119,31 @@ class CreateImageMember(ImagesFixture):
         while number_of_image_members != quota_limit:
             member_id = '{0}{1}'.format(rand_name('member'),
                                         str(random.randint(9999, 100000)))
+
             resp = self.images.client.create_image_member(
                 self.quota_image.id_, member_id)
-            self.assertEqual(resp.status_code, 200,
-                             self.status_code_msg.format(200,
-                                                         resp.status_code))
+            self.assertEqual(
+                resp.status_code, 200,
+                Messages.STATUS_CODE_MSG.format(200, resp.status_code))
+
             resp = self.images.client.list_image_members(self.quota_image.id_)
-            self.assertTrue(resp.ok, self.ok_resp_msg.format(resp.status_code))
+            self.assertTrue(resp.ok,
+                            Messages.OK_RESP_MSG.format(resp.status_code))
             listed_members = resp.entity
+
             number_of_image_members = len(listed_members)
 
         member_id = '{0}{1}'.format(rand_name('member'),
                                     str(random.randint(9999, 100000)))
+
         resp = self.images.client.create_image_member(
             self.quota_image.id_, member_id)
-        self.assertEqual(resp.status_code, 413,
-                         self.status_code_msg.format(413, resp.status_code))
+        self.assertEqual(
+            resp.status_code, 413,
+            Messages.STATUS_CODE_MSG.format(413, resp.status_code))
 
         resp = self.images.client.list_image_members(self.quota_image.id_)
-        self.assertTrue(resp.ok, self.ok_resp_msg.format(resp.status_code))
+        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
         listed_members = resp.entity
 
         self.assertEqual(
