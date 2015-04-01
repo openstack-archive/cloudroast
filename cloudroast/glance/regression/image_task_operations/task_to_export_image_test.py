@@ -31,7 +31,9 @@ class TaskToExportImage(ImagesIntegrationFixture):
         super(TaskToExportImage, cls).setUpClass()
 
         # Count set to number of images required for this module
-        created_images = cls.images.behaviors.create_images_via_task(count=6)
+        created_images = cls.images.behaviors.create_images_via_task(
+            image_properties={'name': rand_name('task_to_export_image')},
+            count=6)
 
         cls.export_image = created_images.pop()
         cls.export_success_image = created_images.pop()
@@ -41,6 +43,7 @@ class TaskToExportImage(ImagesIntegrationFixture):
         cls.container_dne_image = created_images.pop()
 
         created_server = cls.compute.servers.behaviors.create_active_server(
+            name=rand_name('task_to_export_image_server'),
             image_ref=cls.images.config.primary_image).entity
         cls.resources.add(
             created_server.id, cls.compute.servers.client.delete_server)
@@ -56,7 +59,8 @@ class TaskToExportImage(ImagesIntegrationFixture):
             remote_client.create_directory(test_directory)
         cls.created_snapshot = (
             cls.compute.images.behaviors.create_active_image(
-                created_server.id).entity)
+                server_id=created_server.id,
+                name=rand_name('task_to_export_image_snapshot')).entity)
         cls.resources.add(
             cls.created_snapshot.id, cls.images.client.delete_image)
 

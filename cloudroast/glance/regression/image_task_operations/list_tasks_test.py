@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.glance.common.constants import Messages
 from cloudcafe.glance.common.types import TaskTypes
 
@@ -26,7 +27,11 @@ class ListTasks(ImagesFixture):
     def setUpClass(cls):
         super(ListTasks, cls).setUpClass()
 
-        cls.created_task = cls.images.behaviors.create_new_task()
+        import_from = cls.images.config.import_from
+        input_ = {'image_properties': {'name': rand_name('delete_task')},
+                  'import_from': import_from}
+
+        cls.created_task = cls.images.behaviors.create_new_task(input_)
 
     @classmethod
     def tearDownClass(cls):
