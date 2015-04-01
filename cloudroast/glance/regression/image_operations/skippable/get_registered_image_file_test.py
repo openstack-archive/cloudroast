@@ -28,11 +28,11 @@ images = ImagesComposite(user_one)
 @unittest.skipUnless(
     images.config.allow_post_images and images.config.allow_put_image_file and
     images.config.allow_get_image_file, 'Endpoint has incorrect access')
-class GetImageFile(ImagesFixture):
+class GetRegisteredImageFile(ImagesFixture):
 
     @classmethod
     def setUpClass(cls):
-        super(GetImageFile, cls).setUpClass()
+        super(GetRegisteredImageFile, cls).setUpClass()
 
         member_id = cls.images_alt_one.auth.tenant_id
 
@@ -54,7 +54,7 @@ class GetImageFile(ImagesFixture):
     @classmethod
     def tearDownClass(cls):
         cls.images.behaviors.resources.release()
-        super(GetImageFile, cls).tearDownClass()
+        super(GetRegisteredImageFile, cls).tearDownClass()
 
     def test_get_image_file(self):
         """
@@ -128,7 +128,7 @@ class GetImageFile(ImagesFixture):
         self.assertNotEqual(
             resp.content, self.images.config.test_file,
             msg='Unexpected file content. Expected: 404 Item not found '
-                'Received: {1}'.format(resp.content))
+                'Received: {0}'.format(resp.content))
 
     def test_get_image_file_using_blank_image_id(self):
         """

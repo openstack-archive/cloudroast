@@ -46,7 +46,7 @@ class RegisterImage(ImagesFixture):
         cls.resources.release()
         super(RegisterImage, cls).tearDownClass()
 
-    def test_register_image_no_properties(self):
+    def test_register_image_without_passing_properties(self):
         """
         @summary: Register image without passing any properties
 
@@ -153,7 +153,7 @@ class RegisterImage(ImagesFixture):
                              'Received: {0}').format(errors))
 
     @unittest.skip('Redmine bug #11436')
-    def test_register_image_all_allowed_properties(self):
+    def test_register_image_passing_all_allowed_properties(self):
         """
         @summary: Register image passing all allowed properties
 
@@ -244,7 +244,7 @@ class RegisterImage(ImagesFixture):
 
     @data_driven_test(
         ImagesDatasetListGenerator.UpdateRegisterImageRestricted())
-    def ddtest_register_image_restricted_property(self, prop):
+    def ddtest_register_image_passing_restricted_property(self, prop):
         """
         @summary: Register image passing restricted property
 
@@ -259,8 +259,11 @@ class RegisterImage(ImagesFixture):
         prop_key, prop_val = prop.popitem()
 
         # This is a temporary workaround for skips in ddtests
-        if (prop_key == 'user_id' or prop_key == 'os_type' or
-                prop_key == 'image_type' or prop_key == 'id'):
+        failure_prop_list = [
+            'checksum', 'created_at', 'id', 'image_type', 'location',
+            'os_type', 'owner', 'schema', 'size', 'status', 'updated_at',
+            'user_id', 'visibility']
+        if prop_key in failure_prop_list:
             sys.stderr.write('skipped \'Redmine bug #11436\' ... ')
             return
 
@@ -272,7 +275,7 @@ class RegisterImage(ImagesFixture):
             resp.status_code, 403,
             Messages.STATUS_CODE_MSG.format(403, resp.status_code))
 
-    def test_register_two_images_same_name(self):
+    def test_register_two_images_passing_same_name(self):
         """
         @summary: Register two images passing the same name for both
 
@@ -312,7 +315,7 @@ class RegisterImage(ImagesFixture):
 
     @data_driven_test(
         ImagesDatasetListGenerator.RegisterImageInvalidValues())
-    def ddtest_register_image_invalid_values(self, prop):
+    def ddtest_register_image_passing_invalid_values(self, prop):
         """
         @summary: Register image passing invalid value for image property
 
