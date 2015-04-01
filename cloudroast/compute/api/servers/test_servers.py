@@ -1,5 +1,5 @@
 """
-Copyright 2013 Rackspace
+Copyright 2015 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -36,8 +36,15 @@ class ServersTest(ComputeFixture):
     @tags(type='positive', net='yes')
     def test_create_server_with_admin_password(self):
         """
-        If an admin password is provided on server creation, the server's root
-        password should be set to that password.
+        Creates a server with an admin password to be used as root's password.
+
+        This will set the server that is created with the root password of
+        oldslice129690TuG72Bgj2.  Calls cloudcafe's server behaviors get
+        remote instance client with the password to validate that it can
+        authenticate wth password.
+        The following assertions occur:
+            - Defined password is the same as the admin password.
+            - get_remote_instance_client has a true value for can_authenticate
         """
         admin_password = 'oldslice129690TuG72Bgj2'
         response = self.server_behaviors.create_active_server(
@@ -55,7 +62,22 @@ class ServersTest(ComputeFixture):
 
     @tags(type='positive', net='no')
     def test_update_server(self):
-        """Update the name and access addresses of a server."""
+        """
+        Creates a server and then updates the name, ipv4 and ipv6 values.
+
+        Will call the create_active_server from server behaviors, then call
+        update_server from cloudcafe's server_client passing in the newly
+        created server's id, new random name, ipv4 address 192.168.32.16 and
+        ipv6 address 3ffe:1900:4545:3:200:f8ff:fe21:67cf and then waiting for
+        the server to make it to active status. Calling get_server to validate
+        the updates occurred correctly
+        The following assertions occur:
+            - Server name was updated with new random name.
+            - Server's IPV4 address is 192.168.32.16.
+            - Server's IPV6 address is 3ffe:1900:4545:3:200:f8ff:fe21:67cf.
+            - Server's creation date is still the same as the original.
+            - Server's updated date is not the same as the original.
+        """
 
         response = self.server_behaviors.create_active_server()
         original_server = response.entity
