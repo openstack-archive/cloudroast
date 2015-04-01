@@ -17,6 +17,8 @@ limitations under the License.
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.compute.common.exceptions import ItemNotFound
 from cloudcafe.compute.common.types import NovaImageStatusTypes
+from cloudcafe.compute.common.exceptions import BadRequest
+
 from cloudroast.compute.fixtures import ComputeFixture
 
 
@@ -76,7 +78,7 @@ class ImagesTest(ComputeFixture):
         """
         try:
             image_resp = self.servers_client.create_image(self.server.id, '')
-        except:
+        except BadRequest:
             pass
         else:
             image_id = self.parse_image_id(image_resp)
