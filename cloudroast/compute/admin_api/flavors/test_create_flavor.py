@@ -55,9 +55,6 @@ class CreateFlavorTest(ComputeAdminFixture):
 
         Create an instance using the flavor id created during Setup. Wait for
         that instance to become active.
-        This test will be successful if:
-            - The instance successfully builds in less than configured timeout
-              time
         """
         resp = self.server_behaviors.create_active_server(
             flavor_ref=self.flavor.id)
@@ -71,7 +68,8 @@ class CreateFlavorTest(ComputeAdminFixture):
 
         Validate that you receive an 'Action in Progress' error when a user
         attempts to create a flavor with a previously used ID value.
-        This test will be successful if:
+
+        The following assertions occur:
             - The create flavor request raises a 'Action in Progress' error
         """
         with self.assertRaises(ActionInProgress):

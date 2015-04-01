@@ -46,9 +46,6 @@ class DeleteFlavorTest(ComputeAdminFixture):
 
         Validate that the detailed information of the flavor created and
         deleted during setup can be accessed.
-        This test will be successful if:
-            - The test user can successfully retrieve the details of a deleted
-              instance
         """
         self.admin_flavors_client.get_flavor_details(self.flavor.id)
 
@@ -59,7 +56,8 @@ class DeleteFlavorTest(ComputeAdminFixture):
 
         Validate that you receive an 'Bad Request' error when a user attempts
         to create an instance with a flavor created and deleted during setup.
-        This test will be successful if:
+
+        The following assertions occur:
             - The create instance requests raises a 'Bad Request' error
         """
         with self.assertRaises(BadRequest):
@@ -74,7 +72,8 @@ class DeleteFlavorTest(ComputeAdminFixture):
         Validate that you receive an 'Item Not Found' error when a user
         attempts to delete the flavor that was created and deleted during
         setup.
-        This test will be successful if:
+
+        The following assertions occur:
             - The delete flavor requests raises a 'Item not Found' error
         """
         with self.assertRaises(ItemNotFound):

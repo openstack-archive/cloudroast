@@ -31,7 +31,7 @@ class MigrateServerTest(object):
         server and waits for status verify resize, once it confirms
         the resize, it will see if the original host is different from the current.
 
-        This test will be successful if:
+        The following assertions occur:
             - The list flavors with detail request raises a 'Bad Request'
               error when given an invalid value for the minimum disk size.
         """
