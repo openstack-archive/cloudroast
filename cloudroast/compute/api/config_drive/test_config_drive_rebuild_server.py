@@ -1,5 +1,5 @@
 """
-Copyright 2013 Rackspace
+Copyright 2015 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -32,6 +32,58 @@ class ConfigDriveRebuildTest(ComputeFixture):
 
     @classmethod
     def setUpClass(cls):
+        """
+        Perform actions that setup the necessary resources for testing
+
+        The following data is generated during this set up:
+            - A dictionary of metadata with the values:
+                {'meta_key_1': 'meta_value_1',
+                 'meta_key_2': 'meta_value_2'}
+            - A list of files containing a file with the path '/test.txt' and
+              the contents 'This is a config drive test file.'
+            - User data contents 'My user data'
+
+        The following resources are created during this set up:
+            - A keypair with a random name starting with 'key'
+            - A server with the following settings:
+                - config_drive set to True
+                - The keypair previously created
+                - Files to be injected at server creation including the
+                 '/test.txt' data previously generated
+                - The user data previously generated
+                - The metadata previously created
+                - Remaining values required for creating a server will come
+                  from test configuration.
+
+        The following actions are performed during this set up:
+            - A remote instant client is set up for the previously created
+              server
+            - The config drive is mounted at the base path set during test
+              configuration on the previously created server
+            - The details of the mounted config drive are retrieved and the
+              config drive user data, size of the config drive and the open
+              stack metadata prior to the server rebuild are recorded.
+            - The OpenStack metadata of the previously created server is
+              recorded prior to rebuild
+            - The previously created server is rebuilt using:
+                - The alt image id from test configuration
+                - The keypair previously created
+                - Files to be injected at server creation including the
+                 '/test.txt' data previously generated
+                - The user data previously generated
+                - The metadata previously created
+                - Remaining values required for creating a server will come
+                  from test configuration.
+            - A fresh remote instant client is set up for the rebuilt server
+            - The config drive is mounted at the base path set during test
+              configuration on the rebuilt server
+            - The details of the mounted config drive are retrieved and the
+              config drive user data, size of the config drive and the open
+              stack metadata after the server rebuild are recorded.
+            - Using the remote instance client, it is determined whether the
+              directory '/openstack/content' is present at the base path to
+              mount set during test configuration
+        """
         super(ConfigDriveRebuildTest, cls).setUpClass()
 
         cls.metadata = {'meta_key_1': 'meta_value_1',
@@ -102,20 +154,75 @@ class ConfigDriveRebuildTest(ComputeFixture):
                 cls.config_drive_config.base_path_to_mount))
 
     def test_verify_user_data(self):
+        """
+        Verify that the user data is present after a server rebuild
+
+        Validate that the user data found on the server from test set up after
+        it had been rebuilt is equal to the user data created during test setup.
+
+        The following assertions occur:
+            - The 'dir_openstack_content_present' variable is True
+        """
         self.assertEqual(self.user_data_after, self.user_data,
                          msg="User data different")
 
     def test_verify_tolerance(self):
+        """
+        Verify that config drive size is within expected tolerance
+
+        Validate that the size of the config drive after the server rebuild in
+        test set up is within the tolerance values set during test
+        configuration.
+
+        The following assertions occur:
+            - The size of the config drive directory after rebuild is greater
+              than or equal to the config drive minimum size set during test
+              configuration.
+            - The size of the config drive directory after rebuild is less than
+              or equal to the config drive maximum size set during test
+              configuration.
+        """
         self.assertGreaterEqual(self.kb_size_after.size,
                                 self.config_drive_config.min_size)
         self.assertLessEqual(self.kb_size_after.size,
                              self.config_drive_config.max_size)
 
     def test_directory_present_after_rebuild(self):
+        """
+        Verify that the 'openstack' directory is present after a server rebuild
+
+        Validate that the variable showing whether the directory of OpenStack
+        content is present after the server rebuilt during test set up is
+        True.
+
+        The following assertions occur:
+            - The 'dir_openstack_content_present' variable is equal to True
+        """
         self.assertEqual(self.dir_openstack_content_present, True,
-                         msg="Directory Openstack is not present")
+                         msg="Directory openstack is not present")
 
     def test_openstack_metadata(self):
+        """
+        OpenStack metadata should remain consistent through a server rebuild
+
+        Validate that the open stack metadata after a server rebuild matches the
+        metadata from before the rebuild that was recorded during test set up.
+        Validate that the metadata contains some expected key value pairs.
+
+        The following assertions occur:
+            - The availability_zone value in the OpenStack metadata is not None
+            - The hostname value in the OpenStack metadata is not None
+            - The launch index value in the OpenStack metadata is not None
+            - The server name value in the OpenStack metadata after rebuild is
+              equal to the server name value in the OpenStack metadata prior to
+              rebuild
+            - The public key value in the OpenStack metadata after rebuild is
+              equal to the public key value in the OpenStack metadata prior to
+              rebuild
+            - The uuid value in the OpenStack metadata after rebuild is
+              equal to the uuid value in the OpenStack metadata prior to
+              rebuild
+        """
         self.assertIsNotNone(
             self.openstack_meta_after_rebuild.availability_zone,
             msg="availability_zone was not set in the response")
