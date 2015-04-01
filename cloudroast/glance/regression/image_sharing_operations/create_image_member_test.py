@@ -35,7 +35,9 @@ class CreateImageMember(ImagesFixture):
         cls.member_id = cls.images_alt_one.auth.tenant_id
 
         # Count set to number of images required for this module
-        created_images = cls.images.behaviors.create_images_via_task(count=4)
+        created_images = cls.images.behaviors.create_images_via_task(
+            image_properties={'name': rand_name('create_image_member')},
+            count=4)
 
         cls.created_image = created_images.pop()
         cls.quota_image = created_images.pop()

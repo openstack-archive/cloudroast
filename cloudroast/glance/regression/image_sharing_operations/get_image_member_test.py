@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.glance.common.constants import Messages
 from cloudcafe.glance.common.types import ImageMemberStatus
 
@@ -29,7 +30,8 @@ class GetImageMember(ImagesFixture):
         cls.member_id = cls.images_alt_one.auth.tenant_id
 
         # Count set to number of images required for this module
-        created_images = cls.images.behaviors.create_images_via_task(count=4)
+        created_images = cls.images.behaviors.create_images_via_task(
+            image_properties={'name': rand_name('get_image_member')}, count=4)
 
         cls.not_shared_image = created_images.pop()
 
