@@ -29,7 +29,9 @@ class ImageTagOperationsSmoke(ImagesFixture):
         cls.tag = rand_name('tag')
 
         # Count set to number of images required for this module
-        created_images = cls.images.behaviors.create_images_via_task(count=2)
+        created_images = cls.images.behaviors.create_images_via_task(
+            image_properties={'name': rand_name('image_tag_operations_smoke')},
+            count=2)
 
         cls.add_tag_image = created_images.pop()
 

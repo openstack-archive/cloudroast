@@ -31,7 +31,9 @@ class ImageOperationsSmoke(ImagesFixture):
         super(ImageOperationsSmoke, cls).setUpClass()
 
         # Count set to number of images required for this module
-        created_images = cls.images.behaviors.create_images_via_task(count=2)
+        created_images = cls.images.behaviors.create_images_via_task(
+            image_properties={'name': rand_name('image_operations_smoke')},
+            count=2)
 
         cls.image = created_images.pop()
         cls.alt_image = created_images.pop()
@@ -100,7 +102,7 @@ class ImageOperationsSmoke(ImagesFixture):
         2) Verify that the response code is 200
         """
 
-        updated_name = rand_name('updated_image')
+        updated_name = rand_name('image_operations_smoke_updated')
 
         resp = self.images.client.update_image(
             self.image.id_, replace={'name': updated_name})
