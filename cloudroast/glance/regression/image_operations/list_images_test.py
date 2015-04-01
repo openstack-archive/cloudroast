@@ -39,7 +39,7 @@ class ListImages(ImagesIntergrationFixture):
 
         # Count set to number of images required for this module
         created_images = cls.images.behaviors.create_images_via_task(
-            image_properties={'name': rand_name('image')}, count=2)
+            image_properties={'name': rand_name('list_images')}, count=2)
 
         cls.created_image = created_images.pop()
         cls.images.client.create_image_member(

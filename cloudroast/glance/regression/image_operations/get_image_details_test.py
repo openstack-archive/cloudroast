@@ -35,14 +35,15 @@ class GetImageDetails(ImagesFixture):
         member_id = cls.images_alt_one.auth.tenant_id
 
         cls.created_image = cls.images.behaviors.create_image_via_task(
-            image_properties={'name': rand_name('image')})
+            image_properties={'name': rand_name('get_image_details')})
         cls.image_created_at_time_in_sec = calendar.timegm(time.gmtime())
 
         cls.images.client.create_image_member(
             cls.created_image.id_, member_id)
 
         # Count set to number of images required for this module
-        created_images = cls.images.behaviors.create_images_via_task(count=2)
+        created_images = cls.images.behaviors.create_images_via_task(
+            image_properties={'name': rand_name('get_image_details')}, count=2)
 
         cls.rejected_image = created_images.pop()
         cls.images.client.create_image_member(
