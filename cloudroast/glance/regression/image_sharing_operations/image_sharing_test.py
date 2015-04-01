@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.glance.common.constants import Messages
 from cloudcafe.glance.common.types import (
     ImageMemberStatus, ImageType, TaskStatus, TaskTypes)
@@ -31,7 +32,8 @@ class ImageSharing(ImagesIntegrationFixture):
         cls.alt_two_member_id = cls.images_alt_two.auth.tenant_id
 
         # Count set to number of images required for this module
-        created_images = cls.images.behaviors.create_images_via_task(count=4)
+        created_images = cls.images.behaviors.create_images_via_task(
+            image_properties={'name': rand_name('image_sharing')}, count=4)
 
         cls.single_member_image = created_images.pop()
         cls.multiple_members_image = created_images.pop()
@@ -45,34 +47,40 @@ class ImageSharing(ImagesIntegrationFixture):
             cls.no_export_image.id_, cls.alt_one_member_id)
 
         cls.imported_image = cls.images.behaviors.create_image_via_task(
+            image_properties={'name': rand_name('image_sharing')},
             import_from=cls.images.config.import_from_bootable)
         cls.images.client.create_image_member(
             cls.imported_image.id_, cls.alt_one_member_id)
 
         cls.snapshot_image = cls.images.behaviors.create_image_via_task(
+            image_properties={'name': rand_name('image_sharing')},
             import_from=cls.images.config.import_from_bootable)
         cls.images.client.create_image_member(
             cls.snapshot_image.id_, cls.alt_one_member_id)
         cls.snapshot_server = (
             cls.compute_alt_one_servers_behaviors.create_active_server(
+                name=rand_name('image_sharing'),
                 image_ref=cls.snapshot_image.id_)).entity
         cls.resources.add(
             cls.snapshot_server.id,
             cls.compute_alt_one_servers_client.delete_server)
 
         cls.alt_snapshot_image = cls.images.behaviors.create_image_via_task(
+            image_properties={'name': rand_name('image_sharing')},
             import_from=cls.images.config.import_from_bootable)
         cls.images.client.create_image_member(
             cls.alt_snapshot_image.id_, cls.alt_one_member_id)
         cls.export_server = (
             cls.compute_alt_one_servers_behaviors.create_active_server(
+                name=rand_name('image_sharing'),
                 image_ref=cls.alt_snapshot_image.id_)).entity
         cls.resources.add(
             cls.export_server.id,
             cls.compute_alt_one_servers_client.delete_server)
         cls.exported_snapshot = (
             cls.compute_alt_one_images_behaviors.create_active_image(
-                cls.export_server.id).entity)
+                server_id=cls.export_server.id,
+                name=rand_name('image_sharing')).entity)
         cls.resources.add(
             cls.exported_snapshot.id, cls.images_alt_one.client.delete_image)
 
@@ -452,7 +460,7 @@ class ImageSharing(ImagesIntegrationFixture):
         """
 
         resp = self.compute_alt_one_servers_behaviors.create_active_server(
-            image_ref=self.imported_image.id_)
+            name=rand_name('image_sharing'), image_ref=self.imported_image.id_)
         self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
         server = resp.entity
 
@@ -572,7 +580,8 @@ class ImageSharing(ImagesIntegrationFixture):
 
         created_snapshot = (
             self.compute_alt_one_images_behaviors.create_active_image(
-                self.snapshot_server.id).entity)
+                server_id=self.snapshot_server.id,
+                name=rand_name('image_sharing')).entity)
 
         self.resources.add(
             created_snapshot.id, self.images_alt_one.client.delete_image)
