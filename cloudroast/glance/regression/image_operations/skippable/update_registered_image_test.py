@@ -18,6 +18,7 @@ import unittest
 
 from cafe.drivers.unittest.decorators import (
     data_driven_test, DataDrivenFixture)
+from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.glance.common.constants import Messages
 from cloudcafe.glance.common.types import ImageStatus
 from cloudcafe.glance.composite import ImagesComposite, ImagesAuthComposite
@@ -38,7 +39,8 @@ class UpdateRegisteredImage(ImagesFixture):
     def setUpClass(cls):
         super(UpdateRegisteredImage, cls).setUpClass()
 
-        cls.reg_image = cls.images.behaviors.register_new_image()
+        cls.reg_image = cls.images.behaviors.register_new_image(
+            name=rand_name('update_registered_image'))
 
     @classmethod
     def tearDownClass(cls):

@@ -16,6 +16,7 @@ limitations under the License.
 
 import unittest
 
+from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.glance.config import ImagesConfig
 from cloudcafe.glance.common.constants import Messages
 
@@ -36,7 +37,8 @@ class RegisteredImageOperationsSmoke(ImagesFixture):
             cls.images.config.test_file)
 
         # Count set to number of images required for this module
-        registered_images = cls.images.behaviors.register_new_images(count=2)
+        registered_images = cls.images.behaviors.register_new_images(
+            name=rand_name('registered_image_operations_smoke'), count=2)
 
         cls.registered_image = registered_images.pop()
 
@@ -53,7 +55,8 @@ class RegisteredImageOperationsSmoke(ImagesFixture):
         3) Add the image to the resource pool for deletion
         """
 
-        resp = self.images.client.register_image()
+        resp = self.images.client.register_image(
+            name=rand_name('registered_image_operations_smoke'))
         self.assertEqual(
             resp.status_code, 201,
             Messages.STATUS_CODE_MSG.format(201, resp.status_code))
