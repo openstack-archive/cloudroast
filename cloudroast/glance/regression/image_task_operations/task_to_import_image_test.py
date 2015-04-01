@@ -30,8 +30,8 @@ class TaskToImportImage(ImagesIntegrationFixture):
     def setUpClass(cls):
         super(TaskToImportImage, cls).setUpClass()
 
-        cls.container_name = rand_name('container')
-        cls.object_name = rand_name('object')
+        cls.container_name = rand_name('task_to_import_image_container_')
+        cls.object_name = rand_name('task_to_import_image_object')
         copy_from = cls.images.config.import_from_bootable
         headers = {'X-Copy-From': copy_from}
 
@@ -59,7 +59,8 @@ class TaskToImportImage(ImagesIntegrationFixture):
         specifically
         """
 
-        input_ = {'image_properties': {},
+        input_ = {'image_properties':
+                  {'name': rand_name('task_to_import_image')},
                   'import_from': self.images.config.import_from}
 
         resp = self.images.client.task_to_import_image(
@@ -122,7 +123,8 @@ class TaskToImportImage(ImagesIntegrationFixture):
 
         errors = []
 
-        input_ = {'image_properties': {},
+        input_ = {'image_properties':
+                  {'name': rand_name('task_to_import_image')},
                   'import_from': self.images.config.import_from}
 
         task_creation_time_in_sec = calendar.timegm(time.gmtime())
@@ -166,7 +168,8 @@ class TaskToImportImage(ImagesIntegrationFixture):
         errors = []
 
         import_from = '{0}/{1}'.format(self.container_name, self.object_name)
-        input_ = {'image_properties': {},
+        input_ = {'image_properties':
+                  {'name': rand_name('task_to_import_image')},
                   'import_from': import_from}
 
         resp = self.object_storage_client.delete_object(
@@ -211,7 +214,8 @@ class TaskToImportImage(ImagesIntegrationFixture):
         """
 
         tasks = []
-        input_ = {'image_properties': {},
+        input_ = {'image_properties':
+                  {'name': rand_name('task_to_import_image')},
                   'import_from': self.images.config.import_from}
 
         for i in range(2):
@@ -246,7 +250,8 @@ class TaskToImportImage(ImagesIntegrationFixture):
         tasks = []
         imported_image_ids = []
         listed_image_ids = []
-        input_ = {'image_properties': {},
+        input_ = {'image_properties':
+                  {'name': rand_name('task_to_import_image')},
                   'import_from': self.images.config.import_from}
 
         for i in range(5):
@@ -286,7 +291,7 @@ class TaskToImportImage(ImagesIntegrationFixture):
         7) Verify that the imported image's name is as expected
         """
 
-        name = rand_name('image')
+        name = rand_name('task_to_import_image')
 
         input_ = {'image_properties': {'name': name},
                   'import_from': self.images.config.import_from}
@@ -327,7 +332,9 @@ class TaskToImportImage(ImagesIntegrationFixture):
         4) Verify that the failed task contains the correct message
         """
 
-        input_ = {'image_properties': {'image_type': TaskTypes.IMPORT},
+        input_ = {'image_properties':
+                  {'image_type': TaskTypes.IMPORT,
+                   'name': rand_name('task_to_import_image')},
                   'import_from': self.images.config.import_from}
 
         resp = self.images.client.task_to_import_image(
