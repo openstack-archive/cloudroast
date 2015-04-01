@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.glance.common.constants import Messages
 from cloudcafe.glance.common.types import TaskTypes
 
@@ -26,13 +27,20 @@ class ImageTaskOperationsSmoke(ImagesFixture):
     def setUpClass(cls):
         super(ImageTaskOperationsSmoke, cls).setUpClass()
 
+        import_from = cls.images.config.import_from
+        input_ = {'image_properties':
+                  {'name': rand_name('image_task_operations_smoke')},
+                  'import_from': import_from}
+
         # Count set to number of tasks required for this module
-        created_tasks = cls.images.behaviors.create_new_tasks(count=2)
+        created_tasks = cls.images.behaviors.create_new_tasks(input_, count=2)
 
         cls.created_task = created_tasks.pop()
         cls.alt_created_task = created_tasks.pop()
 
-        cls.created_image = cls.images.behaviors.create_image_via_task()
+        cls.created_image = cls.images.behaviors.create_image_via_task(
+            image_properties={'name':
+                              rand_name('image_task_operations_smoke')})
 
     @classmethod
     def tearDownClass(cls):
@@ -74,7 +82,8 @@ class ImageTaskOperationsSmoke(ImagesFixture):
         2) Verify the response status code is 201
         """
 
-        input_ = {'image_properties': {},
+        input_ = {'image_properties':
+                  {'name': rand_name('image_task_operations_smoke')},
                   'import_from': self.images.config.import_from}
 
         resp = self.images.client.task_to_import_image(
