@@ -59,7 +59,7 @@ class LockServerTests(ComputeAdminFixture):
 
         Validate that the server can not be deleted when it is in a locked state.
 
-        This test will be successful if:
+        The following assertions occur:
             - The delete server request raises a 'Action In Progress'
               error when given a server id that is in a locked state.
         """
@@ -75,7 +75,7 @@ class LockServerTests(ComputeAdminFixture):
         Validate that the server can not change the password using the
         server id as the parameter.
 
-        This test will be successful if:
+        The following assertions occur:
             - The change server password request raises a 'Bad Request'
               error when given a server id that is in a locked state.
         """
@@ -92,7 +92,7 @@ class LockServerTests(ComputeAdminFixture):
         Validate that the server can not be rebooted using the
         soft nova server reboot type.
 
-        This test will be successful if:
+        The following assertions occur:
             - The change server password request raises a 'Bad Request'
               error when given a server id that is in a locked state.
         """
@@ -109,7 +109,7 @@ class LockServerTests(ComputeAdminFixture):
         Validate that the server can not be rebuilt with the same image
         as the original.
 
-        This test will be successful if:
+        The following assertions occur:
             - The rebuild server request raises a 'Action In Progress'
               error when given a server id that is in a locked state.
         """
@@ -125,7 +125,7 @@ class LockServerTests(ComputeAdminFixture):
         Validate that the server can not be resized with the same flavor
         as the original.
 
-        This test will be successful if:
+        The following assertions occur:
             - The resize server request raises a 'Action In Progress'
               error when given a server id that is in a locked state.
         """

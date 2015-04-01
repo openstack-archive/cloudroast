@@ -27,8 +27,7 @@ class HypervisorsAdminTest(ComputeAdminFixture):
 
         Get a list of hypervisors and validate that it is not empty.
 
-        This test will be successful if:
-            - The admin test user is able to get a list of hypervisors
+        The following assertions occur:
             - The list of hypervisors is not empty
         """
         hypervisors = self.admin_hypervisors_client.list_hypervisors().entity
