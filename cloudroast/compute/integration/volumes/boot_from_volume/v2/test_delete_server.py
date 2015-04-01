@@ -1,5 +1,5 @@
 """
-Copyright 2014 Rackspace
+Copyright 2015 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -28,14 +28,32 @@ class DeleteVolumeServersTest(object):
 
     @tags(type='smoke', net='no')
     def test_volume_deleted_after_server_deletion_by_default(self):
-        """Verify the volume is deleted automatically after server deletion"""
+        """
+        Verify the volume is deleted automatically after server deletion.
+
+        Will try and delete a non-existing volume expecting a "ItemNotFound"
+        exception to be raised.  The volume should have been deleted with
+        the server.
+
+        The following assertions occur:
+            - Expecting the ItemNotFound Exception to be raised.
+        """
         with self.assertRaises(ItemNotFound):
             self.blockstorage_behavior.client.delete_volume(self.volume[0].volume_id)
 
     @tags(type='smoke', net='no')
     def test_volume_not_deleted_after_server_deletion(self):
-        """Verify that a volume is not deleted after server is deleted when
-        delete_on_termination is set to False"""
+        """
+        Verify that a volume is not deleted after server is deleted.
+
+        Will verify the volume is available and then create a server with
+        the that volume.  The volume is defined with delete_on_termination
+        being set to False.  Following that the server will be deleted and
+        then the volume expecting a true response from the delete call.
+
+        The following assertions occur:
+            - The result of the delete volume is True (Successful).
+        """
         # Creating block device with snapshot data inside
         block_data = self.server_behaviors.create_block_device_mapping_v2(
             boot_index=0, uuid=self.image_ref,
@@ -74,6 +92,13 @@ class ServerFromVolumeV2DeleteServerTests(ServerFromVolumeV2Fixture,
 
     @classmethod
     def setUpClass(cls):
+        """
+        Perform actions that setup the necessary resources for testing.
+
+        The following resources are created during this setup:
+            - Creates an active server.
+            - Deletes the server.
+        """
         super(ServerFromVolumeV2DeleteServerTests, cls).setUpClass()
         cls.create_server()
         cls.resp = cls.servers_client.delete_server(cls.server.id)
