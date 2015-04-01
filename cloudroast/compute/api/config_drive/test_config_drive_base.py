@@ -1,5 +1,5 @@
 """
-Copyright 2013 Rackspace
+Copyright 2015 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -25,6 +25,29 @@ class ConfigDriveTest(ComputeFixture):
 
     @classmethod
     def setUpClass(cls):
+        """
+        Perform actions that setup the necessary resources for testing
+
+        The following data is generated during this set up:
+            - A dictionary of metadata with the values:
+                {'user_key1': 'value1',
+                 'user_key2': 'value2'}
+            - If default file injection is enabled, a list of files containing
+              a file with the path '/test.txt' and the contents 'This is a
+              config drive test file.'
+            - User data contents 'My user data'
+
+        The following resources are created during this set up:
+            - A keypair with a random name starting with 'key'
+            - A server with  with the following settings:
+                - config_drive set to True
+                - The keypair previously created
+                - Files to be injected at server creation including the
+                  '/test.txt' data previously generated
+                - The metadata previously created
+                - Remaining values required for creating a server will come
+                  from test configuration.
+        """
         super(ConfigDriveTest, cls).setUpClass()
         cls.metadata = {'meta_key_1': 'meta_value_1',
                         'meta_key_2': 'meta_value_2'}
@@ -50,14 +73,37 @@ class ConfigDriveTest(ComputeFixture):
 
     @tags(type='smoke', net='no')
     def test_create_server_config_drive_response(self):
-        """Verify the config drive is set to Active"""
+        """
+        Verify the config drive is set to Active
+
+        Validate that the server created during setup shows that config_drive
+        is active.
+
+        The following assertions occur:
+            - The response status code from the server creation request
+              completed during test set up is equal to 202
+            - The config_drive value for the server created during set up is
+              equal to 'True'
+        """
         self.assertEqual(202, self.server_response.status_code)
         self.assertEqual(self.server.config_drive, 'True',
                          msg="Server config drive is set to true")
 
     @tags(type='smoke', net='yes')
     def test_create_server_config_drive_can_be_mounted(self):
-        """Verify that config drive can be mounted"""
+        """
+        Verify that config drive can be mounted
+
+        Get a remote instance client for the server created during test set up.
+        Use the remote client to create a directory at the config drive base
+        path set during test configuration. Validate that the config drive
+        directory was successfully created on the server. Mount the config drive
+        source path at the created directory.
+
+        The following assertions occur:
+            - The remote client command to create a directory at the config
+              drive base path from test configuration returns nothing.
+        """
         remote_client = self.server_behaviors.get_remote_instance_client(
             self.server, self.servers_config, key=self.key.private_key)
         dir_creation = remote_client.create_directory(
@@ -70,7 +116,21 @@ class ConfigDriveTest(ComputeFixture):
 
     @tags(type='smoke', net='yes')
     def test_create_server_config_drive_size(self):
-        """Verify that config drive size is in expected tolerance"""
+        """
+        Verify that config drive size is in expected tolerance
+
+        Get a remote instance client for the server created during test set up.
+        Mount the config drive on the server. Use the remote client to get the
+        size of the config drive directory. Validate that size of the config
+        drive directory is within the tolerance values set during test
+        configuration.
+
+        The following assertions occur:
+            - The size of the config drive directory is greater than or equal to
+              the config drive minimum size set during test configuration.
+            - The size of the config drive directory is less than or equal to
+              the config drive maximum size set during test configuration.
+        """
         remote_client = self.server_behaviors.get_remote_instance_client(
             self.server, self.servers_config, key=self.key.private_key)
         self.config_drive_behaviors.mount_config_drive(
@@ -89,7 +149,19 @@ class ConfigDriveTest(ComputeFixture):
 
     @tags(type='smoke', net='yes')
     def test_create_server_config_drive_user_data(self):
-        """Verify that user_data is empty as expected"""
+        """
+        User data should match the user data set during server creation
+
+        Get a remote instance client for the server created during test set up.
+        Mount the config drive on the server. Use the remote client to get the
+        details of the user data set during test set up. Validate that the
+        contents of the user data match the contents set during test set up.
+
+        The following assertions occur:
+            - The contents of the config drive user data on the server created
+              during test set up are equal to the user_data_contents set during
+              test set up.
+        """
         remote_client = self.server_behaviors.get_remote_instance_client(
             self.server, self.servers_config, key=self.key.private_key)
         self.config_drive_behaviors.mount_config_drive(
