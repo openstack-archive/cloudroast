@@ -37,8 +37,7 @@ class DeleteRegisteredImage(ImagesFixture):
         super(DeleteRegisteredImage, cls).setUpClass()
 
         cls.reg_image = cls.images.behaviors.register_new_image(
-            name=rand_name('delete_registered_image')
-        )
+            name=rand_name('delete_registered_image'))
 
         cls.images.client.store_image_file(
             cls.reg_image.id_, cls.images.config.test_file)

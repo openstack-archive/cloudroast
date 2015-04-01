@@ -332,8 +332,11 @@ class RegisterImage(ImagesFixture):
             sys.stderr.write('skipped \'Redmine bug #11438\' ... ')
             return
 
-        resp = self.images.client.register_image(
-            name=rand_name('register_image'), **prop)
+        if 'name' in prop:
+            resp = self.images.client.register_image(**prop)
+        else:
+            resp = self.images.client.register_image(
+                name=rand_name('register_image'), **prop)
         self.assertEqual(
             resp.status_code, 400,
             Messages.STATUS_CODE_MSG.format(400, resp.status_code))
