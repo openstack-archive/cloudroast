@@ -20,6 +20,7 @@ import time
 
 from cafe.drivers.unittest.decorators import (
     data_driven_test, DataDrivenFixture)
+from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.glance.common.constants import Messages
 from cloudcafe.glance.common.types import ImageMemberStatus
 
@@ -38,7 +39,9 @@ class ListImageMembers(ImagesFixture):
         cls.alt_two_member_id = cls.images_alt_two.auth.tenant_id
 
         # Count set to number of images required for this module
-        created_images = cls.images.behaviors.create_images_via_task(count=4)
+        created_images = cls.images.behaviors.create_images_via_task(
+            image_properties={'name': rand_name('list_image_members')},
+            count=4)
 
         cls.shared_image = created_images.pop()
         cls.images.client.create_image_member(
