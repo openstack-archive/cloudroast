@@ -32,7 +32,7 @@ class HostActionsAdminTest(ComputeAdminFixture):
     @classmethod
     def setUpClass(cls):
         """
-        Perform actions that setup the neccesary resources for testing
+        Perform actions that setup the necessary resources for testing
 
         The following data is generated during this setup:
             - A list of hosts

@@ -61,7 +61,7 @@ class LiveMigratateServerWithVolumeTests(LiveMigratationServerTests):
     @classmethod
     def setUpClass(cls):
         """
-        Perform actions that setup the neccesary resources for testing
+        Perform actions that setup the necessary resources for testing
 
         The following resources are accessed from a parent class:
             - An instance from LiveMigratationServerTests

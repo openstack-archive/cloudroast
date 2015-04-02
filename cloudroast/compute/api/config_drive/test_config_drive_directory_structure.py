@@ -40,7 +40,7 @@ class ConfigDriveDirectoryTest(ComputeFixture):
 
         The following resources are created during this set up:
             - A keypair with a random name starting with 'key'
-            - A server with  with the following settings:
+            - A server with the following settings:
                 - config_drive set to True
                 - The keypair previously created
                 - Files to be injected at server creation including the
@@ -71,7 +71,7 @@ class ConfigDriveDirectoryTest(ComputeFixture):
     @tags(type='smoke', net='yes')
     def test_create_server_config_drive_openstack_directory(self):
         """
-        A server with config drive enabled should have openstack directories
+        A server with config drive enabled should have 'openstack' directories
 
         Get a remote instance client for the server created during test set up.
         Mount the config drive on the server. Use the remote client to validate
@@ -94,12 +94,12 @@ class ConfigDriveDirectoryTest(ComputeFixture):
             directory_path='{0}/openstack/latest'.format(
                 self.config_drive_config.base_path_to_mount))
         self.assertTrue(dir_openstack_present,
-                        msg="Directory Openstack is present")
+                        msg="Directory openstack is present")
         dir_openstack_content_present = remote_client.is_directory_present(
             directory_path='{0}/openstack/content'.format(
                 self.config_drive_config.base_path_to_mount))
         self.assertTrue(dir_openstack_content_present,
-                        msg="Directory Openstack is present")
+                        msg="Directory openstack is present")
 
     @tags(type='smoke', net='yes')
     def test_create_server_config_drive_ec2_directory(self):
@@ -125,7 +125,7 @@ class ConfigDriveDirectoryTest(ComputeFixture):
             directory_path='{0}/ec2/latest'.format(
                 self.config_drive_config.base_path_to_mount))
         self.assertTrue(dir_openstack_present,
-                        msg="Directory Openstack is present")
+                        msg="Directory openstack is present")
 
     @tags(type='smoke', net='yes')
     def test_create_server_config_drive_user_data_not_present(self):
