@@ -24,7 +24,7 @@ class FlavorsTest(ComputeFixture):
     @classmethod
     def setUpClass(cls):
         """
-        Perform actions that setup the neccesary resources for testing
+        Perform actions that setup the necessary resources for testing
 
         The following resources are created during this setup:
             - a list of flavors

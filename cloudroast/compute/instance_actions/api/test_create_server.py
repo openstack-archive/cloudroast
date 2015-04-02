@@ -203,7 +203,7 @@ class CreateServerTest(object):
         from test configuration, If the flavors ephemeral disk(s) size is 0, the
         test will return and end. If the flavor's ephemeral disk(s) size is not
         0, get a remote client for the server created during test set up. Use
-        the remote client to get the a list of all disks on the server. Remove
+        the remote client to get a list of all disks on the server. Remove
         the primary disk from the list of disks. Verify that the remaining disks
         in the disk list are equal in size to the ephemeral disk size of the
         flavor from test configuration. Format each disk in the list of disks
@@ -472,7 +472,7 @@ class ServerFromImageCreateServerTests(ServerFromImageFixture,
 
         The following resources are created during this setup:
             - A keypair with a random name starting with 'key'
-            - A server with  with the following settings:
+            - A server with the following settings:
                 - The name value previously generated
                 - The keypair previously created
                 - if injected files are enabled, files to be injected at server

@@ -25,7 +25,7 @@ class DeleteFlavorTest(ComputeAdminFixture):
     @classmethod
     def setUpClass(cls):
         """
-        Perform actions that setup the neccesary resources for testing
+        Perform actions that setup the necessary resources for testing
 
         The following resources are created during this setup:
             - A public flavor with a name starting with 'flavor', 64MB of RAM,
