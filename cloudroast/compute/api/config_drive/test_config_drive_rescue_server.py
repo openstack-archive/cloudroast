@@ -114,7 +114,7 @@ class ConfigDriveRescueTests(ComputeFixture):
     def test_directory_present_after_rescue(self):
         # verify that the directory exists after the reboot and remount
         self.assertTrue(self.dir_openstack_content_present,
-                        msg="Directory Openstack is not present")
+                        msg="Directory openstack is not present")
 
     def test_openstack_metadata(self):
         message = "Expected {0} to be {1}, was {2}."

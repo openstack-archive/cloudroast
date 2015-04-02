@@ -25,7 +25,7 @@ class QuotasAdminTest(ComputeAdminFixture):
     @classmethod
     def setUpClass(cls):
         """
-        Perform actions that setup the neccesary resources for testing
+        Perform actions that setup the necessary resources for testing
 
         The following resources are created during this setup:
             - An instance is created using the tenant identified in
@@ -107,7 +107,7 @@ class QuotasAdminTest(ComputeAdminFixture):
             - The quota value for instances is equal to 20
             - After the admin deletes the quota values for the tenant identified
               during setup the quoate values are populated
-            - The quota value for instances is equal to the the configured
+            - The quota value for instances is equal to the configured
               default value
         """
         self.admin_quotas_client.update_quota(
