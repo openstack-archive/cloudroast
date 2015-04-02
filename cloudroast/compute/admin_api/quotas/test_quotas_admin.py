@@ -107,7 +107,7 @@ class QuotasAdminTest(ComputeAdminFixture):
             - The quota value for instances is equal to 20
             - After the admin deletes the quota values for the tenant identified
               during setup the quoate values are populated
-            - The quota value for instances is equal to the the configured
+            - The quota value for instances is equal to the configured
               default value
         """
         self.admin_quotas_client.update_quota(

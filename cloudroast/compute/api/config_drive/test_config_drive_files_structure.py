@@ -38,7 +38,7 @@ class ConfigDriveFilesTest(ComputeFixture):
 
         The following resources are created during this set up:
             - A keypair with a random name starting with 'key'
-            - A server with  with the following settings:
+            - A server with the following settings:
                 - config_drive set to True
                 - The keypair previously created
                 - Files to be injected at server creation including the
@@ -70,29 +70,29 @@ class ConfigDriveFilesTest(ComputeFixture):
     @tags(type='smoke', net='yes')
     def test_config_drive_openstack_metadata(self):
         """
-        Verify openstack metadata on config drive
+        Verify OpenStack metadata on config drive
 
-        Mount the config drive on the server. Get the Openstack metadata on the
-        server and validate that the values of the openstack metadata match the
+        Mount the config drive on the server. Get the OpenStack metadata on the
+        server and validate that the values of the OpenStack metadata match the
         expected values.
 
         The following assertions occur:
             - The server's admin password is equal to the admin password in the
-              openstack metadata
-            - The availability_zone value in the openstack metadata is not None
-            - The path of the first file in the openstack metadata files is
+              OpenStack metadata
+            - The availability_zone value in the OpenStack metadata is not None
+            - The path of the first file in the OpenStack metadata files is
               equal to the file path set during test set up.
-            - The hostname value in the openstack metadata is not None
-            - The launch_index value in the openstack metadata is not None
-            - The name in the openstack metadata is equal to the name of the
+            - The hostname value in the OpenStack metadata is not None
+            - The launch_index value in the OpenStack metadata is not None
+            - The name in the OpenStack metadata is equal to the name of the
               server created during test set up
-            - The value of 'meta_key_1' in the openstack metadata is equal to
+            - The value of 'meta_key_1' in the OpenStack metadata is equal to
               'meta_value_1'
-            - The value of 'meta_key_2' in the openstack metadata is equal to
+            - The value of 'meta_key_2' in the OpenStack metadata is equal to
               'meta_value_2'
-            - The public key in the openstack metadata is equal to the public
+            - The public key in the OpenStack metadata is equal to the public
               key created during test set up.
-            - The uuid in the openstack metadata is equal to the id of the
+            - The uuid in the OpenStack metadata is equal to the id of the
               server created during test set up
         """
         message = "Expected {0} to be {1}, was {2}."

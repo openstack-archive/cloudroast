@@ -113,7 +113,7 @@ class ConfigDriveRebuildTest(ComputeFixture):
 
     def test_directory_present_after_rebuild(self):
         self.assertEqual(self.dir_openstack_content_present, True,
-                         msg="Directory Openstack is not present")
+                         msg="Directory openstack is not present")
 
     def test_openstack_metadata(self):
         self.assertIsNotNone(

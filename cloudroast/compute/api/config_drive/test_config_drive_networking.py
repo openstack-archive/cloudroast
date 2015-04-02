@@ -30,7 +30,7 @@ class ConfigDriveFilesTest(ComputeFixture):
 
         The following resources are created during this set up:
             - A keypair with a random name starting with 'key'
-            - A server with  with the following settings:
+            - A server with the following settings:
                 - config_drive set to True
                 - The keypair previously created
                 - Remaining values required for creating a server will come
