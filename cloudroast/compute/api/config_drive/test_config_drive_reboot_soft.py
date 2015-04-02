@@ -90,7 +90,7 @@ class RebootServerSoftTests(ComputeFixture):
         # verify that the directory exists after the reboot and remount
         self.assertTrue(
             self.dir_openstack_content_present,
-            msg="Directory Openstack is not present")
+            msg="Directory openstack is not present")
 
     def test_soft_reboot_openstack_metadata(self):
 

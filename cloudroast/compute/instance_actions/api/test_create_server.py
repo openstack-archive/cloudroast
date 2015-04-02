@@ -472,7 +472,7 @@ class ServerFromImageCreateServerTests(ServerFromImageFixture,
 
         The following resources are created during this setup:
             - A keypair with a random name starting with 'key'
-            - A server with  with the following settings:
+            - A server with the following settings:
                 - The name value previously generated
                 - The keypair previously created
                 - if injected files are enabled, files to be injected at server
