@@ -34,7 +34,8 @@ class DeleteImageTag(ImagesFixture):
          for x in range(number_of_tags)]
 
         # Count set to number of images required for this module
-        created_images = cls.images.behaviors.create_images_via_task(count=4)
+        created_images = cls.images.behaviors.create_images_via_task(
+            image_properties={'name': rand_name('delete_image_tag')}, count=4)
 
         cls.created_image = created_images.pop()
 
