@@ -25,7 +25,7 @@ class PrivateFlavorTest(ComputeAdminFixture):
     @classmethod
     def setUpClass(cls):
         """
-        Perform actions that setup the neccesary resources for testing
+        Perform actions that setup the necessary resources for testing
 
         The following resources are created during this setup:
             - A private flavor with a name starting with 'flavor', 64MB of RAM,
@@ -104,7 +104,7 @@ class PrivateFlavorNegativeTest(ComputeAdminFixture):
     @classmethod
     def setUpClass(cls):
         """
-        Perform actions that setup the neccesary resources for testing
+        Perform actions that setup the necessary resources for testing
 
         The following resources are created during this setup:
             - A private flavor with a name starting with 'flavor', 64MB of RAM,
