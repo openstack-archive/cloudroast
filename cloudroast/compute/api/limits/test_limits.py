@@ -27,7 +27,7 @@ class LimitsTest(ComputeFixture):
 
         Will call get_limits from cloudcafe's limits_client.
 
-        This test will be successful if:
+        The following assertions occur:
             - 200 status code from the http call.
         """
         response = self.limits_client.get_limits()
