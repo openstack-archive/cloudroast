@@ -1032,11 +1032,14 @@ class ObjectSmokeTest(ObjectStorageFixture):
     @ObjectStorageFixture.required_features('object_versioning')
     def ddtest_versioned_container_creation_with_valid_data(
             self, object_type, generate_object):
+
+        container_name = self.create_temp_container(
+            descriptor=CONTAINER_DESCRIPTOR)
         object_history_container_name = self.create_temp_container(
             descriptor=CONTAINER_DESCRIPTOR)
-        container_name = self.create_temp_container(
-            descriptor=CONTAINER_DESCRIPTOR, headers={
-                'X-Versions-Location': object_history_container_name})
+
+        headers = {'X-Versions-Location': object_history_container_name}
+        self.client.set_container_metadata(container_name, headers=headers)
 
         # list objects in non-current container
         response = self.client.list_objects(
