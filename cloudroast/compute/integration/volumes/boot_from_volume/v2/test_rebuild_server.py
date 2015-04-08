@@ -1,5 +1,5 @@
 """
-Copyright 2013 Rackspace
+Copyright 2015 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -29,6 +29,14 @@ class ServerFromVolumeV2RebuildTests(ServerFromVolumeV2Fixture,
 
     @classmethod
     def setUpClass(cls):
+        """
+        Perform actions that setup the necessary resources for testing.
+
+        The following resources are created during this setup:
+            - Creates a keypair.
+            - Creates an active server.
+            - Rebuilds and waits for server to be active again.
+        """
         super(ServerFromVolumeV2RebuildTests, cls).setUpClass()
         cls.key = cls.keypairs_client.create_keypair(rand_name("key")).entity
         cls.resources.add(cls.key.name,
@@ -40,7 +48,15 @@ class ServerFromVolumeV2RebuildTests(ServerFromVolumeV2Fixture,
 
     @tags(type='smoke', net='yes')
     def test_rebuilt_volume_server_disk_size(self):
-        """Verify the size of the virtual disk after the server rebuild"""
+        """
+        Verify the size of the virtual disk after the server rebuild.
+
+        Will get the remote instance of the server and pull the disk info
+        from the server to validate the disk size is correct.
+
+        The following assertions occur:
+            - The disk size is equal to defined size at rebuild.
+        """
         remote_client = self.server_behaviors.get_remote_instance_client(
             self.server, self.servers_config, password=self.password,
             key=self.key.private_key)
