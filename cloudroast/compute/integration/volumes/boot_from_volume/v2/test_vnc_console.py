@@ -1,5 +1,5 @@
 """
-Copyright 2013 Rackspace
+Copyright 2015 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -24,5 +24,11 @@ class ServerFromVolumeV2VncConsoleTests(ServerFromVolumeV2Fixture,
 
     @classmethod
     def setUpClass(cls):
+        """
+        Perform actions that setup the necessary resources for testing.
+
+        The following resources are created during this setup:
+            - Creates an active server.
+        """
         super(ServerFromVolumeV2VncConsoleTests, cls).setUpClass()
         cls.create_server()
