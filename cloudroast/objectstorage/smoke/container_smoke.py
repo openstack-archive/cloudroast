@@ -508,10 +508,6 @@ class ContainerSmokeTest(ObjectStorageFixture):
             self.base_container_name)
         response = self.client.create_container(container_name)
 
-        self.addCleanup(
-            self.behaviors.force_delete_containers,
-            [container_name])
-
         method = "container creation"
         expected = 201
         received = response.status_code
