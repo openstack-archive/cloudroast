@@ -1,5 +1,5 @@
 """
-Copyright 2013 Rackspace
+Copyright 2015 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -27,6 +27,17 @@ class CreateVolumeServerfromSnapshotTest(ServerFromVolumeV2Fixture):
 
     @classmethod
     def setUpClass(cls):
+        """
+        Perform actions that setup the necessary resources for testing.
+
+        The following resources are created during this setup:
+            - Creates an active server.
+            - Creates an available volume from CBS.
+            - Creates an available snapshot.
+            - Creates an active image.
+            - Creates an available volume from snapshot.
+            - Creates an available volume from CBS snapshot.
+        """
         super(CreateVolumeServerfromSnapshotTest, cls).setUpClass()
         cls.server = cls.server_behaviors.create_active_server().entity
         # Creating glance image from the server for image snapshot scenario
@@ -49,7 +60,16 @@ class CreateVolumeServerfromSnapshotTest(ServerFromVolumeV2Fixture):
 
     @tags(type='smoke', net='no')
     def test_create_volume_server_from_image_snapshot(self):
-        """Verify the creation of volume server from image snapshot"""
+        """
+        Verify the creation of volume server from image snapshot.
+
+        Will create a block device mapping and an active server.  Then
+        verify that the response code is ok and waits for the server to
+        become active.
+
+        The following assertions occur:
+            - 200 status code returned from the crete server call.
+        """
         # Creating block device with snapshot data inside
         self.block_data = self.server_behaviors.create_block_device_mapping_v2(
             boot_index=0,
@@ -70,7 +90,16 @@ class CreateVolumeServerfromSnapshotTest(ServerFromVolumeV2Fixture):
     @unittest.skip('Bug, Redmine #8834')
     @tags(type='smoke', net='no')
     def test_create_volume_server_from_volume_snapshot(self):
-        """Verify the creation of volume server from volume snapshot"""
+        """
+        Verify the creation of volume server from volume snapshot.
+
+        Will create a block device mapping and an active server.  Then
+        verify that the response code is ok and waits for the server to
+        become active.
+
+        The following assertions occur:
+            - 200 status code returned from the crete server call.
+        """
         # Creating block device with snapshot data inside
         self.block_data = self.server_behaviors.create_block_device_mapping_v2(
             boot_index=0,
