@@ -379,7 +379,9 @@ class ServerListTest(ComputeFixture):
         Filter the list of servers with detail by name.
 
         This will call the list_servers_with_details with the server name that
-        was created at startup.
+        was created at startup. Then it will get the details of the first server
+        created during test set up and use that information to validate that a
+        detailed list of servers respects the server name filter.
 
         The following assertions occur:
             - 200 status code from the http call.
@@ -392,7 +394,9 @@ class ServerListTest(ComputeFixture):
         filtered_servers = list_response.entity
         self.assertEqual(200, list_response.status_code)
 
-        self.assertIn(self.server, filtered_servers)
+        server_under_test = self.servers_client.get_server(self.server.id).entity
+
+        self.assertIn(server_under_test, filtered_servers)
         self.assertNotIn(self.second_server, filtered_servers)
         self.assertNotIn(self.third_server, filtered_servers)
 
