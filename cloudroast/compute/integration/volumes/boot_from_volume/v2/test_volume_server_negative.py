@@ -1,5 +1,5 @@
 """
-Copyright 2014 Rackspace
+Copyright 2015 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -28,7 +28,18 @@ class CreateVolumeServerNegativeTest(ServerFromVolumeV2Fixture):
     @unittest.skip('Bug, Redmine #8734')
     @tags(type='smoke', net='no')
     def test_delete_on_terminate_invalid(self):
-        """Verify delete on termination set to invalid throws bad request"""
+        """
+        Verify delete on termination set to invalid when block device fails.
+
+        Will make sure that after creating a block device mapping that you can
+        not create a server with that block device. It will trying and create
+        a server then the block device expecting a "BadRequest" exception to
+        be raised because the block device had delete on termination set to
+        "invalid".
+
+        The following assertions occur:
+            - Expecting a BadRequest exception to be raised.
+        """
         # Creating block device with snapshot data inside
         self.block_data = self.server_behaviors.create_block_device_mapping_v2(
             boot_index=0, uuid=self.image_ref,
@@ -44,7 +55,17 @@ class CreateVolumeServerNegativeTest(ServerFromVolumeV2Fixture):
 
     @tags(type='smoke', net='no')
     def test_source_type_invalid(self):
-        """Verify source type set to invalid throws bad request"""
+        """
+        Verify source type set to invalid throws bad request.
+
+        Will make sure that after creating a block device mapping that you can
+        not create a server with that block device; expecting a "BadRequest"
+        exception to be raised because the block device had source type set
+        to "invalid".
+
+        The following assertions occur:
+            - Expecting a BadRequest exception to be raised.
+        """
         # Creating block device with snapshot data inside
         self.block_data = self.server_behaviors.create_block_device_mapping_v2(
             boot_index=0, uuid=self.image_ref,
@@ -61,8 +82,17 @@ class CreateVolumeServerNegativeTest(ServerFromVolumeV2Fixture):
     @unittest.skip('Bug, Redmine #8734')
     @tags(type='smoke', net='no')
     def test_boot_from_concurent_sources_with_image_ref_invalid(self):
-        """Verify default behaviour is booting from image when image_ref is
-        also provided on the create server call"""
+        """
+        Verify creating server with same image ref throws bad request.
+
+        Will make sure that after creating a block device mapping that you can
+        not create a server with that block device; expecting a "BadRequest"
+        exception to be raised because the block device has the same image
+        reference as the server.
+
+        The following assertions occur:
+            - Expecting a BadRequest exception to be raised.
+        """
         # Creating block device with snapshot data inside
         self.block_data = self.server_behaviors.create_block_device_mapping_v2(
             boot_index=0, uuid=self.image_ref,
@@ -79,7 +109,17 @@ class CreateVolumeServerNegativeTest(ServerFromVolumeV2Fixture):
 
     @tags(type='smoke', net='no')
     def test_flavor_invalid(self):
-        """Verify flavor set to invalid throws bad request"""
+        """
+        Verify flavor set to invalid throws bad request.
+
+        Will make sure that after creating a block device mapping that you can
+        not create a server with an invalid flavor reference expecting a
+        "BadRequest" exception to be raised because the server has a flavor
+        ref set to "invalid".
+
+        The following assertions occur:
+            - Expecting a BadRequest exception to be raised.
+        """
         # Creating block device with snapshot data inside
         self.block_data = self.server_behaviors.create_block_device_mapping_v2(
             boot_index=0, uuid=self.image_ref,
