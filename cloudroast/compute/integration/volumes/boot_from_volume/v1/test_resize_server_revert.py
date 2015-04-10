@@ -1,5 +1,5 @@
 """
-Copyright 2013 Rackspace
+Copyright 2015 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -29,6 +29,15 @@ class ServerFromVolumeV1ResizeRevertTests(ServerFromVolumeV1Fixture,
 
     @classmethod
     def setUpClass(cls):
+        """
+        Perform actions that setup the necessary resources for testing.
+
+        The following resources are created during this setup:
+            - Creates a keypair.
+            - Creates an active server.
+            - Resizes the server.
+            - Reverts the change which re-activates the original server.
+        """
         super(ServerFromVolumeV1ResizeRevertTests, cls).setUpClass()
         response = cls.flavors_client.get_flavor_details(cls.flavor_ref)
         cls.flavor = response.entity
