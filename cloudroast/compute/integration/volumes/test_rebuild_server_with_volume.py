@@ -1,5 +1,5 @@
 """
-Copyright 2013 Rackspace
+Copyright 2015 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -38,6 +38,17 @@ class RebuildServerVolumeIntegrationTest(BlockstorageIntegrationFixture):
 
     @classmethod
     def setUpClass(cls):
+        """
+        Perform actions that setup the necessary resources for testing.
+
+        The following resources are created during this setup:
+            - Creates a random keypair.
+            - Creates an active server.
+            - Retrieves a flavor.
+            - Creates an available volume.
+            - Attaches the volume to the active server.
+
+        """
         super(RebuildServerVolumeIntegrationTest, cls).setUpClass()
         cls.key = cls.keypairs_client.create_keypair(rand_name("key")).entity
         cls.resources.add(cls.key.name,
@@ -61,6 +72,14 @@ class RebuildServerVolumeIntegrationTest(BlockstorageIntegrationFixture):
 
     @tags(type='smoke', net='no')
     def test_rebuild_server(self):
+        """
+        Verify that a server can be rebuilt.
+
+        Will generate a new random name for the server and the password of
+        "R3builds3ver".  Will call the rebuild server method with new name,
+        password and the key that was generated during setup. Then will wait
+        for the server to be active.
+        """
         self.name = rand_name('testserver')
         self.password = 'R3builds3ver'
 
@@ -72,12 +91,27 @@ class RebuildServerVolumeIntegrationTest(BlockstorageIntegrationFixture):
 
     @tags(type='smoke', net='no')
     def test_volume_detached_after_rebuild(self):
+        """
+        Verify that the volume is available after the server is rebuilt.
+
+        Will get the volume info for the id created at setup and
+        will validate the volume status.
+
+        The following assertions occur:
+            - Volume status is "available".
+        """
         volume_after_rebuild = self.blockstorage_client.get_volume_info(
             self.volume.id_).entity
         self.assertEqual(volume_after_rebuild.status, 'available')
 
     @tags(type='smoke', net='no')
     def test_reattach_volume_after_rebuild(self):
+        """
+        Verify that you can reattach the volume.
+
+        Will attach the available volume and wait for the status to change
+        to "in-use".
+        """
         self.volume_attachments_client.attach_volume(
             self.server.id, self.volume.id_)
         self.blockstorage_behavior.wait_for_volume_status(
