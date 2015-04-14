@@ -1,5 +1,5 @@
 """
-Copyright 2013 Rackspace
+Copyright 2015 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -34,22 +34,23 @@ class ObjectVersioningTest(ObjectStorageFixture):
     def setUp(self):
         super(ObjectVersioningTest, self).setUp()
         """
+        Create a container for "current" object storage
+        """
+        self.current_version_container_name = (
+            self.create_temp_container(
+                "current_container_{0}".format(self.container_name)))
+
+        """
         Create a container for "non-current" object storage
         """
         self.non_current_version_container_name = (
             self.create_temp_container(
                 "non_current_container_{0}".format(self.container_name)))
 
-        """
-        Create a container for "current" object storage
-        """
-        current_version_container_headers = (
+        headers = (
             {"X-Versions-Location": self.non_current_version_container_name})
-
-        self.current_version_container_name = (
-            self.create_temp_container(
-                "current_container_{0}".format(self.container_name),
-                headers=current_version_container_headers))
+        self.client.set_container_metadata(
+            self.current_version_container_name, headers=headers)
 
         self.num_objects = 4
         self.num_versioned_objects = self.num_objects - 1
@@ -62,7 +63,7 @@ class ObjectVersioningTest(ObjectStorageFixture):
         """
         create objects in the current version container
         """
-        for i in range(0, (self.num_objects)):
+        for i in range(0, self.num_objects):
             data = eval("self.object_data_version{0}".format(i))
 
             headers = {"X-Object-Meta-Version": data,
