@@ -146,18 +146,13 @@ class ConfigDriveFilesTest(ComputeFixture):
 
         Validate that the last network in the network list from the network
         information in vendor metadata on the server created during test set up
-        has values for the 'type', 'netmask', 'link', 'routes', 'id'. There is a
-        value for the IP whitelist for the last network in the network
-        information from the vendor metadata.
+        has values for the 'type', 'netmask', 'link', 'routes', 'id'.
 
         The following assertions occur:
             - The last network in the network information in the vendor metadata
               has values for the attributes 'type', 'netmask', 'link', 'routes',
               and 'id'
-            - The ip whitelist for the last network in the network information
-              is not None
         """
-
         for network in self.vendor_meta.network_info.networks:
             bad_attrs = [attr for attr in ['type',
                                            'netmask',
@@ -165,8 +160,19 @@ class ConfigDriveFilesTest(ComputeFixture):
                                            'routes',
                                            'id']
                          if getattr(network, attr, None) is None]
+
         self.assertFalse(bad_attrs, msg="{0} not set in response".format(
             " ".join(bad_attrs)))
 
-        self.assertIsNotNone(network.ip_whitelist,
+    def test_config_drive_vendor_metadata_ip_whitelist(self):
+        """
+        The vendor metadata in config drive should have an ip whitelist
+
+        Validate that there is a value for the IP whitelist in the vendor
+        metadata.
+
+        The following assertions occur:
+            - The ip whitelist vendor metadata is not None
+        """
+        self.assertIsNotNone(self.vendor_meta.ip_whitelist,
                              msg="ip_whitelist was not set in the response")
