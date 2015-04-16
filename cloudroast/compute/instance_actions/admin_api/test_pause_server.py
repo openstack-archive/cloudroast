@@ -46,7 +46,7 @@ class PauseServerTests(object):
 
         """
 
-        self.ping_ip = self.get_ip_address_for_live_communication(self.server)
+        self.ping_ip = self.get_accessible_ip_address(self.server)
 
         self.admin_server_behaviors.wait_for_server_status(
             self.server.id, ServerStates.ACTIVE)
@@ -95,7 +95,7 @@ class NegativePauseServerTests(object):
               after the failed reboot.
         """
 
-        self.ping_ip = self.get_ip_address_for_live_communication(self.server)
+        self.ping_ip = self.get_accessible_ip_address(self.server)
 
         response = self.admin_servers_client.pause_server(self.server.id)
         self.assertEqual(response.status_code, 202)
@@ -132,4 +132,4 @@ class ServerFromImagePauseTests(ServerFromImageFixture,
         cls.compute_admin = ComputeAdminComposite()
         cls.admin_servers_client = cls.compute_admin.servers.client
         cls.admin_server_behaviors = cls.compute_admin.servers.behaviors
-        cls.create_server()
+        cls.server = cls.server_behaviors.create_active_server().entity
