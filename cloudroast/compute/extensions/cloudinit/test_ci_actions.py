@@ -1,5 +1,5 @@
 """
-Copyright 2013 Rackspace
+Copyright 2015 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -26,6 +26,14 @@ class CloudInitActionsTest(ComputeFixture):
 
     @classmethod
     def setUpClass(cls):
+        """
+        Perform actions that setup the necessary resources for testing.
+
+        The following resources are created during this setup:
+            - Creates a keypair.
+            - Creates an active server.
+            - Rebuilds the server and waits for it to be active.
+        """
         super(CloudInitActionsTest, cls).setUpClass()
         script = cls.config_drive_behaviors.read_cloud_init_for_config_drive(
             cls.cloud_init_config.user_data_script)
@@ -54,7 +62,21 @@ class CloudInitActionsTest(ComputeFixture):
 
     @tags(type='smoke', net='yes')
     def test_user_data_input_format_on_rebuild(self):
-        """Verify the User Data Script Input Format is working on rebuild"""
+        """
+        Verify the User Data Script Input Format is working on rebuild.
+
+        Will mount the config drive then get the remote instance to be able
+        to get the file details.  After verifying the contents of the file
+        are as expected.  Followed by the verifications that the user data
+        directory exists and the time.txt file is in the directory.
+
+        The following assertions occur:
+            - 202 status code response from the rebuild server call.
+            - Content of the user data file retrieved is the same as set in
+                setup.
+            - The user data directory exists.
+            - The time.txt file is present in the user data directory.
+        """
         self.assertEqual(202, self.server_response.status_code)
         self.config_drive_behaviors.mount_config_drive(
             server=self.server_after_rebuild,
