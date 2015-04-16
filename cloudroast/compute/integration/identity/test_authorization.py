@@ -1,5 +1,5 @@
 """
-Copyright 2013 Rackspace
+Copyright 2015 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -33,6 +33,13 @@ class AuthorizationTests(ComputeFixture):
 
     @classmethod
     def setUpClass(cls):
+        """
+        Perform actions that setup the necessary resources for testing.
+
+        The following resources are created during this setup:
+            - Creates an active server with metadata.
+            - Creates an image with metadata and waits for active status.
+        """
         super(AuthorizationTests, cls).setUpClass()
         cls.metadata = {'meta_key_1': 'meta_value_1',
                         'meta_key_2': 'meta_value_2'}
@@ -72,75 +79,215 @@ class AuthorizationTests(ComputeFixture):
 
     @tags(type='negative', net='no')
     def test_get_image_unauthorized(self):
+        """
+        A get image request should fail when not authorized.
+
+        Will call get image expecting a "ItemNotFound" exception to be
+        raised because the call is being executed with insufficient
+        privileges.
+
+        The following assertions occur:
+            - Expecting a ItemNotFound exception to be raised.
+        """
         with self.assertRaises(ItemNotFound):
             self.images_client.get_image(self.image_id)
 
     @tags(type='negative', net='no')
     def test_delete_image_unauthorized(self):
+        """
+        A delete image request should fail when not authorized.
+
+        Will call delete image expecting a "ItemNotFound" exception to be
+        raised because the call is being executed with insufficient
+        privileges.
+
+        The following assertions occur:
+            - Expecting a ItemNotFound exception to be raised.
+        """
         with self.assertRaises(ItemNotFound):
             self.images_client.delete_image(self.image_id)
 
     @tags(type='negative', net='no')
     def test_get_server_unauthorized(self):
+        """
+        A get server request should fail when not authorized.
+
+        Will call get server expecting a "ItemNotFound" exception to be
+        raised because the call is being executed with insufficient
+        privileges.
+
+        The following assertions occur:
+            - Expecting a ItemNotFound exception to be raised.
+        """
         with self.assertRaises(ItemNotFound):
             self.servers_client.get_server(self.server.id)
 
     @tags(type='negative', net='no')
     def test_list_server_addresses_with_invalid_token(self):
+        """
+        A list addresses request should fail when not authorized.
+
+        Will call list addresses expecting a "ItemNotFound" exception to be
+        raised because the call is being executed with insufficient
+        privileges.
+
+        The following assertions occur:
+            - Expecting a ItemNotFound exception to be raised.
+        """
         with self.assertRaises(ItemNotFound):
             self.servers_client.list_addresses(
                 self.server.id)
 
     @tags(type='negative', net='no')
     def test_list_server_addresses_by_network_with_invalid_token(self):
+        """
+        A list addresses request should fail when not authorized.
+
+        Will call list address by network expecting a "ItemNotFound" exception
+        to be raised because the call is being executed with insufficient
+        privileges.
+
+        The following assertions occur:
+            - Expecting a ItemNotFound exception to be raised.
+        """
         with self.assertRaises(ItemNotFound):
             self.servers_client.list_addresses_by_network(
                 self.server.id, 'prviate')
 
     @tags(type='negative', net='no')
     def test_delete_server_unauthorized(self):
+        """
+        A delete server request should fail when not authorized.
+
+        Will call delete server expecting a "ItemNotFound" exception
+        to be raised because the call is being executed with insufficient
+        privileges.
+
+        The following assertions occur:
+            - Expecting a ItemNotFound exception to be raised.
+        """
         with self.assertRaises(ItemNotFound):
             self.servers_client.delete_server(self.server.id)
 
     @tags(type='negative', net='no')
     def test_change_server_password_unauthorized(self):
+        """
+        A change password request should fail when not authorized.
+
+        Will call change password expecting a "ItemNotFound" exception
+        to be raised because the call is being executed with insufficient
+        privileges.
+
+        The following assertions occur:
+            - Expecting a ItemNotFound exception to be raised.
+        """
         with self.assertRaises(ItemNotFound):
             self.servers_client.change_password(self.server.id, 'newP@ssw0rd')
 
     @tags(type='negative', net='no')
     def test_reboot_server_unauthorized(self):
+        """
+        A soft reboot request should fail when not authorized.
+
+        Will call reboot server expecting a "ItemNotFound" exception
+        to be raised because the call is being executed with insufficient
+        privileges.
+
+        The following assertions occur:
+            - Expecting a ItemNotFound exception to be raised.
+        """
         with self.assertRaises(ItemNotFound):
             self.servers_client.reboot(self.server.id,
                                        NovaServerRebootTypes.SOFT)
 
     @tags(type='negative', net='no')
     def test_rebuild_server_unauthorized(self):
+        """
+        A rebuild request should fail when not authorized.
+
+        Will call rebuild server expecting a "ItemNotFound" exception
+        to be raised because the call is being executed with insufficient
+        privileges.
+
+        The following assertions occur:
+            - Expecting a ItemNotFound exception to be raised.
+        """
         with self.assertRaises(ItemNotFound):
             self.servers_client.rebuild(self.server.id, self.image_ref_alt)
 
     @tags(type='negative', net='no')
     def test_resize_server_unauthorized(self):
+        """
+        A resize request should fail when not authorized.
+
+        Will call resize server expecting a "ItemNotFound" exception
+        to be raised because the call is being executed with insufficient
+        privileges.
+
+        The following assertions occur:
+            - Expecting a ItemNotFound exception to be raised.
+        """
         with self.assertRaises(ItemNotFound):
             self.servers_client.resize(self.server.id, self.flavor_ref_alt)
 
     @tags(type='negative', net='no')
     def test_create_image_unauthorized(self):
+        """
+        A create image request should fail when not authorized.
+
+        Will call create image expecting a "ItemNotFound" exception
+        to be raised because the call is being executed with insufficient
+        privileges.
+
+        The following assertions occur:
+            - Expecting a ItemNotFound exception to be raised.
+        """
         with self.assertRaises(ItemNotFound):
             self.servers_client.create_image(self.server.id, 'testimage')
 
     @tags(type='negative', net='no')
     def test_list_server_metadata_unauthorized(self):
+        """
+        A list server metadata request should fail when not authorized.
+
+        Will call list server metadata expecting a "ItemNotFound" exception
+        to be raised because the call is being executed with insufficient
+        privileges.
+
+        The following assertions occur:
+            - Expecting a ItemNotFound exception to be raised.
+        """
         with self.assertRaises(ItemNotFound):
             self.servers_client.list_server_metadata(self.server.id)
 
     @tags(type='negative', net='no')
     def test_set_server_metadata_unauthorized(self):
+        """
+        A set server metadata request should fail when not authorized.
+
+        Will call set server metadata expecting a "ItemNotFound" exception
+        to be raised because the call is being executed with insufficient
+        privileges.
+
+        The following assertions occur:
+            - Expecting a ItemNotFound exception to be raised.
+        """
         with self.assertRaises(ItemNotFound):
             new_meta = {'meta2': 'data2', 'meta3': 'data3'}
             self.servers_client.set_server_metadata(self.server.id, new_meta)
 
     @tags(type='negative', net='no')
     def test_update_server_metadata_unauthorized(self):
+        """
+        A update server metadata request should fail when not authorized.
+
+        Will call update server metadata expecting a "ItemNotFound" exception
+        to be raised because the call is being executed with insufficient
+        privileges.
+
+        The following assertions occur:
+            - Expecting a ItemNotFound exception to be raised.
+        """
         with self.assertRaises(ItemNotFound):
             new_meta = {'meta2': 'data2', 'meta3': 'data3'}
             self.servers_client.update_server_metadata(
@@ -148,53 +295,143 @@ class AuthorizationTests(ComputeFixture):
 
     @tags(type='negative', net='no')
     def test_get_server_metadata_item_unauthorized(self):
+        """
+        A get server metadata request should fail when not authorized.
+
+        Will call get server metadata expecting a "ItemNotFound" exception
+        to be raised because the call is being executed with insufficient
+        privileges.
+
+        The following assertions occur:
+            - Expecting a ItemNotFound exception to be raised.
+        """
         with self.assertRaises(ItemNotFound):
             self.servers_client.get_server_metadata_item(
                 self.server.id, 'meta_key_1')
 
     @tags(type='negative', net='no')
     def test_delete_server_metadata_item_unauthorized(self):
+        """
+        A delete server metadata request should fail when not authorized.
+
+        Will call delete server metadata expecting a "ItemNotFound" exception
+        to be raised because the call is being executed with insufficient
+        privileges.
+
+        The following assertions occur:
+            - Expecting a ItemNotFound exception to be raised.
+        """
         with self.assertRaises(ItemNotFound):
             self.servers_client.delete_server_metadata_item(
                 self.server.id, 'meta_key_1')
 
     @tags(type='negative', net='no')
     def test_set_server_metadata_item_unauthorized(self):
+        """
+        A set server metadata item request should fail when not authorized.
+
+        Will call set server metadata item expecting a "ItemNotFound"
+        exception to be raised because the call is being executed with
+        insufficient privileges.
+
+        The following assertions occur:
+            - Expecting a ItemNotFound exception to be raised.
+        """
         with self.assertRaises(ItemNotFound):
             self.servers_client.set_server_metadata_item(
                 self.server.id, 'meta_key_1', 'newvalue')
 
     @tags(type='negative', net='no')
     def test_list_image_metadata_unauthorized(self):
+        """
+        A set image metadata request should fail when not authorized.
+
+        Will call set image metadata expecting a "ItemNotFound" exception
+        to be raised because the call is being executed with insufficient
+        privileges.
+
+        The following assertions occur:
+            - Expecting a ItemNotFound exception to be raised.
+        """
         with self.assertRaises(ItemNotFound):
             self.images_client.list_image_metadata(self.image_id)
 
     @tags(type='negative', net='no')
     def test_set_image_metadata_unauthorized(self):
+        """
+        A set image metadata request should fail when not authorized.
+
+        Will call set image metadata expecting a "ItemNotFound" exception
+        to be raised because the call is being executed with insufficient
+        privileges.
+
+        The following assertions occur:
+            - Expecting a ItemNotFound exception to be raised.
+        """
         with self.assertRaises(ItemNotFound):
             new_meta = {'user_meta2': 'data2', 'user_meta3': 'data3'}
             self.images_client.set_image_metadata(self.image_id, new_meta)
 
     @tags(type='negative', net='no')
     def test_update_image_metadata_unauthorized(self):
+        """
+        A update image metadata request should fail when not authorized.
+
+        Will call update image metadata expecting a "ItemNotFound" exception
+        to be raised because the call is being executed with insufficient
+        privileges.
+
+        The following assertions occur:
+            - Expecting a ItemNotFound exception to be raised.
+        """
         with self.assertRaises(ItemNotFound):
             new_meta = {'user_meta2': 'data2', 'user_meta3': 'data3'}
             self.images_client.update_image_metadata(self.image_id, new_meta)
 
     @tags(type='negative', net='no')
     def test_get_image_metadata_item_unauthorized(self):
+        """
+        A get image metadata item request should fail when not authorized.
+
+        Will call get image metadata item expecting a "ItemNotFound" exception
+        to be raised because the call is being executed with insufficient
+        privileges.
+
+        The following assertions occur:
+            - Expecting a ItemNotFound exception to be raised.
+        """
         with self.assertRaises(ItemNotFound):
             self.images_client.get_image_metadata_item(
                 self.image_id, 'user_key1')
 
     @tags(type='negative', net='no')
     def test_delete_image_metadata_item_unauthorized(self):
+        """
+        A delete image metadata item request should fail when not authorized.
+
+        Will call delete image metadata item expecting a "ItemNotFound"
+        exception to be raised because the call is being executed with
+        insufficient privileges.
+
+        The following assertions occur:
+            - Expecting a ItemNotFound exception to be raised.
+        """
         with self.assertRaises(ItemNotFound):
             self.images_client.delete_image_metadata_item(
                 self.image_id, 'user_key1')
 
     @tags(type='negative', net='no')
     def test_set_image_metadata_item_unauthorized(self):
+        """
+        A set image metadata item request should fail when not authorized.
+
+        Will call set image metadata item expecting a "ItemNotFound" exception
+        to be raised because the call is being executed with insufficient
+        privileges.
+
+        The following assertions occur:
+            - Expecting a ItemNotFound exception to be raised.
+        """
         with self.assertRaises(ItemNotFound):
             self.images_client.set_image_metadata_item(
                 self.image_id, 'user_key1', 'newvalue')
