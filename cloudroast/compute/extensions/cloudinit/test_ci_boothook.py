@@ -1,5 +1,5 @@
 """
-Copyright 2013 Rackspace
+Copyright 2015 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -25,6 +25,13 @@ class CloudInitBoothookTest(ComputeFixture):
 
     @classmethod
     def setUpClass(cls):
+        """
+        Perform actions that setup the necessary resources for testing.
+
+        The following resources are created during this setup:
+            - Creates a keypair.
+            - Creates an active server.
+        """
         super(CloudInitBoothookTest, cls).setUpClass()
         init_st = cls.config_drive_behaviors.read_cloud_init_for_config_drive(
             cls.cloud_init_config.boothook_script)
@@ -45,7 +52,21 @@ class CloudInitBoothookTest(ComputeFixture):
 
     @tags(type='smoke', net='yes')
     def test_bothook_input_format(self):
-        """Verify the Cloud Boothook Input Format is working as expected"""
+        """
+        Verify the Cloud Boothook Input Format is working as expected.
+
+        Will mount the config drive then get the remote instance to be able
+        to get the file details.  After verifying the contents of the file
+        are as expected; verify that the user data directory exists and the
+        part-001 file is in the directory.
+
+        The following assertions occur:
+            - 200 status code response from the create server call.
+            - Content of the user data file retrieved is the same as set in
+                setup.
+            - The part-001 file is present in the user data directory.
+            - The content of the part-001 file has a word.
+        """
         message = "Expected {0} to be {1}, was {2}."
         self.assertEqual(200, self.server_response.status_code)
         self.config_drive_behaviors.mount_config_drive(
