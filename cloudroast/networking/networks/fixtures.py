@@ -18,8 +18,7 @@ import operator
 from cafe.drivers.unittest.fixtures import BaseTestFixture
 from cloudcafe.common.resources import ResourcePool
 from cloudcafe.compute.composites import ComputeComposite
-from cloudcafe.networking.networks.common.constants \
-    import NeutronResponseCodes
+from cloudcafe.networking.networks.common.constants import NeutronResponseCodes
 from cloudcafe.networking.networks.common.models.response.network \
     import Network
 from cloudcafe.networking.networks.common.models.response.subnet \
@@ -521,20 +520,20 @@ class NetworkingAPIFixture(NetworkingFixture):
         # Data for creating networks and asserting responses
         cls.network_data = dict(
             status='ACTIVE', subnets=[],
-            name='test_api_net', admin_state_up=True,
+            name='test_network', admin_state_up=True,
             tenant_id=cls.user.tenant_id,
             shared=False)
 
         # Data for creating subnets and asserting responses
         cls.subnet_data = dict(
-            name='test_api_subnet',
+            name='test_subnet',
             tenant_id=cls.user.tenant_id,
             enable_dhcp=None, dns_nameservers=[], gateway_ip=None,
             host_routes=[])
 
         # Data for creating ports and asserting responses
         cls.port_data = dict(
-            status='ACTIVE', name='test_api_port', admin_state_up=True,
+            status='ACTIVE', name='test_port', admin_state_up=True,
             tenant_id=cls.user.tenant_id,
             device_owner=None, device_id='', security_groups=[])
 
@@ -601,29 +600,51 @@ class NetworkingAPIFixture(NetworkingFixture):
         host_routes = ipv4_host_routes + ipv6_host_routes
         return host_routes
 
+    def create_network(self, name=None):
+        """Create a test network with initial expected data"""
+        expected_network = self.get_expected_network_data()
+        if name is not None:
+            expected_network.name = name
+        network = self.create_test_network(expected_network)
+        return network
 
-class NetworkingComputeFixture(NetworkingFixture):
-    """
-    @summary: fixture for networking tests with compute integration
-    """
+    def create_subnet(self, name=None, network_id=None, ip_version=None):
+        """Create a test subnet with initial expected data"""
+        if ip_version == 6:
+            expected_subnet = self.get_expected_ipv6_subnet_data()
+        else:
+            expected_subnet = self.get_expected_ipv4_subnet_data()
+        if name is not None:
+            expected_subnet.name = name
 
-    @classmethod
-    def setUpClass(cls):
-        super(NetworkingComputeFixture, cls).setUpClass()
-        cls.compute = ComputeComposite()
+        # Create network if not provided
+        if network_id is None:
+            network = self.create_network()
+            network_id = network.id
+        expected_subnet.network_id = network_id
 
-        # sub-composites
-        cls.flavors = cls.compute.flavors
-        cls.images = cls.compute.images
-        cls.servers = cls.compute.servers
-        cls.keypairs = cls.compute.keypairs
+        # Creating the subnet
+        subnet = self.add_subnet_to_network(expected_subnet)
+        return subnet
 
-        # Other reusable values
-        cls.flavor_ref = cls.flavors.config.primary_flavor
-        cls.image_ref = cls.images.config.primary_image
+    def create_port(self, name=None, network_id=None, ip_version=None):
+        """Create a test port with initial expected data"""
+        expected_port = self.get_expected_port_data()
+        if name is not None:
+            expected_port.name = name
+
+        # Create network and subnet if not provided
+        if network_id is None:
+            network = self.create_network()
+            network_id = network.id
+            subnet = self.create_subnet(network_id=network_id,
+                                        ip_version=ip_version)
+        expected_port.network_id = network_id
+        port = self.add_port_to_network(expected_port)
+        return port
 
 
-class NetworkingSecurityGroupsFixture(NetworkingFixture):
+class NetworkingSecurityGroupsFixture(NetworkingAPIFixture):
     """
     @summary: fixture for networking security groups tests
     """
@@ -865,3 +886,87 @@ class NetworkingSecurityGroupsFixture(NetworkingFixture):
             msg = ('Unexpected Security Groups Rule response attributes: '
                    '{0}').format(secrule.kwargs)
             self.assertFalse(secrule.kwargs, msg)
+
+
+class NetworkingComputeFixture(NetworkingSecurityGroupsFixture):
+    """
+    @summary: fixture for networking tests with compute integration
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        super(NetworkingComputeFixture, cls).setUpClass()
+        cls.compute = ComputeComposite()
+
+        # sub-composites
+        cls.flavors = cls.compute.flavors
+        cls.images = cls.compute.images
+        cls.servers = cls.compute.servers
+        cls.keypairs = cls.compute.keypairs
+
+        # Other reusable values
+        cls.flavor_ref = cls.flavors.config.primary_flavor
+        cls.image_ref = cls.images.config.primary_image
+
+        cls.delete_servers = []
+        cls.failed_servers = []
+
+        # Using the serversCleanup method
+        cls.addClassCleanup(cls.serversCleanUp)
+
+    @classmethod
+    def serversCleanUp(cls):
+        """
+        @summary: Deletes servers using the networks config keep_servers and
+            keep_servers_on_failure flags, and the servers config
+            keep_resources_on_failure flag
+        """
+        cls.fixture_log.info('serversCleanUp: deleting servers....')
+        if not cls.config.keep_servers and cls.delete_servers:
+            if (cls.config.keep_servers_on_failure or
+                    cls.servers.config.keep_resources_on_failure):
+
+                cls.fixture_log.info('Keeping failed servers...')
+                for failed_server in cls.failed_servers:
+                    if failed_server in cls.delete_servers:
+                        cls.delete_servers.remove(failed_server)
+
+            cls.fixture_log.info('Deleting servers...')
+            cls.net.behaviors.wait_for_servers_to_be_deleted(
+                server_id_list=cls.delete_servers)
+            cls.delete_servers = []
+            cls.failed_servers = []
+
+    def assertServerNetworkByName(self, server, network_name, ipv4=True,
+                                  ipv6=False, ipv4_cidr=None, ipv6_cidr=None):
+        """
+        @summary:
+        """
+        server_network = server.addresses.get_by_name(network_name)
+        not_found_msg = 'Network {0} not found at server {1}'.format(
+            network_name, server.id)
+        self.assertIsNotNone(server_network, not_found_msg)
+
+        if ipv4:
+            ipv4_address = server_network.ipv4
+            ipv4_msg = 'Server {0} is missing network {1} IPv4 address'.format(
+                server.id, network_name)
+            self.assertIsNotNone(ipv4_address, ipv4_msg)
+            valid_ipv4 = self.subnets.behaviors.verify_ip(ip_cidr=ipv4_address,
+                                                          ip_range=ipv4_cidr)
+            invalid_ipv4_msg = ('Server {0} valid IP {1} address check failure'
+                                'with IP range {2}').format(
+                                    server.id, ipv4_address, ipv4_cidr)
+            self.assertTrue(valid_ipv4, invalid_ipv4_msg)
+
+        if ipv6:
+            ipv6_address = server_network.ipv6
+            ipv6_msg = 'Server {0} is missing network {1} IPv6 address'.format(
+                server.id, network_name)
+            self.assertIsNotNone(ipv6_address, ipv6_msg)
+            valid_ipv6 = self.subnets.behaviors.verify_ip(ip_cidr=ipv6_address,
+                                                          ip_range=ipv6_cidr)
+            invalid_ipv6_msg = ('Server {0} valid IP {1} address check failure'
+                                'with IP range {2}').format(
+                                    server.id, ipv6_address, ipv6_cidr)
+            self.assertTrue(valid_ipv6, invalid_ipv6_msg)
