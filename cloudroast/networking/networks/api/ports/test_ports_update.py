@@ -103,8 +103,7 @@ class PortUpdateTest(NetworkingAPIFixture):
             name=expected_port.name,
             admin_state_up=expected_port.admin_state_up,
             fixed_ips=expected_port.fixed_ips,
-            device_id=expected_port.device_id,
-            device_owner=expected_port.device_owner)
+            device_id=expected_port.device_id)
 
         # Fail the test if any failure is found
         self.assertFalse(resp.failures)
@@ -286,6 +285,90 @@ class PortUpdateTest(NetworkingAPIFixture):
         # Check the Port response
         self.assertPortResponse(expected_port, port)
 
+    @tags('smoke', 'creator')
+    def test_ipv4_port_update_w_device_owner(self):
+        """
+        @summary: Updating an IPv4 port with device_owner
+        """
+        expected_port = self.ipv4_port
+        expected_port.device_owner = 'port_device_owner'
+
+        # Updating the port
+        resp = self.ports.behaviors.update_port(
+            port_id=expected_port.id,
+            device_owner=expected_port.device_owner)
+
+        # Port update should be unavailable
+        msg = '(negative) Updating a port with device_owner: {0}'.format(
+            expected_port.device_owner)
+        self.assertNegativeResponse(
+            resp=resp, status_code=NeutronResponseCodes.FORBIDDEN, msg=msg,
+            delete_list=self.delete_ports,
+            error_type=NeutronErrorTypes.POLICY_NOT_AUTHORIZED)
+
+    @tags('smoke', 'creator')
+    def test_ipv6_port_update_w_device_owner(self):
+        """
+        @summary: Updating an IPv6 port with device_owner
+        """
+        expected_port = self.ipv6_port
+        expected_port.device_owner = 'port_device_owner'
+
+        # Updating the port
+        resp = self.ports.behaviors.update_port(
+            port_id=expected_port.id,
+            device_owner=expected_port.device_owner)
+
+        # Port update should be unavailable
+        msg = '(negative) Updating a port with device_owner: {0}'.format(
+            expected_port.device_owner)
+        self.assertNegativeResponse(
+            resp=resp, status_code=NeutronResponseCodes.FORBIDDEN, msg=msg,
+            delete_list=self.delete_ports,
+            error_type=NeutronErrorTypes.POLICY_NOT_AUTHORIZED)
+
+    @tags('negative', 'creator')
+    def test_ipv4_port_update_w_invalid_name(self):
+        """
+        @summary: Updating an IPv4 port with an invalid name
+        """
+        expected_port = self.ipv4_port
+        expected_port.name = 'TestName2<script>alert(/xxs/);</script>'
+
+        # Updating the port
+        resp = self.ports.behaviors.update_port(
+            port_id=expected_port.id,
+            name=expected_port.name)
+
+        # Port update should be unavailable
+        msg = '(negative) Updating a port with invalid name: {0}'.format(
+            expected_port.name)
+        self.assertNegativeResponse(
+            resp=resp, status_code=NeutronResponseCodes.BAD_REQUEST, msg=msg,
+            delete_list=self.delete_ports,
+            not_in_error_msg=expected_port.name)
+
+    @tags('negative', 'creator')
+    def test_ipv6_port_update_w_invalid_name(self):
+        """
+        @summary: Updating an IPv6 port with an invalid name
+        """
+        expected_port = self.ipv6_port
+        expected_port.name = 'TestName2<script>alert(/xxs/);</script>'
+
+        # Updating the port
+        resp = self.ports.behaviors.update_port(
+            port_id=expected_port.id,
+            name=expected_port.name)
+
+        # Port update should be unavailable
+        msg = '(negative) Updating a port with invalid name: {0}'.format(
+            expected_port.name)
+        self.assertNegativeResponse(
+            resp=resp, status_code=NeutronResponseCodes.BAD_REQUEST, msg=msg,
+            delete_list=self.delete_ports,
+            not_in_error_msg=expected_port.name)
+
     @unittest.skip('Needs RM10088 fix')
     @tags('positive', 'creator')
     def test_ipv4_port_update_w_long_name_trimming(self):
@@ -371,6 +454,46 @@ class PortUpdateTest(NetworkingAPIFixture):
 
         # Check the Port response
         self.assertPortResponse(expected_port, port, check_fixed_ips=True)
+
+    @tags('smoke', 'negaitve', 'creator')
+    def test_ipv4_port_update_w_invalid_fixed_ips(self):
+        """
+        @summary: Updating an IPv4 port with invalid fixed IPs
+        """
+        expected_port = self.ipv4_port
+        expected_port.fixed_ips = ';cat /etc/passwd;'
+
+        # Updating the port
+        resp = self.ports.behaviors.update_port(
+            port_id=expected_port.id,
+            fixed_ips=expected_port.fixed_ips)
+
+        # Port update should be unavailable with invalid fixed IP
+        msg = '(negative) Updating an IPv4 port with invalid fixed ips'
+        self.assertNegativeResponse(
+            resp=resp, status_code=NeutronResponseCodes.BAD_REQUEST, msg=msg,
+            delete_list=self.delete_ports,
+            error_type=NeutronErrorTypes.HTTP_BAD_REQUEST)
+
+    @tags('smoke', 'negaitve', 'creator')
+    def test_ipv6_port_update_w_invalid_fixed_ips(self):
+        """
+        @summary: Updating an IPv6 port with invalid fixed IPs
+        """
+        expected_port = self.ipv6_port
+        expected_port.fixed_ips = ';cat /etc/passwd;'
+
+        # Updating the port
+        resp = self.ports.behaviors.update_port(
+            port_id=expected_port.id,
+            fixed_ips=expected_port.fixed_ips)
+
+        # Port update should be unavailable with invalid fixed IP
+        msg = '(negative) Updating an IPv6 port with invalid fixed ips'
+        self.assertNegativeResponse(
+            resp=resp, status_code=NeutronResponseCodes.BAD_REQUEST, msg=msg,
+            delete_list=self.delete_ports,
+            error_type=NeutronErrorTypes.HTTP_BAD_REQUEST)
 
     @tags('smoke', 'creator')
     def test_ipv6_port_update_w_single_fixed_ips(self):

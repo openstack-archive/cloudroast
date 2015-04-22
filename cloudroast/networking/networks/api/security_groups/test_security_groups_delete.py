@@ -73,6 +73,52 @@ class SecurityGroupDeleteTest(NetworkingSecurityGroupsFixture):
         secrule = self.create_test_secrule(self.expected_secrule, delete=False)
         request_kwargs = dict(security_group_id=expected_secgroup.id)
 
+        # Checking the security group and rule are there
+        resp = self.sec.behaviors.get_security_group(**request_kwargs)
+        self.assertFalse(resp.failures)
+
+        resp = self.sec.behaviors.get_security_group_rule(
+            security_group_rule_id=secrule.id)
+        self.assertFalse(resp.failures)
+
+        # Deleting the security group
+        resp = self.sec.behaviors.delete_security_group(**request_kwargs)
+        self.assertFalse(resp.failures)
+
+        # Checking the security group was deleted
+        resp = self.sec.behaviors.get_security_group(**request_kwargs)
+
+        neg_msg = ('(negative) Getting a deleted security group')
+        status_code = SecurityGroupsResponseCodes.NOT_FOUND
+        error_type = SecurityGroupsErrorTypes.SECURITY_GROUP_NOT_FOUND
+        self.assertNegativeResponse(
+            resp=resp, status_code=status_code, msg=neg_msg,
+            delete_list=self.delete_secgroups,
+            error_type=error_type)
+
+        # Checking the security group rule was deleted
+        resp = self.sec.behaviors.get_security_group_rule(
+            security_group_rule_id=secrule.id)
+        neg_msg = ('(negative) Getting a deleted security group rule')
+        status_code = SecurityGroupsResponseCodes.NOT_FOUND
+        error_type = SecurityGroupsErrorTypes.SECURITY_GROUP_RULE_NOT_FOUND
+        self.assertNegativeResponse(
+            resp=resp, status_code=status_code, msg=neg_msg,
+            delete_list=self.delete_secgroups,
+            error_type=error_type)
+
+    @tags('sec_group')
+    def test_deleting_previously_deleted_security_group(self):
+        """
+        Testing the HTTP response when trying to delete an already
+        deleted security group
+        """
+        expected_secgroup = self.secgroup
+
+        # Creating a security rule
+        secrule = self.create_test_secrule(self.expected_secrule, delete=False)
+        request_kwargs = dict(security_group_id=expected_secgroup.id)
+
         # Checking the security rule is in the group
         resp = self.sec.behaviors.get_security_group(**request_kwargs)
         self.assertFalse(resp.failures)
@@ -85,6 +131,16 @@ class SecurityGroupDeleteTest(NetworkingSecurityGroupsFixture):
         resp = self.sec.behaviors.get_security_group(**request_kwargs)
 
         neg_msg = ('(negative) Getting a deleted security group')
+        status_code = SecurityGroupsResponseCodes.NOT_FOUND
+        error_type = SecurityGroupsErrorTypes.SECURITY_GROUP_NOT_FOUND
+        self.assertNegativeResponse(
+            resp=resp, status_code=status_code, msg=neg_msg,
+            delete_list=self.delete_secgroups,
+            error_type=error_type)
+
+        # Trying to delete the security group a second time
+        resp = self.sec.behaviors.delete_security_group(**request_kwargs)
+        neg_msg = ('(negative) Deleting a deleted security group')
         status_code = SecurityGroupsResponseCodes.NOT_FOUND
         error_type = SecurityGroupsErrorTypes.SECURITY_GROUP_NOT_FOUND
         self.assertNegativeResponse(

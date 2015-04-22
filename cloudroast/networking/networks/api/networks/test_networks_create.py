@@ -236,4 +236,5 @@ class NetworkCreateTest(NetworkingAPIFixture):
 
         self.assertNegativeResponse(
             resp=resp, status_code=NeutronResponseCodes.BAD_REQUEST, msg=msg,
-            delete_list=self.delete_subnets)
+            delete_list=self.delete_subnets,
+            not_in_error_msg=expected_network.name)

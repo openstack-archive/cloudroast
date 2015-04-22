@@ -1176,6 +1176,84 @@ class SubnetCreateTest(NetworkingAPIFixture):
             error_type=NeutronErrorTypes.OUT_OF_BOUNDS_ALLOCATION_POOL)
 
     @tags('smoke', 'creator')
+    def test_ipv4_subnet_create_ip_policy_w_first_cidr_address(self):
+        """
+        @summary: Subnet create with allocation pool .0 start address
+        """
+        expected_subnet = self.expected_ipv4_subnet
+        expected_subnet.name = 'test_sub_ip_policy_w_first_cidr_address'
+        expected_subnet.ip_version = 4
+        cidr = self.subnets.behaviors.create_ipv4_cidr()
+        expected_subnet.cidr = cidr
+
+        # Request allocation pools with .0 start address
+        request_allocation_pools = self.subnets.behaviors.get_allocation_pool(
+            expected_subnet.cidr, first_increment=0)
+        expected_subnet.allocation_pools = [request_allocation_pools]
+
+        # Trying to create an IPv4 subnet
+        resp = self.subnets.behaviors.create_subnet(
+            network_id=expected_subnet.network_id,
+            name=expected_subnet.name,
+            ip_version=expected_subnet.ip_version,
+            cidr=expected_subnet.cidr,
+            allocation_pools=expected_subnet.allocation_pools,
+            use_exact_name=True, raise_exception=False)
+        if resp.response.entity and hasattr(resp.response.entity, 'id'):
+            self.delete_subnets.append(resp.response.entity.id)
+
+        # Response expect allocation pools start address .1 NOT .0
+        response_allocation_pools = self.subnets.behaviors.get_allocation_pool(
+            expected_subnet.cidr)
+        expected_subnet.allocation_pools = [response_allocation_pools]
+
+        # Fail the test if any failure is found
+        self.assertFalse(resp.failures)
+        subnet = resp.response.entity
+
+        # Check the Subnet response
+        self.assertSubnetResponse(expected_subnet, subnet)
+
+    @tags('smoke', 'creator')
+    def test_ipv4_subnet_create_ip_policy_w_last_cidr_address(self):
+        """
+        @summary: Subnet create with allocation pool .255 end address
+        """
+        expected_subnet = self.expected_ipv4_subnet
+        expected_subnet.name = 'test_sub_ip_policy_w_last_cidr_address'
+        expected_subnet.ip_version = 4
+        cidr = self.subnets.behaviors.create_ipv4_cidr()
+        expected_subnet.cidr = cidr
+
+        # Request allocation pools with .255 end address
+        request_allocation_pools = self.subnets.behaviors.get_allocation_pool(
+            expected_subnet.cidr, first_increment=1, last_decrement=0)
+        expected_subnet.allocation_pools = [request_allocation_pools]
+
+        # Trying to create an IPv4 subnet
+        resp = self.subnets.behaviors.create_subnet(
+            network_id=expected_subnet.network_id,
+            name=expected_subnet.name,
+            ip_version=expected_subnet.ip_version,
+            cidr=expected_subnet.cidr,
+            allocation_pools=expected_subnet.allocation_pools,
+            use_exact_name=True, raise_exception=False)
+        if resp.response.entity and hasattr(resp.response.entity, 'id'):
+            self.delete_subnets.append(resp.response.entity.id)
+
+        # Response expected allocation pools start address .1 NOT .0
+        response_allocation_pools = self.subnets.behaviors.get_allocation_pool(
+            expected_subnet.cidr)
+        expected_subnet.allocation_pools = [response_allocation_pools]
+
+        # Fail the test if any failure is found
+        self.assertFalse(resp.failures)
+        subnet = resp.response.entity
+
+        # Check the Subnet response
+        self.assertSubnetResponse(expected_subnet, subnet)
+
+    @tags('smoke', 'creator')
     def test_ipv6_subnet_create_ip_policy(self):
         """
         @summary: Negative subnet create with allocation pools outside
@@ -1651,7 +1729,8 @@ class SubnetCreateTest(NetworkingAPIFixture):
 
         self.assertNegativeResponse(
             resp=resp, status_code=NeutronResponseCodes.BAD_REQUEST, msg=msg,
-            delete_list=self.delete_subnets)
+            delete_list=self.delete_subnets,
+            not_in_error_msg=expected_subnet.name)
 
     @tags('negative', 'creator')
     def test_ipv6_subnet_create_w_invalid_name(self):
@@ -1675,4 +1754,5 @@ class SubnetCreateTest(NetworkingAPIFixture):
 
         self.assertNegativeResponse(
             resp=resp, status_code=NeutronResponseCodes.BAD_REQUEST, msg=msg,
-            delete_list=self.delete_subnets)
+            delete_list=self.delete_subnets,
+            not_in_error_msg=expected_subnet.name)

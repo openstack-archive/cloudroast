@@ -126,6 +126,50 @@ class SubnetUpdateTest(NetworkingAPIFixture):
         # Check the Subnet response
         self.assertSubnetResponse(expected_subnet, subnet)
 
+    @tags('negative', 'creator')
+    def test_ipv4_subnet_update_w_invalid_name(self):
+        """
+        @summary: Updating a subnet with an invalid name
+        """
+        expected_subnet = self.expected_ipv4_subnet
+        expected_subnet.name = 'TestName2<script>alert(/xxs/);</script>'
+
+        # Updating the subnet name
+        resp = self.subnets.behaviors.update_subnet(
+            subnet_id=self.ipv4_subnet.id,
+            name=expected_subnet.name)
+
+        # Subnet update with invalid name should be unavailable
+        msg = '(negative) Subnet update with invalid name: {0}'.format(
+            expected_subnet.name)
+
+        self.assertNegativeResponse(
+            resp=resp, status_code=NeutronResponseCodes.BAD_REQUEST, msg=msg,
+            delete_list=self.delete_subnets,
+            not_in_error_msg=expected_subnet.name)
+
+    @tags('negative', 'creator')
+    def test_ipv6_subnet_update_w_invalid_name(self):
+        """
+        @summary: Updating a subnet with an invalid name
+        """
+        expected_subnet = self.expected_ipv6_subnet
+        expected_subnet.name = 'TestName2<script>alert(/xxs/);</script>'
+
+        # Updating the subnet name
+        resp = self.subnets.behaviors.update_subnet(
+            subnet_id=self.ipv4_subnet.id,
+            name=expected_subnet.name)
+
+        # Subnet update with invalid name should be unavailable
+        msg = '(negative) Subnet update with invalid name: {0}'.format(
+            expected_subnet.name)
+
+        self.assertNegativeResponse(
+            resp=resp, status_code=NeutronResponseCodes.BAD_REQUEST, msg=msg,
+            delete_list=self.delete_subnets,
+            not_in_error_msg=expected_subnet.name)
+
     @unittest.skip('Needs RM10088 fix')
     @tags('negative', 'creator')
     def test_ipv4_subnet_update_w_long_name_trimming(self):

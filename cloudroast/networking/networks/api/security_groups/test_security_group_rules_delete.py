@@ -73,7 +73,7 @@ class SecurityGroupRuleDeleteTest(NetworkingSecurityGroupsFixture):
         error_type = SecurityGroupsErrorTypes.SECURITY_GROUP_RULE_NOT_FOUND
         self.assertNegativeResponse(
             resp=resp, status_code=status_code, msg=neg_msg,
-            delete_list=self.delete_secgroups,
+            delete_list=self.delete_secgroups_rules,
             error_type=error_type)
 
         # Checking the security rule is not in the group anymore

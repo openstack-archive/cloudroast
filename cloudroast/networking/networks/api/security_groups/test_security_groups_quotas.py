@@ -47,7 +47,7 @@ class SecurityGroupsQuotasTest(NetworkingSecurityGroupsFixture):
         secgroup = self.create_test_secgroup(self.expected_secgroup)
         expected_secrule = self.expected_secrule
         expected_secrule.security_group_id = secgroup.id
-        rules_per_group = self.sec.config.rules_per_group
+        rules_per_group = self.sec.config.max_rules_per_secgroup
         num = rules_per_group
         self.create_n_security_rules_per_group(expected_secrule, num)
 
@@ -76,7 +76,7 @@ class SecurityGroupsQuotasTest(NetworkingSecurityGroupsFixture):
         @summary: Testing security groups quota per tenant
         """
         expected_secgroup = self.expected_secgroup
-        groups_per_tenant = self.sec.config.groups_per_tenant
+        groups_per_tenant = self.sec.config.max_secgroups_per_tenant
         num = groups_per_tenant
         self.create_n_security_groups(expected_secgroup, num)
 
@@ -107,8 +107,8 @@ class SecurityGroupsQuotasTest(NetworkingSecurityGroupsFixture):
         """
         expected_secgroup = self.expected_secgroup
         expected_secrule = self.expected_secrule
-        groups_per_tenant = self.sec.config.groups_per_tenant
-        rules_per_tenant = self.sec.config.rules_per_tenant
+        groups_per_tenant = self.sec.config.max_secgroups_per_tenant
+        rules_per_tenant = self.sec.config.max_rules_per_tenant
         rules_per_group = rules_per_tenant / groups_per_tenant
 
         secgroups = self.create_n_security_groups_w_n_rules(

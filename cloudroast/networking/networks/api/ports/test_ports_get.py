@@ -59,7 +59,7 @@ class PortsGetTest(NetworkingAPIFixture):
     def tearDown(self):
         self.networkingCleanUp()
 
-    @tags('smoke', 'observer')
+    @tags('smoke', 'observer', 'rcv3')
     def test_list_ports(self):
         """
         @summary: Get ports test (list)
@@ -71,7 +71,7 @@ class PortsGetTest(NetworkingAPIFixture):
         # Fail the test if any failure is found
         self.assertFalse(resp.failures)
 
-    @tags('smoke', 'observer')
+    @tags('smoke', 'observer', 'rcv3')
     def test_list_ports_by_network_id(self):
         """
         @summary: Get ports test (list) by network_id
@@ -89,7 +89,7 @@ class PortsGetTest(NetworkingAPIFixture):
         # Check the Port response
         self.assertPortResponse(expected_port, port)
 
-    @tags('smoke', 'observer')
+    @tags('smoke', 'observer', 'rcv3')
     def test_ipv4_port_get(self):
         """
         @summary: Get port test
@@ -106,7 +106,7 @@ class PortsGetTest(NetworkingAPIFixture):
         # Check the Port response
         self.assertPortResponse(expected_port, port)
 
-    @tags('smoke', 'observer')
+    @tags('smoke', 'observer', 'rcv3')
     def test_ipv6_port_get(self):
         """
         @summary: Get port test

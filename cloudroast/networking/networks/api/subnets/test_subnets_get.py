@@ -73,7 +73,7 @@ class SubnetsGetTest(NetworkingAPIFixture):
     def tearDown(self):
         self.networkingCleanUp()
 
-    @tags('smoke', 'observer')
+    @tags('smoke', 'observer', 'rcv3')
     def test_list_subnets(self):
         """
         @summary: Get subnets test (list)
@@ -83,7 +83,45 @@ class SubnetsGetTest(NetworkingAPIFixture):
         # Fail the test if any failure is found
         self.assertFalse(resp.failures)
 
-    @tags('negative', 'observer', 'quark')
+    @tags('smoke', 'observer', 'rcv3')
+    def test_ipv4_subnet_get(self):
+        """
+        @summary: Get IPv4 subnet test
+        """
+        expected_subnet = self.ipv4_subnet
+
+        # Get subnet
+        resp = self.subnets.behaviors.get_subnet(subnet_id=expected_subnet.id)
+
+        # Fail the test if any failure is found
+        self.assertFalse(resp.failures)
+        subnet = resp.response.entity
+
+        # Check the Port response
+        self.assertSubnetResponse(expected_subnet, subnet)
+
+    @tags('smoke', 'observer', 'rcv3')
+    def test_ipv6_subnet_get(self):
+        """
+        @summary: Get IPv6 subnet test
+        """
+        expected_subnet = self.ipv6_subnet
+
+        # Get subnet
+        resp = self.subnets.behaviors.get_subnet(subnet_id=expected_subnet.id)
+
+        # Fail the test if any failure is found
+        self.assertFalse(resp.failures)
+        subnet = resp.response.entity
+
+        subnet.allocation_pools = (
+            self.subnets.behaviors.format_allocation_pools(
+            subnet.allocation_pools))
+
+        # Check the Port response
+        self.assertSubnetResponse(expected_subnet, subnet)
+
+    @tags('negative', 'observer', 'quark', 'rcv3')
     def test_hidden_subnets_public_private(self):
         """
         @summary: Testing public and service net (private) networks are NOT

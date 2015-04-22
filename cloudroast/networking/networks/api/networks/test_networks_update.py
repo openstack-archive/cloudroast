@@ -179,3 +179,25 @@ class NetworkUpdateTest(NetworkingAPIFixture):
             resp=resp, status_code=NeutronResponseCodes.FORBIDDEN, msg=msg,
             delete_list=self.delete_ports,
             error_type=NeutronErrorTypes.POLICY_NOT_AUTHORIZED)
+
+    @tags('negative', 'creator')
+    def test_network_update_w_invalid_name(self):
+        """
+        @summary: Updating a Network with an invalid name
+        """
+        expected_network = self.expected_network
+        expected_network.name = 'TestName2<script>alert(/xxs/);</script>'
+
+        # Updating the network
+        resp = self.networks.behaviors.update_network(
+            network_id=expected_network.id,
+            name=expected_network.name)
+
+        # Network update with invalid name should be unavailable
+        msg = '(negative) Network update with invalid name: {0}'.format(
+            expected_network.name)
+
+        self.assertNegativeResponse(
+            resp=resp, status_code=NeutronResponseCodes.BAD_REQUEST, msg=msg,
+            delete_list=self.delete_subnets,
+            not_in_error_msg=expected_network.name)

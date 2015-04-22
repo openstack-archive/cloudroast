@@ -1,5 +1,5 @@
 """
-Copyright 2014 Rackspace
+Copyright 2015 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -13,15 +13,12 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-
-import netaddr
 import operator
 
 from cafe.drivers.unittest.fixtures import BaseTestFixture
 from cloudcafe.common.resources import ResourcePool
 from cloudcafe.compute.composites import ComputeComposite
-from cloudcafe.networking.networks.common.constants \
-    import NeutronResponseCodes
+from cloudcafe.networking.networks.common.constants import NeutronResponseCodes
 from cloudcafe.networking.networks.common.models.response.network \
     import Network
 from cloudcafe.networking.networks.common.models.response.subnet \
@@ -74,6 +71,10 @@ class NetworkingFixture(BaseTestFixture):
         cls.failed_subnets = []
         cls.delete_ports = []
         cls.failed_ports = []
+        cls.delete_secgroups = []
+        cls.failed_secgroups = []
+        cls.delete_secgroups_rules = []
+        cls.failed_secgroups_rules = []
 
         # Getting user data for testing
         cls.user = cls.net.networking_auth_composite()
@@ -232,7 +233,9 @@ class NetworkingFixture(BaseTestFixture):
         return port
 
     def assertNegativeResponse(self, resp, status_code, msg, delete_list=None,
-                               entity=None, error_type=None):
+                               entity=None, error_type=None,
+                               error_msg_label='NeutronError',
+                               not_in_error_msg=None):
         """
         @summary: negative or delete test response assertion
         @param resp: networking response
@@ -247,6 +250,10 @@ class NetworkingFixture(BaseTestFixture):
         @type entity: None or expected entity
         @param error_type: Neutron error type at common/constants
         @type error_type: string
+        @param error_msg_label: label where the error msg starts in the failure
+        @type error_msg_label: string
+        @param not_in_error_msg: Unexpected comment in error message
+        @type not_in_error_msg: string
         """
         # Just in case there is a resource that should be deleted
         if (delete_list is not None and resp.response.entity
@@ -274,6 +281,16 @@ class NetworkingFixture(BaseTestFixture):
             msg = ('Expected {0} error type in failure msg: {1}').format(
                 error_type, resp.failures[0])
             self.assertTrue(error_msg_check, msg)
+
+        # Check the error message does NOT has the given string
+        if not_in_error_msg:
+            msg_index = resp.failures[0].find(error_msg_label)
+            error_msg = resp.failures[0][msg_index:]
+            error_msg_check = not_in_error_msg in error_msg
+
+            msg = 'Unexpected {0} string in failure msg: {1}'.format(
+                not_in_error_msg, error_msg)
+            self.assertFalse(error_msg_check, msg)
 
     def assertNetworkResponse(self, expected_network, network,
                               check_exact_name=True):
@@ -503,20 +520,20 @@ class NetworkingAPIFixture(NetworkingFixture):
         # Data for creating networks and asserting responses
         cls.network_data = dict(
             status='ACTIVE', subnets=[],
-            name='test_api_net', admin_state_up=True,
+            name='test_network', admin_state_up=True,
             tenant_id=cls.user.tenant_id,
             shared=False)
 
         # Data for creating subnets and asserting responses
         cls.subnet_data = dict(
-            name='test_api_subnet',
+            name='test_subnet',
             tenant_id=cls.user.tenant_id,
             enable_dhcp=None, dns_nameservers=[], gateway_ip=None,
             host_routes=[])
 
         # Data for creating ports and asserting responses
         cls.port_data = dict(
-            status='ACTIVE', name='test_api_port', admin_state_up=True,
+            status='ACTIVE', name='test_port', admin_state_up=True,
             tenant_id=cls.user.tenant_id,
             device_owner=None, device_id='', security_groups=[])
 
@@ -583,29 +600,51 @@ class NetworkingAPIFixture(NetworkingFixture):
         host_routes = ipv4_host_routes + ipv6_host_routes
         return host_routes
 
+    def create_network(self, name=None):
+        """Create a test network with initial expected data"""
+        expected_network = self.get_expected_network_data()
+        if name is not None:
+            expected_network.name = name
+        network = self.create_test_network(expected_network)
+        return network
 
-class NetworkingComputeFixture(NetworkingFixture):
-    """
-    @summary: fixture for networking tests with compute integration
-    """
+    def create_subnet(self, name=None, network_id=None, ip_version=None):
+        """Create a test subnet with initial expected data"""
+        if ip_version == 6:
+            expected_subnet = self.get_expected_ipv6_subnet_data()
+        else:
+            expected_subnet = self.get_expected_ipv4_subnet_data()
+        if name is not None:
+            expected_subnet.name = name
 
-    @classmethod
-    def setUpClass(cls):
-        super(NetworkingComputeFixture, cls).setUpClass()
-        cls.compute = ComputeComposite()
+        # Create network if not provided
+        if network_id is None:
+            network = self.create_network()
+            network_id = network.id
+        expected_subnet.network_id = network_id
 
-        # sub-composites
-        cls.flavors = cls.compute.flavors
-        cls.images = cls.compute.images
-        cls.servers = cls.compute.servers
-        cls.keypairs = cls.compute.keypairs
+        # Creating the subnet
+        subnet = self.add_subnet_to_network(expected_subnet)
+        return subnet
 
-        # Other reusable values
-        cls.flavor_ref = cls.flavors.config.primary_flavor
-        cls.image_ref = cls.images.config.primary_image
+    def create_port(self, name=None, network_id=None, ip_version=None):
+        """Create a test port with initial expected data"""
+        expected_port = self.get_expected_port_data()
+        if name is not None:
+            expected_port.name = name
+
+        # Create network and subnet if not provided
+        if network_id is None:
+            network = self.create_network()
+            network_id = network.id
+            subnet = self.create_subnet(network_id=network_id,
+                                        ip_version=ip_version)
+        expected_port.network_id = network_id
+        port = self.add_port_to_network(expected_port)
+        return port
 
 
-class NetworkingSecurityGroupsFixture(NetworkingFixture):
+class NetworkingSecurityGroupsFixture(NetworkingAPIFixture):
     """
     @summary: fixture for networking security groups tests
     """
@@ -626,11 +665,6 @@ class NetworkingSecurityGroupsFixture(NetworkingFixture):
             protocol=None, ethertype='IPv4', port_range_max=None,
             port_range_min=None,
             tenant_id=cls.user.tenant_id)
-
-        cls.delete_secgroups = []
-        cls.failed_secgroups = []
-        cls.delete_secgroups_rules = []
-        cls.failed_secgroups_rules = []
 
         # Using the secGroupCleanup method
         cls.addClassCleanup(cls.secGroupCleanUp)
@@ -694,7 +728,7 @@ class NetworkingSecurityGroupsFixture(NetworkingFixture):
                 security_group_list=cls.delete_secgroups)
             cls.delete_secgroups = []
 
-    def create_test_secgroup(self, expected_secgroup, delete=True):
+    def create_test_secgroup(self, expected_secgroup=None, delete=True):
         """
         @summary: creating a test security group
         @param expected_secgroup: security group object with expected params
@@ -702,9 +736,10 @@ class NetworkingSecurityGroupsFixture(NetworkingFixture):
         @return: security group entity
         @rtype: models.response.SecurityGroup
         """
-        expected_secgroup = self.expected_secgroup
-        request_kwargs = dict()
+        expected_secgroup = (expected_secgroup or
+                             self.get_expected_secgroup_data())
 
+        request_kwargs = dict()
         if expected_secgroup.name:
             request_kwargs['name'] = expected_secgroup.name
         if expected_secgroup.description:
@@ -735,25 +770,23 @@ class NetworkingSecurityGroupsFixture(NetworkingFixture):
         """
         request_kwargs = dict(
             security_group_id=expected_secrule.security_group_id)
-        if expected_secrule.direction:
-            request_kwargs['direction'] = expected_secrule.direction
-        if expected_secrule.ethertype:
-            request_kwargs['ethertype'] = expected_secrule.ethertype
-        if expected_secrule.port_range_min:
-            request_kwargs['port_range_min'] = expected_secrule.port_range_min
-        if expected_secrule.port_range_max:
-            request_kwargs['port_range_max'] = expected_secrule.port_range_max
+        property_list = ['direction', 'ethertype', 'port_range_min',
+                         'port_range_max', 'remote_group_ip',
+                         'remote_ip_prefix']
+        false_values = [None, '']
+        for prop in property_list:
+            if (hasattr(expected_secrule, prop) and
+                    getattr(expected_secrule, prop) not in false_values):
+                request_kwargs[prop] = getattr(expected_secrule, prop)
+
+        # The one exception to the simplification. The request can take upper
+        # or lower case but the expected response is in upper case.
         if expected_secrule.protocol:
             request_kwargs['protocol'] = expected_secrule.protocol
             expected_secrule.protocol = expected_secrule.protocol.upper()
-        if expected_secrule.remote_group_id:
-            request_kwargs['remote_group_id'] = expected_secrule.remote_group_id
-        if expected_secrule.remote_ip_prefix:
-            request_kwargs['remote_ip_prefix'] = expected_secrule.remote_ip_prefix
 
         # ResourceBuildException will be raised if not created successfully
         resp = self.sec.behaviors.create_security_group_rule(**request_kwargs)
-
         secrule = resp.response.entity
 
         if delete:
@@ -790,6 +823,8 @@ class NetworkingSecurityGroupsFixture(NetworkingFixture):
             msg.format(expected_secgroup.tenant_id, secgroup.tenant_id))
 
         if check_secgroup_rules:
+            # Rules within an expected security groups object and the API
+            # response object may be in different order
             expected_secgroup.security_group_rules.sort(
                 key=operator.attrgetter('id'))
             secgroup.security_group_rules.sort(
@@ -851,3 +886,87 @@ class NetworkingSecurityGroupsFixture(NetworkingFixture):
             msg = ('Unexpected Security Groups Rule response attributes: '
                    '{0}').format(secrule.kwargs)
             self.assertFalse(secrule.kwargs, msg)
+
+
+class NetworkingComputeFixture(NetworkingSecurityGroupsFixture):
+    """
+    @summary: fixture for networking tests with compute integration
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        super(NetworkingComputeFixture, cls).setUpClass()
+        cls.compute = ComputeComposite()
+
+        # sub-composites
+        cls.flavors = cls.compute.flavors
+        cls.images = cls.compute.images
+        cls.servers = cls.compute.servers
+        cls.keypairs = cls.compute.keypairs
+
+        # Other reusable values
+        cls.flavor_ref = cls.flavors.config.primary_flavor
+        cls.image_ref = cls.images.config.primary_image
+
+        cls.delete_servers = []
+        cls.failed_servers = []
+
+        # Using the serversCleanup method
+        cls.addClassCleanup(cls.serversCleanUp)
+
+    @classmethod
+    def serversCleanUp(cls):
+        """
+        @summary: Deletes servers using the networks config keep_servers and
+            keep_servers_on_failure flags, and the servers config
+            keep_resources_on_failure flag
+        """
+        cls.fixture_log.info('serversCleanUp: deleting servers....')
+        if not cls.config.keep_servers and cls.delete_servers:
+            if (cls.config.keep_servers_on_failure or
+                    cls.servers.config.keep_resources_on_failure):
+
+                cls.fixture_log.info('Keeping failed servers...')
+                for failed_server in cls.failed_servers:
+                    if failed_server in cls.delete_servers:
+                        cls.delete_servers.remove(failed_server)
+
+            cls.fixture_log.info('Deleting servers...')
+            cls.net.behaviors.wait_for_servers_to_be_deleted(
+                server_id_list=cls.delete_servers)
+            cls.delete_servers = []
+            cls.failed_servers = []
+
+    def assertServerNetworkByName(self, server, network_name, ipv4=True,
+                                  ipv6=False, ipv4_cidr=None, ipv6_cidr=None):
+        """
+        @summary:
+        """
+        server_network = server.addresses.get_by_name(network_name)
+        not_found_msg = 'Network {0} not found at server {1}'.format(
+            network_name, server.id)
+        self.assertIsNotNone(server_network, not_found_msg)
+
+        if ipv4:
+            ipv4_address = server_network.ipv4
+            ipv4_msg = 'Server {0} is missing network {1} IPv4 address'.format(
+                server.id, network_name)
+            self.assertIsNotNone(ipv4_address, ipv4_msg)
+            valid_ipv4 = self.subnets.behaviors.verify_ip(ip_cidr=ipv4_address,
+                                                          ip_range=ipv4_cidr)
+            invalid_ipv4_msg = ('Server {0} valid IP {1} address check failure'
+                                'with IP range {2}').format(
+                                    server.id, ipv4_address, ipv4_cidr)
+            self.assertTrue(valid_ipv4, invalid_ipv4_msg)
+
+        if ipv6:
+            ipv6_address = server_network.ipv6
+            ipv6_msg = 'Server {0} is missing network {1} IPv6 address'.format(
+                server.id, network_name)
+            self.assertIsNotNone(ipv6_address, ipv6_msg)
+            valid_ipv6 = self.subnets.behaviors.verify_ip(ip_cidr=ipv6_address,
+                                                          ip_range=ipv6_cidr)
+            invalid_ipv6_msg = ('Server {0} valid IP {1} address check failure'
+                                'with IP range {2}').format(
+                                    server.id, ipv6_address, ipv6_cidr)
+            self.assertTrue(valid_ipv6, invalid_ipv6_msg)

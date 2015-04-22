@@ -45,7 +45,7 @@ class NetworkGetTest(NetworkingAPIFixture):
     def tearDown(self):
         self.networkingCleanUp()
 
-    @tags('smoke', 'observer')
+    @tags('smoke', 'observer', 'rcv3')
     def test_network_list(self):
         """
         @summary: Get networks test
@@ -55,7 +55,7 @@ class NetworkGetTest(NetworkingAPIFixture):
         # Fail the test if any failure is found
         self.assertFalse(resp.failures)
 
-    @tags('smoke', 'observer')
+    @tags('smoke', 'observer', 'rcv3')
     def test_network_list_w_shared_true(self):
         """
         @summary: Get networks test with shared set to True. This should
@@ -81,7 +81,41 @@ class NetworkGetTest(NetworkingAPIFixture):
                 missing_networks, network_ids)
             self.fail(msg)
 
-    @tags('smoke', 'observer')
+    @tags('negative', 'observer', 'rcv3')
+    def test_network_subnet_ids_do_not_show_for_public(self):
+        """
+        @summary: Get public network and check subnet IDs are NOT shown
+        """
+        # Get network
+        resp = self.networks.behaviors.get_network(
+            network_id=self.public_network_id)
+
+        # Fail the test if any failure is found
+        self.assertFalse(resp.failures)
+        network = resp.response.entity
+
+        msg = ('Public Network {0} subnet IDs {1} should NOT be shown'.format(
+            self.public_network_id, network.subnets))
+        self.assertEqual([], network.subnets, msg)
+
+    @tags('negative', 'observer')
+    def test_network_subnet_ids_do_not_show_for_servicenet(self):
+        """
+        @summary: Get service network and check subnet IDs are NOT shown
+        """
+        # Get network
+        resp = self.networks.behaviors.get_network(
+            network_id=self.service_network_id)
+
+        # Fail the test if any failure is found
+        self.assertFalse(resp.failures)
+        network = resp.response.entity
+
+        msg = ('Private Network {0} subnet IDs {1} should NOT be shown'.format(
+            self.service_network_id, network.subnets))
+        self.assertEqual([], network.subnets, msg)
+
+    @tags('smoke', 'observer', 'rcv3')
     def test_network_get(self):
         """
         @summary: Get network test
@@ -99,7 +133,7 @@ class NetworkGetTest(NetworkingAPIFixture):
         # Check the network response
         self.assertNetworkResponse(expected_network, network)
 
-    @tags('smoke', 'observer')
+    @tags('smoke', 'observer', 'rcv3')
     def test_network_w_subnets_get(self):
         """
         @summary: Get network with subnets test
@@ -127,7 +161,7 @@ class NetworkGetTest(NetworkingAPIFixture):
         network.subnets.sort()
         self.assertNetworkResponse(expected_network, network)
 
-    @tags('smoke', 'observer')
+    @tags('smoke', 'observer', 'rcv3')
     def test_network_w_ports_get(self):
         """
         @summary: Get network with ports test

@@ -59,7 +59,7 @@ class SecurityGroupRuleGetTest(NetworkingSecurityGroupsFixture):
         self.assertSecurityGroupRuleResponse(expected_secrule, secrule)
 
     @tags('sec_group')
-    def test_security_group_list(self):
+    def test_security_group_rule_list(self):
         resp = self.sec.behaviors.list_security_group_rules()
 
         # Fail the test if any failure is found
