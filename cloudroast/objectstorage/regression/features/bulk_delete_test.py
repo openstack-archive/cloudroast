@@ -1,5 +1,5 @@
 """
-Copyright 2013 Rackspace
+Copyright 2015 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -89,11 +89,12 @@ class BulkDeleteTest(ObjectStorageFixture):
     def test_bulk_deletion_of_all_objects(self):
         """
         Scenario:
-            Create objects in a container.
-            Bulk delete all of the objects.
+            Create a container and then create ten objects in that
+            container. Attempt to delete all the objects with a bulk delete
+            request.
 
         Expected Results:
-            The created objects and the container should be deleted
+            1. All the created objects should be deleted
         """
         container_name = self.create_temp_container('bulk_delete')
         base_name = self.behaviors.VALID_OBJECT_NAME
@@ -106,7 +107,6 @@ class BulkDeleteTest(ObjectStorageFixture):
 
         targets = ['/{0}/{1}'.format(
             container_name, name) for name in objects_list]
-        targets.append('/{0}'.format(container_name))
 
         response = self.client.bulk_delete(targets)
         self.assertTrue(response.ok, 'bulk delete should be successful.')
@@ -131,10 +131,15 @@ class BulkDeleteTest(ObjectStorageFixture):
             not_found_count, 0,
             'should have found all objects to be removed.')
 
-        r = self.client.list_objects(container_name)
+        list_response = self.client.list_objects(container_name)
+
         self.assertEqual(
-            r.status_code, 404,
-            'container and all objects should have been deleted.')
+            int(list_response.headers.get('X-Container-Object-Count')),
+            0,
+            msg="Expected to find {0} objects in the container, actually "
+                "found {1})".format("0",
+                                    list_response.headers.get(
+                                        'X-Container-Object-Count')))
 
     @unittest.skipUnless(get_value('slow') == 'true', 'test is too slow')
     def test_bulk_delete_max_count(self):
