@@ -1,5 +1,5 @@
 """
-Copyright 2013 Rackspace
+Copyright 2015 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -30,12 +30,20 @@ class FormPostTest(ObjectStorageFixture):
         super(FormPostTest, cls).setUpClass()
         cls.key_cache_time = (
             cls.objectstorage_api_config.tempurl_key_cache_time)
-        cls.tempurl_key = cls.behaviors.VALID_TEMPURL_KEY
         cls.object_name = cls.behaviors.VALID_OBJECT_NAME
         cls.object_data = cls.behaviors.VALID_OBJECT_DATA
         cls.content_length = str(len(cls.behaviors.VALID_OBJECT_DATA))
         cls.http_client = HTTPClient()
         cls.redirect_url = "http://example.com/form_post_test"
+
+        keys_set = cls.behaviors.check_account_tempurl_keys()
+        if keys_set:
+            metadata_response = cls.client.get_account_metadata()
+            cls.tempurl_key = \
+                metadata_response.headers.get("X-Account-Meta-Temp-Url-Key")
+        else:
+            raise Exception("An error occurred while checking for Account "
+                            "TempURL keys")
 
     @ObjectStorageFixture.required_features('formpost')
     def test_object_formpost_redirect(self):
