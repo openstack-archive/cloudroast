@@ -47,7 +47,6 @@ class CloudInitPartHandlerTest(ComputeFixture):
     def test_part_handler_input_format(self):
         """Verify the Cloud Part Handler Input Format is working as expected"""
         message = "Expected {0} to be {1}, was {2}."
-        self.assertEqual(200, self.server_response.status_code)
         self.config_drive_behaviors.mount_config_drive(
             server=self.server, servers_config=self.servers_config,
             key=self.key.private_key,
