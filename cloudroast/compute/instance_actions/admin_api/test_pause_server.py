@@ -77,18 +77,21 @@ class PauseServerTests(object):
 class NegativePauseServerTests(object):
 
     @tags(type='smoke', net='yes')
-    def test_pause_reboot_server(self):
+    def test_pause_hard_reboot_server(self):
         """
-        Verify that a server reboot during pause does not restore it.
+        Hard rebooting a paused server returns the server to active status.
 
-        First step is getting the IP address for communication based on the
-        configuration. We pause the instance making sure that
-        there is no connectivity. After that we check what happens when we
-        reboot the instance and expecting a "Forbidden" exception and finally
-        making sure the connectivity is still down.
+        Get the IP address to be used for communication for the server created
+        during test setup. Pause the instance and validate that the status code
+        of the pause response is equal to 202. Wait for the instance to enter
+        PAUSED status and then ping the server until there is no connectivity.
+        Hard reboot the instance and validate that the status code for the
+        reboot response is equal to 202. Wait for the server to enter ACTIVE
+        status and then ping the server until connectivity is restored.
 
         The following assertions occur:
             - A 202 response is returned from the pause call.
+            - A 202 response is returned from the hard reboot call.
         """
 
         self.ping_ip = self.get_accessible_ip_address(self.server)
@@ -102,9 +105,12 @@ class NegativePauseServerTests(object):
         PingClient.ping_until_unreachable(
             self.ping_ip, timeout=60, interval_time=5)
 
-        with self.assertRaises(Forbidden):
-            self.servers_client.reboot(self.server.id,
+        reboot_resp = self.servers_client.reboot(self.server.id,
                                        NovaServerRebootTypes.HARD)
+        self.assertEqual(reboot_resp.status_code, 202)
+
+        self.admin_server_behaviors.wait_for_server_status(
+            self.server.id, ServerStates.ACTIVE)
 
         PingClient.ping_until_unreachable(
             self.ping_ip, timeout=60, interval_time=5)
