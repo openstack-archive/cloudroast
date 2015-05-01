@@ -28,7 +28,11 @@ class LimitsTest(ComputeFixture):
         Will call get_limits from cloudcafe's limits_client.
 
         The following assertions occur:
-            - 200 status code from the http call.
+            - 200 status code from the get_limits call
+            - The body of the response code is not None
         """
         response = self.limits_client.get_limits()
+
         self.assertEqual(response.status_code, 200)
+        msg = "Expected limit response body to be populated."
+        self.assertNotEqual(response.entity, None, msg=msg)
