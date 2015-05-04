@@ -1,5 +1,5 @@
 """
-Copyright 2013 Rackspace
+Copyright 2015 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -25,6 +25,13 @@ class CloudInitIncludeTest(ComputeFixture):
 
     @classmethod
     def setUpClass(cls):
+        """
+        Perform actions that setup the necessary resources for testing.
+
+        The following resources are created during this setup:
+            - Creates a keypair.
+            - Creates an active server.
+        """
         super(CloudInitIncludeTest, cls).setUpClass()
         init_st = cls.config_drive_behaviors.read_cloud_init_for_config_drive(
             cls.cloud_init_config.include_script)
@@ -45,7 +52,22 @@ class CloudInitIncludeTest(ComputeFixture):
 
     @tags(type='smoke', net='yes')
     def test_cloud_config_input_format(self):
-        """Verify the Cloud Config Input Format is working as expected"""
+        """
+        Verify the Cloud Config Input Format is working as expected.
+
+        Will mount the config drive then get the remote instance to be able
+        to get the file details.  After verifying the contents of the file
+        are as expected, verify that the user data directory exists and the
+        obj.pkl file is in the directory.
+
+        The following assertions occur:
+            - 200 status code response from the create server call.
+            - Content of the user data file retrieved is the same as set in
+                setup.
+            - The obj.pkl file is present in the user data directory.
+            - The content of the obj.pkl file has
+                http://www.ubuntu.com/robots.txt in it.
+        """
         message = "Expected {0} to be {1}, was {2}."
         self.assertEqual(200, self.server_response.status_code)
         self.config_drive_behaviors.mount_config_drive(
