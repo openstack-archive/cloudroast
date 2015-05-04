@@ -46,11 +46,12 @@ class ResizeServerDataIntegrityTests(object):
 
         Resize a server and wait until it enters task state 'resize_migrating'.
         Get a remote instance client for the server and use it to inject a file
-        with the name 'tst.txt' and the content 'content'. Confirm the resize by
-        waiting for it to reach status 'VERIFY_RESIZE'. Wait for the server to
-        enter 'ACTIVE' state. Get a remote client for the server, validate
-        that the file injected during resize exists on the server and has the
-        correct contents.
+        with the name 'tst.txt', the contents 'content' and the file path
+        found in the test configuration. Confirm the resize by waiting for it
+        to reach status 'VERIFY_RESIZE'. Wait for the server to enter 'ACTIVE'
+        state. Get a remote client for the server, validate that the file
+        injected during resize exists on the server and has the correct
+        contents.
 
         The following assertions occur:
             - The file injected while the server was resizing is found on the
@@ -68,7 +69,8 @@ class ResizeServerDataIntegrityTests(object):
             self.server, self.servers_config, key=self.key.private_key)
         prototype_file = remote_client.create_file(
             file_name='tst.txt',
-            file_content="content").content
+            file_content="content",
+            file_path=self.servers_config.default_file_path).content
         # Confirm Resize and wait for Active Server status
         self.server_behaviors.wait_for_server_status(
             server_to_resize.id, NovaServerStatusTypes.VERIFY_RESIZE)
