@@ -69,7 +69,6 @@ class CloudInitIncludeTest(ComputeFixture):
                 http://www.ubuntu.com/robots.txt in it.
         """
         message = "Expected {0} to be {1}, was {2}."
-        self.assertEqual(200, self.server_response.status_code)
         self.config_drive_behaviors.mount_config_drive(
             server=self.server, servers_config=self.servers_config,
             key=self.key.private_key,

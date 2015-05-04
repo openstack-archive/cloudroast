@@ -68,7 +68,6 @@ class CloudInitUpstartTest(ComputeFixture):
             - "HELLO WORLD: $UPSTART_JOB" is in the file obj.pkl.
         """
         message = "Expected {0} to be {1}, was {2}."
-        self.assertEqual(200, self.server_response.status_code)
         self.config_drive_behaviors.mount_config_drive(
             server=self.server, servers_config=self.servers_config,
             key=self.key.private_key,
