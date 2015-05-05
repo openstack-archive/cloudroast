@@ -23,24 +23,18 @@ from cloudroast.networking.networks.fixtures import NetworkingAPIFixture
 
 class NetworkUpdateTest(NetworkingAPIFixture):
 
-    @classmethod
-    def setUpClass(cls):
-        """Setting up test data"""
-        super(NetworkUpdateTest, cls).setUpClass()
-
+    def setUp(self):
         # Setting up the network
-        cls.expected_network = cls.get_expected_network_data()
-        cls.expected_network.name = 'test_network_update'
+        self.expected_network = self.get_expected_network_data()
+        self.expected_network.name = 'test_network_update'
 
         # Setting up the Subnets data
-        cls.expected_ipv4_subnet = cls.get_expected_ipv4_subnet_data()
-        cls.expected_ipv6_subnet = cls.get_expected_ipv6_subnet_data()
+        self.expected_ipv4_subnet = self.get_expected_ipv4_subnet_data()
+        self.expected_ipv6_subnet = self.get_expected_ipv6_subnet_data()
 
         # Setting up the Port data
-        cls.expected_ipv4_port = cls.get_expected_port_data()
-        cls.expected_ipv6_port = cls.get_expected_port_data()
-
-    def setUp(self):
+        self.expected_ipv4_port = self.get_expected_port_data()
+        self.expected_ipv6_port = self.get_expected_port_data()
         self.expected_network.shared = False
         self.network = self.create_test_network(self.expected_network)
         self.expected_network.id = self.network.id

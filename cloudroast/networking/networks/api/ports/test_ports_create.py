@@ -79,7 +79,7 @@ class PortCreateTest(NetworkingAPIFixture):
             network_id=expected_port.network_id,
             device_owner=expected_port.device_owner, raise_exception=False)
 
-        # Port update should be unavailable
+        # Port create should be unavailable
         msg = '(negative) Creating a port with device_owner: {0}'.format(
             expected_port.device_owner)
         self.assertNegativeResponse(
@@ -326,15 +326,13 @@ class PortCreateTest(NetworkingAPIFixture):
             network_id=expected_port.network_id, name=expected_port.name,
             fixed_ips=expected_port.fixed_ips,
             raise_exception=False, use_exact_name=True)
-        if resp.response.entity and hasattr(resp.response.entity, 'id'):
-            self.delete_ports.append(resp.response.entity.id)
 
-        # Fail the test if any failure is found
-        self.assertFalse(resp.failures)
-        port = resp.response.entity
-
-        # Port should be created only with fixed IP from the valid subnet
-        self.assertPortResponse(expected_port, port, subnet=ipv4_subnet)
+        # Port create should be unavailable
+        msg = '(negative) Creating a port with subnet from another network'
+        self.assertNegativeResponse(
+            resp=resp, status_code=NeutronResponseCodes.BAD_REQUEST, msg=msg,
+            delete_list=self.delete_ports,
+            error_type=NeutronErrorTypes.INVALID_INPUT)
 
     @tags('smoke', 'creator')
     def test_ipv6_port_create_on_net_w_subnet_ids_from_another_network(self):
@@ -369,15 +367,13 @@ class PortCreateTest(NetworkingAPIFixture):
             network_id=expected_port.network_id, name=expected_port.name,
             fixed_ips=expected_port.fixed_ips,
             raise_exception=False, use_exact_name=True)
-        if resp.response.entity and hasattr(resp.response.entity, 'id'):
-            self.delete_ports.append(resp.response.entity.id)
 
-        # Fail the test if any failure is found
-        self.assertFalse(resp.failures)
-        port = resp.response.entity
-
-        # Port should be created only with fixed IP from the valid subnet
-        self.assertPortResponse(expected_port, port, subnet=ipv6_subnet)
+        # Port create should be unavailable
+        msg = '(negative) Creating a port with subnet from another network'
+        self.assertNegativeResponse(
+            resp=resp, status_code=NeutronResponseCodes.BAD_REQUEST, msg=msg,
+            delete_list=self.delete_ports,
+            error_type=NeutronErrorTypes.INVALID_INPUT)
 
     @tags('smoke', 'creator')
     def test_ipv4_port_create_w_fixed_ips(self):
@@ -864,14 +860,13 @@ class PortCreateTest(NetworkingAPIFixture):
             network_id=expected_port.network_id, name=expected_port.name,
             fixed_ips=expected_port.fixed_ips,
             raise_exception=False, use_exact_name=True)
-        if resp.response.entity and hasattr(resp.response.entity, 'id'):
-            self.delete_ports.append(resp.response.entity.id)
 
-        # Port create should be unavailable with invalid subnet ID
-        msg = '(negative) Creating a port w invalid IPv4 subnet at Fixed IPs'
+        # Port create should be unavailable
+        msg = '(negative) Creating a port with subnet from another network'
         self.assertNegativeResponse(
-            resp=resp, status_code=NeutronResponseCodes.CONFLICT, msg=msg,
-            delete_list=self.delete_ports)
+            resp=resp, status_code=NeutronResponseCodes.BAD_REQUEST, msg=msg,
+            delete_list=self.delete_ports,
+            error_type=NeutronErrorTypes.INVALID_INPUT)
 
     @tags('negative', 'creator')
     def test_ipv6_port_create_w_subnet_id_from_another_network(self):
@@ -897,14 +892,13 @@ class PortCreateTest(NetworkingAPIFixture):
             network_id=expected_port.network_id, name=expected_port.name,
             fixed_ips=expected_port.fixed_ips,
             raise_exception=False, use_exact_name=True)
-        if resp.response.entity and hasattr(resp.response.entity, 'id'):
-            self.delete_ports.append(resp.response.entity.id)
 
-        # Port create should be unavailable with invalid subnet ID
-        msg = '(negative) Creating a port w invalid IPv6 subnet at Fixed IPs'
+        # Port create should be unavailable
+        msg = '(negative) Creating a port with subnet from another network'
         self.assertNegativeResponse(
-            resp=resp, status_code=NeutronResponseCodes.CONFLICT, msg=msg,
-            delete_list=self.delete_ports)
+            resp=resp, status_code=NeutronResponseCodes.BAD_REQUEST, msg=msg,
+            delete_list=self.delete_ports,
+            error_type=NeutronErrorTypes.INVALID_INPUT)
 
     @tags('negative', 'creator')
     def test_port_create_w_subnet_ids_from_another_network(self):
@@ -937,14 +931,13 @@ class PortCreateTest(NetworkingAPIFixture):
             network_id=expected_port.network_id, name=expected_port.name,
             fixed_ips=expected_port.fixed_ips,
             raise_exception=False, use_exact_name=True)
-        if resp.response.entity and hasattr(resp.response.entity, 'id'):
-            self.delete_ports.append(resp.response.entity.id)
 
-        # Port create should be unavailable with invalid subnet ID
-        msg = '(negative) Creating a port w invalid IPv4 subnet at Fixed IPs'
+        # Port create should be unavailable
+        msg = '(negative) Creating a port with subnet from another network'
         self.assertNegativeResponse(
-            resp=resp, status_code=NeutronResponseCodes.CONFLICT, msg=msg,
-            delete_list=self.delete_ports)
+            resp=resp, status_code=NeutronResponseCodes.BAD_REQUEST, msg=msg,
+            delete_list=self.delete_ports,
+            error_type=NeutronErrorTypes.INVALID_INPUT)
 
     @tags('negative', 'creator', 'quark')
     def test_port_create_on_net_w_ipv4_subnet_and_mac_address(self):

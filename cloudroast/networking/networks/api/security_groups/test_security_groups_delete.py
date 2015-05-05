@@ -13,16 +13,13 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-import unittest
 
-from cafe.drivers.unittest.datasets import DatasetList
-from cafe.drivers.unittest.decorators import DataDrivenFixture, \
-    data_driven_test, tags
-from cloudcafe.networking.networks.config import NetworkingSecondUserConfig
-from cloudroast.networking.networks.fixtures \
-    import NetworkingSecurityGroupsFixture
+from cafe.drivers.unittest.decorators import tags
 from cloudcafe.networking.networks.extensions.security_groups_api.constants \
     import SecurityGroupsErrorTypes, SecurityGroupsResponseCodes
+
+from cloudroast.networking.networks.fixtures \
+    import NetworkingSecurityGroupsFixture
 
 
 class SecurityGroupDeleteTest(NetworkingSecurityGroupsFixture):
@@ -46,6 +43,9 @@ class SecurityGroupDeleteTest(NetworkingSecurityGroupsFixture):
 
     @tags('sec_group')
     def test_security_group_delete(self):
+        """
+        @summary: Testing deleting a security group
+        """
         expected_secgroup = self.secgroup
 
         request_kwargs = dict(security_group_id=expected_secgroup.id)
@@ -67,6 +67,10 @@ class SecurityGroupDeleteTest(NetworkingSecurityGroupsFixture):
 
     @tags('sec_group')
     def test_security_group_w_rule_delete(self):
+        """
+        @summary: Testing deleting a security group that has a
+            security group rule
+        """
         expected_secgroup = self.secgroup
 
         # Creating a security rule
@@ -110,16 +114,17 @@ class SecurityGroupDeleteTest(NetworkingSecurityGroupsFixture):
     @tags('sec_group')
     def test_deleting_previously_deleted_security_group(self):
         """
-        Testing the HTTP response when trying to delete an already
-        deleted security group
+        @summary: Testing the HTTP response is NOT FOUND when trying to delete
+            an already deleted security group
         """
-        expected_secgroup = self.secgroup
+        secgroup = self.secgroup
+        expected_secrule = self.expected_secrule
 
         # Creating a security rule
-        secrule = self.create_test_secrule(self.expected_secrule, delete=False)
-        request_kwargs = dict(security_group_id=expected_secgroup.id)
+        secrule = self.create_test_secrule(expected_secrule, delete=False)
 
-        # Checking the security rule is in the group
+        # Checking the security group is there
+        request_kwargs = dict(security_group_id=secgroup.id)
         resp = self.sec.behaviors.get_security_group(**request_kwargs)
         self.assertFalse(resp.failures)
 

@@ -117,6 +117,26 @@ class PortUpdateTest(NetworkingAPIFixture):
         self.assertPortResponse(expected_port, port, check_fixed_ips=True)
 
     @tags('positive', 'creator')
+    def test_ipv4_port_update_w_name_w_double_backtick(self):
+        """
+        @summary: Updating an IPv4 port with name with double backtick
+        """
+        expected_port = self.ipv4_port
+        expected_port.name = '`cat /etc/passwd`'
+
+        # Updating the port
+        resp = self.ports.behaviors.update_port(
+            port_id=expected_port.id,
+            name=expected_port.name)
+
+        # Fail the test if any failure is found
+        self.assertFalse(resp.failures)
+        port = resp.response.entity
+
+        # Check the Port response
+        self.assertPortResponse(expected_port, port)
+
+    @tags('positive', 'creator')
     def test_ipv4_port_update_deallocating_ips(self):
         """
         @summary: Testing IP deallocation and re-allocation on a port

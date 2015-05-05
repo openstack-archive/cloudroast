@@ -13,16 +13,13 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-import unittest
 
-from cafe.drivers.unittest.datasets import DatasetList
-from cafe.drivers.unittest.decorators import DataDrivenFixture, \
-    data_driven_test, tags
-from cloudcafe.networking.networks.config import NetworkingSecondUserConfig
-from cloudroast.networking.networks.fixtures \
-    import NetworkingSecurityGroupsFixture
+from cafe.drivers.unittest.decorators import tags
 from cloudcafe.networking.networks.extensions.security_groups_api.constants \
     import SecurityGroupsErrorTypes, SecurityGroupsResponseCodes
+
+from cloudroast.networking.networks.fixtures \
+    import NetworkingSecurityGroupsFixture
 
 
 class SecurityGroupRuleDeleteTest(NetworkingSecurityGroupsFixture):
@@ -46,20 +43,22 @@ class SecurityGroupRuleDeleteTest(NetworkingSecurityGroupsFixture):
 
     @tags('sec_group')
     def test_security_group_rule_delete(self):
-        expected_secrule = self.secrule
-        request_kwargs = dict(security_group_rule_id=expected_secrule.id)
+        """
+        @summary: Testing deleting a security group rule
+        """
+        secrule = self.secrule
+        request_kwargs = dict(security_group_rule_id=secrule.id)
 
         # Checking the security group rule was added to the group
         resp = self.sec.behaviors.get_security_group(
-            security_group_id=expected_secrule.security_group_id)
+            security_group_id=secrule.security_group_id)
         self.assertFalse(resp.failures)
-        expected_secgroup = resp.response.entity
+        secgroup = resp.response.entity
 
         msg = ('Security group rule:\n{0}\n\nmissing in expected security '
-               'group rules list:\n{1}').format(
-                   expected_secrule, expected_secgroup.security_group_rules)
-        self.assertIn(expected_secrule,
-                      expected_secgroup.security_group_rules, msg)
+               'group rules list:\n{1}').format(secrule,
+                                                secgroup.security_group_rules)
+        self.assertIn(secrule, secgroup.security_group_rules, msg)
 
         # Deleting the security rule
         resp = self.sec.behaviors.delete_security_group_rule(**request_kwargs)
@@ -78,12 +77,11 @@ class SecurityGroupRuleDeleteTest(NetworkingSecurityGroupsFixture):
 
         # Checking the security rule is not in the group anymore
         resp = self.sec.behaviors.get_security_group(
-            security_group_id=expected_secrule.security_group_id)
+            security_group_id=secrule.security_group_id)
         self.assertFalse(resp.failures)
-        expected_secgroup = resp.response.entity
+        secgroup = resp.response.entity
 
         msg = ('Deleted security group rule:\n{0}\n\nstill present in security'
-               ' group rules list:\n{1}').format(
-                   expected_secrule, expected_secgroup.security_group_rules)
-        self.assertNotIn(expected_secrule,
-                         expected_secgroup.security_group_rules, msg)
+               ' group rules list:\n{1}').format(secrule,
+                                                 secgroup.security_group_rules)
+        self.assertNotIn(secrule, secgroup.security_group_rules, msg)
