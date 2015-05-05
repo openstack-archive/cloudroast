@@ -28,13 +28,20 @@ class AddImageTag(ImagesFixture):
 
         # Count set to number of images required for this module
         created_images = cls.images.behaviors.create_images_via_task(
-            image_properties={'name': rand_name('add_image_tag')}, count=5)
+            image_properties={'name': rand_name('add_image_tag')}, count=7)
 
         cls.created_image = created_images.pop()
         cls.single_tag_image = created_images.pop()
         cls.multiple_tags_image = created_images.pop()
         cls.quota_image = created_images.pop()
         cls.duplicate_tag_image = created_images.pop()
+
+        cls.deactivated_image = created_images.pop()
+        cls.images_admin.client.deactivate_image(cls.deactivated_image.id_)
+
+        cls.reactivated_image = created_images.pop()
+        cls.images_admin.client.deactivate_image(cls.reactivated_image.id_)
+        cls.images_admin.client.reactivate_image(cls.reactivated_image.id_)
 
     @classmethod
     def tearDownClass(cls):
@@ -195,6 +202,66 @@ class AddImageTag(ImagesFixture):
                  'Expected: 1 tag '
                  'Received: {1} tags').format(self.duplicate_tag_image.id_,
                                               len(matched_tags)))
+
+    def test_add_single_image_tag_using_deactivated_image(self):
+        """
+        @summary: Add single image tag using deactivated image
+
+        1) Add single image tag using deactivated image
+        2) Verify that the response code is 204
+        3) Get image details
+        4) Verify that the response is ok
+        5) Verify that the added image tag is in the list of image tags
+        """
+
+        tag = rand_name('tag')
+
+        resp = self.images.client.add_image_tag(
+            self.deactivated_image.id_, tag)
+        self.assertEqual(
+            resp.status_code, 204,
+            Messages.STATUS_CODE_MSG.format(204, resp.status_code))
+
+        resp = self.images.client.get_image_details(self.deactivated_image.id_)
+        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
+        get_image = resp.entity
+
+        self.assertIn(
+            tag, get_image.tags,
+            msg=('Unexpected tag for image {0} received. '
+                 'Expected: {1} in tags Received: {2} '
+                 'not in tags').format(self.deactivated_image.id_, tag,
+                                       get_image.tags))
+
+    def test_add_single_image_tag_using_reactivated_image(self):
+        """
+        @summary: Add single image tag using reactivated image
+
+        1) Add single image tag using reactivated image
+        2) Verify that the response code is 204
+        3) Get image details
+        4) Verify that the response is ok
+        5) Verify that the added image tag is in the list of image tags
+        """
+
+        tag = rand_name('tag')
+
+        resp = self.images.client.add_image_tag(
+            self.reactivated_image.id_, tag)
+        self.assertEqual(
+            resp.status_code, 204,
+            Messages.STATUS_CODE_MSG.format(204, resp.status_code))
+
+        resp = self.images.client.get_image_details(self.reactivated_image.id_)
+        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
+        get_image = resp.entity
+
+        self.assertIn(
+            tag, get_image.tags,
+            msg=('Unexpected tag for image {0} received. '
+                 'Expected: {1} in tags Received: {2} '
+                 'not in tags').format(self.reactivated_image.id_, tag,
+                                       get_image.tags))
 
     def test_add_image_tag_using_blank_image_id(self):
         """
