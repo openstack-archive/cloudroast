@@ -15,20 +15,15 @@ limitations under the License.
 """
 
 import calendar
-import sys
 import time
 
-from cafe.drivers.unittest.decorators import (
-    data_driven_test, DataDrivenFixture)
 from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.glance.common.constants import Messages
 from cloudcafe.glance.common.types import ImageMemberStatus
 
 from cloudroast.glance.fixtures import ImagesFixture
-from cloudroast.glance.generators import ImagesDatasetListGenerator
 
 
-@DataDrivenFixture
 class ListImageMembers(ImagesFixture):
 
     @classmethod
@@ -41,7 +36,7 @@ class ListImageMembers(ImagesFixture):
         # Count set to number of images required for this module
         created_images = cls.images.behaviors.create_images_via_task(
             image_properties={'name': rand_name('list_image_members')},
-            count=4)
+            count=6)
 
         cls.shared_image = created_images.pop()
         cls.images.client.create_image_member(
@@ -62,6 +57,17 @@ class ListImageMembers(ImagesFixture):
         cls.delete_image = created_images.pop()
         cls.images.client.delete_image(cls.delete_image.id_)
 
+        cls.deactivated_image = created_images.pop()
+        cls.images.client.create_image_member(
+            cls.deactivated_image.id_, cls.alt_member_id)
+        cls.images_admin.client.deactivate_image(cls.deactivated_image.id_)
+
+        cls.reactivated_image = created_images.pop()
+        cls.images.client.create_image_member(
+            cls.reactivated_image.id_, cls.alt_member_id)
+        cls.images_admin.client.deactivate_image(cls.reactivated_image.id_)
+        cls.images_admin.client.reactivate_image(cls.reactivated_image.id_)
+
     @classmethod
     def tearDownClass(cls):
         cls.images.behaviors.resources.release()
@@ -81,6 +87,7 @@ class ListImageMembers(ImagesFixture):
         """
 
         image_member_ids = []
+        errors = []
 
         resp = self.images.client.list_image_members(
             self.shared_image.id_)
@@ -143,47 +150,97 @@ class ListImageMembers(ImagesFixture):
             msg=('Unexpected number of image members received. Expected: 2 '
                  'Received: {0}').format(len(listed_image_members)))
 
-    @data_driven_test(
-        ImagesDatasetListGenerator.ListImageMembersStatuses())
-    def ddtest_list_image_members_member_status(self, status):
+    def test_list_image_members_using_deactivated_image(self):
         """
-        @summary: List image members passing member status
+        @summary: List image members using deactivated image
 
-        1) Update image member status for member status that is passed in
-        2) Verify that the status code is ok
-        3) List image members for image passing member status
-        4) Verify that the response code is 200
-        5) Verify that the image members returned match the member status
-        passed in
+        1) List image members for deactivated image
+        2) Verify that the response code is 200
+        3) Verify that one image members exist
+        4) Verify that the returned image member's properties are as expected
+        generically
         """
 
-        # This is a temporary workaround for skips in ddtests
-        expected_failure_statuses = [ImageMemberStatus.ACCEPTED,
-                                     ImageMemberStatus.REJECTED]
-        if status.get('member_status') in expected_failure_statuses:
-            sys.stderr.write('skipped \'Redmine bug #11477\' ... ')
-            return
-
-        resp = self.images_alt_one.client.update_image_member(
-            self.alt_shared_image.id_, self.alt_member_id,
-            status.get('member_status'))
-        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
+        image_member_ids = []
+        errors = []
 
         resp = self.images.client.list_image_members(
-            image_id=self.alt_shared_image.id_, params=status)
+            self.deactivated_image.id_)
         self.assertEqual(
             resp.status_code, 200,
             Messages.STATUS_CODE_MSG.format(200, resp.status_code))
         listed_image_members = resp.entity
 
+        self.assertEqual(
+            len(listed_image_members), 1,
+            msg=('Unexpected number of image members received. Expected: 1 '
+                 'Received: {0}').format(len(listed_image_members)))
+
+        [image_member_ids.append(image_member.member_id)
+         for image_member in listed_image_members]
+
+        self.assertIn(
+            self.alt_member_id, image_member_ids,
+            msg=('Unexpected image member received. Expected: {0} in list of '
+                 'image members '
+                 'Received: {1}').format(self.alt_member_id, image_member_ids))
+
         for image_member in listed_image_members:
-            self.assertEqual(
-                image_member.status, status.get('member_status'),
-                msg=('Unexpected member status received for image {0}.'
-                     'Expected: {1} '
-                     'Received: {2}').format(self.alt_shared_image.id_,
-                                             status.get('member_status'),
-                                             image_member.status))
+            errors = self.images.behaviors.validate_image_member(image_member)
+
+        self.assertEqual(
+            errors, [],
+            msg=('Unexpected error received for image {0}. '
+                 'Expected: No errors '
+                 'Received: {1}').format(self.deactivated_image.id_,
+                                         errors))
+
+    def test_list_image_members_using_reactivated_image(self):
+        """
+        @summary: List image members using reactivated image
+
+        1) List image members for reactivated image
+        2) Verify that the response code is 200
+        3) Verify that one image members exist
+        4) Verify that the returned image member's properties are as expected
+        generically
+        5) Verify that the returned image member's properties are as expected
+        more specifically
+        """
+
+        image_member_ids = []
+        errors = []
+
+        resp = self.images.client.list_image_members(
+            self.reactivated_image.id_)
+        self.assertEqual(
+            resp.status_code, 200,
+            Messages.STATUS_CODE_MSG.format(200, resp.status_code))
+        listed_image_members = resp.entity
+
+        self.assertEqual(
+            len(listed_image_members), 1,
+            msg=('Unexpected number of image members received. Expected: 1 '
+                 'Received: {0}').format(len(listed_image_members)))
+
+        [image_member_ids.append(image_member.member_id)
+         for image_member in listed_image_members]
+
+        self.assertIn(
+            self.alt_member_id, image_member_ids,
+            msg=('Unexpected image member received. Expected: {0} in list of '
+                 'image members '
+                 'Received: {1}').format(self.alt_member_id, image_member_ids))
+
+        for image_member in listed_image_members:
+            errors = self.images.behaviors.validate_image_member(image_member)
+
+        self.assertEqual(
+            errors, [],
+            msg=('Unexpected error received for image {0}. '
+                 'Expected: No errors '
+                 'Received: {1}').format(self.reactivated_image.id_,
+                                         errors))
 
     def test_list_image_members_using_invalid_image_id(self):
         """
@@ -272,7 +329,10 @@ class ListImageMembers(ImagesFixture):
         if (image_member.member_id != self.alt_member_id and
                 image_member.member_id != self.alt_two_member_id):
             errors.append(Messages.PROPERTY_MSG.format(
-                'member_id', self.member_id, image_member.member_id))
+                'member_id',
+                '{0} or {1}'.format(self.alt_member_id,
+                                    self.alt_two_member_id),
+                image_member.member_id))
         if image_member.status != ImageMemberStatus.PENDING:
             errors.append(Messages.PROPERTY_MSG.format(
                 'status', ImageMemberStatus.PENDING, image_member.status))
