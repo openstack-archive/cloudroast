@@ -14,22 +14,21 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import sys
-import unittest
-
+import re
 from cafe.drivers.unittest.decorators import (
     data_driven_test, DataDrivenFixture)
 from cloudcafe.common.tools.datagen import rand_name
-from cloudcafe.glance.common.constants import Messages
-from cloudcafe.glance.common.types import (
-    ImageMemberStatus, ImageStatus, ImageVisibility, SortDirection)
+from cloudcafe.glance.common.constants import ImageProperties, Messages
 
-from cloudroast.glance.fixtures import ImagesIntergrationFixture
+from cloudcafe.glance.common.types import (
+    ImageMemberStatus, ImageStatus, ImageType, ImageVisibility, SortDirection)
+
+from cloudroast.glance.fixtures import ImagesIntegrationFixture
 from cloudroast.glance.generators import ImagesDatasetListGenerator
 
 
 @DataDrivenFixture
-class ListImages(ImagesIntergrationFixture):
+class ListImages(ImagesIntegrationFixture):
 
     @classmethod
     def setUpClass(cls):
@@ -39,7 +38,7 @@ class ListImages(ImagesIntergrationFixture):
 
         # Count set to number of images required for this module
         created_images = cls.images.behaviors.create_images_via_task(
-            image_properties={'name': rand_name('list_images')}, count=2)
+            image_properties={'name': rand_name('list_images')}, count=4)
 
         cls.created_image = created_images.pop()
         cls.images.client.create_image_member(
@@ -52,6 +51,38 @@ class ListImages(ImagesIntergrationFixture):
         cls.images.client.create_image_member(
             cls.shared_image.id_, cls.alt_one_member)
 
+        image = created_images.pop()
+        cls.images_admin.client.deactivate_image(image.id_)
+        cls.deactivated_imported_image = (
+            cls.images.client.get_image_details(image.id_)).entity
+
+        alt_image = created_images.pop()
+        cls.images_admin.client.deactivate_image(alt_image.id_)
+        cls.images_admin.client.reactivate_image(alt_image.id_)
+        cls.reactivated_imported_image = (
+            cls.images.client.get_image_details(alt_image.id_)).entity
+
+        created_server = cls.compute.servers.behaviors.create_active_server(
+            image_ref=cls.images.config.primary_image).entity
+        cls.resources.add(
+            created_server.id, cls.compute.servers.client.delete_server)
+
+        snapshot_image = cls.compute.images.behaviors.create_active_image(
+            created_server.id).entity
+        cls.resources.add(snapshot_image.id, cls.images.client.delete_image)
+        cls.images_admin.client.deactivate_image(snapshot_image.id)
+        cls.deactivated_snapshot_image = (
+            cls.images.client.get_image_details(snapshot_image.id).entity)
+
+        alt_snapshot_image = cls.compute.images.behaviors.create_active_image(
+            created_server.id).entity
+        cls.resources.add(
+            alt_snapshot_image.id, cls.images.client.delete_image)
+        cls.images_admin.client.deactivate_image(alt_snapshot_image.id)
+        cls.images_admin.client.reactivate_image(alt_snapshot_image.id)
+        cls.reactivated_snapshot_image = (
+            cls.images.client.get_image_details(alt_snapshot_image.id).entity)
+
     @classmethod
     def tearDownClass(cls):
         cls.images.behaviors.resources.release()
@@ -62,7 +93,7 @@ class ListImages(ImagesIntergrationFixture):
         @summary: Compare the list of images returned from the glance api and
         the nova api
 
-        1) List images with a limit set to 100 and visiblity set to public
+        1) List images with a limit set to 100 and image_type set to base
         through the glance api
         2) Verify that the response is ok
         3) Verify that the images returned is not none
@@ -77,7 +108,7 @@ class ListImages(ImagesIntergrationFixture):
         """
 
         resp = self.images.client.list_images(
-            params={'limit': 100, 'visibility': ImageVisibility.PUBLIC})
+            params={'limit': 100, 'image_type': ImageType.BASE})
         self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
 
         glance_image_names = [image.name for image in resp.entity]
@@ -97,16 +128,18 @@ class ListImages(ImagesIntergrationFixture):
                                    'Received: No images received'))
 
         self.assertEqual(
-            len(glance_image_names), len(nova_image_names),
-            msg=('Unexpected images received. Expected: Number of images to '
-                 'match Received: Number of images do not match'))
+            len(nova_image_names), len(glance_image_names),
+            msg=('Unexpected images received. Expected: Number of Nova images '
+                 '({0}) to match number of Glance images ({1}) Received: '
+                 'Number of images do not '
+                 'match'.format(len(nova_image_names),
+                                len(glance_image_names))))
 
-        for image_name in glance_image_names:
-            self.assertIn(
-                image_name, nova_image_names,
-                msg=('Unexpected images received. Expected: {0} in list of '
-                     'images '
-                     'Received: {1}').format(image_name, nova_image_names))
+        images_diff = list(
+            set(glance_image_names) - set(nova_image_names))
+        self.assertEqual(images_diff, [],
+                         msg=('Unexpected images listed in Glance that are '
+                              'not listed in Nova: {0}').format(images_diff))
 
     def test_list_all_images(self):
         """
@@ -120,6 +153,8 @@ class ListImages(ImagesIntergrationFixture):
         3) Verify that the created image is in the returned list of images
         4) Verify that each image returned has a status of active
         """
+
+        acceptable_statuses = [ImageStatus.ACTIVE, ImageStatus.DEACTIVATED]
 
         listed_images = self.images.behaviors.list_all_images()
         self.assertNotEqual(
@@ -135,11 +170,12 @@ class ListImages(ImagesIntergrationFixture):
 
         # TODO: Add additional assertions to verify all images are as expected
         for image in listed_images:
-            self.assertEqual(
-                image.status, ImageStatus.ACTIVE,
-                msg=('Unexpected status for image {0} received. Expected: {1} '
-                     'Received: {2}').format(image.id_,
-                                             ImageStatus.ACTIVE, image.status))
+            if image.image_type == ImageType.IMPORT:
+                self.assertIn(
+                    image.status, acceptable_statuses,
+                    msg=('Unexpected status for image {0} received. Expected:'
+                         'active or deactivated Received: '
+                         '{1}').format(image.id_, image.status))
 
     def test_image_visibility_of_shared_images(self):
         """
@@ -203,15 +239,21 @@ class ListImages(ImagesIntergrationFixture):
         filter that is acceptable
         """
 
-        # This is a temporary workaround for skips in ddtests
-        if 'id_' in params or 'created_at' in params:
-            sys.stderr.write('skipped \'Redmine bug #11168\' ... ')
-            return
-
         api_args = {}
+        tz_regex = re.compile(ImageProperties.TZ_REGEX)
 
         for param in params:
-            api_args.update({param: getattr(self.created_image, param)})
+            if param == 'id_':
+                api_args.update({'id': getattr(self.created_image, param)})
+            elif param == 'created_at' or param == 'updated_at':
+                param_value = str(getattr(self.created_image, param))
+                tz_value = tz_regex.search(param_value).group()
+                if tz_value is None:
+                    api_args.update({param: param_value})
+                else:
+                    api_args.update({param: param_value.replace(tz_value, '')})
+            else:
+                api_args.update({param: getattr(self.created_image, param)})
 
         listed_images = self.images.behaviors.list_all_images(**api_args)
         self.assertNotEqual(
@@ -262,24 +304,25 @@ class ListImages(ImagesIntergrationFixture):
                      'Expected: {1} '
                      'Received: {2}').format(image.id_, expected, received))
 
-    @unittest.skip('Redmine bug #11270')
-    def test_filter_images_list_passing_member_status(self):
+    def test_filter_images_list_passing_member_status_pending(self):
         """
-        @summary: List all images that match a filter, passing in member_status
-        as the query parameter
+        @summary: List all images that match in member_status of pending and
+        visibility of shared as the query parameters
 
-        1) List all images passing in member_status as the query parameter
+        1) List all images passing in member_status of pending and visibility
+        of shared as the query parameters
         2) Verify that the list of images returned is not empty
         3) Verify that each image returned list image members
         4) Verify that each image returned contains a value for member_status
         that matches the member_status that is being used as the filter
         """
 
-        api_args = ({'member_status':
-                     getattr(self.created_image_member, 'status'),
-                     'visibility': getattr(self.created_image, 'visibility')})
+        api_args = (
+            {'member_status': getattr(self.created_image_member, 'status'),
+             'visibility': ImageVisibility.SHARED})
 
-        listed_images = self.images.behaviors.list_all_images(**api_args)
+        listed_images = self.images_alt_one.behaviors.list_all_images(
+            **api_args)
         self.assertNotEqual(
             len(listed_images), 0,
             msg=('Unexpected number of images received. Expected: Not {0} '
@@ -536,20 +579,14 @@ class ListImages(ImagesIntergrationFixture):
             elif key == 'sort_key':
                 sort_key = params[key]
 
-        # This is a temporary workaround for skips in ddtests
-        additional_property = self.images.config.additional_property
-        expected_failure_properties = [
-            additional_property, 'auto_disk_config', 'id', 'image_type',
-            'os_type', 'protected', 'tags', 'user_id', 'visibility']
-        if sort_key in expected_failure_properties:
-            sys.stderr.write('skipped \'Redmine bugs #11260 and #11262\' ... ')
-            return
-
         listed_images = self.images.behaviors.list_all_images(**params)
         self.assertNotEqual(
             len(listed_images), 0,
             msg=('Unexpected number of images received. Expected: Not {0} '
                  'Received: {1}').format(0, len(listed_images)))
+
+        if sort_key == 'id':
+            sort_key = 'id_'
 
         for current, next_ in zip(listed_images[0::2], listed_images[1::2]):
             current_item = getattr(current, sort_key)
@@ -570,71 +607,263 @@ class ListImages(ImagesIntergrationFixture):
                 self.assertGreaterEqual(
                     current_item, next_item,
                     msg=('Unexpected items for images {0} and {1} received.'
-                         'Expected: Greater than or equal to {0} '
-                         'Received: {1}').format(next_.id_, current.id_,
+                         'Expected: Greater than or equal to {2} '
+                         'Received: {3}').format(next_.id_, current.id_,
                                                  next_item, current_item))
 
-    @unittest.skip('Redmine bug #11261')
-    def test_sort_images_list_passing_id_asc(self):
+    def test_sort_images_list_using_multiple_sort_keys_only(self):
         """
-        @summary: List all images, sorting the list by passing in id as the
-        sort_key and asc as the sort_dir
+        @summary: List all images, sorting the list by passing in multiple
+        query parameters as the sort_keys only
 
-        1) List all images passing in id as the sort_key and asc as the
-        sort_dir
-        2) Verify that the list of images returned is not empty
-        3) Verify that each image returned contains a value for id that is less
-        than or equal to the value for id of the next image
+        1) List all images passing in multiple query parameters as the
+        sort_keys only via wrapper test method
+        2) Verify that each image returned is in order based on the first
+        sort_key (descending by default)
+        3) If the two images being compared have the same value for the first
+        sort_key, verify that each image returned in then in order based on the
+        second sort_key (descending by default)
         """
 
-        sort_key_var = 'id_'
-
-        api_args = {'sort_key': 'id', 'sort_dir': SortDirection.ASCENDING}
-
-        listed_images = self.images.behaviors.list_all_images(**api_args)
-        self.assertNotEqual(
-            len(listed_images), 0,
-            msg=('Unexpected number of images received. Expected: Not {0} '
-                 'Received: {1}').format(0, len(listed_images)))
+        listed_images = self._list_images_with_sort_keys_dirs(['name', 'size'])
 
         for current, next_ in zip(listed_images[0::2], listed_images[1::2]):
-            current_item = getattr(current, sort_key_var).replace('-', '')
-            next_item = getattr(next_, sort_key_var).replace('-', '')
-
-            self.assertLessEqual(
-                current_item, next_item,
-                msg=('Unexpected item received. Expected: Less than or equal '
-                     'to {0} Received: {1}').format(next_item, current_item))
-
-    @unittest.skip('Redmine bug #11261')
-    def test_sort_images_list_passing_id_desc(self):
-        """
-        @summary: List all images, sorting the list by passing in id as the
-        sort_key and desc as the sort_dir
-
-        1) List all images passing in id as the sort_key and desc as the
-        sort_dir
-        2) Verify that the list of images returned is not empty
-        3) Verify that each image returned contains a value for id that is
-        greater than or equal to the value for id of the next image
-        """
-
-        sort_key_var = 'id_'
-
-        api_args = {'sort_key': 'id', 'sort_dir': SortDirection.DESCENDING}
-
-        listed_images = self.images.behaviors.list_all_images(**api_args)
-        self.assertNotEqual(
-            len(listed_images), 0,
-            msg=('Unexpected number of images received. Expected: Not {0} '
-                 'Received: {1}').format(0, len(listed_images)))
-
-        for current, next_ in zip(listed_images[0::2], listed_images[1::2]):
-            current_item = getattr(current, sort_key_var).replace('-', '')
-            next_item = getattr(next_, sort_key_var).replace('-', '')
+            current_name = current.name
+            next_name = next_.name
+            if current_name is not None:
+                current_name = current_name.lower()
+            if next_name is not None:
+                next_name = next_name.lower()
 
             self.assertGreaterEqual(
-                current_item, next_item,
-                msg=('Unexpected item received. Expected: Greater than or '
-                     'equal to {0} Received: {1}').format(next_item,
-                                                          current_item))
+                current_name, next_name,
+                msg=('Unexpected order of images {0} and {1} received. '
+                     'Expected: Greater than or equal to {2} Received: '
+                     '{3}').format(next_.id_, current.id_, next_name,
+                                   current_name))
+
+            # If names are equal, verify that sizes are in expected order
+            if current_name == next_name:
+                self.assertGreaterEqual(
+                    current.size, next_.size,
+                    msg=('Unexpected order of images {0} and {1} received.'
+                         'Expected: Greater than or equal to {2} Received: '
+                         '{3}').format(next_.id_, current.id_, next_.size,
+                                       current.size))
+
+    def test_sort_images_list_using_multiple_sort_keys_and_sort_dirs(self):
+        """
+        @summary: List all images, sorting the list by passing in multiple
+        query parameters as the sort_keys and multiple directions as the
+        sort_dirs
+
+        1) List all images passing in multiple query parameters as the
+        sort_keys and multiple directions as the sort_dirs via wrapper test
+        method
+        2) Verify that each image returned is in order based on the first
+        sort_key and sort_dir
+        3) Verify that each image returned in then in order based on the second
+        sort_key and sort_dir
+        """
+
+        listed_images = self._list_images_with_sort_keys_dirs(
+            ['name', 'size'],
+            [SortDirection.ASCENDING, SortDirection.DESCENDING])
+
+        for current, next_ in zip(listed_images[0::2], listed_images[1::2]):
+            current_name = current.name
+            next_name = next_.name
+            if current_name is not None:
+                current_name = current_name.lower()
+            if next_name is not None:
+                next_name = next_name.lower()
+
+            self.assertLessEqual(
+                next_name, next_name,
+                msg=('Unexpected order of images {0} and {1} received.'
+                     'Expected: Less than or equal to {2} Received: '
+                     '{3}').format(next_.id_, current.id_, next_name,
+                                   current_name))
+
+            if current_name == next_name:
+                self.assertGreaterEqual(
+                    current.size, next_.size,
+                    msg=('Unexpected order of images {0} and {1} received.'
+                         'Expected: Greater than or equal to {2} Received: '
+                         '{3}').format(next_.id_, current.id_, next_.size,
+                                       current.size))
+
+    def test_sort_images_list_using_multi_sort_keys_and_single_sort_dir(self):
+        """
+        @summary: List all images, sorting the list by passing in multiple
+        query parameters as the sort_keys and a single direction as the
+        sort_dir
+
+        1) List all images passing in multiple query parameters as the
+        sort_keys and a single direction as the sort_dir via wrapper test
+        method
+        2) Verify that each image returned is in order based on the first
+        sort_key and sort_dir
+        3) Verify that each image returned in then in order based on the second
+        sort_key and the same sort_dir
+        """
+
+        listed_images = self._list_images_with_sort_keys_dirs(
+            ['name', 'size'], [SortDirection.ASCENDING])
+
+        for current, next_ in zip(listed_images[0::2], listed_images[1::2]):
+            current_name = current.name
+            next_name = next_.name
+            if current_name is not None:
+                current_name = current_name.lower()
+            if next_name is not None:
+                next_name = next_name.lower()
+
+            self.assertLessEqual(
+                current_name, next_name,
+                msg=('Unexpected order of images {0} and {1} received.'
+                     'Expected: Less than or equal to {2} Received: '
+                     '{3}').format(next_.id_, current.id_, next_name,
+                                   current_name))
+
+            if current_name == next_name:
+                self.assertLessEqual(
+                    current.size, next_.size,
+                    msg=('Unexpected order of images {0} and {1} received.'
+                         'Expected: Less than or equal to {2} Received: '
+                         '{3}').format(next_.id_, current.id_, next_.size,
+                                       current.size))
+
+    def test_sort_images_list_using_multiple_sort_dirs_only(self):
+        """
+        @summary: List all images, sorting the list by passing in multiple
+        query parameters as the sort_dirs only
+
+        1) List all images passing in multiple query parameters as the
+        sort_dirs only
+        2) Verify that the response code is 400
+        """
+
+        sort_dirs = [SortDirection.ASCENDING, SortDirection.DESCENDING]
+
+        sort_pairs = ['sort_dir={0}'.format(key) for key in sort_dirs]
+
+        url_addition = '&'.join(sort_pairs)
+
+        resp = self.images.client.list_images(url_addition=url_addition)
+        self.assertEqual(
+            resp.status_code, 400,
+            Messages.STATUS_CODE_MSG.format(400, resp.status_code))
+
+    def test_sort_images_list_using_single_sort_key_and_multi_sort_dirs(self):
+        """
+        @summary: List all images, sorting the list by passing in a single
+        query parameter as the sort_key and multiple query parameters as the
+        sort_dirs
+
+        1) List all images passing in a single query parameter as the sort_key
+        and multiple query parameters as the sort_dirs
+        2) Verify that the response code is 400
+        """
+
+        sort_key = 'name'
+        sort_dirs = [SortDirection.ASCENDING, SortDirection.DESCENDING]
+
+        sort_pairs = ['sort_dir={0}'.format(key) for key in sort_dirs]
+        sort_pairs.append('sort_key={0}'.format(sort_key))
+
+        url_addition = '&'.join(sort_pairs)
+
+        resp = self.images.client.list_images(url_addition=url_addition)
+        self.assertEqual(
+            resp.status_code, 400,
+            Messages.STATUS_CODE_MSG.format(400, resp.status_code))
+
+    def test_list_deactivated_images(self):
+        """
+        @summary: List all images with no additional query parameters,
+        paginating through the results as needed, and verify that the
+        deactivated images are listed
+
+        1) List all images via wrapper test method
+        2) Verify that there are no errors
+        """
+
+        errors = self._verify_listed_images([
+            self.deactivated_imported_image, self.deactivated_snapshot_image])
+
+        self.assertEqual(
+            errors, [],
+            msg=('Unexpected errors received. Expected: No errors '
+                 'Received: {0}').format(errors))
+
+    def test_list_reactivated_images(self):
+        """
+        @summary: List all images with no additional query parameters,
+        paginating through the results as needed, and verify that the
+        reactivated images are listed
+
+        1) List all images via wrapper test method
+        2) Verify that there are no errors
+        """
+
+        errors = self._verify_listed_images([
+            self.reactivated_imported_image, self.reactivated_snapshot_image])
+
+        self.assertEqual(
+            errors, [],
+            msg=('Unexpected errors received. Expected: No errors '
+                 'Received: {0}').format(errors))
+
+    def _verify_listed_images(self, expected_images):
+        """
+        @summary: List all images with no additional query parameters,
+        paginating through the results as needed, and verify that the
+        expected images are listed
+
+        1) List all images not passing in any additional query parameter,
+        paginating through the results as needed
+        2) Verify that the list is not empty
+        3) Verify that the expected images are in the returned list of
+        images
+        4) Return errors
+        """
+
+        listed_images = self.images.behaviors.list_all_images()
+
+        self.assertNotEqual(
+            len(listed_images), 0,
+            msg=('Unexpected number of images received. Expected: Not {0} '
+                 'Received: {1}').format(0, len(listed_images)))
+
+        return [('Expected image not received. Expected: {0} in list of '
+                 'images Received: {1}').format(image.id_, listed_images)
+                for image in expected_images if image not in listed_images]
+
+    def _list_images_with_sort_keys_dirs(self, sort_keys, sort_dirs=None):
+        """
+        @summary: List all images, sorting the list by passing in query
+        parameters for the sort_keys and sort_dirs and return the list of
+        images
+
+        1) List all images passing in query parameters for the sort_keys and
+        sort_dirs
+        2) Verify that the list of images returned is not empty
+        3) Return the list of images
+        """
+
+        sort_pairs = [
+            'sort_key={0}'.format(sort_key) for sort_key in sort_keys]
+        if sort_dirs is not None:
+            [sort_pairs.append('sort_dir={0}'.format(sort_dir))
+             for sort_dir in sort_dirs]
+
+        url_addition = '&'.join(sort_pairs)
+
+        listed_images = self.images.behaviors.list_all_images(url_addition)
+        self.assertNotEqual(
+            len(listed_images), 0,
+            msg=('Unexpected number of images received. Expected: Not {0} '
+                 'Received: {1}').format(0, len(listed_images)))
+
+        return listed_images
