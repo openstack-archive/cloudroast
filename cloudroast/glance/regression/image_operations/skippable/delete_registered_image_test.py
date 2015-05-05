@@ -99,7 +99,7 @@ class DeleteRegisteredImage(ImagesFixture):
         1) Attempt to delete public image
         2) Verify that the response code is 403
         3) Get image details of the public image
-        4) Verify that the response code is 200
+        4) Verify that the response is ok
         5) Verify that the image still has a status of active
         """
 

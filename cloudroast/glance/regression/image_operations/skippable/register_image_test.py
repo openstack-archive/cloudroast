@@ -16,9 +16,10 @@ limitations under the License.
 
 import calendar
 import re
-import sys
+
 import time
 import unittest
+import uuid
 
 from cafe.drivers.unittest.decorators import (
     data_driven_test, DataDrivenFixture)
@@ -152,7 +153,6 @@ class RegisterImage(ImagesFixture):
             errors, [], msg=('Unexpected error received. Expected: No errors '
                              'Received: {0}').format(errors))
 
-    @unittest.skip('Redmine bug #11436')
     def test_register_image_passing_all_allowed_properties(self):
         """
         @summary: Register image passing all allowed properties
@@ -169,7 +169,7 @@ class RegisterImage(ImagesFixture):
         auto_disk_config = 'False'
         container_format = ImageContainerFormat.AKI
         disk_format = ImageDiskFormat.ISO
-        id_ = '00000000-0000-0000-0000-000000000000'
+        id_ = str(uuid.uuid1())
         image_type = ImageType.IMPORT
         min_disk = images.config.min_disk
         min_ram = images.config.min_ram
@@ -209,9 +209,9 @@ class RegisterImage(ImagesFixture):
         if id_regex.match(reg_image.id_) is None:
             errors.append(Messages.PROPERTY_MSG.format(
                 'id_', 'not None', id_regex))
-        if reg_image.image_type is not None:
+        if reg_image.image_type is None:
             errors.append(Messages.PROPERTY_MSG.format(
-                'image_type', 'None', reg_image.image_type))
+                'image_type', 'not None', reg_image.image_type))
         if reg_image.min_disk != min_disk:
             errors.append(Messages.PROPERTY_MSG.format(
                 'min_disk', min_disk, reg_image.min_disk))
@@ -221,18 +221,18 @@ class RegisterImage(ImagesFixture):
         if reg_image.name != name:
             errors.append(Messages.PROPERTY_MSG.format(
                 'name', name, reg_image.name))
-        if reg_image.os_type is not None:
+        if reg_image.os_type is None:
             errors.append(Messages.PROPERTY_MSG.format(
-                'os_type', 'None', reg_image.os_type))
+                'os_type', 'not None', reg_image.os_type))
         if reg_image.protected != protected:
             errors.append(Messages.PROPERTY_MSG.format(
                 'protected', protected, reg_image.protected))
         if reg_image.tags != tags:
             errors.append(Messages.PROPERTY_MSG.format(
                 'tags', tags, reg_image.tags))
-        if reg_image.user_id is not None:
+        if reg_image.user_id is None:
             errors.append(Messages.PROPERTY_MSG.format(
-                'user_id', 'None', reg_image.user_id))
+                'user_id', 'not None', reg_image.user_id))
         if reg_image.additional_properties != additional_properties:
             errors.append(Messages.PROPERTY_MSG.format(
                 'additional_properties', additional_properties,
@@ -243,7 +243,7 @@ class RegisterImage(ImagesFixture):
                              'Received: {0}').format(errors))
 
     @data_driven_test(
-        ImagesDatasetListGenerator.UpdateRegisterImageRestricted())
+        ImagesDatasetListGenerator.RegisterImageRestricted())
     def ddtest_register_image_passing_restricted_property(self, prop):
         """
         @summary: Register image passing restricted property
@@ -255,19 +255,14 @@ class RegisterImage(ImagesFixture):
         2) Verify that the response code is 403
         """
 
+        underscore_props = ['file', 'self']
+
         # Each prop passed in only has one key-value pair
-        prop_key, prop_val = prop.popitem()
+        for key, val in prop.iteritems():
+            prop_key = key
+            prop_val = val
 
-        # This is a temporary workaround for skips in ddtests
-        failure_prop_list = [
-            'checksum', 'created_at', 'id', 'image_type', 'location',
-            'os_type', 'owner', 'schema', 'size', 'status', 'updated_at',
-            'user_id', 'visibility']
-        if prop_key in failure_prop_list:
-            sys.stderr.write('skipped \'Redmine bug #11436\' ... ')
-            return
-
-        if prop_key == 'file' or prop_key == 'self':
+        if prop_key in underscore_props:
             prop = {'{0}_'.format(prop_key): prop_val}
 
         resp = self.images.client.register_image(
@@ -327,12 +322,11 @@ class RegisterImage(ImagesFixture):
         2) Verify that the response code is 400
         """
 
-        # This is a temporary workaround for skips in ddtests
-        if 'auto_disk_config' in prop:
-            sys.stderr.write('skipped \'Redmine bug #11438\' ... ')
-            return
+        # Each prop passed in only has one key-value pair
+        for key, val in prop.iteritems():
+            prop_key = key
 
-        if 'name' in prop:
+        if prop_key == 'name':
             resp = self.images.client.register_image(**prop)
         else:
             resp = self.images.client.register_image(
