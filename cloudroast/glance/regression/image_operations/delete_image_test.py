@@ -30,7 +30,7 @@ class DeleteImage(ImagesFixture):
 
         # Count set to number of images required for this module
         created_images = cls.images.behaviors.create_images_via_task(
-            image_properties={'name': rand_name('delete_image')}, count=5)
+            image_properties={'name': rand_name('delete_image')}, count=7)
 
         cls.created_image = created_images.pop()
         cls.alt_created_image = created_images.pop()
@@ -47,6 +47,13 @@ class DeleteImage(ImagesFixture):
         cls.images.client.update_image(
             cls.protected_created_image.id_, replace={'protected': True})
 
+        cls.deactivated_image = created_images.pop()
+        cls.images_admin.client.deactivate_image(cls.deactivated_image.id_)
+
+        cls.reactivated_image = created_images.pop()
+        cls.images_admin.client.deactivate_image(cls.reactivated_image.id_)
+        cls.images_admin.client.reactivate_image(cls.reactivated_image.id_)
+
     @classmethod
     def tearDownClass(cls):
         cls.images.client.update_image(
@@ -58,42 +65,31 @@ class DeleteImage(ImagesFixture):
         """
         @summary: Delete image
 
-        1) Delete image
-        2) Verify that the response code is 204
-        3) Get image details of the deleted image
-        4) Verify that the response code is 404
+        1) Delete image via wrapper test method
+        2) Verify that the response code is 404
         """
 
-        resp = self.images.client.delete_image(self.created_image.id_)
-        self.assertEqual(
-            resp.status_code, 204,
-            Messages.STATUS_CODE_MSG.format(204, resp.status_code))
+        get_deleted_image = self._delete_image(self.created_image.id_)
 
-        resp = self.images.client.get_image_details(self.created_image.id_)
         self.assertEqual(
-            resp.status_code, 404,
-            Messages.STATUS_CODE_MSG.format(404, resp.status_code))
+            get_deleted_image.status_code, 404,
+            Messages.STATUS_CODE_MSG.format(
+                404, get_deleted_image.status_code))
 
     def test_delete_shared_image(self):
         """
         @summary: Delete shared image
 
-        1) Delete shared image
-        4) Verify that the response code is 204
-        5) Get image details as member of shared image
-        6) Verify that the response code is 404
+        1) Delete shared image via wrapper test method
+        2) Verify that the response code is 404
         """
 
-        resp = self.images.client.delete_image(self.shared_created_image.id_)
-        self.assertEqual(
-            resp.status_code, 204,
-            Messages.STATUS_CODE_MSG.format(204, resp.status_code))
+        get_deleted_image = self._delete_image(self.shared_created_image.id_)
 
-        resp = self.images_alt_one.client.get_image_details(
-            self.created_image.id_)
         self.assertEqual(
-            resp.status_code, 404,
-            Messages.STATUS_CODE_MSG.format(404, resp.status_code))
+            get_deleted_image.status_code, 404,
+            Messages.STATUS_CODE_MSG.format(
+                404, get_deleted_image.status_code))
 
     def test_delete_image_using_blank_image_id(self):
         """
@@ -180,3 +176,50 @@ class DeleteImage(ImagesFixture):
         resp = self.images.client.get_image_details(
             self.alt_shared_created_image.id_)
         self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
+
+    def test_delete_deactivated_image(self):
+        """
+        @summary: Delete deactivated image
+
+        1) Delete deactivated image via wrapper test method
+        2) Verify that the response code is 404
+        """
+
+        get_deleted_image = self._delete_image(self.deactivated_image.id_)
+
+        self.assertEqual(
+            get_deleted_image.status_code, 404,
+            Messages.STATUS_CODE_MSG.format(
+                404, get_deleted_image.status_code))
+
+    def test_delete_reactivated_image(self):
+        """
+        @summary: Delete reactivated image
+
+        1) Delete reactivated image via wrapper test method
+        2) Verify that the response code is 404
+        """
+
+        get_deleted_image = self._delete_image(self.reactivated_image.id_)
+
+        self.assertEqual(
+            get_deleted_image.status_code, 404,
+            Messages.STATUS_CODE_MSG.format(
+                404, get_deleted_image.status_code))
+
+    def _delete_image(self, image_id):
+        """
+        @summary: Delete an image and return the get image details response
+
+        1) Delete an image
+        2) Verify that the response code is 204
+        3) Get image details of the deleted image
+        4) Return the get image details response
+        """
+
+        resp = self.images.client.delete_image(image_id)
+        self.assertEqual(
+            resp.status_code, 204,
+            Messages.STATUS_CODE_MSG.format(204, resp.status_code))
+
+        return self.images.client.get_image_details(image_id)
