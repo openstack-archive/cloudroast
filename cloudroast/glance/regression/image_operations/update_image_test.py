@@ -14,512 +14,216 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import sys
-
-from cafe.drivers.unittest.decorators import (
-    data_driven_test, DataDrivenFixture)
 from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.glance.common.constants import Messages
 
 from cloudroast.glance.fixtures import ImagesFixture
-from cloudroast.glance.generators import ImagesDatasetListGenerator
 
 
-@DataDrivenFixture
-class UpdateImage(ImagesFixture):
+class DeleteImage(ImagesFixture):
 
     @classmethod
     def setUpClass(cls):
-        super(UpdateImage, cls).setUpClass()
+        super(DeleteImage, cls).setUpClass()
+
+        member_id = cls.images_alt_one.auth.tenant_id
 
         # Count set to number of images required for this module
         created_images = cls.images.behaviors.create_images_via_task(
-            image_properties={'name': rand_name('update_image')}, count=3)
+            image_properties={'name': rand_name('delete_image')}, count=7)
 
         cls.created_image = created_images.pop()
         cls.alt_created_image = created_images.pop()
-        cls.quota_image = created_images.pop()
+
+        cls.shared_created_image = created_images.pop()
+        cls.images.client.create_image_member(
+            cls.shared_created_image.id_, member_id)
+
+        cls.alt_shared_created_image = created_images.pop()
+        cls.images.client.create_image_member(
+            cls.alt_shared_created_image.id_, member_id)
+
+        cls.protected_created_image = created_images.pop()
+        cls.images.client.update_image(
+            cls.protected_created_image.id_, replace={'protected': True})
+
+        cls.deactivated_image = created_images.pop()
+        cls.images_admin.client.deactivate_image(cls.deactivated_image.id_)
+
+        cls.reactivated_image = created_images.pop()
+        cls.images_admin.client.deactivate_image(cls.reactivated_image.id_)
+        cls.images_admin.client.reactivate_image(cls.reactivated_image.id_)
 
     @classmethod
     def tearDownClass(cls):
         cls.images.client.update_image(
-            cls.created_image.id_, replace={'protected': False})
+            cls.protected_created_image.id_, replace={'protected': False})
         cls.images.behaviors.resources.release()
-        super(UpdateImage, cls).tearDownClass()
+        super(DeleteImage, cls).tearDownClass()
 
-    @data_driven_test(
-        ImagesDatasetListGenerator.UpdateImageAllowed())
-    def ddtest_update_image_replace_allowed_property(self, prop):
+    def test_delete_image(self):
         """
-        @summary: Update image replacing allowed image property
+        @summary: Delete image
 
-        @param prop: Key-value pair containing the image property to validate
-        @type prop: Dictionary
-
-        1) Update image replacing allowed image property's value
-        2) Verify that the response code is 200
-        3) Verify that the update image response shows that the property's
-        value has been updated as expected
-        4) Get image details for the image
-        5) Verify that the response is ok
-        6) Verify that the get image details response shows that the property's
-        value has been updated as expected
-        7) Verify that the image's updated_at time has increased
+        1) Delete image
+        2) Verify that the response code is 204
+        3) Get image details of the deleted image
+        4) Verify that the response code is 404
         """
 
-        # Each prop passed in only has one key-value pair
-        prop_key, prop_val = prop.popitem()
-
-        resp = self.images.client.update_image(
-            self.created_image.id_, replace={prop_key: prop_val})
+        resp = self.images.client.delete_image(self.created_image.id_)
         self.assertEqual(
-            resp.status_code, 200,
-            Messages.STATUS_CODE_MSG.format(200, resp.status_code))
-        updated_image = resp.entity
-
-        self.assertEqual(
-            getattr(updated_image, prop_key), prop_val,
-            msg=('Unexpected updated image value received. Expected: {0} '
-                 'Received: {1}').format(prop_val,
-                                         getattr(updated_image, prop_key)))
+            resp.status_code, 204,
+            Messages.STATUS_CODE_MSG.format(204, resp.status_code))
 
         resp = self.images.client.get_image_details(self.created_image.id_)
-        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
-        get_image = resp.entity
-
-        self.assertEqual(
-            getattr(get_image, prop_key), prop_val,
-            msg=('Unexpected get image details value received. Expected: {0} '
-                 'Received: {1}').format(prop_val,
-                                         getattr(get_image, prop_key)))
-
-        self.assertGreaterEqual(
-            updated_image.updated_at, self.created_image.updated_at,
-            msg=('Unexpected updated_at value received. '
-                 'Expected: Greater than {0} '
-                 'Received: {1}').format(self.created_image.updated_at,
-                                         updated_image.updated_at))
-
-    @data_driven_test(
-        ImagesDatasetListGenerator.UpdateImageInaccessible())
-    def ddtest_update_image_replace_inaccessible_property(self, prop):
-        """
-        @summary: Update image replacing inaccessible image property
-
-        @param prop: Key-value pair containing the image property to validate
-        @type prop: Dictionary
-
-        1) Update image replacing inaccessible image property's value
-        2) Verify that the response code is 403
-        """
-
-        # Each prop passed in only has one key-value pair
-        prop_key, prop_val = prop.popitem()
-
-        resp = self.images.client.update_image(
-            self.alt_created_image.id_, replace={prop_key: prop_val})
-        self.assertEqual(
-            resp.status_code, 403,
-            Messages.STATUS_CODE_MSG.format(403, resp.status_code))
-
-    @data_driven_test(
-        ImagesDatasetListGenerator.UpdateRegisterImageRestricted())
-    def ddtest_update_image_replace_restricted_property(self, prop):
-        """
-        @summary: Update image replacing restricted image property
-
-        @param prop: Key-value pair containing the image property to validate
-        @type prop: Dictionary
-
-        1) Update image replacing restricted image property's value
-        2) Verify that the response code is 403
-        3) Get image details for the image
-        4) Verify that the response is ok
-        5) Verify that the get image details response shows that the property's
-        value has not been updated
-        """
-
-        # Each prop passed in only has one key-value pair
-        prop_key, prop_val = prop.popitem()
-
-        # This is a temporary workaround for skips in ddtests
-        if prop_key == 'id':
-            sys.stderr.write('skipped \'Redmine bug #11398\' ... ')
-            return
-
-        resp = self.images.client.update_image(
-            self.alt_created_image.id_, replace={prop_key: prop_val})
-        self.assertEqual(
-            resp.status_code, 403,
-            Messages.STATUS_CODE_MSG.format(403, resp.status_code))
-
-        resp = self.images.client.get_image_details(self.alt_created_image.id_)
-        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
-        get_image = resp.entity
-
-        prop_key = self._check_prop_key(prop_key)
-
-        self.assertEqual(
-            getattr(get_image, prop_key),
-            getattr(self.alt_created_image, prop_key),
-            msg=('Unexpected get image details value received. Expected: {0} '
-                 'Received: {1}').format(getattr(self.alt_created_image,
-                                                 prop_key),
-                                         getattr(get_image, prop_key)))
-
-    @data_driven_test(
-        ImagesDatasetListGenerator.UpdateRegisterImageRestricted())
-    def ddtest_update_image_add_restricted_property(self, prop):
-        """
-        @summary: Update image adding restricted image property
-
-        @param prop: Key-value pair containing the image property to validate
-        @type prop: Dictionary
-
-        1) Update image adding restricted image property
-        2) Verify that the response code is 403
-        3) Get image details for the image
-        4) Verify that the response is ok
-        5) Verify that the get image details response shows that the property
-        has been not been added
-        """
-
-        # Each prop passed in only has one key-value pair
-        prop_key, prop_val = prop.popitem()
-
-        # This is a temporary workaround for skips in ddtests
-        if prop_key == 'id':
-            sys.stderr.write('skipped \'Redmine bug #11398\' ... ')
-            return
-
-        resp = self.images.client.update_image(
-            self.alt_created_image.id_, add={prop_key: prop_val})
-        self.assertEqual(
-            resp.status_code, 403,
-            Messages.STATUS_CODE_MSG.format(403, resp.status_code))
-
-        resp = self.images.client.get_image_details(self.alt_created_image.id_)
-        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
-        get_image = resp.entity
-
-        prop_key = self._check_prop_key(prop_key)
-
-        self.assertEqual(
-            getattr(get_image, prop_key), getattr(self.alt_created_image,
-                                                  prop_key),
-            msg=('Unexpected get image details value received. Expected: {0} '
-                 'Received: {1}').format(getattr(self.alt_created_image,
-                                                 prop_key),
-                                         getattr(get_image, prop_key)))
-
-    @data_driven_test(
-        ImagesDatasetListGenerator.UpdateRegisterImageRestricted())
-    def ddtest_update_image_remove_restricted_property(self, prop):
-        """
-        @summary: Update image removing restricted image property
-
-        @param prop: Key-value pair containing the image property to validate
-        @type prop: Dictionary
-
-        1) Update image removing restricted image property
-        2) Verify that the response code is 403
-        3) Get image details for the image
-        4) Verify that the response is ok
-        5) Verify that the get image details response shows that the property
-        has been not been removed
-        """
-
-        # Each prop passed in only has one key-value pair
-        prop_key, prop_val = prop.popitem()
-
-        # This is a temporary workaround for skips in ddtests
-        failure_prop_list = ['id', 'file', 'schema', 'self']
-        if prop_key in failure_prop_list:
-            sys.stderr.write('skipped \'Launchpad bug #1438826\' ... ')
-            return
-
-        resp = self.images.client.update_image(
-            self.alt_created_image.id_, remove={prop_key: prop_val})
-        self.assertEqual(
-            resp.status_code, 403,
-            Messages.STATUS_CODE_MSG.format(403, resp.status_code))
-
-        resp = self.images.client.get_image_details(self.alt_created_image.id_)
-        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
-        get_image = resp.entity
-
-        prop_key = self._check_prop_key(prop_key)
-
-        self.assertEqual(
-            getattr(get_image, prop_key), getattr(self.alt_created_image,
-                                                  prop_key),
-            msg=('Unexpected get image details value received. Expected: {0} '
-                 'Received: {1}').format(getattr(self.alt_created_image,
-                                                 prop_key),
-                                         getattr(get_image, prop_key)))
-
-    def test_update_image_add_new_property(self):
-        """
-        @summary: Update image by adding a new image property
-
-        1) Update image adding a new image property
-        2) Verify that the response code is 200
-        3) Verify that the update image response shows that the new property
-        has been added as expected
-        4) Get image details for the image
-        5) Verify that the response is ok
-        6) Verify that the get image details response shows that the new
-        property has been added as expected
-        """
-
-        new_prop = 'new_property'
-        new_prop_value = rand_name('new_property_value')
-
-        resp = self.images.client.update_image(
-            self.created_image.id_, add={new_prop: new_prop_value})
-        self.assertEqual(
-            resp.status_code, 200,
-            Messages.STATUS_CODE_MSG.format(200, resp.status_code))
-        updated_image = resp.entity
-
-        added_prop_value = (
-            updated_image.additional_properties.get(new_prop, None))
-
-        self.assertEqual(
-            added_prop_value, new_prop_value,
-            msg=('Unexpected new image property value received. Expected: {0} '
-                 'Received: {1}').format(new_prop_value, added_prop_value))
-
-        resp = self.images.client.get_image_details(self.created_image.id_)
-        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
-        get_image = resp.entity
-
-        get_added_prop_value = (
-            get_image.additional_properties.get(new_prop, None))
-
-        self.assertEqual(
-            get_added_prop_value, new_prop_value,
-            msg=('Unexpected new image property value received. Expected: {0} '
-                 'Received: {1}').format(new_prop_value, get_added_prop_value))
-
-    def test_update_image_remove_property(self):
-        """
-        @summary: Update image by removing an image property
-
-        1) Update image adding a new image property
-        2) Verify that the response code is 200
-        3) Update the image removing the new image property
-        4) Verify that the response code is 200
-        5) Verify that the update image response shows that the new
-        property has been removed as expected
-        6) Get image details for the image
-        7) Verify that the response code is ok
-        8) Verify that the get image response shows that the new
-        property has been removed as expected
-        """
-
-        new_prop = 'alt_new_property'
-        new_prop_value = rand_name('alt_new_property_value')
-
-        resp = self.images.client.update_image(
-            self.created_image.id_, add={new_prop: new_prop_value})
-        self.assertEqual(
-            resp.status_code, 200,
-            Messages.STATUS_CODE_MSG.format(200, resp.status_code))
-
-        response = self.images.client.update_image(
-            self.created_image.id_, remove={new_prop: new_prop_value})
-        self.assertEqual(
-            resp.status_code, 200,
-            Messages.STATUS_CODE_MSG.format(200, resp.status_code))
-        updated_image = response.entity
-
-        self.assertNotIn(
-            new_prop, updated_image.additional_properties,
-            msg=('Unexpected removed image property received. Expected: {0} '
-                 'to not be present '
-                 'Received: {1}').format(new_prop,
-                                         updated_image.additional_properties))
-
-        resp = self.images.client.get_image_details(self.created_image.id_)
-        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
-        get_image = resp.entity
-
-        self.assertNotIn(
-            new_prop, get_image.additional_properties,
-            msg=('Unexpected removed image property received. Expected: {0} '
-                 'to not be present '
-                 'Received: {1}').format(new_prop,
-                                         get_image.additional_properties))
-
-    def test_update_image_replace_additional_property(self):
-        """
-        @summary: Update image by replacing an additional image property
-
-        1) Update image adding a new image property
-        2) Verify that the response code is 200
-        3) Update the image replacing the new image property's value
-        4) Verify that the response code is 200
-        5) Verify that the update image response shows that the new property's
-        value has been updated as expected
-        6) Get image details for the image
-        7) Verify that the response code is ok
-        8) Verify that the get image response shows that the new
-        property's value has been updated as expected
-        """
-
-        new_prop = 'alt_two_new_property'
-        new_prop_value = rand_name('alt_two_new_property_value')
-        updated_prop_value = rand_name('updated_new_property_value')
-
-        resp = self.images.client.update_image(
-            self.created_image.id_, add={new_prop: new_prop_value})
-        self.assertEqual(
-            resp.status_code, 200,
-            Messages.STATUS_CODE_MSG.format(200, resp.status_code))
-
-        resp = self.images.client.update_image(
-            self.created_image.id_,
-            replace={new_prop: updated_prop_value})
-        self.assertEqual(
-            resp.status_code, 200,
-            Messages.STATUS_CODE_MSG.format(200, resp.status_code))
-        updated_image = resp.entity
-
-        replaced_prop_value = (
-            updated_image.additional_properties.get(new_prop, None))
-
-        self.assertEqual(
-            replaced_prop_value, updated_prop_value,
-            msg=('Unexpected updated image property value received. '
-                 'Expected: {0} '
-                 'Received: {1}').format(updated_prop_value,
-                                         replaced_prop_value))
-
-        resp = self.images.client.get_image_details(self.created_image.id_)
-        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
-        get_image = resp.entity
-
-        get_replaced_prop_value = (
-            get_image.additional_properties.get(new_prop, None))
-
-        self.assertEqual(
-            get_replaced_prop_value, updated_prop_value,
-            msg=('Unexpected updated image property value received.'
-                 'Expected: {0} '
-                 'Received: {1}').format(new_prop_value,
-                                         get_replaced_prop_value))
-
-    def test_update_image_property_quota_limit(self):
-        """
-        @summary: Validate image properties quota limit
-
-        1) While the number of image properties is not equal to the image
-        properties quota, update image adding a new image property
-        2) Verify that the response code is 200
-        3) When the number of image properties is equal to the image properties
-        quota, update image adding another new image property
-        4) Verify that the response code is 413
-        5) Get image details
-        6) Verify that the response is ok
-        7) Verify that the number of image properties matches the image
-        properties quota
-        """
-
-        number_of_image_properties = 0
-        additional_props = ['auto_disk_config', 'image_type', 'os_type',
-                            'user_id']
-        quota_limit = self.images.config.image_properties_limit
-
-        # Decrease quota limit for every property that image already contains
-        for prop in additional_props:
-            if hasattr(self.quota_image, prop):
-                quota_limit -= 1
-
-        while number_of_image_properties != quota_limit:
-            new_prop = rand_name('prop')
-            new_prop_value = rand_name('prop_value')
-
-            resp = self.images.client.update_image(
-                self.quota_image.id_, add={new_prop: new_prop_value})
-            self.assertEqual(
-                resp.status_code, 200,
-                Messages.STATUS_CODE_MSG.format(200, resp.status_code))
-
-            resp = self.images.client.get_image_details(self.quota_image.id_)
-            self.assertTrue(resp.ok,
-                            Messages.OK_RESP_MSG.format(resp.status_code))
-            get_image = resp.entity
-
-            number_of_image_properties = len(getattr(get_image,
-                                                     'additional_properties'))
-
-        new_prop = rand_name('prop')
-        new_prop_value = rand_name('prop_value')
-
-        resp = self.images.client.update_image(
-            self.quota_image.id_, add={new_prop: new_prop_value})
-        self.assertEqual(
-            resp.status_code, 413,
-            Messages.STATUS_CODE_MSG.format(413, resp.status_code))
-
-        resp = self.images.client.get_image_details(self.quota_image.id_)
-        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
-        get_image = resp.entity
-
-        self.assertEqual(
-            len(getattr(get_image, 'additional_properties')), quota_limit,
-            msg='Unexpected number of image properties returned.'
-                'Expected: {0} '
-                'Received: {1}'.format(quota_limit,
-                                       len(getattr(get_image,
-                                                   'additional_properties'))))
-
-    def test_update_image_using_blank_image_id(self):
-        """
-        @summary: Update image using a blank image id
-
-        1) Update image using blank image id
-        2) Verify that the response code is 404
-        """
-
-        resp = self.images.client.update_image(
-            image_id='', add={'new_prop': rand_name('new_prop_value')})
         self.assertEqual(
             resp.status_code, 404,
             Messages.STATUS_CODE_MSG.format(404, resp.status_code))
 
-    def test_update_image_using_invalid_image_id(self):
+    def test_delete_shared_image(self):
         """
-        @summary: Update image using an invalid image id
+        @summary: Delete shared image
 
-        1) Update image using invalid image id
-        2) Verify that the response code is 404
+        1) Delete shared image
+        4) Verify that the response code is 204
+        5) Get image details as member of shared image
+        6) Verify that the response code is 404
         """
 
-        resp = self.images.client.update_image(
-            image_id='invalid', add={'new_prop': rand_name('new_prop_value')})
+        resp = self.images.client.delete_image(self.shared_created_image.id_)
+        self.assertEqual(
+            resp.status_code, 204,
+            Messages.STATUS_CODE_MSG.format(204, resp.status_code))
+
+        resp = self.images_alt_one.client.get_image_details(
+            self.created_image.id_)
         self.assertEqual(
             resp.status_code, 404,
             Messages.STATUS_CODE_MSG.format(404, resp.status_code))
 
-    def _check_prop_key(self, prop_key):
+    def test_delete_image_using_blank_image_id(self):
         """
-        @summary: Check if prop_key needs an underscore added
+        @summary: Delete image using blank image id
 
-        @param prop_key: Image property to check
-        @type prop_key: String
-
-        @return: Prop_key
-        @rtype: String
+        1) Delete image using blank image id
+        2) Verify that the response code is 404
         """
 
-        keys_need_underscore = ['file', 'id', 'self']
+        resp = self.images.client.delete_image(image_id='')
+        self.assertEqual(
+            resp.status_code, 404,
+            Messages.STATUS_CODE_MSG.format(404, resp.status_code))
 
-        if prop_key in keys_need_underscore:
-            prop_key = '{0}_'.format(prop_key)
+    def test_delete_image_using_invalid_image_id(self):
+        """
+        @summary: Delete image using invalid image id
 
-        if prop_key == 'location':
-            prop_key = 'file_'
+        1) Delete image using invalid image id
+        2) Verify that the response code is 404
+        """
 
-        return prop_key
+        resp = self.images.client.delete_image(image_id='invalid')
+        self.assertEqual(
+            resp.status_code, 404,
+            Messages.STATUS_CODE_MSG.format(404, resp.status_code))
+
+    def test_delete_image_that_is_already_deleted(self):
+        """
+        @summary: Delete image that is already deleted
+
+        1) Delete image
+        2) Verify that the response code is 204
+        3) Delete image again
+        4) Verify that the response code is 404
+        """
+
+        resp = self.images.client.delete_image(self.alt_created_image.id_)
+        self.assertEqual(
+            resp.status_code, 204,
+            Messages.STATUS_CODE_MSG.format(204, resp.status_code))
+
+        resp = self.images.client.delete_image(self.alt_created_image.id_)
+        self.assertEqual(
+            resp.status_code, 404,
+            Messages.STATUS_CODE_MSG.format(404, resp.status_code))
+
+    def test_delete_image_that_is_protected(self):
+        """
+        @summary: Delete image that is protected
+
+        1) Delete image that has protected set to true
+        2) Verify that the response code is 403
+        3) Get image details for the image
+        4) Verify that the response is ok
+        """
+
+        resp = self.images.client.delete_image(
+            self.protected_created_image.id_)
+        self.assertEqual(
+            resp.status_code, 403,
+            Messages.STATUS_CODE_MSG.format(403, resp.status_code))
+
+        resp = self.images.client.get_image_details(
+            self.protected_created_image.id_)
+        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
+
+    def test_delete_shared_image_as_member(self):
+        """
+        @summary: Delete shared image as member
+
+        1) Delete shared image as member
+        2) Verify that the response code is 403
+        3) Get image details for the image
+        4) Verify that the response is ok
+        """
+
+        resp = self.images_alt_one.client.delete_image(
+            self.alt_shared_created_image.id_)
+        self.assertEqual(
+            resp.status_code, 403,
+            Messages.STATUS_CODE_MSG.format(403, resp.status_code))
+
+        resp = self.images.client.get_image_details(
+            self.alt_shared_created_image.id_)
+        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
+
+    def test_delete_deactivated_image(self):
+        """
+        @summary: Delete deactivated image
+
+        1) Delete deactivated image
+        2) Verify that the response code is 204
+        3) Get image details of the deleted image
+        4) Verify that the response code is 404
+        """
+
+        resp = self.images.client.delete_image(self.deactivated_image.id_)
+        self.assertEqual(
+            resp.status_code, 204,
+            Messages.STATUS_CODE_MSG.format(204, resp.status_code))
+
+        resp = self.images.client.get_image_details(self.deactivated_image.id_)
+        self.assertEqual(
+            resp.status_code, 404,
+            Messages.STATUS_CODE_MSG.format(404, resp.status_code))
+
+    def test_delete_reactivated_image(self):
+        """
+        @summary: Delete reactivated image
+
+        1) Delete reactivated image
+        2) Verify that the response code is 204
+        3) Get image details of the deleted image
+        4) Verify that the response code is 404
+        """
+
+        resp = self.images.client.delete_image(self.reactivated_image.id_)
+        self.assertEqual(
+            resp.status_code, 204,
+            Messages.STATUS_CODE_MSG.format(204, resp.status_code))
+
+        resp = self.images.client.get_image_details(self.deactivated_image.id_)
+        self.assertEqual(
+            resp.status_code, 404,
+            Messages.STATUS_CODE_MSG.format(404, resp.status_code))
