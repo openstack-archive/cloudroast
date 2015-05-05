@@ -18,6 +18,7 @@ import calendar
 import random
 import time
 import unittest
+import uuid
 
 from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.glance.common.constants import Messages
@@ -37,12 +38,19 @@ class CreateImageMember(ImagesFixture):
         # Count set to number of images required for this module
         created_images = cls.images.behaviors.create_images_via_task(
             image_properties={'name': rand_name('create_image_member')},
-            count=4)
+            count=6)
 
         cls.created_image = created_images.pop()
         cls.quota_image = created_images.pop()
         cls.alt_created_image = created_images.pop()
         cls.inaccessible_image = created_images.pop()
+
+        cls.deactivated_image = created_images.pop()
+        cls.images_admin.client.deactivate_image(cls.deactivated_image.id_)
+
+        cls.reactivated_image = created_images.pop()
+        cls.images_admin.client.deactivate_image(cls.reactivated_image.id_)
+        cls.images_admin.client.reactivate_image(cls.reactivated_image.id_)
 
     @classmethod
     def tearDownClass(cls):
@@ -98,7 +106,7 @@ class CreateImageMember(ImagesFixture):
                  'Expected: No errors '
                  'Received: {1}').format(self.created_image.id_, errors))
 
-    @unittest.skip('Redmine bug #3707')
+    @unittest.skip('Bug')
     def test_create_image_member_quota_limit(self):
         """
         @summary: Validate create image member quota limit
@@ -201,20 +209,69 @@ class CreateImageMember(ImagesFixture):
             msg='Unexpected image members returned. Expected: Not Found '
                 'Received: {0}'.format(resp.reason))
 
-    @unittest.skip('Redmine bug #11499')
+    def test_create_image_member_using_deactivated_image(self):
+        """
+        @summary: Create image member using deactivated image
+
+        1) Create image member using deactivated image
+        2) Verify that the response code is 200
+        3) Verify that the image member's properties are as expected
+        generically
+        """
+
+        resp = self.images.client.create_image_member(
+            self.deactivated_image.id_, self.member_id)
+        self.assertEqual(
+            resp.status_code, 200,
+            Messages.STATUS_CODE_MSG.format(200, resp.status_code))
+        image_member = resp.entity
+
+        errors = self.images.behaviors.validate_image_member(image_member)
+
+        self.assertEqual(
+            errors, [],
+            msg=('Unexpected error received for image {0}. '
+                 'Expected: No errors '
+                 'Received: {1}').format(self.deactivated_image.id_, errors))
+
+    def test_create_image_member_using_reactivated_image(self):
+        """
+        @summary: Create image member using reactivated image
+
+        1) Create image member using reactivated image
+        2) Verify that the response code is 200
+        3) Verify that the image member's properties are as expected
+        generically
+        """
+
+        resp = self.images.client.create_image_member(
+            self.reactivated_image.id_, self.member_id)
+        self.assertEqual(
+            resp.status_code, 200,
+            Messages.STATUS_CODE_MSG.format(200, resp.status_code))
+        image_member = resp.entity
+
+        errors = self.images.behaviors.validate_image_member(image_member)
+
+        self.assertEqual(
+            errors, [],
+            msg=('Unexpected error received for image {0}. '
+                 'Expected: No errors '
+                 'Received: {1}').format(self.reactivated_image.id_, errors))
+
     def test_create_image_member_using_blank_image_id(self):
         """
         @summary: Create image member using blank image id
 
         1) Create image member using blank image id
-        2) Verify that the response code is 404
+        2) Verify that the response code is 405
         """
 
         resp = self.images.client.create_image_member(
             image_id='', member_id=self.member_id)
         self.assertEqual(
-            resp.status_code, 404,
-            Messages.STATUS_CODE_MSG.format(404, resp.status_code))
+            resp.status_code, 405,
+            Messages.STATUS_CODE_MSG.format(405, resp.status_code))
 
     def test_create_image_member_using_invalid_image_id(self):
         """
@@ -230,32 +287,16 @@ class CreateImageMember(ImagesFixture):
             resp.status_code, 404,
             Messages.STATUS_CODE_MSG.format(404, resp.status_code))
 
-    @unittest.skip('Redmine bug #11500')
     def test_create_image_member_using_blank_member_id(self):
         """
         @summary: Create image member using blank member id
 
         1) Create image member using blank member id
-        2) Verify that the response code is 404
+        2) Verify that the response code is 400
         """
 
         resp = self.images.client.create_image_member(
-            image_id=self.alt_created_image.id_, member_id='')
+            image_id=str(uuid.uuid1()), member_id='')
         self.assertEqual(
-            resp.status_code, 404,
-            Messages.STATUS_CODE_MSG.format(404, resp.status_code))
-
-    @unittest.skip('Redmine bug #11501')
-    def test_create_image_member_using_invalid_member_id(self):
-        """
-        @summary: Create image member using invalid member id
-
-        1) Create image member using invalid member id
-        2) Verify that the response code is 404
-        """
-
-        resp = self.images.client.create_image_member(
-            image_id=self.alt_created_image.id_, member_id='invalid')
-        self.assertEqual(
-            resp.status_code, 404,
-            Messages.STATUS_CODE_MSG.format(404, resp.status_code))
+            resp.status_code, 400,
+            Messages.STATUS_CODE_MSG.format(400, resp.status_code))

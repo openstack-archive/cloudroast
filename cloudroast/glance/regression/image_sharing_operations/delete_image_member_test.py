@@ -34,7 +34,7 @@ class DeleteImageMember(ImagesFixture):
         # Count set to number of images required for this module
         created_images = cls.images.behaviors.create_images_via_task(
             image_properties={'name': rand_name('delete_image_member')},
-            count=3)
+            count=5)
 
         cls.shared_image = created_images.pop()
         cls.images.client.create_image_member(
@@ -49,6 +49,17 @@ class DeleteImageMember(ImagesFixture):
         cls.alt_shared_image = created_images.pop()
         cls.images.client.create_image_member(
             cls.alt_shared_image.id_, cls.member_id)
+
+        cls.deactivated_image = created_images.pop()
+        cls.images.client.create_image_member(
+            cls.deactivated_image.id_, cls.member_id)
+        cls.images_admin.client.deactivate_image(cls.deactivated_image.id_)
+
+        cls.reactivated_image = created_images.pop()
+        cls.images.client.create_image_member(
+            cls.reactivated_image.id_, cls.member_id)
+        cls.images_admin.client.deactivate_image(cls.reactivated_image.id_)
+        cls.images_admin.client.reactivate_image(cls.reactivated_image.id_)
 
     @classmethod
     def tearDownClass(cls):
@@ -129,6 +140,82 @@ class DeleteImageMember(ImagesFixture):
                  'images '
                  'Received: {1}').format(self.accepted_image, listed_images))
 
+    def test_delete_image_member_using_deactivated_image(self):
+        """
+        @summary: Delete image member using deactivated image
+
+        1) Delete image member using deactivated image
+        2) Verify that the response code is 204
+        3) Get image members
+        4) Verify that the response is ok
+        5) Verify that the image member is not in the list of image members
+        6) List images as member that was deleted
+        7) Verify that the image is no longer listed
+        """
+
+        resp = self.images.client.delete_image_member(
+            self.deactivated_image.id_, self.member_id)
+        self.assertEqual(
+            resp.status_code, 204,
+            Messages.STATUS_CODE_MSG.format(204, resp.status_code))
+
+        resp = self.images.client.list_image_members(
+            self.deactivated_image.id_)
+        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
+        members = resp.entity
+
+        self.assertListEqual(
+            members, [],
+            msg=('Unexpected members received for image {0}. '
+                 'Expected: No members '
+                 'Received: {1}').format(self.deactivated_image.id_, members))
+
+        listed_images = self.images_alt_one.behaviors.list_all_images()
+
+        self.assertNotIn(
+            self.deactivated_image, listed_images,
+            msg=('Unexpected images received. Expected: {0} not in list of '
+                 'images Received: '
+                 '{1}').format(self.deactivated_image, listed_images))
+
+    def test_delete_image_member_using_reactivated_image(self):
+        """
+        @summary: Delete image member using reactivated image
+
+        1) Delete image member using reactivated image
+        2) Verify that the response code is 204
+        3) Get image members
+        4) Verify that the response is ok
+        5) Verify that the image member is not in the list of image members
+        6) List images as member that was deleted
+        7) Verify that the image is no longer listed
+        """
+
+        resp = self.images.client.delete_image_member(
+            self.reactivated_image.id_, self.member_id)
+        self.assertEqual(
+            resp.status_code, 204,
+            Messages.STATUS_CODE_MSG.format(204, resp.status_code))
+
+        resp = self.images.client.list_image_members(
+            self.reactivated_image.id_)
+        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
+        members = resp.entity
+
+        self.assertListEqual(
+            members, [],
+            msg=('Unexpected members received for image {0}. '
+                 'Expected: No members '
+                 'Received: {1}').format(self.reactivated_image.id_, members))
+
+        listed_images = self.images_alt_one.behaviors.list_all_images()
+
+        self.assertNotIn(
+            self.reactivated_image, listed_images,
+            msg=('Unexpected images received. Expected: {0} not in list of '
+                 'images Received: '
+                 '{1}').format(self.reactivated_image, listed_images))
+
     def test_delete_image_member_as_member_forbidden(self):
         """
         @summary: Delete image member as member of the image
@@ -191,22 +278,21 @@ class DeleteImageMember(ImagesFixture):
             resp.status_code, 404,
             Messages.STATUS_CODE_MSG.format(404, resp.status_code))
 
-    @unittest.skip('Redmine bug #11534')
+    @unittest.skip('Launchpad bug #1442320')
     def test_delete_image_member_using_blank_member_id(self):
         """
         @summary: Delete image member using blank member id
 
         1) Delete image member using blank member id
-        2) Verify that the response code is 404
+        2) Verify that the response code is 400
         """
 
-        resp = self.images_alt_one.client.delete_image_member(
-            image_id=self.shared_image, member_id='')
+        resp = self.images.client.delete_image_member(
+            image_id=self.shared_image.id_, member_id='')
         self.assertEqual(
-            resp.status_code, 404,
-            Messages.STATUS_CODE_MSG.format(404, resp.status_code))
+            resp.status_code, 400,
+            Messages.STATUS_CODE_MSG.format(400, resp.status_code))
 
-    @unittest.skip('Redmine bug #11534')
     def test_delete_image_member_using_invalid_member_id(self):
         """
         @summary: Delete image member using invalid member id
@@ -215,8 +301,8 @@ class DeleteImageMember(ImagesFixture):
         2) Verify that the response code is 404
         """
 
-        resp = self.images_alt_one.client.delete_image_member(
-            image_id=self.shared_image, member_id='invalid')
+        resp = self.images.client.delete_image_member(
+            image_id=self.shared_image.id_, member_id='invalid')
         self.assertEqual(
             resp.status_code, 404,
             Messages.STATUS_CODE_MSG.format(404, resp.status_code))
