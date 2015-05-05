@@ -35,7 +35,7 @@ class DeleteImageTag(ImagesFixture):
 
         # Count set to number of images required for this module
         created_images = cls.images.behaviors.create_images_via_task(
-            image_properties={'name': rand_name('delete_image_tag')}, count=4)
+            image_properties={'name': rand_name('delete_image_tag')}, count=6)
 
         cls.created_image = created_images.pop()
 
@@ -49,6 +49,15 @@ class DeleteImageTag(ImagesFixture):
         cls.alt_single_tag_image = created_images.pop()
         cls.images.client.add_image_tag(cls.alt_single_tag_image.id_, cls.tag)
 
+        cls.deactivated_image = created_images.pop()
+        cls.images.client.add_image_tag(cls.deactivated_image.id_, cls.tag)
+        cls.images_admin.client.deactivate_image(cls.deactivated_image.id_)
+
+        cls.reactivated_image = created_images.pop()
+        cls.images.client.add_image_tag(cls.reactivated_image.id_, cls.tag)
+        cls.images_admin.client.deactivate_image(cls.reactivated_image.id_)
+        cls.images_admin.client.reactivate_image(cls.reactivated_image.id_)
+
     @classmethod
     def tearDownClass(cls):
         cls.images.behaviors.resources.release()
@@ -58,22 +67,11 @@ class DeleteImageTag(ImagesFixture):
         """
         @summary: Delete single image tag
 
-        1) Delete a single image tag
-        2) Verify that the response code is 204
-        3) Get image details
-        4) Verify that the response is ok
-        5) Verify that the deleted image tag is not in the list of image tags
+        1) Delete single image tag via wrapper test method
+        2) Verify that the deleted image tag is not in the list of image tags
         """
 
-        resp = self.images.client.delete_image_tag(
-            self.single_tag_image.id_, self.tag)
-        self.assertEqual(
-            resp.status_code, 204,
-            Messages.STATUS_CODE_MSG.format(204, resp.status_code))
-
-        resp = self.images.client.get_image_details(self.single_tag_image.id_)
-        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
-        get_image = resp.entity
+        get_image = self._delete_image_tag(self.single_tag_image.id_)
 
         self.assertNotIn(
             self.tag, get_image.tags,
@@ -134,6 +132,42 @@ class DeleteImageTag(ImagesFixture):
             resp.status_code, 404,
             Messages.STATUS_CODE_MSG.format(404, resp.status_code))
 
+    def test_delete_single_image_tag_using_deactivated_image(self):
+        """
+        @summary: Delete single image tag using deactivated image
+
+        1) Delete single image tag using deactivated image via wrapper test
+        method
+        2) Verify that the deleted image tag is not in the list of image tags
+        """
+
+        get_image = self._delete_image_tag(self.deactivated_image.id_)
+
+        self.assertNotIn(
+            self.tag, get_image.tags,
+            msg=('Unexpected tag for image {0} received. '
+                 'Expected: {1} in tags Received: {2} '
+                 'not in tags').format(self.deactivated_image.id_, self.tag,
+                                       get_image.tags))
+
+    def test_delete_single_image_tag_using_reactivated_image(self):
+        """
+        @summary: Delete single image tag using reactivated image
+
+        1) Delete single image tag using reactivated image via wrapper test
+        method
+        2) Verify that the deleted image tag is not in the list of image tags
+        """
+
+        get_image = self._delete_image_tag(self.reactivated_image.id_)
+
+        self.assertNotIn(
+            self.tag, get_image.tags,
+            msg=('Unexpected tag for image {0} received. '
+                 'Expected: {1} in tags Received: {2} '
+                 'not in tags').format(self.reactivated_image.id_, self.tag,
+                                       get_image.tags))
+
     def test_delete_image_tag_using_blank_image_id(self):
         """
         @summary: Delete image tag using blank image id
@@ -191,3 +225,26 @@ class DeleteImageTag(ImagesFixture):
         self.assertEqual(
             resp.status_code, 404,
             Messages.STATUS_CODE_MSG.format(404, resp.status_code))
+
+    def _delete_image_tag(self, image_id):
+        """
+        @summary: Delete an image tag from a given image and return the get
+        image details response
+
+        1) Delete image tag
+        2) Verify that the response code is 204
+        3) Get image details
+        4) Verify that the response is ok
+        5) Return the get image details response
+        """
+
+        resp = self.images.client.delete_image_tag(
+            image_id, self.tag)
+        self.assertEqual(
+            resp.status_code, 204,
+            Messages.STATUS_CODE_MSG.format(204, resp.status_code))
+
+        resp = self.images.client.get_image_details(image_id)
+        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
+
+        return resp.entity
