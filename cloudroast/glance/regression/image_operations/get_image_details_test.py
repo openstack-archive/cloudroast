@@ -43,7 +43,7 @@ class GetImageDetails(ImagesFixture):
 
         # Count set to number of images required for this module
         created_images = cls.images.behaviors.create_images_via_task(
-            image_properties={'name': rand_name('get_image_details')}, count=2)
+            image_properties={'name': rand_name('get_image_details')}, count=4)
 
         cls.rejected_image = created_images.pop()
         cls.images.client.create_image_member(
@@ -54,6 +54,13 @@ class GetImageDetails(ImagesFixture):
         cls.deleted_image = created_images.pop()
         cls.images.client.delete_image(cls.deleted_image.id_)
 
+        cls.deactivated_image = created_images.pop()
+        cls.images_admin.client.deactivate_image(cls.deactivated_image.id_)
+
+        cls.reactivated_image = created_images.pop()
+        cls.images_admin.client.deactivate_image(cls.reactivated_image.id_)
+        cls.images_admin.client.reactivate_image(cls.reactivated_image.id_)
+
     @classmethod
     def tearDownClass(cls):
         cls.images.behaviors.resources.release()
@@ -63,58 +70,47 @@ class GetImageDetails(ImagesFixture):
         """
         @summary: Get image details
 
-        1) Get image details passing in the image id
-        2) Verify that the response code is 200
-        3) Verify that the returned image's properties are as expected
-        generically
-        4) Verify that the returned image's properties are as expected more
-        specifically
+        1) Get image details via wrapper test method
+        2) Verify that there are no errors
+        3) Verify that the image status is active
         """
 
-        resp = self.images.client.get_image_details(self.created_image.id_)
-        self.assertEqual(
-            resp.status_code, 200,
-            Messages.STATUS_CODE_MSG.format(200, resp.status_code))
-
-        get_image = resp.entity
-
-        errors = self.images.behaviors.validate_image(get_image)
-
-        errors.append(self._validate_image(get_image))
+        errors, image_status = self._get_image_details_errors_status(
+            self.created_image.id_)
 
         self.assertEqual(
             errors, [[]],
             msg=('Unexpected error received. Expected: No errors '
                  'Received: {0}').format(errors))
+        self.assertEqual(
+            image_status, ImageStatus.ACTIVE,
+            msg=('Unexpected status for image {0}. '
+                 'Expected: {1} Received: '
+                 '{2}').format(self.reactivated_image.id_,
+                               ImageStatus.ACTIVE, image_status))
 
     def test_get_image_details_as_member_of_shared_image(self):
         """
         @summary: Get image details as member of shared image
 
-        1) Get image details using the tenant who was added as a member
-        2) Verify that the response code is 200
-        3) Verify that the returned image's properties are as expected
-        generically
-        4) Verify that the returned image's properties are as expected more
-        specifically
+        1) Get image details as member via wrapper test method
+        2) Verify that there are no errors
+        3) Verify that the image status is active
         """
 
-        resp = self.images_alt_one.client.get_image_details(
-            self.created_image.id_)
-        self.assertEqual(
-            resp.status_code, 200,
-            Messages.STATUS_CODE_MSG.format(200, resp.status_code))
-
-        get_image = resp.entity
-
-        errors = self.images.behaviors.validate_image(get_image)
-
-        errors.append(self._validate_image(get_image))
+        errors, image_status = self._get_image_details_errors_status(
+            self.created_image.id_, self.images_alt_one.client)
 
         self.assertEqual(
             errors, [[]],
             msg=('Unexpected error received. Expected: No errors '
                  'Received: {0}').format(errors))
+        self.assertEqual(
+            image_status, ImageStatus.ACTIVE,
+            msg=('Unexpected status for image {0}. '
+                 'Expected: {1} Received: '
+                 '{2}').format(self.reactivated_image.id_,
+                               ImageStatus.ACTIVE, image_status))
 
     def test_get_image_details_as_tenant_without_access_to_image(self):
         """
@@ -174,6 +170,52 @@ class GetImageDetails(ImagesFixture):
         self.assertEqual(
             resp.status_code, 404,
             Messages.STATUS_CODE_MSG.format(404, resp.status_code))
+
+    def test_get_image_details_of_deactivated_image(self):
+        """
+        @summary: Get image details of a deactivated image
+
+        1) Get image details of a deactivated image via wrapper test method
+        2) Verify that there are no errors
+        3) Verify that the image status is deactivated
+        """
+
+        errors, image_status = self._get_image_details_errors_status(
+            self.deactivated_image.id_)
+
+        self.assertEqual(
+            errors, [[]],
+            msg=('Unexpected error received. Expected: No errors '
+                 'Received: {0}').format(errors))
+        self.assertEqual(
+            image_status, ImageStatus.DEACTIVATED,
+            msg=('Unexpected status for image {0}. '
+                 'Expected: {1} Received: '
+                 '{2}').format(self.deactivated_image.id_,
+                               ImageStatus.DEACTIVATED, image_status))
+
+    def test_get_image_details_of_reactivated_image(self):
+        """
+        @summary: Get image details of a reactivated image
+
+        1) Get image details of a deactivated image via wrapper test method
+        2) Verify that there are no errors
+        3) Verify that the image status is active
+        """
+
+        errors, image_status = self._get_image_details_errors_status(
+            self.reactivated_image.id_)
+
+        self.assertEqual(
+            errors, [[]],
+            msg=('Unexpected error received. Expected: No errors '
+                 'Received: {0}').format(errors))
+        self.assertEqual(
+            image_status, ImageStatus.ACTIVE,
+            msg=('Unexpected status for image {0}. '
+                 'Expected: {1} Received: '
+                 '{2}').format(self.reactivated_image.id_,
+                               ImageStatus.ACTIVE, image_status))
 
     def test_get_image_details_using_blank_image_id(self):
         """
@@ -246,7 +288,7 @@ class GetImageDetails(ImagesFixture):
         if get_image.min_ram != self.images.config.min_ram:
             errors.append(Messages.PROPERTY_MSG.format(
                 'min_ram', self.images.config.min_ram, get_image.min_ram))
-        if get_image.name != self.created_image.name:
+        if get_image.name is None:
             errors.append(Messages.PROPERTY_MSG.format(
                 'name', self.created_image.name, get_image.name))
         if get_image.os_type != ImageOSType.LINUX:
@@ -262,9 +304,6 @@ class GetImageDetails(ImagesFixture):
             errors.append(Messages.PROPERTY_MSG.format(
                 'size', 'Around {0}'.format(self.images.config.size_default),
                 get_image.size))
-        if get_image.status != ImageStatus.ACTIVE:
-            errors.append(Messages.PROPERTY_MSG.format(
-                'status', ImageStatus.ACTIVE, get_image.status))
         if get_image.tags is None:
             errors.append(Messages.PROPERTY_MSG.format(
                 'tags', 'not None', get_image.tags))
@@ -281,3 +320,32 @@ class GetImageDetails(ImagesFixture):
                 'visibility', ImageVisibility.PRIVATE, get_image.visibility))
 
         return errors
+
+    def _get_image_details_errors_status(self, image_id, images_client=None):
+        """
+        @summary: Get image details and return errors
+
+        1) Get image details passing in the image id
+        2) Verify that the response code is 200
+        3) Check that the returned image's properties are as expected
+        generically
+        4) Check that the returned image's properties are as expected more
+        specifically
+        5) Return the errors and image status
+        """
+
+        if images_client is None:
+            images_client = self.images.client
+
+        resp = images_client.get_image_details(image_id)
+        self.assertEqual(
+            resp.status_code, 200,
+            Messages.STATUS_CODE_MSG.format(200, resp.status_code))
+
+        get_image = resp.entity
+
+        errors = self.images.behaviors.validate_image(get_image)
+
+        errors.append(self._validate_image(get_image))
+
+        return errors, get_image.status
