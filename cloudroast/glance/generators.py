@@ -15,16 +15,20 @@ limitations under the License.
 """
 
 from datetime import datetime
+import uuid
 
 from cafe.drivers.unittest.datasets import DatasetList
 from cloudcafe.common.tools.datagen import random_int, rand_name, random_string
 from cloudcafe.glance.common.types import (
     ImageContainerFormat, ImageDiskFormat, ImageMemberStatus, ImageOSType,
     ImageStatus, ImageType, ImageVisibility, Schemas, SortDirection)
-from cloudcafe.glance.composite import ImagesComposite, ImagesAuthComposite
+from cloudcafe.glance.composite import (
+    ImagesComposite, ImagesAuthComposite, ImagesAuthCompositeAdmin)
 
 user_one = ImagesAuthComposite()
+user_admin = ImagesAuthCompositeAdmin()
 images = ImagesComposite(user_one)
+images_admin = ImagesComposite(user_admin)
 
 
 class ImagesDatasetListGenerator(object):
@@ -45,7 +49,7 @@ class ImagesDatasetListGenerator(object):
         container_format = ImageContainerFormat.AMI
         created_at = datetime.now()
         disk_format = ImageDiskFormat.RAW
-        id_ = '00000000-0000-0000-0000-000000000000'
+        id_ = str(uuid.uuid1())
         image_type = ImageType.IMPORT
         min_disk = images.config.min_disk
         min_ram = images.config.min_ram
@@ -124,7 +128,7 @@ class ImagesDatasetListGenerator(object):
         container_format = ImageContainerFormat.AMI
         created_at = datetime.now()
         disk_format = ImageDiskFormat.RAW
-        id_ = '00000000-0000-0000-0000-000000000000'
+        id_ = str(uuid.uuid1())
         image_type = ImageType.IMPORT
         limit = 10
         marker = None
@@ -192,13 +196,10 @@ class ImagesDatasetListGenerator(object):
         """
 
         data_dict = {}
-        additional_prop = images.config.additional_property
 
         properties = [
-            additional_prop, 'auto_disk_config', 'checksum',
-            'container_format', 'created_at', 'disk_format', 'image_type',
-            'min_disk', 'min_ram', 'name', 'os_type', 'owner', 'protected',
-            'size', 'status', 'tags', 'updated_at', 'user_id', 'visibility']
+            'container_format', 'created_at', 'disk_format', 'id', 'name',
+            'size', 'status', 'updated_at']
 
         for prop in properties:
             data_dict.update(
@@ -305,9 +306,11 @@ class ImagesDatasetListGenerator(object):
         @rtype: DatasetList
         """
 
+        image_id = str(uuid.uuid1())
+
         deleted = True
         deleted_at = str(datetime.now())
-        location = '/v2/images/00000000-0000-0000-0000-000000000000/test_file'
+        location = '/v2/images/{0}/test_file'.format(image_id)
         virtual_size = images.config.size_default
 
         data_dict = {
@@ -319,34 +322,37 @@ class ImagesDatasetListGenerator(object):
         return build_basic_dataset(data_dict, 'prop')
 
     @staticmethod
-    def UpdateRegisterImageRestricted():
+    def UpdateAddRemoveImageRestricted():
         """
         @summary: Generates a dataset list of properties that are restricted
-        for the update and register image requests
+        for the update image requests to add and remove properties
 
         @return: Dataset_list
         @rtype: DatasetList
         """
 
+        image_id = str(uuid.uuid1())
+
         # Properties that are read-only
-        id_ = '00000000-0000-0000-0000-000000000000'
         checksum = random_string()
         created_at = str(datetime.now())
-        file_ = '/v2/images/00000000-0000-0000-0000-000000000000/file'
+        file_ = '/v2/images/{0}/file'.format(image_id)
+        id_ = str(uuid.uuid1())
         schema = Schemas.IMAGE_MEMBER_SCHEMA
-        self_ = '/v2/images/00000000-0000-0000-0000-000000000000'
+        self_ = '/v2/images/{0}'.format(image_id)
         size = random_int(0, 9999999)
         status = ImageStatus.ACTIVE
         updated_at = str(datetime.now())
 
         # Properties that are reserved
         image_type = ImageType.IMPORT
+        location = '/v2/images/{0}/file'.format(image_id)
         os_type = ImageOSType.LINUX
-        owner = random_int(0, 999999)
+        owner = str(random_int(0, 999999))
         user_id = random_string()
 
         # Properties that unauthorized
-        visibility = ImageVisibility.PUBLIC
+        visibility = ImageVisibility.PRIVATE
 
         data_dict = {
             'passing_id': {'id': id_},
@@ -358,10 +364,95 @@ class ImagesDatasetListGenerator(object):
             'passing_status': {'status': status},
             'passing_updated_at': {'updated_at': updated_at},
             'passing_image_type': {'image_type': image_type},
+            'passing_location': {'location': location},
             'passing_os_type': {'os_type': os_type},
             'passing_owner': {'owner': owner},
             'passing_user_id': {'user_id': user_id},
             'passing_visibility': {'visibility': visibility}}
+
+        return build_basic_dataset(data_dict, 'prop')
+
+    @staticmethod
+    def UpdateReplaceImageRestricted():
+        """
+        @summary: Generates a dataset list of properties that are restricted
+        for the update image request to replace properties
+
+        @return: Dataset_list
+        @rtype: DatasetList
+        """
+
+        image_id = str(uuid.uuid1())
+
+        # Properties that are read-only
+        checksum = random_string()
+        created_at = str(datetime.now())
+        file_ = '/v2/images/{0}/file'.format(image_id)
+        id_ = str(uuid.uuid1())
+        schema = Schemas.IMAGE_MEMBER_SCHEMA
+        self_ = '/v2/images/{0}'.format(image_id)
+        size = random_int(0, 9999999)
+        status = ImageStatus.ACTIVE
+        updated_at = str(datetime.now())
+
+        # Properties that are reserved
+        image_type = ImageType.IMPORT
+        location = '/v2/images/{0}/file'.format(image_id)
+        os_type = ImageOSType.LINUX
+        owner = str(random_int(0, 999999))
+        user_id = random_string()
+
+        data_dict = {
+            'passing_id': {'id': id_},
+            'passing_checksum': {'checksum': checksum},
+            'passing_created_at': {'created_at': created_at},
+            'passing_file': {'file': file_},
+            'passing_schema': {'schema': schema},
+            'passing_self': {'self': self_}, 'passing_size': {'size': size},
+            'passing_status': {'status': status},
+            'passing_updated_at': {'updated_at': updated_at},
+            'passing_image_type': {'image_type': image_type},
+            'passing_location': {'location': location},
+            'passing_os_type': {'os_type': os_type},
+            'passing_owner': {'owner': owner},
+            'passing_user_id': {'user_id': user_id}}
+
+        return build_basic_dataset(data_dict, 'prop')
+
+    @staticmethod
+    def RegisterImageRestricted():
+        """
+        @summary: Generates a dataset list of properties that are restricted
+        for the register image request
+
+        @return: Dataset_list
+        @rtype: DatasetList
+        """
+
+        image_id = str(uuid.uuid1())
+
+        # Properties that are read-only
+        checksum = random_string()
+        created_at = str(datetime.now())
+        file_ = '/v2/images/{0}/file'.format(image_id)
+        schema = Schemas.IMAGE_MEMBER_SCHEMA
+        self_ = '/v2/images/{0}'.format(image_id)
+        size = random_int(0, 9999999)
+        status = ImageStatus.ACTIVE
+        updated_at = str(datetime.now())
+
+        # Properties that are reserved
+        owner = str(random_int(0, 999999))
+
+        data_dict = {
+            'passing_checksum': {'checksum': checksum},
+            'passing_created_at': {'created_at': created_at},
+            'passing_file': {'file': file_},
+            'passing_schema': {'schema': schema},
+            'passing_self': {'self': self_}, 'passing_size': {'size': size},
+            'passing_status': {'status': status},
+            'passing_updated_at': {'updated_at': updated_at},
+            'passing_owner': {'owner': owner}}
 
         return build_basic_dataset(data_dict, 'prop')
 
@@ -375,7 +466,6 @@ class ImagesDatasetListGenerator(object):
         @rtype: DatasetList
         """
 
-        auto_disk_config = 'invalid'
         container_format = 'invalid'
         disk_format = 'invalid'
         min_disk = 'invalid'
@@ -385,8 +475,6 @@ class ImagesDatasetListGenerator(object):
         tags = 0
 
         data_dict = {
-            'passing_invalid_auto_disk_config':
-            {'auto_disk_config': auto_disk_config},
             'passing_invalid_container_format':
             {'container_format': container_format},
             'passing_invalid_disk_format': {'disk_format': disk_format},
@@ -399,26 +487,68 @@ class ImagesDatasetListGenerator(object):
         return build_basic_dataset(data_dict, 'prop')
 
     @staticmethod
-    def ListImageMembersStatuses():
+    def DeactivateImageTypes():
         """
-        @summary: Generates a dataset list of image member statuses for the
-        list image members request
+        @summary: Generates a dataset list of images for the deactivate image
+        request
 
         @return: Dataset_list
         @rtype: DatasetList
         """
 
-        data_dict = {}
-        member_statuses = [
-            ImageMemberStatus.ACCEPTED, ImageMemberStatus.PENDING,
-            ImageMemberStatus.REJECTED]
+        created_images = images.behaviors.create_images_via_task(
+            image_properties={'name': rand_name('deactivate_image')}, count=3)
 
-        for status in member_statuses:
-            data_dict.update(
-                {'passing_{0}_status'.format(status):
-                 {'member_status': status}})
+        private_image = created_images.pop()
 
-        return build_basic_dataset(data_dict, 'status')
+        deactivated_image = created_images.pop()
+        images_admin.client.deactivate_image(deactivated_image.id_)
+
+        public_image = created_images.pop()
+        images_admin.client.update_image(
+            public_image.id_, replace={'visibility': ImageVisibility.PUBLIC})
+
+        data_dict = {
+            'passing_deactivated_image': deactivated_image,
+            'passing_private_image': private_image,
+            'passing_public_image': public_image}
+
+        return build_basic_dataset(data_dict, 'image')
+
+    @staticmethod
+    def ReactivateImageTypes():
+        """
+        @summary: Generates a dataset list of images for the reactivate image
+        request
+
+        @return: Dataset_list
+        @rtype: DatasetList
+        """
+
+        created_images = images.behaviors.create_images_via_task(
+            image_properties={'name': rand_name('reactivate_image')}, count=4)
+
+        active_image = created_images.pop()
+
+        private_image = created_images.pop()
+        images_admin.client.deactivate_image(private_image.id_)
+
+        reactivated_image = created_images.pop()
+        images_admin.client.deactivate_image(reactivated_image.id_)
+        images_admin.client.reactivate_image(reactivated_image.id_)
+
+        public_image = created_images.pop()
+        images_admin.client.update_image(
+            public_image.id_, replace={'visibility': ImageVisibility.PUBLIC})
+        images_admin.client.reactivate_image(public_image.id_)
+
+        data_dict = {
+            'passing_active_image': active_image,
+            'passing_private_image': private_image,
+            'passing_public_image': public_image,
+            'passing_reactivated_image': reactivated_image}
+
+        return build_basic_dataset(data_dict, 'image')
 
     @staticmethod
     def Versions():
