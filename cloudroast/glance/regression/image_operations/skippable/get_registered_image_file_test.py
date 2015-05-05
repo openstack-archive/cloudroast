@@ -39,7 +39,7 @@ class GetRegisteredImageFile(ImagesFixture):
 
         # Count set to number of images required for this module
         reg_images = cls.images.behaviors.register_new_images(
-            name=rand_name('get_registered_image_file'), count=3)
+            name=rand_name('get_registered_image_file'), count=5)
 
         cls.reg_image = reg_images.pop()
         cls.images.client.store_image_file(
@@ -52,6 +52,17 @@ class GetRegisteredImageFile(ImagesFixture):
             cls.shared_reg_image.id_, member_id)
 
         cls.empty_reg_image = reg_images.pop()
+
+        cls.deactivated_image = reg_images.pop()
+        cls.images.client.store_image_file(
+            cls.deactivated_image.id_, cls.images.config.test_file)
+        cls.images_admin.client.deactivate_image(cls.deactivated_image.id_)
+
+        cls.reactivated_image = reg_images.pop()
+        cls.images.client.store_image_file(
+            cls.reactivated_image.id_, cls.images.config.test_file)
+        cls.images_admin.client.deactivate_image(cls.reactivated_image.id_)
+        cls.images_admin.client.reactivate_image(cls.reactivated_image.id_)
 
     @classmethod
     def tearDownClass(cls):
@@ -99,19 +110,24 @@ class GetRegisteredImageFile(ImagesFixture):
                 'Received: {1}'.format(self.images.config.test_file,
                                        resp.content))
 
-    @unittest.skip('Redmine bug #11451')
     def test_get_image_file_using_empty_image(self):
         """
         @summary: Get image file for image that is empty
 
         1) Get image file for image that is empty
-        2) Verify that the response code is 404
+        2) Verify that the response code is 204
+        3) Verify that the image file is empty
         """
 
         resp = self.images.client.get_image_file(self.empty_reg_image.id_)
         self.assertEqual(
-            resp.status_code, 404,
-            Messages.STATUS_CODE_MSG.format(404, resp.status_code))
+            resp.status_code, 204,
+            Messages.STATUS_CODE_MSG.format(204, resp.status_code))
+
+        self.assertEqual(
+            resp.content, '',
+            msg='Unexpected file content. Expected: Empty contents '
+                'Received: {0}'.format(resp.content))
 
     def test_get_image_file_as_tenant_without_access_to_image(self):
         """
@@ -131,6 +147,40 @@ class GetRegisteredImageFile(ImagesFixture):
             resp.content, self.images.config.test_file,
             msg='Unexpected file content. Expected: 404 Item not found '
                 'Received: {0}'.format(resp.content))
+
+    def test_get_image_file_using_deactivated_image(self):
+        """
+        @summary: Get image file using deactivated image
+
+        1) Get image file using deactivated image
+        2) Verify that the response code is 400
+        3) Verify that the image file is empty
+        """
+
+        resp = self.images.client.get_image_file(self.deactivated_image.id_)
+        self.assertEqual(
+            resp.status_code, 403,
+            Messages.STATUS_CODE_MSG.format(403, resp.status_code))
+
+    def test_get_image_file_using_reactivated_image(self):
+        """
+        @summary: Get image file using reactivated image
+
+        1) Get image file using reactivated image
+        2) Verify that the response code is 200
+        3) Verify that the image file contains the correct data
+        """
+
+        resp = self.images.client.get_image_file(self.reactivated_image.id_)
+        self.assertEqual(
+            resp.status_code, 200,
+            Messages.STATUS_CODE_MSG.format(200, resp.status_code))
+
+        self.assertEqual(
+            resp.content, self.images.config.test_file,
+            msg='Unexpected file content. Expected: {0} '
+                'Received: {1}'.format(self.images.config.test_file,
+                                       resp.content))
 
     def test_get_image_file_using_blank_image_id(self):
         """
