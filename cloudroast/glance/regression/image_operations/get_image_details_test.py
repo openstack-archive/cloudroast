@@ -43,7 +43,7 @@ class GetImageDetails(ImagesFixture):
 
         # Count set to number of images required for this module
         created_images = cls.images.behaviors.create_images_via_task(
-            image_properties={'name': rand_name('get_image_details')}, count=2)
+            image_properties={'name': rand_name('get_image_details')}, count=4)
 
         cls.rejected_image = created_images.pop()
         cls.images.client.create_image_member(
@@ -53,6 +53,13 @@ class GetImageDetails(ImagesFixture):
 
         cls.deleted_image = created_images.pop()
         cls.images.client.delete_image(cls.deleted_image.id_)
+
+        cls.deactivated_image = created_images.pop()
+        cls.images_admin.client.deactivate_image(cls.deactivated_image.id_)
+
+        cls.reactivated_image = created_images.pop()
+        cls.images_admin.client.deactivate_image(cls.reactivated_image.id_)
+        cls.images_admin.client.reactivate_image(cls.reactivated_image.id_)
 
     @classmethod
     def tearDownClass(cls):
@@ -174,6 +181,70 @@ class GetImageDetails(ImagesFixture):
         self.assertEqual(
             resp.status_code, 404,
             Messages.STATUS_CODE_MSG.format(404, resp.status_code))
+
+    def test_get_image_details_of_deactivated_image(self):
+        """
+        @summary: Get image details of a deactivated image
+
+        1) Get image details of a deactivated image
+        2) Verify that the response code is 200
+        3) Verify that the returned image's properties are as expected
+        generically
+        4) Verify that the status of the image status is deactivated
+        """
+
+        resp = self.images.client.get_image_details(
+            self.deactivated_image.id_)
+        self.assertEqual(
+            resp.status_code, 200,
+            Messages.STATUS_CODE_MSG.format(200, resp.status_code))
+        get_image = resp.entity
+
+        errors = self.images.behaviors.validate_image(get_image)
+
+        self.assertEqual(
+            errors, [],
+            msg=('Unexpected error received. Expected: No errors '
+                 'Received: {0}').format(errors))
+
+        self.assertEqual(
+            get_image.status, ImageStatus.DEACTIVATED,
+            msg=('Unexpected status for image {0}. '
+                 'Expected: {1} Received: '
+                 '{2}').format(self.deactivated_image.id_,
+                               ImageStatus.DEACTIVATED, get_image.status))
+
+    def test_get_image_details_of_reactivated_image(self):
+        """
+        @summary: Get image details of a reactivated image
+
+        1) Get image details of a reactivated image
+        2) Verify that the response code is 200
+        3) Verify that the returned image's properties are as expected
+        generically
+        4) Verify that the status of the image status is active
+        """
+
+        resp = self.images.client.get_image_details(
+            self.reactivated_image.id_)
+        self.assertEqual(
+            resp.status_code, 200,
+            Messages.STATUS_CODE_MSG.format(200, resp.status_code))
+        get_image = resp.entity
+
+        errors = self.images.behaviors.validate_image(get_image)
+
+        self.assertEqual(
+            errors, [],
+            msg=('Unexpected error received. Expected: No errors '
+                 'Received: {0}').format(errors))
+
+        self.assertEqual(
+            get_image.status, ImageStatus.ACTIVE,
+            msg=('Unexpected status for image {0}. '
+                 'Expected: {1} Received: '
+                 '{2}').format(self.deactivated_image.id_,
+                               ImageStatus.ACTIVE, get_image.status))
 
     def test_get_image_details_using_blank_image_id(self):
         """

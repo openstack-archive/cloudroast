@@ -32,13 +32,58 @@ class UpdateImage(ImagesFixture):
     def setUpClass(cls):
         super(UpdateImage, cls).setUpClass()
 
+        cls.new_prop = 'new_property'
+        cls.new_prop_value = rand_name('new_property_value')
+
         # Count set to number of images required for this module
         created_images = cls.images.behaviors.create_images_via_task(
-            image_properties={'name': rand_name('update_image')}, count=3)
+            image_properties={'name': rand_name('update_image')}, count=9)
 
         cls.created_image = created_images.pop()
         cls.alt_created_image = created_images.pop()
         cls.quota_image = created_images.pop()
+
+        cls.add_prop_deactivated_image = created_images.pop()
+        cls.images_admin.client.deactivate_image(
+            cls.add_prop_deactivated_image.id_)
+
+        cls.replace_prop_deactivated_image = created_images.pop()
+        cls.images.client.update_image(
+            cls.replace_prop_deactivated_image.id_,
+            add={cls.new_prop: cls.new_prop_value})
+        cls.images_admin.client.deactivate_image(
+            cls.replace_prop_deactivated_image.id_)
+
+        cls.remove_prop_deactivated_image = created_images.pop()
+        cls.images.client.update_image(
+            cls.remove_prop_deactivated_image.id_,
+            add={cls.new_prop: cls.new_prop_value})
+        cls.images_admin.client.deactivate_image(
+            cls.remove_prop_deactivated_image.id_)
+
+        cls.add_prop_reactivated_image = created_images.pop()
+        cls.images_admin.client.deactivate_image(
+            cls.add_prop_reactivated_image.id_)
+        cls.images_admin.client.reactivate_image(
+            cls.add_prop_reactivated_image.id_)
+
+        cls.replace_prop_reactivated_image = created_images.pop()
+        cls.images.client.update_image(
+            cls.replace_prop_reactivated_image.id_,
+            add={cls.new_prop: cls.new_prop_value})
+        cls.images_admin.client.deactivate_image(
+            cls.replace_prop_reactivated_image.id_)
+        cls.images_admin.client.reactivate_image(
+            cls.replace_prop_reactivated_image.id_)
+
+        cls.remove_prop_reactivated_image = created_images.pop()
+        cls.images.client.update_image(
+            cls.remove_prop_reactivated_image.id_,
+            add={cls.new_prop: cls.new_prop_value})
+        cls.images_admin.client.deactivate_image(
+            cls.remove_prop_reactivated_image.id_)
+        cls.images_admin.client.deactivate_image(
+            cls.remove_prop_reactivated_image.id_)
 
     @classmethod
     def tearDownClass(cls):
@@ -123,7 +168,7 @@ class UpdateImage(ImagesFixture):
             Messages.STATUS_CODE_MSG.format(403, resp.status_code))
 
     @data_driven_test(
-        ImagesDatasetListGenerator.UpdateRegisterImageRestricted())
+        ImagesDatasetListGenerator.UpdateReplaceImageRestricted())
     def ddtest_update_image_replace_restricted_property(self, prop):
         """
         @summary: Update image replacing restricted image property
@@ -144,7 +189,7 @@ class UpdateImage(ImagesFixture):
 
         # This is a temporary workaround for skips in ddtests
         if prop_key == 'id':
-            sys.stderr.write('skipped \'Redmine bug #11398\' ... ')
+            sys.stderr.write('skipped \'Launchpad bug #1439808\' ... ')
             return
 
         resp = self.images.client.update_image(
@@ -168,7 +213,7 @@ class UpdateImage(ImagesFixture):
                                          getattr(get_image, prop_key)))
 
     @data_driven_test(
-        ImagesDatasetListGenerator.UpdateRegisterImageRestricted())
+        ImagesDatasetListGenerator.UpdateAddRemoveImageRestricted())
     def ddtest_update_image_add_restricted_property(self, prop):
         """
         @summary: Update image adding restricted image property
@@ -189,7 +234,10 @@ class UpdateImage(ImagesFixture):
 
         # This is a temporary workaround for skips in ddtests
         if prop_key == 'id':
-            sys.stderr.write('skipped \'Redmine bug #11398\' ... ')
+            sys.stderr.write('skipped \'Launchpad bug #1439808\' ... ')
+            return
+        if prop_key == 'visibility':
+            sys.stderr.write('skipped \'Launchpad bug #1443512\' ... ')
             return
 
         resp = self.images.client.update_image(
@@ -213,7 +261,7 @@ class UpdateImage(ImagesFixture):
                                          getattr(get_image, prop_key)))
 
     @data_driven_test(
-        ImagesDatasetListGenerator.UpdateRegisterImageRestricted())
+        ImagesDatasetListGenerator.UpdateAddRemoveImageRestricted())
     def ddtest_update_image_remove_restricted_property(self, prop):
         """
         @summary: Update image removing restricted image property
@@ -229,13 +277,15 @@ class UpdateImage(ImagesFixture):
         has been not been removed
         """
 
+        failure_prop_list = [
+            'id', 'file', 'location', 'schema', 'self']
+
         # Each prop passed in only has one key-value pair
         prop_key, prop_val = prop.popitem()
 
         # This is a temporary workaround for skips in ddtests
-        failure_prop_list = ['id', 'file', 'schema', 'self']
         if prop_key in failure_prop_list:
-            sys.stderr.write('skipped \'Launchpad bug #1438826\' ... ')
+            sys.stderr.write('skipped \'Launchpad bug #1443563\' ... ')
             return
 
         resp = self.images.client.update_image(
@@ -272,35 +322,34 @@ class UpdateImage(ImagesFixture):
         property has been added as expected
         """
 
-        new_prop = 'new_property'
-        new_prop_value = rand_name('new_property_value')
-
         resp = self.images.client.update_image(
-            self.created_image.id_, add={new_prop: new_prop_value})
+            self.created_image.id_, add={self.new_prop: self.new_prop_value})
         self.assertEqual(
             resp.status_code, 200,
             Messages.STATUS_CODE_MSG.format(200, resp.status_code))
         updated_image = resp.entity
 
         added_prop_value = (
-            updated_image.additional_properties.get(new_prop, None))
+            updated_image.additional_properties.get(self.new_prop, None))
 
         self.assertEqual(
-            added_prop_value, new_prop_value,
+            added_prop_value, self.new_prop_value,
             msg=('Unexpected new image property value received. Expected: {0} '
-                 'Received: {1}').format(new_prop_value, added_prop_value))
+                 'Received: '
+                 '{1}').format(self.new_prop_value, added_prop_value))
 
         resp = self.images.client.get_image_details(self.created_image.id_)
         self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
         get_image = resp.entity
 
         get_added_prop_value = (
-            get_image.additional_properties.get(new_prop, None))
+            get_image.additional_properties.get(self.new_prop, None))
 
         self.assertEqual(
-            get_added_prop_value, new_prop_value,
+            get_added_prop_value, self.new_prop_value,
             msg=('Unexpected new image property value received. Expected: {0} '
-                 'Received: {1}').format(new_prop_value, get_added_prop_value))
+                 'Received: '
+                 '{1}').format(self.new_prop_value, get_added_prop_value))
 
     def test_update_image_remove_property(self):
         """
@@ -310,12 +359,12 @@ class UpdateImage(ImagesFixture):
         2) Verify that the response code is 200
         3) Update the image removing the new image property
         4) Verify that the response code is 200
-        5) Verify that the update image response shows that the new
-        property has been removed as expected
+        5) Verify that the update image response shows that the new property
+        has been removed as expected
         6) Get image details for the image
         7) Verify that the response code is ok
-        8) Verify that the get image response shows that the new
-        property has been removed as expected
+        8) Verify that the get image response shows that the new property has
+        been removed as expected
         """
 
         new_prop = 'alt_new_property'
@@ -327,12 +376,12 @@ class UpdateImage(ImagesFixture):
             resp.status_code, 200,
             Messages.STATUS_CODE_MSG.format(200, resp.status_code))
 
-        response = self.images.client.update_image(
+        resp = self.images.client.update_image(
             self.created_image.id_, remove={new_prop: new_prop_value})
         self.assertEqual(
             resp.status_code, 200,
             Messages.STATUS_CODE_MSG.format(200, resp.status_code))
-        updated_image = response.entity
+        updated_image = resp.entity
 
         self.assertNotIn(
             new_prop, updated_image.additional_properties,
@@ -364,8 +413,8 @@ class UpdateImage(ImagesFixture):
         value has been updated as expected
         6) Get image details for the image
         7) Verify that the response code is ok
-        8) Verify that the get image response shows that the new
-        property's value has been updated as expected
+        8) Verify that the get image response shows that the new property's
+        value has been updated as expected
         """
 
         new_prop = 'alt_two_new_property'
@@ -407,8 +456,278 @@ class UpdateImage(ImagesFixture):
             get_replaced_prop_value, updated_prop_value,
             msg=('Unexpected updated image property value received.'
                  'Expected: {0} '
-                 'Received: {1}').format(new_prop_value,
+                 'Received: {1}').format(updated_prop_value,
                                          get_replaced_prop_value))
+
+    def test_update_deactivated_image_add_property(self):
+        """
+        @summary: Update deactivated image by adding an image property
+
+        1) Update the deactivated image adding an image property
+        2) Verify that the response code is 200
+        3) Verify that the update image response shows that the property has
+        been added as expected
+        4) Get image details for the image
+        5) Verify that the response code is ok
+        6) Verify that the get image response shows that the property has been
+        added as expected
+        """
+
+        resp = self.images.client.update_image(
+            self.add_prop_deactivated_image.id_,
+            add={self.new_prop: self.new_prop_value})
+        self.assertEqual(
+            resp.status_code, 200,
+            Messages.STATUS_CODE_MSG.format(200, resp.status_code))
+        updated_image = resp.entity
+
+        added_prop_value = (
+            updated_image.additional_properties.get(self.new_prop, None))
+
+        self.assertEqual(
+            added_prop_value, self.new_prop_value,
+            msg=('Unexpected new image property value received. Expected: {0} '
+                 'Received: '
+                 '{1}').format(self.new_prop_value, added_prop_value))
+
+        resp = self.images.client.get_image_details(
+            self.add_prop_deactivated_image.id_)
+        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
+        get_image = resp.entity
+
+        get_added_prop_value = (
+            get_image.additional_properties.get(self.new_prop, None))
+
+        self.assertEqual(
+            get_added_prop_value, self.new_prop_value,
+            msg=('Unexpected new image property value received. Expected: {0} '
+                 'Received: '
+                 '{1}').format(self.new_prop_value, get_added_prop_value))
+
+    def test_update_deactivated_image_replace_property(self):
+        """
+        @summary: Update deactivated image by replacing an image property
+
+        1) Update the deactivated image replacing the an image property's value
+        2) Verify that the response code is 200
+        3) Verify that the update image response shows that the image
+        property's value has been updated as expected
+        4) Get image details for the image
+        5) Verify that the response code is ok
+        6) Verify that the get image response shows that the image's property's
+        value has been updated as expected
+        """
+
+        updated_prop_value = rand_name('updated_new_property_value')
+
+        resp = self.images.client.update_image(
+            self.replace_prop_deactivated_image.id_,
+            replace={self.new_prop: updated_prop_value})
+        self.assertEqual(
+            resp.status_code, 200,
+            Messages.STATUS_CODE_MSG.format(200, resp.status_code))
+        updated_image = resp.entity
+
+        replaced_prop_value = (
+            updated_image.additional_properties.get(self.new_prop, None))
+
+        self.assertEqual(
+            replaced_prop_value, updated_prop_value,
+            msg=('Unexpected updated image property value received. '
+                 'Expected: {0} '
+                 'Received: {1}').format(updated_prop_value,
+                                         replaced_prop_value))
+
+        resp = self.images.client.get_image_details(
+            self.replace_prop_deactivated_image.id_)
+        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
+        get_image = resp.entity
+
+        get_replaced_prop_value = (
+            get_image.additional_properties.get(self.new_prop, None))
+
+        self.assertEqual(
+            get_replaced_prop_value, updated_prop_value,
+            msg=('Unexpected updated image property value received.'
+                 'Expected: {0} '
+                 'Received: {1}').format(updated_prop_value,
+                                         get_replaced_prop_value))
+
+    def test_update_deactivated_image_remove_property(self):
+        """
+        @summary: Update deactivated image by removing an image property
+
+        1) Update the deactivated image removing an image property
+        2) Verify that the response code is 200
+        3) Verify that the update image response shows that the property has
+        been removed as expected
+        4) Get image details for the image
+        5) Verify that the response code is ok
+        6) Verify that the get image response shows that the property has been
+        removed as expected
+        """
+
+        resp = self.images.client.update_image(
+            self.remove_prop_deactivated_image.id_,
+            remove={self.new_prop: self.new_prop_value})
+        self.assertEqual(
+            resp.status_code, 200,
+            Messages.STATUS_CODE_MSG.format(200, resp.status_code))
+        updated_image = resp.entity
+
+        self.assertNotIn(
+            self.new_prop, updated_image.additional_properties,
+            msg=('Unexpected removed image property received. Expected: {0} '
+                 'to not be present '
+                 'Received: {1}').format(self.new_prop,
+                                         updated_image.additional_properties))
+
+        resp = self.images.client.get_image_details(
+            self.remove_prop_deactivated_image.id_)
+        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
+        get_image = resp.entity
+
+        self.assertNotIn(
+            self.new_prop, get_image.additional_properties,
+            msg=('Unexpected removed image property received. Expected: {0} '
+                 'to not be present '
+                 'Received: {1}').format(self.new_prop,
+                                         get_image.additional_properties))
+
+    def test_update_reactivated_image_add_property(self):
+        """
+        @summary: Update reactivated image by adding an image property
+
+        1) Update the reactivated image adding an image property
+        2) Verify that the response code is 200
+        3) Verify that the update image response shows that the property has
+        been added as expected
+        4) Get image details for the image
+        5) Verify that the response code is ok
+        6) Verify that the get image response shows that the property has been
+        added as expected
+        """
+
+        resp = self.images.client.update_image(
+            self.add_prop_reactivated_image.id_,
+            add={self.new_prop: self.new_prop_value})
+        self.assertEqual(
+            resp.status_code, 200,
+            Messages.STATUS_CODE_MSG.format(200, resp.status_code))
+        updated_image = resp.entity
+
+        added_prop_value = (
+            updated_image.additional_properties.get(self.new_prop, None))
+
+        self.assertEqual(
+            added_prop_value, self.new_prop_value,
+            msg=('Unexpected new image property value received. Expected: {0} '
+                 'Received: '
+                 '{1}').format(self.new_prop_value, added_prop_value))
+
+        resp = self.images.client.get_image_details(
+            self.add_prop_reactivated_image.id_)
+        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
+        get_image = resp.entity
+
+        get_added_prop_value = (
+            get_image.additional_properties.get(self.new_prop, None))
+
+        self.assertEqual(
+            get_added_prop_value, self.new_prop_value,
+            msg=('Unexpected new image property value received. Expected: {0} '
+                 'Received: '
+                 '{1}').format(self.new_prop_value, get_added_prop_value))
+
+    def test_update_reactivated_image_replace_property(self):
+        """
+        @summary: Update reactivated image by replacing an image property
+
+        1) Update the reactivated image replacing the an image property's value
+        2) Verify that the response code is 200
+        3) Verify that the update image response shows that the image
+        property's value has been updated as expected
+        4) Get image details for the image
+        5) Verify that the response code is ok
+        6) Verify that the get image response shows that the image's property's
+        value has been updated as expected
+        """
+
+        updated_prop_value = rand_name('updated_new_property_value')
+
+        resp = self.images.client.update_image(
+            self.replace_prop_reactivated_image.id_,
+            replace={self.new_prop: updated_prop_value})
+        self.assertEqual(
+            resp.status_code, 200,
+            Messages.STATUS_CODE_MSG.format(200, resp.status_code))
+        updated_image = resp.entity
+
+        replaced_prop_value = (
+            updated_image.additional_properties.get(self.new_prop, None))
+
+        self.assertEqual(
+            replaced_prop_value, updated_prop_value,
+            msg=('Unexpected updated image property value received. '
+                 'Expected: {0} '
+                 'Received: {1}').format(updated_prop_value,
+                                         replaced_prop_value))
+
+        resp = self.images.client.get_image_details(
+            self.replace_prop_reactivated_image.id_)
+        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
+        get_image = resp.entity
+
+        get_replaced_prop_value = (
+            get_image.additional_properties.get(self.new_prop, None))
+
+        self.assertEqual(
+            get_replaced_prop_value, updated_prop_value,
+            msg=('Unexpected updated image property value received.'
+                 'Expected: {0} '
+                 'Received: {1}').format(updated_prop_value,
+                                         get_replaced_prop_value))
+
+    def test_update_reactivated_image_remove_property(self):
+        """
+        @summary: Update reactivated image by removing an image property
+
+        1) Update the reactivated image removing an image property
+        2) Verify that the response code is 200
+        3) Verify that the update image response shows that the property has
+        been removed as expected
+        4) Get image details for the image
+        5) Verify that the response code is ok
+        6) Verify that the get image response shows that the property has been
+        removed as expected
+        """
+
+        resp = self.images.client.update_image(
+            self.remove_prop_reactivated_image.id_,
+            remove={self.new_prop: self.new_prop_value})
+        self.assertEqual(
+            resp.status_code, 200,
+            Messages.STATUS_CODE_MSG.format(200, resp.status_code))
+        updated_image = resp.entity
+
+        self.assertNotIn(
+            self.new_prop, updated_image.additional_properties,
+            msg=('Unexpected removed image property received. Expected: {0} '
+                 'to not be present '
+                 'Received: {1}').format(self.new_prop,
+                                         updated_image.additional_properties))
+
+        resp = self.images.client.get_image_details(
+            self.remove_prop_reactivated_image.id_)
+        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
+        get_image = resp.entity
+
+        self.assertNotIn(
+            self.new_prop, get_image.additional_properties,
+            msg=('Unexpected removed image property received. Expected: {0} '
+                 'to not be present '
+                 'Received: {1}').format(self.new_prop,
+                                         get_image.additional_properties))
 
     def test_update_image_property_quota_limit(self):
         """
