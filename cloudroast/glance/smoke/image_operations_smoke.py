@@ -33,10 +33,15 @@ class ImageOperationsSmoke(ImagesFixture):
         # Count set to number of images required for this module
         created_images = cls.images.behaviors.create_images_via_task(
             image_properties={'name': rand_name('image_operations_smoke')},
-            count=2)
+            count=4)
 
         cls.image = created_images.pop()
         cls.alt_image = created_images.pop()
+        cls.activated_image = created_images.pop()
+
+        cls.deactivated_image = created_images.pop()
+        cls.images_admin.client.deactivate_image(
+            cls.deactivated_image.id_)
 
     @classmethod
     def tearDownClass(cls):
@@ -119,6 +124,34 @@ class ImageOperationsSmoke(ImagesFixture):
         """
 
         resp = self.images.client.delete_image(self.alt_image.id_)
+        self.assertEqual(
+            resp.status_code, 204,
+            Messages.STATUS_CODE_MSG.format(204, resp.status_code))
+
+    def test_deactivate_image(self):
+        """
+        @summary: Deactivate an image
+
+        1) Deactivate an image
+        2) Verify that the response code is 204
+        """
+
+        resp = self.images_admin.client.deactivate_image(
+            self.activated_image.id_)
+        self.assertEqual(
+            resp.status_code, 204,
+            Messages.STATUS_CODE_MSG.format(204, resp.status_code))
+
+    def test_reactivate_image(self):
+        """
+        @summary: Reactivate an image
+
+        1) Reactivate an image
+        2) Verify that the response code is 204
+        """
+
+        resp = self.images_admin.client.reactivate_image(
+            self.deactivated_image.id_)
         self.assertEqual(
             resp.status_code, 204,
             Messages.STATUS_CODE_MSG.format(204, resp.status_code))

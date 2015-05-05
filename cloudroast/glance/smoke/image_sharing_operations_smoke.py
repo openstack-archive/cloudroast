@@ -14,17 +14,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from cafe.drivers.unittest.decorators import (
-    data_driven_test, DataDrivenFixture)
 from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.glance.common.constants import Messages
 from cloudcafe.glance.common.types import ImageMemberStatus
 
 from cloudroast.glance.fixtures import ImagesFixture
-from cloudroast.glance.generators import ImagesDatasetListGenerator
 
 
-@DataDrivenFixture
 class ImageSharingOperationsSmoke(ImagesFixture):
 
     @classmethod
@@ -58,20 +54,15 @@ class ImageSharingOperationsSmoke(ImagesFixture):
         cls.images.behaviors.resources.release()
         super(ImageSharingOperationsSmoke, cls).tearDownClass()
 
-    @data_driven_test(ImagesDatasetListGenerator.ListImageMembersStatuses())
-    def ddtest_list_image_members(self, params):
+    def test_list_image_members(self):
         """
         @summary: List all image members
 
-        @param params: Parameter being passed to the list image members request
-        @type params: Dictionary
-
-        1) List all image members passing in a query parameter
+        1) List all image members
         2) Verify the response status code is 200
         """
 
-        resp = self.images.client.list_image_members(
-            self.created_image.id_, params)
+        resp = self.images.client.list_image_members(self.created_image.id_)
         self.assertEqual(
             resp.status_code, 200,
             Messages.STATUS_CODE_MSG.format(200, resp.status_code))
