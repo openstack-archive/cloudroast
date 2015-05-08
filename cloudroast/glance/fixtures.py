@@ -28,8 +28,8 @@ from cloudcafe.compute.servers_api.behaviors import ServerBehaviors
 from cloudcafe.compute.servers_api.client import ServersClient
 from cloudcafe.compute.servers_api.config import ServersConfig
 from cloudcafe.glance.composite import (
-    ImagesComposite, ImagesAuthComposite, ImagesAuthCompositeAltOne,
-    ImagesAuthCompositeAltTwo)
+    ImagesAuthComposite, ImagesAuthCompositeAltOne,
+    ImagesAuthCompositeAltTwo, ImagesAuthCompositeAdmin, ImagesComposite)
 from cloudcafe.glance.config import (
     AltOneUserConfig, ImagesConfig, MarshallingConfig)
 from cloudcafe.objectstorage.config import ObjectStorageConfig
@@ -55,10 +55,12 @@ class ImagesFixture(BaseTestFixture):
         cls.user_one = ImagesAuthComposite()
         cls.user_two = ImagesAuthCompositeAltOne()
         cls.user_three = ImagesAuthCompositeAltTwo()
+        cls.user_admin = ImagesAuthCompositeAdmin()
 
         cls.images = ImagesComposite(cls.user_one)
         cls.images_alt_one = ImagesComposite(cls.user_two)
         cls.images_alt_two = ImagesComposite(cls.user_three)
+        cls.images_admin = ImagesComposite(cls.user_admin)
 
         cls.addClassCleanup(cls.resources.release)
 
