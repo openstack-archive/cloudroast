@@ -16,6 +16,7 @@ limitations under the License.
 
 import calendar
 import time
+import unittest
 
 from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.glance.common.constants import Messages
@@ -33,7 +34,7 @@ class TaskToExportImage(ImagesIntegrationFixture):
         # Count set to number of images required for this module
         created_images = cls.images.behaviors.create_images_via_task(
             image_properties={'name': rand_name('task_to_export_image')},
-            count=6)
+            count=8)
 
         cls.export_image = created_images.pop()
         cls.export_success_image = created_images.pop()
@@ -41,6 +42,13 @@ class TaskToExportImage(ImagesIntegrationFixture):
         cls.multiple_export_image = created_images.pop()
         cls.duplicate_export_image = created_images.pop()
         cls.container_dne_image = created_images.pop()
+
+        cls.deactivated_image = created_images.pop()
+        cls.images_admin.client.deactivate_image(cls.deactivated_image.id_)
+
+        cls.reactivated_image = created_images.pop()
+        cls.images_admin.client.deactivate_image(cls.reactivated_image.id_)
+        cls.images_admin.client.reactivate_image(cls.reactivated_image.id_)
 
         created_server = cls.compute.servers.behaviors.create_active_server(
             name=rand_name('task_to_export_image_server'),
@@ -421,3 +429,65 @@ class TaskToExportImage(ImagesIntegrationFixture):
             msg=('Unexpected number of exported images received. '
                  'Expected: 1'
                  'Received: {0}').format(len(exported_images)))
+
+    @unittest.skip('Launchpad bug #1446286')
+    def test_task_to_export_deactivated_image(self):
+        """
+        @summary: Create a task to export a deactivated image
+
+        1) Create a task to export a deactivated image
+        2) Verify that the response code is 201
+        3) Wait for the task to fail
+        4) Verify that the failed task contains the correct message
+        """
+
+        input_ = {'image_uuid': self.deactivated_image.id_,
+                  'receiving_swift_container': self.images.config.export_to}
+
+        resp = self.images.client.task_to_export_image(
+            input_, TaskTypes.EXPORT)
+        self.assertEqual(
+            resp.status_code, 201,
+            Messages.STATUS_CODE_MSG.format(201, resp.status_code))
+        task_id = resp.entity.id_
+
+        task = self.images.behaviors.wait_for_task_status(
+            task_id, TaskStatus.FAILURE)
+
+        self.assertEqual(
+            task.message, Messages.EXPORT_UNKNOWN_ERROR_MSG,
+            msg=('Unexpected message received. Expected: {0} Received: '
+                 '{1}').format(Messages.EXPORT_UNKNOWN_ERROR_MSG,
+                               task.message))
+
+    def test_task_to_export_reactivated_image(self):
+        """
+        @summary: Create a task to export a reactivated image
+
+        1) Create a task to export a reactivated image
+        2) Verify that the response code is 201
+        3) Wait for the task to complete successfully
+        4) Verify that the successful task contains the correct export location
+        """
+
+        input_ = {'image_uuid': self.reactivated_image.id_,
+                  'receiving_swift_container': self.images.config.export_to}
+        expected_location = (
+            '{0}/{1}.vhd'.format(self.images.config.export_to,
+                                 self.reactivated_image.id_))
+
+        resp = self.images.client.task_to_export_image(
+            input_, TaskTypes.EXPORT)
+        self.assertEqual(
+            resp.status_code, 201,
+            Messages.STATUS_CODE_MSG.format(201, resp.status_code))
+        task_id = resp.entity.id_
+
+        task = self.images.behaviors.wait_for_task_status(
+            task_id, TaskStatus.SUCCESS)
+
+        self.assertEqual(
+            task.result.export_location, expected_location,
+            msg=('Unexpected export location received. Expected: {0}'
+                 'Received: '
+                 '{1}').format(expected_location, task.result.export_location))
