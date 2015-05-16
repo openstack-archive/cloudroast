@@ -123,7 +123,7 @@ data_set_list_negative.append_new_dataset(
         'Long Security Group Test text description'
         'Long Security Group Test text description'
         'Long Security Group Test text description')},
-    tags=['bug'])
+    tags=['sec_group', 'post', 'negative', 'rbac_creator'])
 
 data_set_list_negative.append_new_dataset(
     name='w_long_name',
@@ -141,7 +141,7 @@ data_set_list_negative.append_new_dataset(
         'Long Security Group Test text name name name'
         'Long Security Group Test text name name name'
         'Long Security Group Test text name name name')},
-    tags=['bug'])
+    tags=['sec_group', 'post', 'negative', 'rbac_creator'])
 
 
 @DataDrivenFixture
