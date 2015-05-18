@@ -23,11 +23,11 @@ from cloudcafe.compute.common.equality_tools import EqualityTools
 from cloudcafe.compute.common.types import NovaServerStatusTypes \
     as ServerStates, NovaServerRebootTypes as RebootTypes
 from cloudcafe.compute.servers_api.config import ServersConfig
-from cloudcafe.stacktach.config import StacktachConfig, MarshallingConfig
-from cloudcafe.stacktach.stacktach_db_api.behaviors import StackTachDBBehavior
-from cloudcafe.stacktach.stacktach_db_api.client import StackTachDBClient
-from cloudcafe.stacktach.stacky_api.behaviors import StackTachBehavior
-from cloudcafe.stacktach.stacky_api.client import StackTachClient
+from cloudcafe.stacktach.v2.config import StacktachConfig, MarshallingConfig
+from cloudcafe.stacktach.v2.stacktach_db_api.behaviors import StackTachDBBehavior
+from cloudcafe.stacktach.v2.stacktach_db_api.client import StackTachDBClient
+from cloudcafe.stacktach.v2.stacky_api.behaviors import StackTachBehavior
+from cloudcafe.stacktach.v2.stacky_api.client import StackTachClient
 from cloudroast.compute.fixtures import ComputeFixture
 
 
