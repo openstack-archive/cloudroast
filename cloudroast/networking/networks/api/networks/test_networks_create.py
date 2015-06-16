@@ -77,8 +77,10 @@ class NetworkCreateTest(NetworkingAPIFixture):
 
         # Network create should be unavailable with the shared attribute
         msg = ('Unexpected HTTP response {0} instead of the expected {1} '
-               'while creating a network with the shared parameter').format(
-                resp.response.status_code, NeutronResponseCodes.FORBIDDEN)
+               'while creating a network with the shared parameter'
+               '').format(resp.response.status_code,
+                          NeutronResponseCodes.FORBIDDEN)
+
         self.assertEqual(resp.response.status_code,
                          NeutronResponseCodes.FORBIDDEN, msg)
         self.assertIsNone(resp.response.entity, 'Unexpected entity')
@@ -171,8 +173,9 @@ class NetworkCreateTest(NetworkingAPIFixture):
 
         # Network create should be unavailable with another tenant ID
         msg = ('Unexpected HTTP response {0} instead of the expected {1} '
-               'while creating a network with another tenant ID').format(
-                resp.response.status_code, NeutronResponseCodes.FORBIDDEN)
+               'while creating a network with another tenant ID'
+               '').format(resp.response.status_code,
+                          NeutronResponseCodes.FORBIDDEN)
         self.assertEqual(resp.response.status_code,
                          NeutronResponseCodes.FORBIDDEN, msg)
         self.assertIsNone(resp.response.entity, 'Unexpected entity')

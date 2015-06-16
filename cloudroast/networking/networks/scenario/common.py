@@ -97,12 +97,13 @@ class ScenarioMixin(object):
     def _get_remote_client(cls, server):
         ip_address = cls.compute.servers.behaviors.get_public_ip_address(
             server.entity)
+
         remote_client = \
             cls.compute.servers.behaviors.get_remote_instance_client(
-                server.entity,
-                ip_address=ip_address, username='root',
+                server.entity, ip_address=ip_address, username='root',
                 key=cls.keypair.private_key,
                 auth_strategy=InstanceAuthStrategies.KEY)
+
         return remote_client
 
     @classmethod
@@ -118,7 +119,8 @@ class ScenarioMixin(object):
                'gateway server')
         assert not error, msg
 
-    def _next_sequential_cidr(self, cidr):
+    @classmethod
+    def _next_sequential_cidr(cls, cidr):
         """
         @summary: Computes the next sequential contiguous cidr to the one
           provided as input. Both cidr's will have the same prefix size
@@ -129,8 +131,8 @@ class ScenarioMixin(object):
         @rtype: IPy.IP
         """
         next_cidr_1st_ip = cidr[-1].ip + 1
-        return IP('{}/{}'.format(str(next_cidr_1st_ip),
-                                 str(cidr.prefixlen())))
+        return IP('{network}/{cidr}'.format(
+            network=str(next_cidr_1st_ip), cidr=str(cidr.prefixlen())))
 
     def _execute_ssh_command(self, ssh_client, cmd):
         response = ssh_client.execute_command(cmd)

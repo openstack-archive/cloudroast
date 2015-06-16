@@ -13,12 +13,9 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-import unittest
-
 from cafe.drivers.unittest.datasets import DatasetList
 from cafe.drivers.unittest.decorators import DataDrivenFixture, \
-    data_driven_test, tags
-from cloudcafe.networking.networks.config import NetworkingSecondUserConfig
+    data_driven_test
 from cloudroast.networking.networks.fixtures \
     import NetworkingSecurityGroupsFixture
 from cloudcafe.networking.networks.extensions.security_groups_api.constants \
@@ -58,41 +55,41 @@ data_set_list_negative = DatasetList()
 data_set_list_negative.append_new_dataset(
     name='w_other_tenant_id',
     data_dict={"name": 'test_secgroup_update_neg', "tenant_id": False,
-    "http_status": 'BAD_REQUEST',
-    "test_desc": 'another tenant ID on the request body',
-    "error_type": 'HTTP_BAD_REQUEST'},
+               "http_status": 'BAD_REQUEST',
+               "test_desc": 'another tenant ID on the request body',
+               "error_type": 'HTTP_BAD_REQUEST'},
     tags=['sec_group', 'post', 'negative', 'rbac_creator'])
 data_set_list_negative.append_new_dataset(
     name='w_invalid_tenant_id',
     data_dict={"name": 'test_secgroup_update_neg', "tenant_id": '555555',
-    "http_status": 'BAD_REQUEST',
-    "test_desc": 'invalid tenant ID on the request body',
-    "error_type": 'HTTP_BAD_REQUEST'},
+               "http_status": 'BAD_REQUEST',
+               "test_desc": 'invalid tenant ID on the request body',
+               "error_type": 'HTTP_BAD_REQUEST'},
     tags=['sec_group', 'post', 'negative', 'rbac_creator'])
 data_set_list_negative.append_new_dataset(
     name='w_blank_tenant_id',
     data_dict={"name": 'test_secgroup_update_neg', "tenant_id": '',
-    "use_false_values": True,
-    "http_status": 'BAD_REQUEST',
-    "test_desc": 'invalid tenant ID on the request body',
-    "error_type": 'HTTP_BAD_REQUEST'},
+               "use_false_values": True,
+               "http_status": 'BAD_REQUEST',
+               "test_desc": 'invalid tenant ID on the request body',
+               "error_type": 'HTTP_BAD_REQUEST'},
     tags=['sec_group', 'post', 'negative', 'rbac_creator'])
 
 # Negative tests with long description and long name
 data_set_list_negative.append_new_dataset(
     name='w_long_description',
     data_dict={"name": 'test_secgroup_create_neg',
-        "http_status": 'BAD_REQUEST',
-        "test_desc": 'description longer than 255 chars',
-        "error_type": 'HTTP_BAD_REQUEST',
-        "description": LONG_DESCRIPTION_DATA},
+               "http_status": 'BAD_REQUEST',
+               "test_desc": 'description longer than 255 chars',
+               "error_type": 'HTTP_BAD_REQUEST',
+               "description": LONG_DESCRIPTION_DATA},
     tags=['sec_group', 'post', 'negative', 'rbac_creator'])
 data_set_list_negative.append_new_dataset(
     name='w_long_name',
     data_dict={"name": 'test_secgroup_create_neg',
-        "http_status": 'BAD_REQUEST',
-        "test_desc": 'name longer than 255 chars',
-        "name": LONG_NAME_DATA},
+               "http_status": 'BAD_REQUEST',
+               "test_desc": 'name longer than 255 chars',
+               "name": LONG_NAME_DATA},
     tags=['sec_group', 'post', 'negative', 'rbac_creator'])
 
 
@@ -109,6 +106,7 @@ class SecurityGroupUpdateTest(NetworkingSecurityGroupsFixture):
         cls.expected_secrule = cls.get_expected_secrule_data()
 
     def setUp(self):
+        super(SecurityGroupUpdateTest, self).setUp()
         self.secgroup = self.create_test_secgroup(self.expected_secgroup)
         self.expected_secrule.security_group_id = self.secgroup.id
         secrule1 = self.create_test_secrule(self.expected_secrule)
@@ -126,6 +124,7 @@ class SecurityGroupUpdateTest(NetworkingSecurityGroupsFixture):
                                          check_exact_name=False)
 
     def tearDown(self):
+        super(SecurityGroupUpdateTest, self).tearDown()
         self.expected_secgroup.security_group_rules = []
         self.secGroupCleanUp()
 
@@ -203,5 +202,4 @@ class SecurityGroupUpdateTest(NetworkingSecurityGroupsFixture):
             error_type = getattr(SecurityGroupsErrorTypes, error_type)
         self.assertNegativeResponse(
             resp=resp, status_code=status_code, msg=msg,
-            delete_list=self.delete_secgroups,
-            error_type=error_type)
+            delete_list=self.delete_secgroups, error_type=error_type)

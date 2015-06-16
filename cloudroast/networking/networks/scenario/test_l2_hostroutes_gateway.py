@@ -95,9 +95,10 @@ class L2HostroutesGatewayTest(NetworkingComputeFixture,
         self.subnet_with_route = subnet
 
     def _create_router(self):
-        # TODO remove return and self.destination_network from call to
-        # _create_server when dev team completes functionallity to attach vif's
-        # to nova instances using device_id during port create / update
+        # TODO (leonardo.maycotte) remove return and self.destination_network
+        # from call to _create_server when dev team completes functionality
+        # to attach vif'sto nova instances using device_id during port
+        # create/update
         self.router = self._create_server('router', [self.network_with_route,
                                                      self.destination_network])
 
@@ -121,10 +122,11 @@ class L2HostroutesGatewayTest(NetworkingComputeFixture,
                "creation request specified instance uuid in device_id "
                "attribute")
         self.assertEqual(self.router.entity.id, port.device_id, msg)
-        # TODO get instance details and confirm port was attached. ssh into
-        # instance and confirm new interface is found with ifconfig. This will
-        # be added when dev team completes functionallity to attach vif's
-        # to nova instances using device_id during port create / update
+        # TODO (leonardo.maycotte) get instance details and confirm port was
+        # attached. ssh into instance and confirm new interface is found with
+        # ifconfig. This will be added when dev team completes functionality
+        # to attach vif's to nova instances using device_id during port
+        # create/update
 
     def _enable_ip_forwarding(self):
         self.router.remote_client = self._get_remote_client(self.router)
@@ -142,8 +144,8 @@ class L2HostroutesGatewayTest(NetworkingComputeFixture,
         destination = self.destination_subnet.cidr[
             :self.destination_subnet.cidr.rindex('/')]
 
-        # TODO remove next 5 lines when dev team fixes problem with ipv6 host
-        # routes not being propagated to instances
+        # TODO (leonardo.maycotte) remove next 5 lines when dev team fixes
+        # problem with ipv6 host routes not being propagated to instances
         if self.__class__.__name__ == 'L2HostroutesGatewayTestIPv6':
             nexthop = getattr(self.router, self.network_with_route.name)
             self._execute_ssh_command(
@@ -345,17 +347,19 @@ class GatewayPoliciesTest(NetworkingComputeFixture,
                                  [self.access_network],
                                  public_and_service=False)
 
-        # TODO the following hard coded delay will be removed once dev team
-        # fixes bug that makes instances unreachable with ssh for a period of
-        # time right after boot
+        # TODO (leonardo.maycotte) the following hard coded delay will be
+        # removed once dev team fixes bug that makes instances unreachable with
+        # ssh for a period of time right after boot
         time.sleep(240)
 
         self.gateway.remote_client = self._get_remote_client(self.gateway)
-        ssh_cmd = '{}{} {}'.format(self.ssh_command_stub,
-                                   getattr(vm, self.access_network.name),
-                                   'route | grep default')
+        ssh_cmd = '{cmd}{name} {option}'.format(
+            cmd=self.ssh_command_stub,
+            name=getattr(vm, self.access_network.name),
+            option='route | grep default')
         output = self._execute_ssh_command(
             self.gateway.remote_client.ssh_client, ssh_cmd)
+
         msg = ('Unexpected default route was found in VM connected to network '
                'without a gateway defined')
         self.assertFalse(output, msg)
@@ -386,21 +390,24 @@ class GatewayPoliciesTest(NetworkingComputeFixture,
         vm = self._create_server('vm_with_default_route', nets,
                                  public_and_service=False)
 
-        # TODO the following hard coded delay will be removed once dev team
-        # fixes bug that makes instances unreachable with ssh for a period of
-        # time right after boot
+        # TODO (leonardo.maycotte) the following hard coded delay will be
+        # removed once dev team fixes bug that makes instances unreachable with
+        # ssh for a period of time right after boot
         time.sleep(240)
 
         # Confirm vm got expected default route
         self.gateway.remote_client = self._get_remote_client(self.gateway)
-        ssh_cmd = '{}{} {}'.format(self.ssh_command_stub,
-                                   getattr(vm, self.access_network.name),
-                                   'route | grep default')
+        ssh_cmd = '{cmd}{name} {option}'.format(
+            cmd=self.ssh_command_stub,
+            name=getattr(vm, self.access_network.name),
+            option='route | grep default')
         output = self._execute_ssh_command(
             self.gateway.remote_client.ssh_client, ssh_cmd)
+
         msg = ('Expected default route not found in VM connected to network '
                'with gateway_ip defined')
         self.assertTrue(output, msg)
+
         msg = ('Default route in VM connected to network does not point to '
                'the gateway defined in the network it is connected to')
         self.assertIn(expected_gateway_ip, output, msg)
@@ -414,9 +421,10 @@ class GatewayPoliciesTest(NetworkingComputeFixture,
         cidr = self._next_sequential_cidr(IP(self.base_cidr))
         allocation_pools = [{"start": str(IP(cidr[2].ip)),
                              "end": str(IP(cidr[-2].ip))}]
+
         net, subnet = self._create_network_with_subnet(
-            'hostroutes', str(cidr),
-            allocation_pools=allocation_pools)
+            'hostroutes', str(cidr), allocation_pools=allocation_pools)
+
         expected_gateway_ip = str(IP(cidr[1].ip))
         self.subnets_client.update_subnet(
             subnet.id,
@@ -425,25 +433,30 @@ class GatewayPoliciesTest(NetworkingComputeFixture,
 
         # Create a vm connected to the network with the gateway. It will also
         # be connected to the access network, so ssh to it is possible
-        vm = self._create_server('vm_with_default_route_hostroutes',
-                                 [net, self.access_network],
-                                 public_and_service=False)
+        vm = self._create_server(
+            'vm_with_default_route_hostroutes',
+            [net, self.access_network],
+            public_and_service=False)
 
-        # TODO the following hard coded delay will be removed once dev team
-        # fixes bug that makes instances unreachable with ssh for a period of
-        # time right after boot
+        # TODO (leonardo.maycotte) the following hard coded delay will be
+        # removed once dev team fixes bug that makes instances unreachable with
+        # ssh for a period of time right after boot
         time.sleep(240)
 
         # Confirm vm got expected default route
         self.gateway.remote_client = self._get_remote_client(self.gateway)
-        ssh_cmd = '{}{} {}'.format(self.ssh_command_stub,
-                                   getattr(vm, self.access_network.name),
-                                   'route | grep default')
+        ssh_cmd = '{cmd}{name} {option}'.format(
+            cmd=self.ssh_command_stub,
+            name=getattr(vm, self.access_network.name),
+            option='route | grep default')
+
         output = self._execute_ssh_command(
             self.gateway.remote_client.ssh_client, ssh_cmd)
+
         msg = ('Expected default route not found in VM connected to network '
                'with gateway_ip defined with host routes')
         self.assertTrue(output, msg)
+
         msg = ('Default route in VM connected to network does not point to '
                'the gateway defined in the network it is connected to')
         self.assertIn(expected_gateway_ip, output, msg)
@@ -459,10 +472,11 @@ class GatewayPoliciesTest(NetworkingComputeFixture,
         cidr = self._next_sequential_cidr(IP(self.base_cidr))
         allocation_pools = [{"start": str(IP(cidr[2].ip)),
                              "end": str(IP(cidr[-2].ip))}]
+
         net, subnet = self._create_network_with_subnet(
-            'hostroutes', str(cidr),
-            allocation_pools=allocation_pools)
+            'hostroutes', str(cidr), allocation_pools=allocation_pools)
         expected_nexthop = str(IP(cidr[1].ip))
+
         self.subnets_client.update_subnet(
             subnet.id,
             host_routes=[{"destination": str(cidr),
@@ -483,9 +497,10 @@ class GatewayPoliciesTest(NetworkingComputeFixture,
         self.gateway.remote_client = self._get_remote_client(self.gateway)
         range_origin = str(IP(cidr[0].ip))
         route_cmd = 'route -n | grep {}'.format(range_origin)
-        ssh_cmd = '{}{} {}'.format(self.ssh_command_stub,
-                                   getattr(vm, self.access_network.name),
-                                   route_cmd)
+        ssh_cmd = '{cmd}{name} {options}'.format(
+            cmd=self.ssh_command_stub,
+            name=getattr(vm, self.access_network.name),
+            options=route_cmd)
         output = self._execute_ssh_command(
             self.gateway.remote_client.ssh_client, ssh_cmd).splitlines()
         msg = ('Expected route not found in VM connected to network with '

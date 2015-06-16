@@ -143,14 +143,17 @@ class NetworkingFixture(BaseTestFixture):
         network = None
         resp = self.networks.behaviors.create_network(
             name=expected_network.name)
+
         if (resp.response.status_code == NeutronResponseCodes.CREATE_NETWORK
                 and resp.response.entity):
             network = resp.response.entity
             self.delete_networks.append(network.id)
 
             # Check the Network response
-            self.assertNetworkResponse(expected_network=expected_network,
-                                       network=network, check_exact_name=False)
+            self.assertNetworkResponse(
+                expected_network=expected_network, network=network,
+                check_exact_name=False)
+
         elif set_up:
             msg = ('Unable to create test network status code {0}, '
                    'failures:{1}'.format(resp.response.status_code,
@@ -177,6 +180,7 @@ class NetworkingFixture(BaseTestFixture):
             cidr=expected_subnet.cidr,
             allocation_pools=expected_subnet.allocation_pools,
             raise_exception=False)
+
         if (resp.response.status_code == NeutronResponseCodes.CREATE_SUBNET
                 and resp.response.entity):
             subnet = resp.response.entity
@@ -186,17 +190,21 @@ class NetworkingFixture(BaseTestFixture):
                 # Need to format IPv6 allocation pools response for assertion
                 subnet.allocation_pools = (
                     self.subnets.behaviors.format_allocation_pools(
-                    subnet.allocation_pools))
+                        subnet.allocation_pools))
 
             # Check the created subnet is as expected
             self.assertSubnetResponse(
                 expected_subnet=expected_subnet, subnet=subnet,
                 check_exact_name=False)
+
         elif set_up:
-            msg = ('Unable to create test IPv{0} subnet {1} status code {2}, '
-                'failures:{3}'.format(
-                expected_subnet.ip_version, expected_subnet.name,
-                resp.response.status_code, resp.failures))
+            msg_fmt = ('Unable to create test IPv{version} subnet {subnet} '
+                       'status code {status}, failures: {failures}')
+            msg = msg_fmt.format(
+                version=expected_subnet.ip_version,
+                subnet=expected_subnet.name,
+                status=resp.response.status_code,
+                failures=resp.failures)
             self.assertClassSetupFailure(msg)
         return subnet
 
@@ -216,6 +224,7 @@ class NetworkingFixture(BaseTestFixture):
             network_id=expected_port.network_id,
             name=expected_port.name,
             raise_exception=False)
+
         if (resp.response.status_code == NeutronResponseCodes.CREATE_PORT
                 and resp.response.entity):
             port = resp.response.entity
@@ -225,10 +234,13 @@ class NetworkingFixture(BaseTestFixture):
             self.assertPortResponse(
                 expected_port=expected_port, port=port,
                 check_exact_name=False)
+
         elif set_up:
-            msg = ('Unable to create test port {0} status code {1}, '
-                'failures: {2}'.format(
-                expected_port.name, resp.response.status_code, resp.failures))
+            msg_fmt = ('Unable to create test port {port} status code {status}'
+                       ', failures: {failures}')
+            msg = msg_fmt.format(
+                port=expected_port.name, status=resp.response.status_code,
+                failures=resp.failures)
             self.assertClassSetupFailure(msg)
         return port
 
@@ -259,10 +271,12 @@ class NetworkingFixture(BaseTestFixture):
         if (delete_list is not None and resp.response.entity
                 and hasattr(resp.response.entity, 'id')):
             delete_list.append(resp.response.entity.id)
-        message = ('{msg}: unexpected HTTP response {resp_status} instead of '
-                   'the expected {status}'.format(
-                    msg=msg, resp_status=resp.response.status_code,
-                    status=status_code))
+
+        msg_fmt = ('{msg}: unexpected HTTP response {resp_status} instead of '
+                   'the expected {status}')
+        message = msg_fmt.format(
+            msg=msg, resp_status=resp.response.status_code, status=status_code)
+
         self.assertEqual(resp.response.status_code, status_code, message)
         self.assertTrue(resp.failures, 'Missing expected failures')
 
@@ -278,7 +292,7 @@ class NetworkingFixture(BaseTestFixture):
         # Neutron error type check
         if error_type:
             error_msg_check = error_type in resp.failures[0]
-            msg = ('Expected {0} error type in failure msg: {1}').format(
+            msg = 'Expected {0} error type in failure msg: {1}'.format(
                 error_type, resp.failures[0])
             self.assertTrue(error_msg_check, msg)
 
@@ -311,16 +325,20 @@ class NetworkingFixture(BaseTestFixture):
         self.assertEqual(
             expected_network.status, network.status,
             msg.format(expected_network.status, network.status))
+
         self.assertEqual(
             expected_network.subnets, network.subnets,
             msg.format(expected_network.subnets, network.subnets))
+
         self.assertEqual(
             expected_network.admin_state_up, network.admin_state_up,
             msg.format(expected_network.admin_state_up,
                        network.admin_state_up))
+
         self.assertEqual(
             expected_network.tenant_id, network.tenant_id,
             msg.format(expected_network.tenant_id, network.tenant_id))
+
         self.assertEqual(
             expected_network.shared, network.shared,
             msg.format(expected_network.shared, network.shared))
@@ -343,6 +361,7 @@ class NetworkingFixture(BaseTestFixture):
             self.assertEqual(
                 expected_subnet.name, subnet.name,
                 msg.format(expected_subnet.name, subnet.name))
+
         else:
             start_name_msg = 'Expected {0} name to start with {1}'.format(
                 subnet.name, expected_subnet.name)
@@ -351,29 +370,37 @@ class NetworkingFixture(BaseTestFixture):
         self.assertEqual(
             expected_subnet.enable_dhcp, subnet.enable_dhcp,
             msg.format(expected_subnet.enable_dhcp, subnet.enable_dhcp))
+
         self.assertEqual(
             expected_subnet.network_id, subnet.network_id,
             msg.format(expected_subnet.network_id, subnet.network_id))
+
         self.assertEqual(
             expected_subnet.tenant_id, subnet.tenant_id,
             msg.format(expected_subnet.tenant_id, subnet.tenant_id))
+
         self.assertEqual(
             expected_subnet.dns_nameservers, subnet.dns_nameservers,
             msg.format(expected_subnet.dns_nameservers,
                        subnet.dns_nameservers))
+
         self.assertEqual(
             expected_subnet.allocation_pools, subnet.allocation_pools,
             msg.format(expected_subnet.allocation_pools,
                        subnet.allocation_pools))
+
         self.assertEqual(
             expected_subnet.gateway_ip, subnet.gateway_ip,
             msg.format(expected_subnet.gateway_ip, subnet.gateway_ip))
+
         self.assertEqual(
             expected_subnet.ip_version, subnet.ip_version,
             msg.format(expected_subnet.ip_version, subnet.ip_version))
+
         self.assertEqual(
             expected_subnet.host_routes, subnet.host_routes,
             msg.format(expected_subnet.host_routes, subnet.host_routes))
+
         self.assertEqual(
             expected_subnet.cidr, subnet.cidr,
             msg.format(expected_subnet.cidr, subnet.cidr))
@@ -397,24 +424,36 @@ class NetworkingFixture(BaseTestFixture):
         failures = []
 
         subnet_msg = ('Unexpected subnet id in fixed IP {fixed_ip} instead of '
-            'subnet id {subnet_id} in port {port} fixed IPs {fixed_ips}')
+                      'subnet id {subnet_id} in port {port} fixed IPs '
+                      '{fixed_ips}')
+
         verify_msg = ('Fixed IP ip_address {ip} not within the expected '
-            'subnet cidr {cidr} in port {port} fixed IPs {fixed_ips}')
+                      'subnet cidr {cidr} in port {port} fixed IPs '
+                      '{fixed_ips}')
+
         ip_msg = ('Repeated ip_address {ip} within fixed ips {fixed_ips} '
-            'at port {port}')
+                  'at port {port}')
 
         for fixed_ip in fixed_ips:
             if fixed_ip['subnet_id'] != subnet_id:
                 failures.append(subnet_msg.format(fixed_ip=fixed_ip,
-                    subnet_id=subnet_id, port=port.id, fixed_ips=fixed_ips))
+                                                  subnet_id=subnet_id,
+                                                  port=port.id,
+                                                  fixed_ips=fixed_ips))
+
             fixed_ip_within_cidr = self.subnets.behaviors.verify_ip(
                 ip_cidr=fixed_ip['ip_address'], ip_range=cidr)
+
             if fixed_ip_within_cidr is not True:
                 failures.append(verify_msg.format(ip=fixed_ip['ip_address'],
-                    cidr=cidr, port=port.id, fixed_ips=fixed_ips))
+                                                  cidr=cidr, port=port.id,
+                                                  fixed_ips=fixed_ips))
+
             if fixed_ip['ip_address'] in verified_ip:
                 failures.append(ip_msg.format(ip=fixed_ip['ip_address'],
-                    fixed_ips=fixed_ips, port=port.id))
+                                              fixed_ips=fixed_ips,
+                                              port=port.id))
+
             verified_ip.append(fixed_ip['ip_address'])
         self.assertFalse(failures)
 
@@ -442,11 +481,13 @@ class NetworkingFixture(BaseTestFixture):
         subnet_ids = result['subnet_ids']
         subnet_ids.sort()
 
-        msg = ('Unexpected subnet IDs {unexpected_ids} instead of the expected'
-               ' {expected_ids} within port fixed Ips {ips} at port {port} in '
-               'network {network}').format(unexpected_ids=subnet_ids,
-                expected_ids=expected_subnet_ids, ips=fixed_ips, port=port.id,
-                network=port.network_id)
+        msg_fmt = ('Unexpected subnet IDs {unexpected_ids} instead of the '
+                   'expected {expected_ids} within port fixed Ips {ips} at '
+                   'port {port} in network {network}')
+        msg = msg_fmt.format(
+            unexpected_ids=subnet_ids, expected_ids=expected_subnet_ids,
+            ips=fixed_ips, port=port.id, network=port.network_id)
+
         self.assertListEqual(subnet_ids, expected_subnet_ids, msg)
 
     def assertPortResponse(self, expected_port, port, subnet=None,
@@ -468,22 +509,27 @@ class NetworkingFixture(BaseTestFixture):
         self.assertEqual(
             expected_port.status, port.status,
             msg.format(expected_port.status, port.status))
+
         self.assertEqual(
             expected_port.admin_state_up, port.admin_state_up,
-            msg.format(expected_port.admin_state_up,
-                       port.admin_state_up))
+            msg.format(expected_port.admin_state_up, port.admin_state_up))
+
         self.assertEqual(
             expected_port.network_id, port.network_id,
             msg.format(expected_port.network_id, port.network_id))
+
         self.assertEqual(
             expected_port.tenant_id, port.tenant_id,
             msg.format(expected_port.tenant_id, port.tenant_id))
+
         self.assertEqual(
             expected_port.device_owner, port.device_owner,
             msg.format(expected_port.device_owner, port.device_owner))
+
         self.assertEqual(
             expected_port.security_groups, port.security_groups,
             msg.format(expected_port.security_groups, port.security_groups))
+
         self.assertEqual(
             expected_port.device_id, port.device_id,
             msg.format(expected_port.device_id, port.device_id))
@@ -497,8 +543,10 @@ class NetworkingFixture(BaseTestFixture):
             self.assertEqual(
                 expected_port.fixed_ips, port.fixed_ips,
                 msg.format(expected_port.fixed_ips, port.fixed_ips))
+
         elif subnet is not None:
             self.assertPortFixedIpsFromSubnet(port, subnet)
+
         else:
             self.assertTrue(port.fixed_ips, 'Missing fixed ips')
 
@@ -571,9 +619,9 @@ class NetworkingAPIFixture(NetworkingFixture):
         expected_subnet.allocation_pools = [allocation_pool]
         return expected_subnet
 
-    def get_ipv4_dns_nameservers_data(self):
+    @classmethod
+    def get_ipv4_dns_nameservers_data(cls):
         """IPv4 dns nameservers test data (quota is 2)"""
-                # IPv4 dns_nameservers test data
         ipv4_dns_nameservers = ['0.0.0.0', '0.0.1.0']
         return ipv4_dns_nameservers
 
@@ -637,8 +685,7 @@ class NetworkingAPIFixture(NetworkingFixture):
         if network_id is None:
             network = self.create_network()
             network_id = network.id
-            subnet = self.create_subnet(network_id=network_id,
-                                        ip_version=ip_version)
+            self.create_subnet(network_id=network_id, ip_version=ip_version)
         expected_port.network_id = network_id
         port = self.add_port_to_network(expected_port)
         return port
@@ -663,8 +710,7 @@ class NetworkingSecurityGroupsFixture(NetworkingAPIFixture):
         cls.security_group_rule_data = dict(
             remote_group_id=None, direction='ingress', remote_ip_prefix=None,
             protocol=None, ethertype='IPv4', port_range_max=None,
-            port_range_min=None,
-            tenant_id=cls.user.tenant_id)
+            port_range_min=None, tenant_id=cls.user.tenant_id)
 
         # Using the secGroupCleanup method
         cls.addClassCleanup(cls.secGroupCleanUp)
@@ -672,14 +718,12 @@ class NetworkingSecurityGroupsFixture(NetworkingAPIFixture):
     @classmethod
     def get_expected_secgroup_data(cls):
         """Security Group object with default data"""
-        expected_secgroup = SecurityGroup(**cls.security_group_data)
-        return expected_secgroup
+        return SecurityGroup(**cls.security_group_data)
 
     @classmethod
     def get_expected_secrule_data(cls):
         """Security Group Rule object with default data"""
-        expected_secrule = SecurityGroupRule(**cls.security_group_rule_data)
-        return expected_secrule
+        return SecurityGroupRule(**cls.security_group_rule_data)
 
     @classmethod
     def secGroupCleanUp(cls):
@@ -809,15 +853,17 @@ class NetworkingSecurityGroupsFixture(NetworkingAPIFixture):
 
         if check_exact_name:
             self.assertEqual(expected_secgroup.name, secgroup.name,
-                msg.format(expected_secgroup.name, secgroup.name))
+                             msg.format(expected_secgroup.name, secgroup.name))
         else:
             start_name_msg = 'Expected {0} name to start with {1}'.format(
                 secgroup.name, expected_secgroup.name)
             self.assertTrue(secgroup.name.startswith(expected_secgroup.name),
                             start_name_msg)
+
         self.assertEqual(
             expected_secgroup.description, secgroup.description,
             msg.format(expected_secgroup.description, secgroup.description))
+
         self.assertEqual(
             expected_secgroup.tenant_id, secgroup.tenant_id,
             msg.format(expected_secgroup.tenant_id, secgroup.tenant_id))
@@ -832,8 +878,8 @@ class NetworkingSecurityGroupsFixture(NetworkingAPIFixture):
             self.assertEqual(
                 expected_secgroup.security_group_rules,
                 secgroup.security_group_rules,
-                    msg.format(expected_secgroup.security_group_rules,
-                               secgroup.security_group_rules))
+                msg.format(expected_secgroup.security_group_rules,
+                           secgroup.security_group_rules))
 
         if self.config.check_response_attrs:
             msg = 'Unexpected Security Groups response attributes: {0}'.format(

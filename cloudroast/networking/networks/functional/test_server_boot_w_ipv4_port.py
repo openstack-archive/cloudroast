@@ -13,11 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-import time
-
 from cafe.drivers.unittest.decorators import tags
-from cloudcafe.networking.networks.common.constants \
-    import NeutronResponseCodes, NeutronErrorTypes
 from cloudroast.networking.networks.fixtures import NetworkingComputeFixture
 
 
@@ -34,9 +30,9 @@ class ServersBootTestWithPortIPv4(NetworkingComputeFixture):
 
         port_ids = [port.id]
         network_ids = [self.public_network_id, self.service_network_id]
-        resp = self.net.behaviors.create_networking_server(
+        response = self.net.behaviors.create_networking_server(
             network_ids=network_ids, port_ids=port_ids)
-        server = resp.entity
+        server = response.entity
         self.delete_servers.append(server.id)
 
         # Check Public, Servicenet and Isolated networks on server
@@ -44,9 +40,9 @@ class ServersBootTestWithPortIPv4(NetworkingComputeFixture):
                                        ipv4=True, ipv6=True)
         self.assertServerNetworkByName(server=server, network_name='private',
                                        ipv4=True, ipv6=False)
-        self.assertServerNetworkByName(server=server,
-                                       network_name=network.name, ipv4=True,
-                                       ipv6=False, ipv4_cidr=subnet.cidr)
+        self.assertServerNetworkByName(server=server, ipv4_cidr=subnet.cidr,
+                                       network_name=network.name,
+                                       ipv4=True, ipv6=False)
 
         # Check the server id is at the port device_id and the device_owner
         # is set to compute:None after the server is booted with the port
@@ -60,5 +56,5 @@ class ServersBootTestWithPortIPv4(NetworkingComputeFixture):
         updated_port = get_port_req.response.entity
 
         # Check the Port response
-        self.assertPortResponse(expected_port, updated_port,
-                                check_fixed_ips=True)
+        self.assertPortResponse(
+            expected_port, updated_port, check_fixed_ips=True)

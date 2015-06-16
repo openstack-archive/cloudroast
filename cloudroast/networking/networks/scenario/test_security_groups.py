@@ -29,9 +29,7 @@ PING_PACKET_LOSS_REGEX = '(\d{1,3})\.?\d*\%.*loss'
 IP_FMT = '{}/{}'
 
 
-class SecurityGroupsTest(NetworkingComputeFixture,
-                         ScenarioMixin):
-
+class SecurityGroupsTest(NetworkingComputeFixture, ScenarioMixin):
     """
     This test class verifies that the data plane exhibits the behavior
     specified by one or more security groups applied to ports. Each test case
@@ -62,20 +60,25 @@ class SecurityGroupsTest(NetworkingComputeFixture,
         # Create the instances for the test cases
         cls._create_keypair()
         cls.open_loginable_secgroup = cls._create_open_loginable_secgroup()
-        cls.sender = cls._create_server('sender')
+
         cls.listener = cls._create_server('listener')
-        cls.other_sender = cls._create_server('other-sender')
+        cls.listener.remote_client = None
+
+        cls.sender = cls._create_server('sender')
         cls.sender.remote_client = cls._get_remote_client(cls.sender)
+
+        cls.other_sender = cls._create_server('other-sender')
         cls.other_sender.remote_client = cls._get_remote_client(
             cls.other_sender)
-        cls.listener.remote_client = None
-        cls._transfer_private_key_to_vm(cls.sender.remote_client.ssh_client,
-                                        cls.keypair.private_key,
-                                        cls.PRIVATE_KEY_PATH)
+
+        cls._transfer_private_key_to_vm(
+            cls.sender.remote_client.ssh_client,
+            cls.keypair.private_key, cls.PRIVATE_KEY_PATH)
+
         cls._transfer_private_key_to_vm(
             cls.other_sender.remote_client.ssh_client,
-            cls.keypair.private_key,
-            cls.PRIVATE_KEY_PATH)
+            cls.keypair.private_key, cls.PRIVATE_KEY_PATH)
+
         cls.listener_port_id = cls._get_listener_port_id()
 
     @classmethod
@@ -106,21 +109,27 @@ class SecurityGroupsTest(NetworkingComputeFixture,
         @return: security group
         @rtype: security group entity
         """
-        sg_name = '{}_{}'.format(rand_name(cls.NAMES_PREFIX), name)
+        sg_name = '{prefix}_{name}'.format(
+            prefix=rand_name(cls.NAMES_PREFIX), name=name)
+
         sg_desc = sg_name + " description"
         resp = cls.security_groups.client.create_security_group(
             name=sg_name, description=sg_desc)
+
         msg = "Security group create returned unexpected status code: {}"
         msg = msg.format(resp.status_code)
         assert resp.status_code == 201, msg
+
         secgroup = resp.entity
         cls.delete_secgroups.append(secgroup.id)
         msg = ("Security group create returned unexpected security group "
-               "name: {}")
+               "name: {0}")
         msg = msg.format(secgroup.name)
         assert secgroup.name == sg_name, msg
+
         msg = ("Security group create returned unexpected security group "
-               "description: {}")
+               "description: {0}")
+        msg = msg.format(secgroup.description)
         assert secgroup.description == sg_desc, msg
         return secgroup
 
@@ -148,10 +157,11 @@ class SecurityGroupsTest(NetworkingComputeFixture,
         msg = "Security group rule create returned unexpected status code: {}"
         msg = msg.format(resp.status_code)
         assert resp.status_code == 201, msg
+
         secgroup_rule = resp.entity
         cls.delete_secgroups_rules.append(secgroup_rule.id)
         msg = ("Security group rule create returned unexpected security group "
-               "id: {}")
+               "id: {0}")
         msg = msg.format(secgroup_rule.security_group_id)
         assert secgroup_id == secgroup_rule.security_group_id, msg
         return secgroup_rule
@@ -187,8 +197,8 @@ class SecurityGroupsTest(NetworkingComputeFixture,
             )
         ]
 
-        return cls._create_secgroup_rules_from_rulesets(secgroup_id, ethertype,
-                                                        rulesets)
+        return cls._create_secgroup_rules_from_rulesets(
+            secgroup_id, ethertype, rulesets)
 
     @classmethod
     def _create_secgroup_rules_from_rulesets(cls, secgroup_id, ethertype,
@@ -208,7 +218,8 @@ class SecurityGroupsTest(NetworkingComputeFixture,
         """
         rules = []
         msg_template = ("Security group rule create returned unexpected "
-                        "direction attribute: {}")
+                        "direction attribute: {0}")
+
         for ruleset in rulesets:
             for direction in ['ingress', ]:
                 sg_rule = cls._create_security_group_rule(secgroup_id,
@@ -235,20 +246,22 @@ class SecurityGroupsTest(NetworkingComputeFixture,
         if secgroup:
             resp = cls.security_groups.client.get_security_group(secgroup.id)
             msg = ("Security group rule show returned unexpected status "
-                   "code: {}")
+                   "code: {0}")
             msg = msg.format(resp.status_code)
             assert resp.status_code == 200, msg
+
             sg = resp.entity
             for rule in sg.security_group_rules:
                 resp = cls.security_groups.client.delete_security_group_rule(
                     rule.id)
                 msg = ("Security group rule delete returned unexpected status "
-                       "code: {}")
+                       "code: {0}")
                 msg = msg.format(resp.status_code)
                 assert resp.status_code == 204, msg
+
         else:
-            sg = cls._create_empty_security_group(
-                'open-loginable-secgroup')
+            sg = cls._create_empty_security_group('open-loginable-secgroup')
+
         cls._create_loginable_secgroup_rules(sg.id, 'IPv4')
         cls._create_loginable_secgroup_rules(sg.id, 'IPv6')
         return sg
@@ -257,8 +270,8 @@ class SecurityGroupsTest(NetworkingComputeFixture,
         ping_cmd = self.PING_COMMAND.format(ip_address)
         output = ssh_client.execute_command(ping_cmd)
         try:
-            packet_loss_percent = re.search(PING_PACKET_LOSS_REGEX,
-                                            output.stdout).group(1)
+            packet_loss_percent = re.search(
+                PING_PACKET_LOSS_REGEX, output.stdout).group(1)
         except Exception:
             return False
         return packet_loss_percent != '100'
@@ -273,6 +286,7 @@ class SecurityGroupsTest(NetworkingComputeFixture,
         msg = ("Connectivity exists unexpectedly between two instances with "
                "a security group that forbids such connectivity")
         self.assertFalse(self._ping(ssh_client, ip_address), msg)
+
         response = self._ssh(ssh_client, ip_address, 'pwd')
         if (('port 22: Connection timed out' not in response.stderr) and
                 ('port 22: No route to host' not in response.stderr)):
@@ -282,20 +296,23 @@ class SecurityGroupsTest(NetworkingComputeFixture,
         msg = ("Connectivity doesn't exist between two instances with a "
                "security group that allows such connectivity")
         self.assertTrue(self._ping(ssh_client, ip_address), msg)
+
         response = self._ssh(ssh_client, ip_address, 'pwd')
         self.assertEqual(response.stdout.strip(), '/root', msg)
 
     def _update_port_secgroups(self, security_groups_ids):
         resp = self.net.ports.client.update_port(
             self.listener_port_id, security_groups=security_groups_ids)
-        msg = "Port security groups update returned unexpected status code: {}"
+        msg = "Port security groups update returned unexpected status code:{0}"
         msg = msg.format(resp.status_code)
         self.assertEqual(resp.status_code, 200, msg)
-        msg = "Port list of security group of unexpected length: {}"
+
+        msg = "Port list of security group of unexpected length: {0}"
         msg = msg.format(len(resp.entity.security_groups))
         self.assertEqual(len(resp.entity.security_groups),
                          len(security_groups_ids), msg)
-        msg = "Missing security group after port update: {}"
+
+        msg = "Missing security group after port update: {0}"
         for secgroup_id in security_groups_ids:
             self.assertIn(secgroup_id, resp.entity.security_groups,
                           msg.format(secgroup_id))
@@ -308,6 +325,7 @@ class SecurityGroupsTest(NetworkingComputeFixture,
         msg = 'Error executing netcat command in sender instance'
         response = sender_client.execute_command(netcat_sender).stderr
         self.assertIn('succeeded!', response, msg)
+
         cat_cmd = 'cat {}{}'.format(self.NC_OUTPUT_FILE, port)
         nc_output = self._ssh(self.sender.remote_client.ssh_client,
                               self.listener_port_ip, cat_cmd).stdout
@@ -315,6 +333,7 @@ class SecurityGroupsTest(NetworkingComputeFixture,
             msg = ('UDP port cannot be accessed with a security group that '
                    'allows access')
             self.assertIn(self.NC_OUTPUT, nc_output, msg)
+
         else:
             msg = ("UDP port can be accessed with a security group that "
                    "doesn't allow access")
@@ -366,8 +385,8 @@ class SecurityGroupsTest(NetworkingComputeFixture,
 
         # Confirm listener instance can be pinged and sshed from sender
         # instance
-        self._verify_ssh_ping_allowed(self.sender.remote_client.ssh_client,
-                                      self.listener_port_ip)
+        self._verify_ssh_ping_allowed(
+            self.sender.remote_client.ssh_client, self.listener_port_ip)
 
         # Confirm listener instance cannot be pinged and sshed from
         # other_sender instance
@@ -396,8 +415,8 @@ class SecurityGroupsTest(NetworkingComputeFixture,
 
         # Confirm listener instance can be pinged and sshed from sender
         # instance
-        self._verify_ssh_ping_allowed(self.sender.remote_client.ssh_client,
-                                      self.listener_port_ip)
+        self._verify_ssh_ping_allowed(
+            self.sender.remote_client.ssh_client, self.listener_port_ip)
 
         # If possible, confirm listener instance cannot be pinged and sshed
         # from other_sender instance
@@ -425,33 +444,42 @@ class SecurityGroupsTest(NetworkingComputeFixture,
                 port_range_max=self.OPEN_TCP_PORTS[-1],
             ),
         ]
-        self._create_secgroup_rules_from_rulesets(secgroup.id, self.ETHERTYPE,
-                                                  rulesets)
+        self._create_secgroup_rules_from_rulesets(
+            secgroup.id, self.ETHERTYPE, rulesets)
+
         self.open_loginable_secgroup = self._create_open_loginable_secgroup(
             self.open_loginable_secgroup)
+
         self._update_port_secgroups([secgroup.id,
                                      self.open_loginable_secgroup.id])
         self.sender.remote_client = self._get_remote_client(self.sender)
 
         # Confirm sender server can communicate with listener server over tcp
         # ports in self.OPEN_TCP_PORTS
-        netcat_sender = '{} -z -v -w5 {}'.format(self.NETCAT,
-                                                 self.listener_port_ip)
+        netcat_sender = '{netcat} -z -v -w5 {ip}'.format(
+            netcat=self.NETCAT, ip=self.listener_port_ip)
+
         for port in self.OPEN_TCP_PORTS:
-            sender_cmd = '{} {}'.format(netcat_sender, port)
-            expected_response = ('Connection to {} {} port [tcp/'.format(
-                self.listener_port_ip, port))
+            sender_cmd = '{sender} {port}'.format(
+                sender=netcat_sender, port=port)
+
+            expected_response = ('Connection to {ip} {port} port [tcp/'.format(
+                ip=self.listener_port_ip, port=port))
             response = self.sender.remote_client.ssh_client.execute_command(
                 sender_cmd).stderr
+
             self.assertIn(expected_response, response)
             self.assertIn('succeeded!', response)
 
         # Confirm sender server cannot communicate with listener server over
         # tcp ports in self.CLOSED_TCP_PORTS
         for port in self.CLOSED_TCP_PORTS:
-            sender_cmd = '{} {}'.format(netcat_sender, port)
-            expected_response = ('nc: connect to {} port {} (tcp) timed '
-                                 'out').format(self.listener_port_ip, port)
+            sender_cmd = '{sender} {port}'.format(
+                sender=netcat_sender, port=port)
+
+            expected_response = ('nc: connect to {ip} port {port} (tcp) timed '
+                                 'out').format(ip=self.listener_port_ip,
+                                               port=port)
             self.assertIn(
                 expected_response,
                 self.sender.remote_client.ssh_client.execute_command(
@@ -490,8 +518,9 @@ class SecurityGroupsTest(NetworkingComputeFixture,
                 port_range_max=self.OPEN_UDP_PORT,
             ),
         ]
-        self._create_secgroup_rules_from_rulesets(secgroup.id, self.ETHERTYPE,
-                                                  rulesets)
+        self._create_secgroup_rules_from_rulesets(
+            secgroup.id, self.ETHERTYPE, rulesets)
+
         self.open_loginable_secgroup = self._create_open_loginable_secgroup(
             self.open_loginable_secgroup)
         self._update_port_secgroups([secgroup.id,
@@ -523,16 +552,16 @@ class SecurityGroupsTest(NetworkingComputeFixture,
         above
         """
         # Set up security groups
-        secgroup = self._create_empty_security_group(
-            'any-protocol-secgroup')
+        secgroup = self._create_empty_security_group('any-protocol-secgroup')
         rulesets = [
             dict(
                 protocol=None,
                 remote_ip_prefix=remote_ip_prefix,
             ),
         ]
-        self._create_secgroup_rules_from_rulesets(secgroup.id, self.ETHERTYPE,
-                                                  rulesets)
+        self._create_secgroup_rules_from_rulesets(
+            secgroup.id, self.ETHERTYPE, rulesets)
+
         self._update_port_secgroups([secgroup.id])
         self.sender.remote_client = self._get_remote_client(self.sender)
         self.other_sender.remote_client = self._get_remote_client(
@@ -540,10 +569,10 @@ class SecurityGroupsTest(NetworkingComputeFixture,
 
         # Confirm sender instance can ping, ssh and send udp datagrams to
         # listener server
-        self._verify_ssh_ping_allowed(self.sender.remote_client.ssh_client,
-                                      self.listener_port_ip)
-        self._verify_udp_communication(self.sender.remote_client.ssh_client,
-                                       self.ANY_UPD_OPEN, True)
+        self._verify_ssh_ping_allowed(
+            self.sender.remote_client.ssh_client, self.listener_port_ip)
+        self._verify_udp_communication(
+            self.sender.remote_client.ssh_client, self.ANY_UPD_OPEN, True)
 
         # Confirm other_sender server cannot ping, ssh and send udp datagrams
         # to listener server
@@ -578,14 +607,16 @@ class SecurityGroupsTest(NetworkingComputeFixture,
         secgroups_ids = []
         max_number_secgroups = (
             self.security_groups.config.max_secgroups_per_port)
+
         for i in xrange(max_number_secgroups - 1):
-            name = 'max-number-secgroup-{}'.format(str(i))
+            name = 'max-number-secgroup-{index}'.format(index=str(i))
             secgroups_ids.append(self._create_secgroup_incremental_port(
                 name, rulesets).id)
+
         secgroups_ids.append(self._create_secgroup_incremental_port(
-            name,
-            rulesets,
+            name, rulesets,
             self.security_groups.config.max_rules_per_secgroup - 2).id)
+
         self._create_loginable_secgroup_rules(
             secgroups_ids[-1], self.ETHERTYPE,
             remote_ip_prefix=remote_ip_prefix)
@@ -599,10 +630,10 @@ class SecurityGroupsTest(NetworkingComputeFixture,
 
         # Confirm sender instance can ping, ssh and send udp datagrams to
         # listener server
-        self._verify_ssh_ping_allowed(self.sender.remote_client.ssh_client,
-                                      self.listener_port_ip)
-        self._verify_udp_communication(self.sender.remote_client.ssh_client,
-                                       self.MAX_UDP_OPEN, True)
+        self._verify_ssh_ping_allowed(
+            self.sender.remote_client.ssh_client, self.listener_port_ip)
+        self._verify_udp_communication(
+            self.sender.remote_client.ssh_client, self.MAX_UDP_OPEN, True)
 
         # Confirm other_sender server cannot ping, ssh and send udp datagrams
         # to listener server
@@ -614,7 +645,7 @@ class SecurityGroupsTest(NetworkingComputeFixture,
 
         # Add one more security group to the list. This is one more that the
         # maximum per port
-        name = 'max-number-secgroup-{}'.format(str(max_number_secgroups))
+        name = 'max-number-secgroup-{0}'.format(str(max_number_secgroups))
         secgroups_ids.append(self._create_secgroup_incremental_port(
             name, rulesets).id)
 
@@ -623,7 +654,7 @@ class SecurityGroupsTest(NetworkingComputeFixture,
         with self.assertRaises(AssertionError) as exception_manager:
             self._update_port_secgroups(secgroups_ids)
         msg = ('Assignment of more security groups to a port than allowed '
-               'by quota raised unexpected exception: {}')
+               'by quota raised unexpected exception: {0}')
         msg = msg.format(type(exception_manager.exception))
         self.assertTrue(isinstance(exception_manager.exception,
                                    AssertionError), msg)
@@ -639,7 +670,7 @@ class SecurityGroupsTestIPv4(SecurityGroupsTest):
     IPv4
     """
 
-    PING_COMMAND = 'ping -c 3 {}'
+    PING_COMMAND = 'ping -c 3 {0}'
     SSH_COMMAND = ('ssh -o UserKnownHostsFile=/dev/null '
                    '-o StrictHostKeyChecking=no -o ConnectTimeout=60 '
                    '-i {private_key_path} root@{ip_address} {command}')
@@ -706,7 +737,7 @@ class SecurityGroupsTestIPv6(SecurityGroupsTest):
     IPv6
     """
 
-    PING_COMMAND = 'ping6 -c 3 {}'
+    PING_COMMAND = 'ping6 -c 3 {0}'
     SSH_COMMAND = ('ssh -6 -o UserKnownHostsFile=/dev/null '
                    '-o StrictHostKeyChecking=no -o ConnectTimeout=60 '
                    '-i {private_key_path} root@{ip_address} {command}')
@@ -773,7 +804,7 @@ class SecurityGroupsTestServiceNet(SecurityGroupsTest):
     IPv4
     """
 
-    PING_COMMAND = 'ping -c 3 {}'
+    PING_COMMAND = 'ping -c 3 {0}'
     SSH_COMMAND = ('ssh -o UserKnownHostsFile=/dev/null '
                    '-o StrictHostKeyChecking=no -o ConnectTimeout=60 '
                    '-i {private_key_path} root@{ip_address} {command}')
@@ -801,14 +832,17 @@ class SecurityGroupsTestServiceNet(SecurityGroupsTest):
             device_id=cls.listener.entity.id,
             network_id=cls.service_network_id)
         super(SecurityGroupsTestServiceNet, cls)._get_listener_port_id()
+
         msg = "Ports list returned unexpected status code: {}"
         msg = msg.format(resp.status_code)
         assert resp.status_code == 200, msg
+
         ports = resp.entity
         msg = ("Ports list returned unexpected number of ports given provided "
                "filter. Expected 1 port, {0} returned")
         msg = msg.format(len(ports))
         assert len(ports) == 1, msg
+
         return ports[0].id
 
     @tags(type='negative', net='yes')
@@ -858,13 +892,14 @@ class SecurityGroupsCleanup(NetworkingComputeFixture):
 
     def test_cleanup_security_groups(self):
         resp = self.security_groups.client.list_security_groups()
-        msg = "Security group list returned unexpected status code: {}"
+        msg = "Security group list returned unexpected status code: {0}"
         msg = msg.format(resp.status_code)
         self.assertEqual(resp.status_code, 200, msg)
+
         list_sec_groups = resp.entity
         for secgroup in list_sec_groups:
             resp = self.security_groups.client.delete_security_group(
                 secgroup.id)
-            msg = "Security group delete returned unexpected status code: {}"
+            msg = "Security group delete returned unexpected status code: {0}"
             msg = msg.format(resp.status_code)
             self.assertEqual(resp.status_code, 204, msg)

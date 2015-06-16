@@ -13,12 +13,10 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-import unittest
 
 from cafe.drivers.unittest.datasets import DatasetList
 from cafe.drivers.unittest.decorators import DataDrivenFixture, \
-    data_driven_test, tags
-from cloudcafe.networking.networks.config import NetworkingSecondUserConfig
+    data_driven_test
 from cloudroast.networking.networks.fixtures \
     import NetworkingSecurityGroupsFixture
 from cloudcafe.networking.networks.extensions.security_groups_api.constants \
@@ -141,17 +139,19 @@ data_set_list_negative.append_new_dataset(
     tags=['sec_group', 'post', 'negative', 'rbac_creator'])
 data_set_list_negative.append_new_dataset(
     name='w_remote_ip_prefix_ipv6_and_ipv4_ethertype',
-    data_dict={'remote_ip_prefix': 'fd00:d9f1:d355::/64',
-               'http_status': 'BAD_REQUEST',
-               'test_desc': 'Etherytype IPv4 does not match remote_ip_prefix IPv6',
-               'error_type': 'INVALID_INPUT'},
+    data_dict={
+        'remote_ip_prefix': 'fd00:d9f1:d355::/64',
+        'http_status': 'BAD_REQUEST',
+        'test_desc': 'Etherytype IPv4 does not match remote_ip_prefix IPv6',
+        'error_type': 'INVALID_INPUT'},
     tags=['sec_group', 'post', 'negative', 'rbac_creator'])
 data_set_list_negative.append_new_dataset(
     name='w_remote_ip_prefix_ipv4_and_ipv6_ethertype',
-    data_dict={'ethertype': 'IPv6', 'remote_ip_prefix': '192.168.86.0/24',
-               'http_status': 'BAD_REQUEST',
-               'test_desc': 'Etherytype IPv6 does not match remote_ip_prefix IPv4',
-               'error_type': 'INVALID_INPUT'},
+    data_dict={
+        'ethertype': 'IPv6', 'remote_ip_prefix': '192.168.86.0/24',
+        'http_status': 'BAD_REQUEST',
+        'test_desc': 'Etherytype IPv6 does not match remote_ip_prefix IPv4',
+        'error_type': 'INVALID_INPUT'},
     tags=['sec_group', 'post', 'negative', 'rbac_creator'])
 data_set_list_negative.append_new_dataset(
     name='w_remote_group_id',
@@ -164,10 +164,11 @@ data_set_list_negative.append_new_dataset(
 # With bug, http response should be 400 instead of 500
 data_set_list_negative.append_new_dataset(
     name='w_protocol_icmp_and_port_range_max',
-    data_dict={'protocol': 'icmp', 'port_range_max': 200,
-               'http_status': 'BAD_REQUEST',
-               'test_desc': 'ICMP requires port_range_min when port_range_max given',
-               'error_type': 'SECURITY_GROUP_INVALID_ICMP_VALUE'},
+    data_dict={
+        'protocol': 'icmp', 'port_range_max': 200,
+        'http_status': 'BAD_REQUEST',
+        'test_desc': 'ICMP requires port_range_min when port_range_max given',
+        'error_type': 'SECURITY_GROUP_INVALID_ICMP_VALUE'},
     tags=['bug'])
 
 
@@ -183,11 +184,13 @@ class SecurityGroupRuleCreateTest(NetworkingSecurityGroupsFixture):
         cls.expected_secgroup.description = 'testing security rules creates'
 
     def setUp(self):
+        super(SecurityGroupRuleCreateTest, self).setUp()
         self.secgroup = self.create_test_secgroup(self.expected_secgroup)
         self.expected_secrule = self.get_expected_secrule_data()
         self.expected_secrule.security_group_id = self.secgroup.id
 
     def tearDown(self):
+        super(SecurityGroupRuleCreateTest, self).tearDown()
         self.secGroupCleanUp()
 
     @data_driven_test(data_set_list)

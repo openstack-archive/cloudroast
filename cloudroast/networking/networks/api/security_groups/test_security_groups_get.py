@@ -13,16 +13,10 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-import unittest
 
-from cafe.drivers.unittest.datasets import DatasetList
-from cafe.drivers.unittest.decorators import DataDrivenFixture, \
-    data_driven_test, tags
-from cloudcafe.networking.networks.config import NetworkingSecondUserConfig
+from cafe.drivers.unittest.decorators import tags
 from cloudroast.networking.networks.fixtures \
     import NetworkingSecurityGroupsFixture
-from cloudcafe.networking.networks.extensions.security_groups_api.constants \
-    import SecurityGroupsErrorTypes, SecurityGroupsResponseCodes
 
 
 class SecurityGroupGetTest(NetworkingSecurityGroupsFixture):
@@ -37,10 +31,12 @@ class SecurityGroupGetTest(NetworkingSecurityGroupsFixture):
         cls.expected_secrule = cls.get_expected_secrule_data()
 
     def setUp(self):
+        super(SecurityGroupGetTest, self).setUp()
         self.secgroup = self.create_test_secgroup(self.expected_secgroup)
         self.expected_secrule.security_group_id = self.secgroup.id
 
     def tearDown(self):
+        super(SecurityGroupGetTest, self).tearDown()
         self.secGroupCleanUp()
 
     @tags('sec_group')
@@ -65,7 +61,7 @@ class SecurityGroupGetTest(NetworkingSecurityGroupsFixture):
         secgroup_list = resp.response.entity
 
         msg = ('Security group:\n{0}\n\nmissing in expected security group '
-            'list:\n{1}').format(self.secgroup, secgroup_list)
+               'list:\n{1}').format(self.secgroup, secgroup_list)
         self.assertIn(self.secgroup, secgroup_list, msg)
 
     @tags('sec_group')

@@ -34,11 +34,13 @@ class SecurityGroupRuleDeleteTest(NetworkingSecurityGroupsFixture):
         cls.expected_secrule = cls.get_expected_secrule_data()
 
     def setUp(self):
+        super(SecurityGroupRuleDeleteTest, self).setUp()
         self.secgroup = self.create_test_secgroup(self.expected_secgroup)
         self.expected_secrule.security_group_id = self.secgroup.id
         self.secrule = self.create_test_secrule(self.expected_secrule)
 
     def tearDown(self):
+        super(SecurityGroupRuleDeleteTest, self).tearDown()
         self.secGroupCleanUp()
 
     @tags('sec_group')
@@ -67,13 +69,12 @@ class SecurityGroupRuleDeleteTest(NetworkingSecurityGroupsFixture):
         # Checking the security rule was deleted
         resp = self.sec.behaviors.get_security_group_rule(**request_kwargs)
 
-        neg_msg = ('(negative) Getting a deleted security rule')
+        neg_msg = '(negative) Getting a deleted security rule'
         status_code = SecurityGroupsResponseCodes.NOT_FOUND
         error_type = SecurityGroupsErrorTypes.SECURITY_GROUP_RULE_NOT_FOUND
         self.assertNegativeResponse(
             resp=resp, status_code=status_code, msg=neg_msg,
-            delete_list=self.delete_secgroups_rules,
-            error_type=error_type)
+            delete_list=self.delete_secgroups_rules, error_type=error_type)
 
         # Checking the security rule is not in the group anymore
         resp = self.sec.behaviors.get_security_group(

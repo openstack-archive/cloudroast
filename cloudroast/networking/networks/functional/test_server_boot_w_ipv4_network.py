@@ -13,11 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-import time
-
 from cafe.drivers.unittest.decorators import tags
-from cloudcafe.networking.networks.common.constants \
-    import NeutronResponseCodes, NeutronErrorTypes
 from cloudroast.networking.networks.fixtures import NetworkingComputeFixture
 
 
@@ -34,9 +30,9 @@ class ServersBootTestWithNetworkIPv4(NetworkingComputeFixture):
 
         network_ids = [self.public_network_id, self.service_network_id,
                        network.id]
-        resp = self.net.behaviors.create_networking_server(
+        response = self.net.behaviors.create_networking_server(
             network_ids=network_ids)
-        server = resp.entity
+        server = response.entity
         self.delete_servers.append(server.id)
 
         # Check Public, Servicenet and Isolated networks on server
@@ -44,32 +40,37 @@ class ServersBootTestWithNetworkIPv4(NetworkingComputeFixture):
                                        ipv4=True, ipv6=True)
         self.assertServerNetworkByName(server=server, network_name='private',
                                        ipv4=True, ipv6=False)
-        self.assertServerNetworkByName(server=server,
-                                       network_name=network.name, ipv4=True,
-                                       ipv6=False, ipv4_cidr=subnet.cidr)
+        self.assertServerNetworkByName(server=server, ipv4_cidr=subnet.cidr,
+                                       network_name=network.name,
+                                       ipv4=True, ipv6=False)
 
         # Check the server has the expected ports
         publicnet_port = self.ports.behaviors.list_ports(
             device_id=server.id, network_id=self.public_network_id)
+
         servicenet_port = self.ports.behaviors.list_ports(
             device_id=server.id, network_id=self.service_network_id)
+
         isolatednet_port = self.ports.behaviors.list_ports(
             device_id=server.id, network_id=network.id)
 
         results = []
         failure_msg = ('Unable to get server {0} port for network {1}. '
                        'Failures: {2}.')
+
         if publicnet_port.failures:
-            msg = failure_msg.format(server.id, self.public_network_id,
-                                     publicnet_port.failures)
+            msg = failure_msg.format(
+                server.id, self.public_network_id, publicnet_port.failures)
             results.append(msg)
+
         if servicenet_port.failures:
-            msg = failure_msg.format(server.id, self.service_network_id,
-                                     servicenet_port.failures)
+            msg = failure_msg.format(
+                server.id, self.service_network_id, servicenet_port.failures)
             results.append(msg)
+
         if isolatednet_port.failures:
-            msg = failure_msg.format(server.id, network.id,
-                                     isolatednet_port.failures)
+            msg = failure_msg.format(
+                server.id, network.id, isolatednet_port.failures)
             results.append(msg)
 
         # Fail the test if any failure is found

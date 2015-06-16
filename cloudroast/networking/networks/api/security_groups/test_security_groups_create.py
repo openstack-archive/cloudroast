@@ -13,12 +13,10 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-import unittest
 
 from cafe.drivers.unittest.datasets import DatasetList
 from cafe.drivers.unittest.decorators import DataDrivenFixture, \
-    data_driven_test, tags
-from cloudcafe.networking.networks.config import NetworkingSecondUserConfig
+    data_driven_test
 from cloudroast.networking.networks.fixtures \
     import NetworkingSecurityGroupsFixture
 from cloudcafe.networking.networks.extensions.security_groups_api.constants \
@@ -72,7 +70,7 @@ data_set_list.append_new_dataset(
 # Trimming should leave the name with 40 chars
 data_set_list.append_new_dataset(
     name='w_long_name_trimming',
-    data_dict={"name": ('12345678901234567890123456789012345678901234567890'),
+    data_dict={"name": '12345678901234567890123456789012345678901234567890',
                "expected_name": '1234567890123456789012345678901234567890'},
     tags=['bug'])
 
@@ -84,56 +82,53 @@ data_set_list_negative = DatasetList()
 data_set_list_negative.append_new_dataset(
     name='w_other_tenant_id',
     data_dict={"name": 'test_secgroup_create_neg', "tenant_id": False,
-    "http_status": 'BAD_REQUEST',
-    "test_desc": 'another tenant ID on the request body',
-    "error_type": 'HTTP_BAD_REQUEST'},
+               "http_status": 'BAD_REQUEST',
+               "test_desc": 'another tenant ID on the request body',
+               "error_type": 'HTTP_BAD_REQUEST'},
     tags=['sec_group', 'post', 'negative', 'rbac_creator'])
 data_set_list_negative.append_new_dataset(
     name='w_invalid_tenant_id',
     data_dict={"name": 'test_secgroup_create_neg', "tenant_id": '555555',
-    "http_status": 'BAD_REQUEST',
-    "test_desc": 'invalid tenant ID on the request body',
-    "error_type": 'HTTP_BAD_REQUEST'},
+               "http_status": 'BAD_REQUEST',
+               "test_desc": 'invalid tenant ID on the request body',
+               "error_type": 'HTTP_BAD_REQUEST'},
     tags=['sec_group', 'post', 'negative', 'rbac_creator'])
 data_set_list_negative.append_new_dataset(
     name='w_blank_tenant_id',
     data_dict={"name": 'test_secgroup_create_neg', "tenant_id": '',
-    "use_false_values": True,
-    "http_status": 'BAD_REQUEST',
-    "test_desc": 'invalid tenant ID on the request body',
-    "error_type": 'HTTP_BAD_REQUEST'},
+               "use_false_values": True,
+               "http_status": 'BAD_REQUEST',
+               "test_desc": 'invalid tenant ID on the request body',
+               "error_type": 'HTTP_BAD_REQUEST'},
     tags=['sec_group', 'post', 'negative', 'rbac_creator'])
 
 data_set_list_negative.append_new_dataset(
     name='w_long_description',
     data_dict={"name": 'test_secgroup_create_neg',
-        "http_status": 'BAD_REQUEST',
-        "test_desc": 'description longer than 255 chars',
-        "error_type": 'HTTP_BAD_REQUEST',
-        "description": (LONG_DESCRIPTION_DATA)},
+               "http_status": 'BAD_REQUEST',
+               "test_desc": 'description longer than 255 chars',
+               "error_type": 'HTTP_BAD_REQUEST',
+               "description": LONG_DESCRIPTION_DATA},
     tags=['sec_group', 'post', 'negative', 'rbac_creator'])
 
 data_set_list_negative.append_new_dataset(
     name='w_long_name',
     data_dict={"name": 'test_secgroup_create_neg',
-        "http_status": 'BAD_REQUEST',
-        "test_desc": 'name longer than 255 chars',
-        "name": LONG_NAME_DATA},
+               "http_status": 'BAD_REQUEST',
+               "test_desc": 'name longer than 255 chars',
+               "name": LONG_NAME_DATA},
     tags=['sec_group', 'post', 'negative', 'rbac_creator'])
 
 
 @DataDrivenFixture
 class SecurityGroupCreateTest(NetworkingSecurityGroupsFixture):
 
-    @classmethod
-    def setUpClass(cls):
-        """Setting up test data"""
-        super(SecurityGroupCreateTest, cls).setUpClass()
-
     def setUp(self):
+        super(SecurityGroupCreateTest, self).setUp()
         self.expected_secgroup = self.get_expected_secgroup_data()
 
     def tearDown(self):
+        super(SecurityGroupCreateTest, self).tearDown()
         self.secGroupsCleanUp()
 
     @data_driven_test(data_set_list)
@@ -218,5 +213,4 @@ class SecurityGroupCreateTest(NetworkingSecurityGroupsFixture):
             error_type = getattr(SecurityGroupsErrorTypes, error_type)
         self.assertNegativeResponse(
             resp=resp, status_code=status_code, msg=msg,
-            delete_list=self.delete_secgroups,
-            error_type=error_type)
+            delete_list=self.delete_secgroups, error_type=error_type)
