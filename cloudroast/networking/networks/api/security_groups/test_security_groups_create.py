@@ -13,12 +13,10 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-import unittest
 
 from cafe.drivers.unittest.datasets import DatasetList
 from cafe.drivers.unittest.decorators import DataDrivenFixture, \
-    data_driven_test, tags
-from cloudcafe.networking.networks.config import NetworkingSecondUserConfig
+    data_driven_test
 from cloudroast.networking.networks.fixtures \
     import NetworkingSecurityGroupsFixture
 from cloudcafe.networking.networks.extensions.security_groups_api.constants \
@@ -84,41 +82,40 @@ data_set_list_negative = DatasetList()
 data_set_list_negative.append_new_dataset(
     name='w_other_tenant_id',
     data_dict={"name": 'test_secgroup_create_neg', "tenant_id": False,
-    "http_status": 'BAD_REQUEST',
-    "test_desc": 'another tenant ID on the request body',
-    "error_type": 'HTTP_BAD_REQUEST'},
+               "http_status": 'BAD_REQUEST',
+               "test_desc": 'another tenant ID on the request body',
+               "error_type": 'HTTP_BAD_REQUEST'},
     tags=['sec_group', 'post', 'negative', 'rbac_creator'])
 data_set_list_negative.append_new_dataset(
     name='w_invalid_tenant_id',
     data_dict={"name": 'test_secgroup_create_neg', "tenant_id": '555555',
-    "http_status": 'BAD_REQUEST',
-    "test_desc": 'invalid tenant ID on the request body',
-    "error_type": 'HTTP_BAD_REQUEST'},
+               "http_status": 'BAD_REQUEST',
+               "test_desc": 'invalid tenant ID on the request body',
+               "error_type": 'HTTP_BAD_REQUEST'},
     tags=['sec_group', 'post', 'negative', 'rbac_creator'])
 data_set_list_negative.append_new_dataset(
     name='w_blank_tenant_id',
     data_dict={"name": 'test_secgroup_create_neg', "tenant_id": '',
-    "use_false_values": True,
-    "http_status": 'BAD_REQUEST',
-    "test_desc": 'invalid tenant ID on the request body',
-    "error_type": 'HTTP_BAD_REQUEST'},
+               "use_false_values": True,
+               "http_status": 'BAD_REQUEST',
+               "test_desc": 'invalid tenant ID on the request body',
+               "error_type": 'HTTP_BAD_REQUEST'},
     tags=['sec_group', 'post', 'negative', 'rbac_creator'])
 
 data_set_list_negative.append_new_dataset(
     name='w_long_description',
     data_dict={"name": 'test_secgroup_create_neg',
-        "http_status": 'BAD_REQUEST',
-        "test_desc": 'description longer than 255 chars',
-        "error_type": 'HTTP_BAD_REQUEST',
-        "description": (LONG_DESCRIPTION_DATA)},
+               "http_status": 'BAD_REQUEST',
+               "test_desc": 'description longer than 255 chars',
+               "error_type": 'HTTP_BAD_REQUEST',
+               "description": (LONG_DESCRIPTION_DATA)},
     tags=['sec_group', 'post', 'negative', 'rbac_creator'])
 
 data_set_list_negative.append_new_dataset(
     name='w_long_name',
-    data_dict={"name": 'test_secgroup_create_neg',
-        "http_status": 'BAD_REQUEST',
-        "test_desc": 'name longer than 255 chars',
-        "name": LONG_NAME_DATA},
+    data_dict={"name": LONG_NAME_DATA,
+               "http_status": 'BAD_REQUEST',
+               "test_desc": 'name longer than 255 chars'},
     tags=['sec_group', 'post', 'negative', 'rbac_creator'])
 
 
@@ -158,7 +155,7 @@ class SecurityGroupCreateTest(NetworkingSecurityGroupsFixture):
         if description or use_false_values:
             request_kwargs['description'] = description
             expected_secgroup.description = description
-        if tenant_id == True:
+        if tenant_id is True:
             request_kwargs['tenant_id'] = self.user.tenant_id
         elif tenant_id or use_false_values:
             request_kwargs['tenant_id'] = None
@@ -181,9 +178,7 @@ class SecurityGroupCreateTest(NetworkingSecurityGroupsFixture):
 
     @data_driven_test(data_set_list_negative)
     def ddtest_security_group_create_negative(self, name=None,
-                                              expected_name=None,
                                               description=None,
-                                              expected_description=None,
                                               tenant_id=None,
                                               security_group_rules=None,
                                               use_false_values=False,
@@ -203,7 +198,7 @@ class SecurityGroupCreateTest(NetworkingSecurityGroupsFixture):
             request_kwargs['name'] = name
         if description or use_false_values:
             request_kwargs['description'] = description
-        if tenant_id == False:
+        if tenant_id is False:
             request_kwargs['tenant_id'] = self.alt_user.tenant_id
         elif tenant_id or use_false_values:
             request_kwargs['tenant_id'] = tenant_id
