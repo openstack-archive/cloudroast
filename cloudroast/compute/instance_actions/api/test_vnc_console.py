@@ -15,6 +15,7 @@ limitations under the License.
 """
 
 import unittest
+import requests
 
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.compute.common.types import ComputeHypervisors, \
@@ -50,6 +51,11 @@ class ServerVncConsoleTests(object):
         console = resp.entity
         self.assertEqual(console.type, VncConsoleTypes.XVPVNC)
         self.assertIsNotNone(console.url)
+        self._verify_console_url(console.url)
+
+    def _verify_console_url(self, url):
+        resp = requests.head(url)
+        self.assertEqual(resp.status_code, 200)
 
     @tags(type='smoke', net='no')
     def test_get_novnc_console(self):
@@ -70,6 +76,49 @@ class ServerVncConsoleTests(object):
         console = resp.entity
         self.assertEqual(console.type, VncConsoleTypes.NOVNC)
         self.assertIsNotNone(console.url)
+        self._verify_console_url(console.url)
+
+    @tags(type='smoke', net='no')
+    def test_get_xvpvnc_console_invalid_token(self):
+        """
+        Access shouldn't be granted to the XVPVNC console with invalid token
+
+        Validate that the test user can  not get the XVPVNC VNC console
+
+        The following assertions occur:
+            - The response status code to the get vnc request is equal to 200
+            - The response is not authorized
+        """
+        resp = self.vnc_client.get_vnc_console(
+            self.server.id, VncConsoleTypes.XVPVNC)
+        self.assertEqual(resp.status_code, 200)
+        console_url = resp.entity
+        self._verify_vnc_server_not_accessible_with_invalid_token(console_url)
+
+    @unittest.skip('rm12958')
+    @tags(type='smoke', net='no')
+    def test_get_novnc_console_invalid_token(self):
+        """
+        Access shouldn't be granted to the NOVNC console with invalid token
+
+        Validate that the test user can  not get the NOVNC VNC console
+
+        The following assertions occur:
+            - The response status code to the get vnc request is equal to 200
+            - The response is not authorized
+        """
+        resp = self.vnc_client.get_vnc_console(
+            self.server.id, VncConsoleTypes.NOVNC)
+        self.assertEqual(resp.status_code, 200)
+        console_url = resp.entity
+        self._verify_vnc_server_not_accessible_with_invalid_token(console_url)
+
+    def _verify_vnc_server_not_accessible_with_invalid_token(self, console_url):
+        invalid_token = 'invalid_token'
+        valid_vnc_server = console_url.url.split('=')[0]
+        invalid_url = "{0}={1}".format(valid_vnc_server, invalid_token)
+        resp = requests.head(invalid_url)
+        self.assertEqual(resp.status_code, 401)
 
 
 class ServerFromImageVncConsoleTests(ServerFromImageFixture,
