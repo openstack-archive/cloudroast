@@ -16,22 +16,20 @@ limitations under the License.
 
 from cafe.drivers.unittest.decorators import data_driven_test
 from cafe.drivers.unittest.decorators import tags
-from cloudcafe.blockstorage.volumes_api.common.models import statuses
 from cloudroast.blockstorage.volumes_api.fixtures import \
-    DataDrivenVolumesTestFixture
+    VolumesTestFixture
 from cloudcafe.blockstorage.datasets import BlockstorageDatasets
 from cafe.drivers.unittest.decorators import DataDrivenFixture
-
 
 volume_types_dataset = BlockstorageDatasets.volume_types()
 
 
 @DataDrivenFixture
-class VolumeActions(DataDrivenVolumesTestFixture):
+class VolumeActions(VolumesTestFixture):
 
     @data_driven_test(volume_types_dataset)
     @tags('volumes', 'smoke')
-    def ddtest_create_minimum_size_default_volume(
+    def ddtest_create_volume(
             self, volume_type_name, volume_type_id):
         """Verify that a volume of minimum size can be created"""
 
@@ -41,7 +39,7 @@ class VolumeActions(DataDrivenVolumesTestFixture):
         name = self.random_volume_name()
         description = "{0}".format(self.__class__.__name__)
         metadata = {"metadata_key_one": "metadata_value_one"}
-        availability_zone = self.volumes.blockstorage_auth.availability_zone
+        availability_zone = self.volumes.auth.availability_zone
 
         resp = self.volumes.client.create_volume(
             size, volume_type_id, name=name,
@@ -66,12 +64,40 @@ class VolumeActions(DataDrivenVolumesTestFixture):
         self.assertIsNotNone(volume.status)
         self.assertIsNone(volume.snapshot_id)
 
-        # TODO: Replace this assertion with a call to
-        #       assertVolumeCreateSuceeded
-        self.assertIn(
-            volume.status.lower(),
-            [statuses.Volume.AVAILABLE.lower(),
-             statuses.Volume.CREATING.lower()])
+        # Verify that metadata is set as expected
+        for key in metadata.iterkeys():
+            self.assertIn(key, volume.metadata)
+            self.assertEqual(metadata[key], volume.metadata[key])
+
+        if availability_zone:
+            self.assertEqual(volume.availability_zone, availability_zone)
+
+        # Verify volume create suceeded
+        self.assertVolumeCreateSucceeded(volume.id_, volume.size)
+
+    @data_driven_test(volume_types_dataset)
+    @tags('volumes', 'smoke')
+    def ddtest_final_volume_metadata(
+            self, volume_type_name, volume_type_id):
+        """Verify that a volume of minimum size can be created"""
+
+        # Setup
+        size = self.volumes.behaviors.get_configured_volume_type_property(
+            "min_size", id_=volume_type_id, name=volume_type_name)
+        name = self.random_volume_name()
+        description = "{0}".format(self.__class__.__name__)
+        metadata = {"metadata_key_one": "metadata_value_one"}
+        availability_zone = self.volumes.auth.availability_zone
+
+        volume = self.volumes.behaviors.create_available_volume(
+            size, volume_type_id, name=name, description=description,
+            availability_zone=availability_zone, metadata=metadata)
+
+        self.addCleanup(
+            self.volumes.behaviors.delete_volume_confirmed, volume.id_)
+
+        # Wait for all processes to update metadata field
+        volume = self.volumes.behaviors.get_volume_info(volume.id_)
 
         # Verify that metadata is set as expected
         for key in metadata.iterkeys():
@@ -80,6 +106,9 @@ class VolumeActions(DataDrivenVolumesTestFixture):
 
         if availability_zone:
             self.assertEqual(volume.availability_zone, availability_zone)
+
+        # Verify volume create suceeded
+        self.assertVolumeCreateSucceeded(volume.id_, volume.size)
 
     @data_driven_test(volume_types_dataset)
     @tags('volumes', 'smoke')
@@ -205,4 +234,6 @@ class VolumeActions(DataDrivenVolumesTestFixture):
 
         # Test
         result = self.volumes.behaviors.delete_volume_confirmed(volume.id_)
-        self.assertTrue(result)
+        self.assertTrue(
+            result, "Unable to confirm that volume {0} was deleted".format(
+                volume.id_))
