@@ -1,18 +1,26 @@
 from cafe.drivers.unittest.decorators import data_driven_test
 from cafe.drivers.unittest.decorators import tags
 from cloudroast.blockstorage.volumes_api.fixtures import \
-    DataDrivenVolumesTestFixture
+    VolumesTestFixture
 from cloudcafe.blockstorage.datasets import BlockstorageDatasets
 from cafe.drivers.unittest.decorators import DataDrivenFixture
 
 volume_types_dataset = BlockstorageDatasets.volume_types()
+volume_types_dataset.apply_test_tags('volume-cloning-complete-dataset')
+configured_vtypes_dataset = BlockstorageDatasets.configured_volume_types()
+configured_vtypes_dataset.apply_test_tags('volume-cloning-configured-dataset')
+random_vtype_dataset = BlockstorageDatasets.volume_types(
+    max_datasets=1, randomize=True)
+random_vtype_dataset.apply_test_tags('volume-cloning-single-random-dataset')
+volume_types_dataset.merge_dataset_tags(configured_vtypes_dataset)
+volume_types_dataset.merge_dataset_tags(random_vtype_dataset)
 
 
 @DataDrivenFixture
-class CBSVolumeCloneTests(DataDrivenVolumesTestFixture):
+class CBSVolumeCloneTests(VolumesTestFixture):
 
     @data_driven_test(volume_types_dataset)
-    @tags('volumes', 'smoke', 'cloning')
+    @tags('smoke')
     def ddtest_create_exact_clone_of_existing_volume_and_verify_attributes(
             self, volume_type_name, volume_type_id):
         """Verify that data written to a volume is intact and available
@@ -72,7 +80,6 @@ class CBSVolumeCloneTests(DataDrivenVolumesTestFixture):
         #    volume, volume_clone_info, key_list=key_list)
 
     @data_driven_test(volume_types_dataset)
-    @tags('volumes', 'smoke', 'cloning')
     def ddtest_create_larger_clone_of_volume(
             self, volume_type_name, volume_type_id):
         """Clone a volume using a larger size than the original volume."""
@@ -84,7 +91,7 @@ class CBSVolumeCloneTests(DataDrivenVolumesTestFixture):
 
         self.assertResponseDeserializedAndOk(clone_response)
         volume_clone = clone_response.entity
-        self.assertVolumeCreateSuceeded(volume_clone.id_, volume_clone.size)
+        self.assertVolumeCloneSucceeded(volume_clone.id_, volume_clone.size)
 
         # Add cleanup for volume clone
         self.addCleanup(

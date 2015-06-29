@@ -19,6 +19,17 @@ from cafe.drivers.unittest.fixtures import BaseTestFixture
 
 class BaseBlockstorageTestFixture(BaseTestFixture):
 
+    @staticmethod
+    def add_cleanup(obj_ref, function, *args, **kwargs):
+        """ Attempts to use the appropriate add cleanup method.
+
+        Automatically used addClassCleanup if called from a classmethod,
+        or addCleanup if called from an instance method"""
+        try:
+            obj_ref.addCleanup(function, *args, **kwargs)
+        except TypeError:
+            obj_ref.addClassCleanup(function, *args, **kwargs)
+
     def assertExactResponseStatus(
             self, requests_response_object, expected_status, msg=None):
         std_msg = "Received status code {0} != {1}".format(
