@@ -38,10 +38,22 @@ class StoreRegisteredImageFile(ImagesFixture):
 
         # Count set to number of images required for this module
         reg_images = cls.images.behaviors.register_new_images(
-            name=rand_name('store_registered_image_file'), count=3)
+            name=rand_name('store_registered_image_file'), count=5)
+
         cls.reg_image = reg_images.pop()
         cls.duplicate_reg_image = reg_images.pop()
         cls.content_type_reg_image = reg_images.pop()
+
+        cls.deactivated_image = reg_images.pop()
+        cls.images.client.store_image_file(
+            cls.deactivated_image.id_, cls.images.config.test_file)
+        cls.images_admin.client.deactivate_image(cls.deactivated_image.id_)
+
+        cls.reactivated_image = reg_images.pop()
+        cls.images.client.store_image_file(
+            cls.reactivated_image.id_, cls.images.config.test_file)
+        cls.images_admin.client.deactivate_image(cls.reactivated_image.id_)
+        cls.images_admin.client.reactivate_image(cls.reactivated_image.id_)
 
     @classmethod
     def tearDownClass(cls):
@@ -108,6 +120,64 @@ class StoreRegisteredImageFile(ImagesFixture):
             resp.status_code, 409,
             Messages.STATUS_CODE_MSG.format(409, resp.status_code))
 
+    def test_store_image_file_using_deactivated_image_forbidden(self):
+        """
+        @summary: Store image file using deactivated image
+
+        1) Store image file using deactivated image
+        2) Verify that the response code is 409
+        3) Reactivate the image
+        4) Verify that the response is ok
+        5) Get image file of the image
+        6) Verify that the response is ok
+        7) Verify that the image file contains the correct data
+        """
+
+        resp = self.images.client.store_image_file(
+            self.deactivated_image.id_, self.images.config.alt_test_file)
+        self.assertEqual(
+            resp.status_code, 409,
+            Messages.STATUS_CODE_MSG.format(409, resp.status_code))
+
+        resp = self.images_admin.client.reactivate_image(
+            self.deactivated_image.id_)
+        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
+
+        resp = self.images.client.get_image_file(self.deactivated_image.id_)
+        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
+
+        self.assertEqual(
+            resp.content, self.images.config.test_file,
+            msg='Unexpected file content. Expected: {0} '
+                'Received: {1}'.format(self.images.config.test_file,
+                                       resp.content))
+
+    def test_store_new_image_file_using_reactivated_image_forbidden(self):
+        """
+        @summary: Store new image file using reactivated image
+
+        1) Store new image file using reactivated image
+        2) Verify that the response code is 409
+        3) Get image file of the image
+        4) Verify that the response is ok
+        5) Verify that the image file contains the original data
+        """
+
+        resp = self.images.client.store_image_file(
+            self.reactivated_image.id_, self.images.config.alt_test_file)
+        self.assertEqual(
+            resp.status_code, 409,
+            Messages.STATUS_CODE_MSG.format(409, resp.status_code))
+
+        resp = self.images.client.get_image_file(self.reactivated_image.id_)
+        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
+
+        self.assertEqual(
+            resp.content, self.images.config.test_file,
+            msg='Unexpected file content. Expected: {0} '
+                'Received: {1}'.format(self.images.config.test_file,
+                                       resp.content))
+
     def test_store_image_file_using_invalid_content_type(self):
         """
         @summary: Store image file using invalid content type
@@ -115,7 +185,7 @@ class StoreRegisteredImageFile(ImagesFixture):
         1) Store image file using invalid content type
         2) Verify response code is 415
         3) Get image details of the image
-        4) Verify that the response code is ok
+        4) Verify that the response is ok
         5) Verify that the image has not been updated
         """
 
