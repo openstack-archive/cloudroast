@@ -33,7 +33,7 @@ class ImageSharing(ImagesIntegrationFixture):
 
         # Count set to number of images required for this module
         created_images = cls.images.behaviors.create_images_via_task(
-            image_properties={'name': rand_name('image_sharing')}, count=4)
+            image_properties={'name': rand_name('image_sharing')}, count=7)
 
         cls.single_member_image = created_images.pop()
         cls.multiple_members_image = created_images.pop()
@@ -45,6 +45,31 @@ class ImageSharing(ImagesIntegrationFixture):
         cls.no_export_image = created_images.pop()
         cls.images.client.create_image_member(
             cls.no_export_image.id_, cls.alt_one_member_id)
+
+        cls.shared_image = created_images.pop()
+        cls.images.client.create_image_member(
+            cls.shared_image.id_, cls.alt_one_member_id)
+        cls.images_alt_one.client.update_image_member(
+            cls.shared_image.id_, cls.alt_one_member_id,
+            ImageMemberStatus.ACCEPTED)
+
+        image = created_images.pop()
+        cls.images.client.create_image_member(image.id_, cls.alt_one_member_id)
+        cls.images_alt_one.client.update_image_member(
+            image.id_, cls.alt_one_member_id, ImageMemberStatus.ACCEPTED)
+        cls.images_admin.client.deactivate_image(image.id_)
+        cls.shared_deactivated_image = (
+            cls.images.client.get_image_details(image.id_).entity)
+
+        alt_image = created_images.pop()
+        cls.images.client.create_image_member(
+            alt_image.id_, cls.alt_one_member_id)
+        cls.images_alt_one.client.update_image_member(
+            alt_image.id_, cls.alt_one_member_id, ImageMemberStatus.ACCEPTED)
+        cls.images_admin.client.deactivate_image(alt_image.id_)
+        cls.images_admin.client.reactivate_image(alt_image.id_)
+        cls.shared_reactivated_image = (
+            cls.images.client.get_image_details(alt_image.id_).entity)
 
         cls.imported_image = cls.images.behaviors.create_image_via_task(
             image_properties={'name': rand_name('image_sharing')},
@@ -651,3 +676,67 @@ class ImageSharing(ImagesIntegrationFixture):
             len(exported_images), 1,
             msg=('Unexpected number of images received. Expected: 1 '
                  'Received: {0}').format(len(exported_images)))
+
+    def test_share_image_as_member_of_image_forbidden(self):
+        """
+        @summary: Share image as member of image
+
+        1) Using alt_one_member, share shared_image with alt_two_member
+        2) Verify that the response code is 403
+        3) Using alt_two_member, get image details of shared_image
+        4) Verify that the response code is 404
+        """
+
+        resp = self.images_alt_one.client.create_image_member(
+            self.shared_image.id_, self.alt_two_member_id)
+        self.assertEqual(
+            resp.status_code, 403,
+            Messages.STATUS_CODE_MSG.format(403, resp.status_code))
+
+        resp = self.images_alt_two.client.get_image_details(
+            self.shared_image.id_)
+        self.assertEqual(
+            resp.status_code, 404,
+            Messages.STATUS_CODE_MSG.format(404, resp.status_code))
+
+    def test_shared_deactivated_image_accessibility(self):
+        """
+        @summary: Shared deactivated image accessibility
+
+        1) Using alt_one_member, get image details of shared_deactivated_image
+        2) Verify that the response is ok
+        3) Using alt_one_member, list images
+        5) Verify that shared_deactivated_image is present
+        """
+
+        resp = self.images_alt_one.client.get_image_details(
+            self.shared_deactivated_image.id_)
+        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
+
+        listed_images = self.images_alt_one.behaviors.list_all_images()
+        self.assertIn(
+            self.shared_deactivated_image, listed_images,
+            msg='Unexpected images received. Expected: {0} to be present '
+                'Received: '
+                'Image not present'.format(self.shared_deactivated_image))
+
+    def test_shared_reactivated_image_accessibility(self):
+        """
+        @summary: Shared reactivated image accessibility
+
+        1) Using alt_one_member, get image details of shared_reactivated_image
+        2) Verify that the response is ok
+        3) Using alt_one_member, list images
+        5) Verify that shared_reactivated_image is present
+        """
+
+        resp = self.images_alt_one.client.get_image_details(
+            self.shared_reactivated_image.id_)
+        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
+
+        listed_images = self.images_alt_one.behaviors.list_all_images()
+        self.assertIn(
+            self.shared_reactivated_image, listed_images,
+            msg='Unexpected images received. Expected: {0} to be present '
+                'Received: '
+                'Image not present'.format(self.shared_reactivated_image))
