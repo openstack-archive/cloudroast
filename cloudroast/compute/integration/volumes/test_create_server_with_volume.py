@@ -17,6 +17,7 @@ limitations under the License.
 from unittest.suite import TestSuite
 
 from cafe.drivers.unittest.decorators import tags
+from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.blockstorage.volumes_api.v1.models import statuses
 from cloudroast.compute.fixtures import BlockstorageIntegrationFixture
 
@@ -46,7 +47,11 @@ class CreateServerVolumeIntegrationTest(BlockstorageIntegrationFixture):
 
         """
         super(CreateServerVolumeIntegrationTest, cls).setUpClass()
-        cls.server = cls.server_behaviors.create_active_server().entity
+        cls.key = cls.keypairs_client.create_keypair(rand_name("key")).entity
+        cls.resources.add(cls.key.name,
+                          cls.keypairs_client.delete_keypair)
+        cls.server = cls.server_behaviors.create_active_server(
+            key_name=cls.key.name).entity
         cls.resources.add(cls.server.id,
                           cls.servers_client.delete_server)
         cls.volume = cls.blockstorage_behavior.create_available_volume(
