@@ -62,7 +62,7 @@ class DeactivateImage(ImagesIntegrationFixture):
         super(DeactivateImage, cls).tearDownClass()
 
     @data_driven_test(
-        ImagesDatasetListGenerator.DeactivateImages())
+        ImagesDatasetListGenerator.DeactivateImageTypes())
     def ddtest_deactivate_image(self, image):
         """
         @summary: Deactivate an image

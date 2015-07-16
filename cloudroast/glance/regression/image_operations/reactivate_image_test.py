@@ -66,7 +66,7 @@ class ReactivateImage(ImagesIntegrationFixture):
         super(ReactivateImage, cls).tearDownClass()
 
     @data_driven_test(
-        ImagesDatasetListGenerator.ReactivateImages())
+        ImagesDatasetListGenerator.ReactivateImageTypes())
     def ddtest_reactivate_image(self, image):
         """
         @summary: Reactivate an image
