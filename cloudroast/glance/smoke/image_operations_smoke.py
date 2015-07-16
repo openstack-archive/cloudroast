@@ -14,13 +14,18 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import unittest
+
 from cafe.drivers.unittest.decorators import (
     data_driven_test, DataDrivenFixture)
 from cloudcafe.common.tools.datagen import rand_name
+from cloudcafe.glance.config import ImagesConfig
 from cloudcafe.glance.common.constants import Messages
 
 from cloudroast.glance.fixtures import ImagesFixture
 from cloudroast.glance.generators import ImagesDatasetListGenerator
+
+images_config = ImagesConfig()
 
 
 @DataDrivenFixture
@@ -128,6 +133,8 @@ class ImageOperationsSmoke(ImagesFixture):
             resp.status_code, 204,
             Messages.STATUS_CODE_MSG.format(204, resp.status_code))
 
+    @unittest.skipUnless(images_config.allow_deactivate_reactivate,
+                         'Endpoint has incorrect access')
     def test_deactivate_image(self):
         """
         @summary: Deactivate an image
@@ -142,6 +149,8 @@ class ImageOperationsSmoke(ImagesFixture):
             resp.status_code, 204,
             Messages.STATUS_CODE_MSG.format(204, resp.status_code))
 
+    @unittest.skipUnless(images_config.allow_deactivate_reactivate,
+                         'Endpoint has incorrect access')
     def test_reactivate_image(self):
         """
         @summary: Reactivate an image
