@@ -33,8 +33,8 @@ class RegisteredImageOperationsSmoke(ImagesFixture):
     def setUpClass(cls):
         super(RegisteredImageOperationsSmoke, cls).setUpClass()
 
-        cls.file_data = cls.images.behaviors.read_data_file(
-            cls.images.config.test_file)
+        with open(cls.images.config.test_file, 'r') as DATA:
+            cls.file_data = DATA.read().rstrip()
 
         # Count set to number of images required for this module
         registered_images = cls.images.behaviors.register_new_images(
