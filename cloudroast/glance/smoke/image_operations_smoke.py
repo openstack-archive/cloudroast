@@ -72,7 +72,7 @@ class ImageOperationsSmoke(ImagesFixture):
 
     @data_driven_test(
         ImagesDatasetListGenerator.ListImagesInvalidParameters())
-    def ddtest_invalid_list_images(self, params):
+    def ddtest_invalid_list_images(self, prop):
         """
         @summary: Attempt to list a subset of images passing in invalid query
         parameters
@@ -86,7 +86,7 @@ class ImageOperationsSmoke(ImagesFixture):
         """
 
         # Invalid parameters should be ignored, the response code should be 200
-        resp = self.images.client.list_images(params)
+        resp = self.images.client.list_images(prop)
         self.assertEqual(
             resp.status_code, 200,
             Messages.STATUS_CODE_MSG.format(200, resp.status_code))
