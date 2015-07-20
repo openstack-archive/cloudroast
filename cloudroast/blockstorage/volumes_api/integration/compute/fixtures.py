@@ -13,6 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
+
 from cloudcafe.common.tools.datagen import random_string
 from cloudcafe.compute.composites import ComputeIntegrationComposite
 from cloudroast.blockstorage.volumes_api.fixtures import VolumesTestFixture
@@ -218,8 +219,62 @@ class ComputeIntegrationTestFixture(VolumesTestFixture):
             connection_timeout=connection_timeout, key=key,
             password=password)
 
+    @classmethod
+    def setup_server_and_attached_volume_with_data(
+            cls, server=None, volume=None):
+        """
+        Builds a new server using configured defaults
+        Attaches, formats and mounts a new volume
+        Writes data to the volume
+        Saves the md5sum of the written data as a class attribute
+        Syncs the filesystem write cache.
+        """
 
-class VolumesImagesIntegrationFixture(ComputeIntegrationTestFixture):
+        # Build new server using configured defaults
+        cls.test_server = server or cls.new_server()
+
+        # Set remote instance client up
+        cls.server_conn = cls.connect_to_instance(cls.test_server)
+        cls.volume_mount_point = cls.server_conn.generate_mountpoint()
+        cls.test_volume = volume or cls.new_volume()
+
+        # Attach Volume
+        cls.test_attachment = cls.attach_volume_and_get_device_info(
+            cls.server_conn, cls.test_server.id, cls.test_volume.id_)
+
+        # Format Volume
+        cls.format_attached_volume(
+            cls.server_conn, cls.test_attachment.os_disk_device_name)
+
+        # Mount Volume
+        cls.mount_attached_volume(
+            cls.server_conn, cls.test_attachment.os_disk_device_name,
+            mount_point=cls.volume_mount_point)
+
+        # Write data to volume
+        cls.written_data = "a" * 1024
+        cls.written_filename = "qe_test_datafile"
+        resp = cls.create_remote_file(
+            cls.server_conn, cls.volume_mount_point, cls.written_filename,
+            file_content=cls.written_data)
+        assert resp is not None, (
+            "Could not verify writability of attached volume")
+
+        # Save written file md5sum
+        cls.original_md5hash = cls.get_remote_file_md5_hash(
+            cls.server_conn, cls.volume_mount_point, cls.written_filename)
+        assert cls.original_md5hash is not None, (
+            "Unable to hash file on mounted volume")
+
+        # Make the fs writes cached data to disk before unmount.
+        cls.server_conn.filesystem_sync()
+
+    @classmethod
+    def unmount_and_detach_test_volume(cls):
+        cls.unmount_attached_volume(
+            cls.server_conn, cls.test_attachment.os_disk_device_name)
+        cls.volume_attachments.behaviors.delete_volume_attachment(
+            cls.test_attachment.id_, cls.test_server.id)
 
     def calculate_volume_size_for_image(self, image):
         """Get size from image object if possible, or use configured value
@@ -266,14 +321,14 @@ class VolumesImagesIntegrationFixture(ComputeIntegrationTestFixture):
         if errors:
             self.fail(self._formatMessage(msg, "\n".join(errors)))
 
-    def assertMinDiskSizeIsSet(self, image):
+    def assertMinDiskSizeIsSet(self, image, msg=None):
         # TODO: This should probably be an images behavior method that I
         #       wrap here.
         if getattr(image, 'min_disk', 0) <= 0:
-            msg = (
-                "\nImage {0} ({1}) does not have a min_disk size set, or "
+            stdmsg = (
+                "\nImage {0} '{1}' does not have a min_disk size set, or "
                 "has a min_disk size of 0".format(image.id, image.name))
-            self.fail(self._formatMessage(msg))
+            self.fail(self._formatMessage(msg, stdmsg))
 
     def check_if_minimum_disk_size_is_set(self, image):
         """Check the image info to make sure the min_disk attribute
@@ -287,12 +342,18 @@ class VolumesImagesIntegrationFixture(ComputeIntegrationTestFixture):
     def make_server_snapshot(self, server, add_cleanup=True):
         server_snapshot_name = random_string(
             prefix="cbs_qe_image_of_{0}_".format(server.name), size=10)
+
         create_img_resp = self.servers.client.create_image(
             server.id, name=server_snapshot_name)
+
         assert create_img_resp.ok, (
             "Create-Server-Image call failed with a {0}".format(
                 create_img_resp.status_code))
 
+        self.images.behaviors.verify_server_snapshotting_progression(server.id)
+
+        # Poll for list of all snapshots and find the one that belongs to our
+        # server.
         list_imgs_resp = self.images.client.list_images()
         assert list_imgs_resp.ok, (
             "list-images call failed with a {0}".format(
@@ -312,10 +373,11 @@ class VolumesImagesIntegrationFixture(ComputeIntegrationTestFixture):
             self.addCleanup(
                 self.images.client.delete_image, server_snapshot.id)
 
-        # Wait for the image to become active
+        # Wait for the image to become active just in case
         self.images.behaviors.wait_for_image_status(
             server_snapshot.id, 'ACTIVE', 10, 600)
 
+        # get the model for the snapshot in question
         resp = self.images.client.get_image(server_snapshot.id)
         assert resp.ok, ("Could not get updated snapshot info after create")
         assert resp.entity is not None, (
@@ -335,25 +397,29 @@ class VolumesImagesIntegrationFixture(ComputeIntegrationTestFixture):
         # Create a bootable volume from the server snapshot
         return self.create_volume_from_image_test(volume_type, server_snapshot)
 
-    def create_volume_from_image_test(self, volume_type, image):
+    def create_volume_from_image_test(
+            self, volume_type, image, add_cleanup=True):
         size = self.calculate_volume_size_for_image(image)
         volume = self.volumes.behaviors.create_available_volume(
             size, volume_type.id_, image_ref=image.id,
             timeout=self.volumes.config.volume_create_max_timeout)
 
-        try:
-            self.addCleanup(
-                self.volumes.behaviors.delete_volume_confirmed, volume.id_)
-        except:
-            raise Exception(
-                "Could not create a volume in setup for "
-                "create_volume_from_image test")
+        if add_cleanup:
+            try:
+                self.addCleanup(
+                    self.volumes.behaviors.delete_volume_confirmed, volume.id_)
+            except:
+                raise Exception(
+                    "Could not create a volume in setup for "
+                    "create_volume_from_image test")
 
         self.assertEquals(
             str(size), str(volume.size),
             "Expected volume size {0} did not match actual observed volume"
             " size {1}".format(size, volume.size))
 
+        # TODO: Break this out into it's own assertion with progress verifer
+        # to give the bootable flag time to populate.
         self.assertEquals(
             'true', volume.bootable, "Volume built from image was not marked "
             "as bootable")

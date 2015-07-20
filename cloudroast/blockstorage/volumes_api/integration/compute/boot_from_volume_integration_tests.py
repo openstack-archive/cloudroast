@@ -20,86 +20,77 @@ from cloudcafe.blockstorage.datasets import (
 from cloudcafe.common.tools.datagen import random_string
 
 from cloudroast.blockstorage.volumes_api.integration.compute.fixtures \
-    import VolumesImagesIntegrationFixture
+    import ComputeIntegrationTestFixture
 
 
-# Create tagged Image dataset
-images_complete_dataset = ComputeIntegrationDatasets.images()
-images_single_random_dataset = ComputeIntegrationDatasets.images(
-    max_datasets=1, randomize=True)
-images_configured_dataset = ComputeIntegrationDatasets.configured_images()
-images_complete_dataset.apply_test_tags("bfv-exhaustive")
-images_configured_dataset.apply_test_tags("bfv-configured")
-images_single_random_dataset.apply_test_tags("bfv-single-random")
-images_complete_dataset.merge_dataset_tags(
-    images_configured_dataset,
-    images_single_random_dataset)
-
-# Create tagged Images by VolumeType dataset
-images_by_volume_complete_dataset = \
-    ComputeIntegrationDatasets.images_by_volume_type()
-images_by_volume_single_random_dataset = \
-    ComputeIntegrationDatasets.images_by_volume_type(
+class test_datasets(object):
+    # Create tagged Image dataset
+    images = ComputeIntegrationDatasets.images()
+    single = ComputeIntegrationDatasets.images(
         max_datasets=1, randomize=True)
-images_by_volume_configured_dataset = \
-    ComputeIntegrationDatasets.configured_images_by_volume_type()
-images_by_volume_complete_dataset.apply_test_tags("bfv-exhaustive")
-images_by_volume_configured_dataset.apply_test_tags("bfv-configured")
-images_by_volume_single_random_dataset.apply_test_tags("bfv-single-random")
-images_by_volume_complete_dataset.merge_dataset_tags(
-    images_by_volume_configured_dataset,
-    images_by_volume_single_random_dataset)
+    configured = ComputeIntegrationDatasets.configured_images()
+    images.apply_test_tags("bfv-exhaustive")
+    configured.apply_test_tags("bfv-configured")
+    single.apply_test_tags("bfv-single-random")
+    images.merge_dataset_tags(configured, single)
 
-# Create tagged Images by Flavor dataset
-images_by_flavor_complete_dataset = \
-    ComputeIntegrationDatasets.images_by_flavor()
-images_by_flavor_single_random_dataset = \
-    ComputeIntegrationDatasets.images_by_flavor(
+    # Create tagged Images by VolumeType dataset
+    images_by_volume = \
+        ComputeIntegrationDatasets.images_by_volume_type()
+    single = ComputeIntegrationDatasets.images_by_volume_type(
         max_datasets=1, randomize=True)
-images_by_flavor_configured_dataset = \
-    ComputeIntegrationDatasets.configured_images_by_flavor()
-images_by_flavor_complete_dataset.apply_test_tags("bfv-exhaustive")
-images_by_flavor_configured_dataset.apply_test_tags("bfv-configured")
-images_by_flavor_single_random_dataset.apply_test_tags("bfv-single-random")
-images_by_flavor_complete_dataset.merge_dataset_tags(
-    images_by_flavor_configured_dataset,
-    images_by_flavor_single_random_dataset)
+    configured = ComputeIntegrationDatasets.configured_images_by_volume_type()
+    images_by_volume.apply_test_tags("bfv-exhaustive")
+    configured.apply_test_tags("bfv-configured")
+    single.apply_test_tags("bfv-single-random")
+    images_by_volume.merge_dataset_tags(configured, single)
+
+    # Create tagged Images by Flavor dataset
+    images_by_flavor = \
+        ComputeIntegrationDatasets.images_by_flavor()
+    single = ComputeIntegrationDatasets.images_by_flavor(
+        max_datasets=1, randomize=True)
+    configured = ComputeIntegrationDatasets.configured_images_by_flavor()
+    images_by_flavor.apply_test_tags("bfv-exhaustive")
+    configured.apply_test_tags("bfv-configured")
+    single.apply_test_tags("bfv-single-random")
+    images_by_flavor.merge_dataset_tags(configured, single)
 
 
 @DataDrivenFixture
-class BootFromVolumeIntegrationTests(VolumesImagesIntegrationFixture):
+class BootFromVolumeIntegrationTests(ComputeIntegrationTestFixture):
 
-    @data_driven_test(images_complete_dataset)
+    @data_driven_test(test_datasets.images)
     def ddtest_non_asserting_min_disk_check_for_image(self, image):
         """Check if the image has min disk attribute set, print a
         message if it doesn't.  This test will only fail on Error"""
         self.check_if_minimum_disk_size_is_set(image)
 
-    @data_driven_test(images_complete_dataset)
+    @data_driven_test(test_datasets.images)
     def ddtest_min_disk_is_set_for_image(self, image):
         """Verify that image has min disk attribute set"""
         self.assertMinDiskSizeIsSet(image)
 
-    @data_driven_test(images_by_volume_complete_dataset)
+    @data_driven_test(test_datasets.images_by_volume)
     def ddtest_create_basic_bootable_volume_from(self, volume_type, image):
         """Create a single volume_type volume from image"""
         self.create_volume_from_image_test(volume_type, image)
 
-    @data_driven_test(images_by_flavor_complete_dataset)
+    @data_driven_test(test_datasets.images_by_flavor)
     def ddtest_create_bootable_volume_from_a_snapshot_of_a_server(
             self, image, flavor,
             volume_type=BlockstorageDatasets.default_volume_type_model()):
         self.create_bootable_volume_from_server_snapshot(
             image, flavor, volume_type)
 
-    @data_driven_test(images_by_flavor_complete_dataset)
+    @data_driven_test(test_datasets.images_by_flavor)
     def ddtest_create_bootable_volume_from_last_of_3_snapshots_of_a_server(
             self, image, flavor,
             volume_type=BlockstorageDatasets.default_volume_type_model()):
         self.create_bootable_volume_from_third_snapshot_of_server_test(
             image, flavor, volume_type)
 
-    @data_driven_test(images_by_flavor_complete_dataset)
+    @data_driven_test(test_datasets.images_by_flavor)
     def ddtest_verify_data_on_custom_snapshot_after_copy_to_volume(
             self, image, flavor,
             volume_type=BlockstorageDatasets.default_volume_type_model()):

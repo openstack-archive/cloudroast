@@ -38,7 +38,7 @@ class VolumeAttachmentsAPISmoke(ComputeIntegrationTestFixture):
     def setUpClass(cls):
         super(VolumeAttachmentsAPISmoke, cls).setUpClass()
         cls.test_server = cls.new_server()
-        cls.test_volume = cls.new_volume()
+        cls.test_volume = cls.new_volume(add_cleanup=False)
         cls.test_attachment = \
             cls.volume_attachments.behaviors.attach_volume_to_server(
                 cls.test_server.id, cls.test_volume.id_)
@@ -51,6 +51,12 @@ class VolumeAttachmentsAPISmoke(ComputeIntegrationTestFixture):
         cls.addClassCleanup(
             cls.volume_attachments.client.delete_volume_attachment,
             cls.test_attachment.id_)
+        cls.addClassCleanup(
+            cls.volume_attachments.behaviors.
+            verify_volume_status_progression_during_detachment,
+            cls.test_volume.id_, raise_on_error=False)
+        cls.addClassCleanup(
+            cls.volumes.client.delete_volume, cls.test_volume.id_)
 
     @tags('integration', 'smoke')
     def test_attach_volume_to_server(self):
