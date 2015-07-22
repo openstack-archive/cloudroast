@@ -25,6 +25,10 @@ from cloudcafe.networking.networks.extensions.security_groups_api.constants \
     import SecurityGroupsErrorTypes, SecurityGroupsResponseCodes
 
 
+LONG_DESCRIPTION_DATA = 'Long Security Group Test text description' * 10
+LONG_NAME_DATA = 'Long Security Group Test text name name name' * 10
+
+
 # Creating data sets for data driven testing
 data_set_list = DatasetList()
 data_set_list.append_new_dataset(
@@ -73,6 +77,23 @@ data_set_list_negative.append_new_dataset(
     "test_desc": 'invalid tenant ID on the request body',
     "error_type": 'HTTP_BAD_REQUEST'},
     tags=['sec_group', 'post', 'negative', 'rbac_creator'])
+
+# Bug fix available on Neutron .224
+data_set_list_negative.append_new_dataset(
+    name='w_long_description',
+    data_dict={"name": 'test_secgroup_create_neg',
+        "http_status": 'BAD_REQUEST',
+        "test_desc": 'description longer than 255 chars',
+        "error_type": 'HTTP_BAD_REQUEST',
+        "description": LONG_DESCRIPTION_DATA},
+    tags=['bug', 'post', 'negative', 'rbac_creator'])
+data_set_list_negative.append_new_dataset(
+    name='w_long_name',
+    data_dict={"name": 'test_secgroup_create_neg',
+        "http_status": 'BAD_REQUEST',
+        "test_desc": 'name longer than 255 chars',
+        "name": LONG_NAME_DATA},
+    tags=['bug', 'post', 'negative', 'rbac_creator'])
 
 
 @DataDrivenFixture
