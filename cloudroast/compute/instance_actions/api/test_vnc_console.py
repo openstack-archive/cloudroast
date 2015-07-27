@@ -15,6 +15,7 @@ limitations under the License.
 """
 
 import unittest
+import requests
 
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.compute.common.types import ComputeHypervisors, \
@@ -52,6 +53,10 @@ class ServerVncConsoleTests(object):
         self.assertIsNotNone(console.url)
         self._verify_console_url(console.url)
 
+    def _verify_console_url(self, url):
+        resp = requests.head(url)
+        self.assertEqual(resp.status_code, 200)
+
     @tags(type='smoke', net='no')
     def test_get_novnc_console(self):
         """
@@ -73,12 +78,8 @@ class ServerVncConsoleTests(object):
         self.assertIsNotNone(console.url)
         self._verify_console_url(console.url)
 
-    def _verify_console_url(self, url):
-        resp = self.compute.vnc_console.behaviors.get_vnc_console_response(url)
-        self.assertEqual(resp, 'HTTP/1.1 200 OK')
-
     @tags(type='smoke', net='no')
-    def test_connect_xvpvnc_server_invalid_token(self):
+    def test_get_xvpvnc_console_invalid_token(self):
         """
         Access shouldn't be granted to the XVPVNC console with invalid token
 
@@ -94,8 +95,9 @@ class ServerVncConsoleTests(object):
         console = resp.entity
         self._verify_vnc_server_not_accessible_with_invalid_token(console)
 
+    @unittest.skip('Intended behavior')
     @tags(type='smoke', net='no')
-    def test_connect_novnc_server_invalid_token(self):
+    def test_get_novnc_console_invalid_token(self):
         """
         Access shouldn't be granted to the NOVNC console with invalid token
 
@@ -115,9 +117,9 @@ class ServerVncConsoleTests(object):
         invalid_token = 'invalid_token'
         valid_vnc_server = console.url.split('=')[0]
         invalid_url = "{0}={1}".format(valid_vnc_server, invalid_token)
-        response = self.compute.vnc_console.behaviors.get_vnc_console_response(
-            invalid_url)
-        self.assertIn('HTTP/1.1 401 Not Authorized', response)
+        #print invalid_url
+        resp = requests.head(invalid_url)
+        self.assertEqual(resp.status_code, 401)
 
 
 class ServerFromImageVncConsoleTests(ServerFromImageFixture,
