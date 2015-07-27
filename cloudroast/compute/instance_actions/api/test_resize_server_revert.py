@@ -28,10 +28,10 @@ compute_config = ComputeConfig()
 hypervisor = compute_config.hypervisor.lower()
 
 flavors_config = FlavorsConfig()
-resize_enabled = flavors_config.resize_enabled
+resize_up_enabled = flavors_config.resize_up_enabled
 
 can_resize = (
-    resize_enabled
+    resize_up_enabled
     and hypervisor not in [ComputeHypervisors.IRONIC,
                            ComputeHypervisors.LXC_LIBVIRT])
 
