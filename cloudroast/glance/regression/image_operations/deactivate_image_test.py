@@ -164,6 +164,16 @@ class DeactivateImage(ImagesIntegrationFixture):
         """
         @summary: Deactivate image and return the get image details response
 
+        @param image_id: Image id to deactivate
+        @type image_id: Uuid
+        @param images_client: Images client to user
+        @type images_client: Object
+        @param response_code: Response status code
+        @type response_code: Integer
+
+        @return: Get image details response
+        @rtype: Object
+
         1) Deactivate an image as specified user
         2) Verify that the response code is as expected
         3) Get image details passing in the image id

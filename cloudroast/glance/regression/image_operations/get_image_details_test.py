@@ -303,6 +303,14 @@ class GetImageDetails(ImagesFixture):
         """
         @summary: Get image details and return errors
 
+        @param image_id: Image id to get
+        @type image_id: Uuid
+        @param images_client: Images client to user
+        @type images_client: Object
+
+        @return: Errors, Get image status
+        @rtype: List, String
+
         1) Get image details passing in the image id
         2) Verify that the response code is 200
         3) Check that the returned image's properties are as expected

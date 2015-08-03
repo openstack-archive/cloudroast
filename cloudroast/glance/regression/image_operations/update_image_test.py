@@ -604,6 +604,16 @@ class UpdateImage(ImagesFixture):
         @summary: Update image by adding or replacing an image property and
         return the added or replaced image property
 
+        @param image_id: Image id to update
+        @type image_id: Uuid
+        @param action: Update image action to perform
+        @type action: String
+        @param new_prop: New image property to add
+        @type new_prop: String
+
+        @return: Get image details properties
+        @rtype: String
+
         1) Update an image adding or replacing an image property
         2) Verify that the response code is 200
         3) Verify that the update image response shows that the property has
@@ -648,6 +658,12 @@ class UpdateImage(ImagesFixture):
         """
         @summary: Update image by removing an image property and return the get
         image details response
+
+        @param image_id: Image id to update
+        @type image_id: Uuid
+
+        @return: Get image details
+        @rtype: Object
 
         1) Update an image removing an image property
         2) Verify that the response code is 200
