@@ -73,60 +73,6 @@ class ListImageMembers(ImagesFixture):
         cls.images.behaviors.resources.release()
         super(ListImageMembers, cls).tearDownClass()
 
-    def test_list_image_members(self):
-        """
-        @summary: List image members
-
-        1) List image members for image with two image members
-        2) Verify that the response code is 200
-        3) Verify that two image members exist
-        4) Verify that each returned image member's properties are as expected
-        generically
-        5) Verify that each returned image member's properties are as expected
-        more specifically
-        """
-
-        image_member_ids = []
-        errors = []
-
-        resp = self.images.client.list_image_members(
-            self.shared_image.id_)
-        self.assertEqual(
-            resp.status_code, 200,
-            Messages.STATUS_CODE_MSG.format(200, resp.status_code))
-        listed_image_members = resp.entity
-
-        self.assertEqual(
-            len(listed_image_members), 2,
-            msg=('Unexpected number of image members received. Expected: 2 '
-                 'Received: {0}').format(len(listed_image_members)))
-
-        [image_member_ids.append(image_member.member_id)
-         for image_member in listed_image_members]
-
-        self.assertIn(
-            self.alt_member_id, image_member_ids,
-            msg=('Unexpected image member received. Expected: {0} in list of '
-                 'image members '
-                 'Received: {1}').format(self.alt_member_id, image_member_ids))
-        self.assertIn(
-            self.alt_two_member_id, image_member_ids,
-            msg=('Unexpected image member received. Expected: {0} in list of '
-                 'image members '
-                 'Received: {1}').format(self.alt_two_member_id,
-                                         image_member_ids))
-
-        for image_member in listed_image_members:
-            errors = self.images.behaviors.validate_image_member(image_member)
-            errors.append(self._validate_image_member(image_member))
-
-        self.assertEqual(
-            errors, [[]],
-            msg=('Unexpected error received for image {0}. '
-                 'Expected: No errors '
-                 'Received: {1}').format(self.shared_image.id_,
-                                         errors))
-
     def test_list_image_members_all_member_statuses(self):
         """
         @summary: List image members passing all for member_status
