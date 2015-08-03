@@ -28,10 +28,9 @@ class AddImageTag(ImagesFixture):
 
         # Count set to number of images required for this module
         created_images = cls.images.behaviors.create_images_via_task(
-            image_properties={'name': rand_name('add_image_tag')}, count=7)
+            image_properties={'name': rand_name('add_image_tag')}, count=6)
 
         cls.created_image = created_images.pop()
-        cls.single_tag_image = created_images.pop()
         cls.multiple_tags_image = created_images.pop()
         cls.quota_image = created_images.pop()
         cls.duplicate_tag_image = created_images.pop()
@@ -47,25 +46,6 @@ class AddImageTag(ImagesFixture):
     def tearDownClass(cls):
         cls.images.behaviors.resources.release()
         super(AddImageTag, cls).tearDownClass()
-
-    def test_add_single_image_tag(self):
-        """
-        @summary: Add single image tag
-
-        1) Add single image tag via wrapper test method
-        2) Verify that the added image tag is in the list of image tags
-        """
-
-        tag = rand_name('tag')
-
-        get_image = self._add_image_tag(self.single_tag_image.id_, tag)
-
-        self.assertIn(
-            tag, get_image.tags,
-            msg=('Unexpected tag for image {0} received. '
-                 'Expected: {1} in tags Received: {2} '
-                 'not in tags').format(self.single_tag_image.id_, tag,
-                                       get_image.tags))
 
     def test_add_multiple_image_tags(self):
         """

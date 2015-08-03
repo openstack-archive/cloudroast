@@ -33,12 +33,9 @@ class DeleteImageTag(ImagesFixture):
 
         # Count set to number of images required for this module
         created_images = cls.images.behaviors.create_images_via_task(
-            image_properties={'name': rand_name('delete_image_tag')}, count=6)
+            image_properties={'name': rand_name('delete_image_tag')}, count=5)
 
         cls.created_image = created_images.pop()
-
-        cls.single_tag_image = created_images.pop()
-        cls.images.client.add_image_tag(cls.single_tag_image.id_, cls.tag)
 
         cls.multiple_tags_image = created_images.pop()
         for tag in cls.tags_to_add:
@@ -61,23 +58,6 @@ class DeleteImageTag(ImagesFixture):
         cls.images.behaviors.resources.release()
         super(DeleteImageTag, cls).tearDownClass()
 
-    def test_delete_single_image_tag(self):
-        """
-        @summary: Delete single image tag
-
-        1) Delete single image tag via wrapper test method
-        2) Verify that the deleted image tag is not in the list of image tags
-        """
-
-        get_image = self._delete_image_tag(self.single_tag_image.id_)
-
-        self.assertNotIn(
-            self.tag, get_image.tags,
-            msg=('Unexpected tag for image {0} received. '
-                 'Expected: {1} in tags Received: {2} '
-                 'not in tags').format(self.single_tag_image.id_, self.tag,
-                                       get_image.tags))
-
     def test_delete_multiple_image_tags(self):
         """
         @summary: Delete multiple image tags
@@ -96,7 +76,8 @@ class DeleteImageTag(ImagesFixture):
                 resp.status_code, 204,
                 Messages.STATUS_CODE_MSG.format(204, resp.status_code))
 
-        resp = self.images.client.get_image_details(self.single_tag_image.id_)
+        resp = self.images.client.get_image_details(
+            self.multiple_tags_image.id_)
         self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
         get_image = resp.entity
 
@@ -105,8 +86,8 @@ class DeleteImageTag(ImagesFixture):
                 tag, get_image.tags,
                 msg=('Unexpected tag for image {0} received. '
                      'Expected: {1} in tags Received: {2} '
-                     'not in tags').format(self.single_tag_image.id_, self.tag,
-                                           get_image.tags))
+                     'not in tags').format(self.multiple_tags_image.id_,
+                                           self.tag, get_image.tags))
 
     def test_delete_image_tag_that_is_already_deleted(self):
         """
