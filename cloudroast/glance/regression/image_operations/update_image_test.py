@@ -32,7 +32,7 @@ class UpdateImage(ImagesFixture):
     def setUpClass(cls):
         super(UpdateImage, cls).setUpClass()
 
-        cls.new_prop = 'new_property'
+        cls.new_prop = rand_name('new_property')
         cls.new_prop_value = rand_name('new_property_value')
         cls.updated_prop_value = rand_name('updated_new_property_value')
 
@@ -308,23 +308,6 @@ class UpdateImage(ImagesFixture):
                  'Received: {1}').format(getattr(self.alt_created_image,
                                                  prop_key),
                                          getattr(get_image, prop_key)))
-
-    def test_update_image_add_new_property(self):
-        """
-        @summary: Update image by adding a new image property
-
-        1) Update image adding an image property via wrapper test method
-        2) Verify that the property has been added as expected
-        """
-
-        added_prop_value = self._update_image_add_replace_property(
-            self.created_image.id_)
-
-        self.assertEqual(
-            added_prop_value, self.new_prop_value,
-            msg=('Unexpected new image property value received. Expected: {0} '
-                 'Received: '
-                 '{1}').format(self.new_prop_value, added_prop_value))
 
     def test_update_image_replace_additional_property(self):
         """

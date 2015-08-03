@@ -30,9 +30,8 @@ class DeleteImage(ImagesFixture):
 
         # Count set to number of images required for this module
         created_images = cls.images.behaviors.create_images_via_task(
-            image_properties={'name': rand_name('delete_image')}, count=7)
+            image_properties={'name': rand_name('delete_image')}, count=6)
 
-        cls.created_image = created_images.pop()
         cls.alt_created_image = created_images.pop()
 
         cls.shared_created_image = created_images.pop()
@@ -60,21 +59,6 @@ class DeleteImage(ImagesFixture):
             cls.protected_created_image.id_, replace={'protected': False})
         cls.images.behaviors.resources.release()
         super(DeleteImage, cls).tearDownClass()
-
-    def test_delete_image(self):
-        """
-        @summary: Delete image
-
-        1) Delete image via wrapper test method
-        2) Verify that the response code is 404
-        """
-
-        get_deleted_image = self._delete_image(self.created_image.id_)
-
-        self.assertEqual(
-            get_deleted_image.status_code, 404,
-            Messages.STATUS_CODE_MSG.format(
-                404, get_deleted_image.status_code))
 
     def test_delete_shared_image(self):
         """

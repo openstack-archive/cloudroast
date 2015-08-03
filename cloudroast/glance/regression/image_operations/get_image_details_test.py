@@ -33,9 +33,10 @@ class GetImageDetails(ImagesFixture):
         super(GetImageDetails, cls).setUpClass()
 
         member_id = cls.images_alt_one.auth.tenant_id
+        cls.name = rand_name('get_image_details')
 
         cls.created_image = cls.images.behaviors.create_image_via_task(
-            image_properties={'name': rand_name('get_image_details')})
+            image_properties={'name': cls.name})
         cls.image_created_at_time_in_sec = calendar.timegm(time.gmtime())
 
         cls.images.client.create_image_member(
@@ -65,29 +66,6 @@ class GetImageDetails(ImagesFixture):
     def tearDownClass(cls):
         cls.images.behaviors.resources.release()
         super(GetImageDetails, cls).tearDownClass()
-
-    def test_get_image_details(self):
-        """
-        @summary: Get image details
-
-        1) Get image details via wrapper test method
-        2) Verify that there are no errors
-        3) Verify that the image status is active
-        """
-
-        errors, image_status = self._get_image_details_errors_status(
-            self.created_image.id_)
-
-        self.assertEqual(
-            errors, [],
-            msg=('Unexpected error received. Expected: No errors '
-                 'Received: {0}').format(errors))
-        self.assertEqual(
-            image_status, ImageStatus.ACTIVE,
-            msg=('Unexpected status for image {0}. '
-                 'Expected: {1} Received: '
-                 '{2}').format(self.reactivated_image.id_,
-                               ImageStatus.ACTIVE, image_status))
 
     def test_get_image_details_as_member_of_shared_image(self):
         """
@@ -290,7 +268,7 @@ class GetImageDetails(ImagesFixture):
                 'min_ram', self.images.config.min_ram, get_image.min_ram))
         if get_image.name is None:
             errors.append(Messages.PROPERTY_MSG.format(
-                'name', self.created_image.name, get_image.name))
+                'name', self.name, get_image.name))
         if get_image.os_type != ImageOSType.LINUX:
             errors.append(Messages.PROPERTY_MSG.format(
                 'os_type', ImageOSType.LINUX, get_image.os_type))
