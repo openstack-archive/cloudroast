@@ -19,7 +19,6 @@ import time
 
 from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.glance.common.constants import Messages
-from cloudcafe.glance.common.types import TaskStatus
 
 from cloudroast.glance.fixtures import ImagesFixture
 
@@ -40,58 +39,6 @@ class GetTaskDetails(ImagesFixture):
     def tearDownClass(cls):
         cls.images.behaviors.resources.release()
         super(GetTaskDetails, cls).tearDownClass()
-
-    def test_get_task_details(self):
-        """
-        @summary: Get task details
-
-        1) Get task details of created task
-        2) Verify that the response code is 200
-        3) Verify that the returned task's properties are as expected
-        generically
-        4) Verify that the returned task's properties are as expected more
-        specifically
-        """
-
-        resp = self.images.client.get_task_details(self.created_task.id_)
-        self.assertEqual(
-            resp.status_code, 200,
-            Messages.STATUS_CODE_MSG.format(200, resp.status_code))
-        get_task_details = resp.entity
-
-        errors = self.images.behaviors.validate_task(get_task_details)
-
-        created_at_delta = self.images.behaviors.get_time_delta(
-            self.task_created_at_time_in_sec, get_task_details.created_at)
-        updated_at_delta = self.images.behaviors.get_time_delta(
-            self.task_created_at_time_in_sec, get_task_details.updated_at)
-        expires_at_delta = self.images.behaviors.get_time_delta(
-            self.task_created_at_time_in_sec, get_task_details.expires_at)
-
-        if created_at_delta > self.images.config.max_created_at_delta:
-            errors.append(Messages.PROPERTY_MSG.format(
-                'created_at delta', self.images.config.max_created_at_delta,
-                created_at_delta))
-        if expires_at_delta > self.images.config.max_expires_at_delta:
-            errors.append(Messages.PROPERTY_MSG.format(
-                'expires_at delta', self.images.config.max_expires_at_delta,
-                expires_at_delta))
-        if get_task_details.owner != self.images.auth.tenant_id:
-                errors.append(Messages.PROPERTY_MSG.format(
-                    'owner', self.images.auth.tenant_id,
-                    get_task_details.owner))
-        if get_task_details.status != TaskStatus.SUCCESS:
-            errors.append(Messages.PROPERTY_MSG.format(
-                'status', TaskStatus.SUCCESS, get_task_details.status))
-        if updated_at_delta > self.images.config.max_updated_at_delta:
-            errors.append(Messages.PROPERTY_MSG.format(
-                'updated_at delta', self.images.config.max_updated_at_delta,
-                updated_at_delta))
-
-        self.assertEqual(
-            errors, [],
-            msg=('Unexpected error received. Expected: No errors '
-                 'Received: {0}').format(errors))
 
     def test_get_task_details_as_tenant_without_access_to_task(self):
         """

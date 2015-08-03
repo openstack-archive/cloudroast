@@ -46,68 +46,6 @@ class TaskToImportImage(ImagesIntegrationFixture):
             [cls.container_name])
         super(TaskToImportImage, cls).tearDownClass()
 
-    def test_task_to_import_image(self):
-        """
-        @summary: Create a task to import an image
-
-        1) Create a task to import an image
-        2) Verify that the response code is 201
-        3) Wait for the task to complete successfully
-        4) Verify that the returned task's properties are as expected
-        generically
-        5) Verify that the returned task's properties are as expected more
-        specifically
-        """
-
-        input_ = {'image_properties':
-                  {'name': rand_name('task_to_import_image')},
-                  'import_from': self.images.config.import_from}
-
-        resp = self.images.client.task_to_import_image(
-            input_, TaskTypes.IMPORT)
-        self.assertEqual(
-            resp.status_code, 201,
-            Messages.STATUS_CODE_MSG.format(201, resp.status_code))
-        task_id = resp.entity.id_
-
-        task_creation_time_in_sec = calendar.timegm(time.gmtime())
-
-        task = self.images.behaviors.wait_for_task_status(
-            task_id, TaskStatus.SUCCESS)
-
-        errors = self.images.behaviors.validate_task(task)
-
-        created_at_delta = self.images.behaviors.get_time_delta(
-            task_creation_time_in_sec, task.created_at)
-        updated_at_delta = self.images.behaviors.get_time_delta(
-            task_creation_time_in_sec, task.updated_at)
-        expires_at_delta = self.images.behaviors.get_time_delta(
-            task_creation_time_in_sec, task.expires_at)
-
-        if created_at_delta > self.images.config.max_created_at_delta:
-            errors.append(Messages.PROPERTY_MSG.format(
-                'created_at delta', self.images.config.max_created_at_delta,
-                created_at_delta))
-        if expires_at_delta > self.images.config.max_expires_at_delta:
-            errors.append(Messages.PROPERTY_MSG.format(
-                'expires_at delta', self.images.config.max_expires_at_delta,
-                expires_at_delta))
-        if task.owner != self.images.auth.tenant_id:
-                errors.append(Messages.PROPERTY_MSG.format(
-                    'owner', self.images.auth.tenant_id, task.owner))
-        if task.status != TaskStatus.SUCCESS:
-            errors.append(Messages.PROPERTY_MSG.format(
-                'status', TaskStatus.SUCCESS, task.status))
-        if updated_at_delta > self.images.config.max_updated_at_delta:
-            errors.append(Messages.PROPERTY_MSG.format(
-                'updated_at delta', self.images.config.max_updated_at_delta,
-                updated_at_delta))
-
-        self.assertEqual(
-            errors, [],
-            msg=('Unexpected error received. Expected: No errors '
-                 'Received: {0}').format(errors))
-
     def test_task_to_import_image_states_success(self):
         """
         @summary: Validate task to import image states - pending, processing,
