@@ -282,6 +282,14 @@ class AddImageTag(ImagesFixture):
         @summary: Add an image tag to a given image and return the get image
         details response
 
+        @param image_id: Image id to add image tag to
+        @type image_id: Uuid
+        @param tag: Tag to add to image
+        @type tag: String
+
+        @return: Get image details response
+        @rtype: Object
+
         1) Add image tag
         2) Verify that the response code is 204
         3) Get image details
