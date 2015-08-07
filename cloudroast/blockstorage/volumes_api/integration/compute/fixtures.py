@@ -54,7 +54,7 @@ class ComputeIntegrationTestFixture(VolumesTestFixture):
     def attach_volume_and_get_device_info(
             cls, server_connection, server_id, volume_id):
 
-        details = server_connection.get_all_disk_details()
+        original_details = server_connection.get_all_disk_details()
         attachment = \
             cls.volume_attachments.behaviors.attach_volume_to_server(
                 server_id, volume_id)
@@ -62,19 +62,18 @@ class ComputeIntegrationTestFixture(VolumesTestFixture):
         assert attachment, "Could not attach volume {0} to server {1}".format(
             volume_id, server_id)
 
-        os_disk_details = [
-            d for d in server_connection.get_all_disk_details()
-            if d not in details]
+        new_details = server_connection.get_all_disk_details()
+        volume_details = [d for d in new_details if d not in original_details]
 
-        cls.fixture_log.debug(os_disk_details)
-        assert len(os_disk_details) == 1, (
+        cls.fixture_log.debug(volume_details)
+        assert len(volume_details) == 1, (
             "Could not uniquely identity the attached volume via the OS.")
 
-        setattr(attachment, 'os_disk_details', os_disk_details)
+        setattr(attachment, 'os_disk_details', volume_details)
 
         os_disk_device_name = \
-            os_disk_details[0].get('Number') or "/dev/{0}".format(
-                os_disk_details[0].get('name'))
+            volume_details[0].get('Number') or "/dev/{0}".format(
+                volume_details[0].get('name'))
 
         assert os_disk_device_name, (
             "Could not get a unique device name from the OS")
