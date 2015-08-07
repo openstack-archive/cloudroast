@@ -117,7 +117,7 @@ class ExtractArchiveFormatParameterTest(ObjectStorageFixture):
     @data_driven_test(DatasetList(archive_formats))
     @ObjectStorageFixture.required_features('bulk_upload')
     def ddtest_failure_reported_with_incorrect_archive_identifier(
-            self, archive_format, wrong_format):
+            self, archive_format, wrong_format, **kwargs):
         """
         Scenario: archive file is uploaded with incorrect extract-archive
         format identifier
