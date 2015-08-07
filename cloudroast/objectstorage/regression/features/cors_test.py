@@ -34,7 +34,7 @@ class CORSTest(ObjectStorageFixture):
 
     @data_driven_test(ObjectDatasetList())
     @ObjectStorageFixture.required_features('tempurl')
-    def ddtest_container_cors_with_tempurl(self, generate_object):
+    def ddtest_container_cors_with_tempurl(self, generate_object, **kwargs):
         """
         Scenario:
             Create a container with CORS headers.
@@ -303,7 +303,8 @@ class CORSTest(ObjectStorageFixture):
 
     @data_driven_test(ObjectDatasetList())
     @ObjectStorageFixture.required_features('tempurl')
-    def ddtest_container_cors_with_wildcard_origin(self, generate_object):
+    def ddtest_container_cors_with_wildcard_origin(self, generate_object,
+                                                   **kwargs):
         """
         Scenario:
             Create a container with CORS headers:
@@ -390,7 +391,7 @@ class CORSTest(ObjectStorageFixture):
 
     @data_driven_test(ObjectDatasetList())
     @ObjectStorageFixture.required_features('tempurl', 'object-cors')
-    def ddtest_object_cors_with_tempurl(self, generate_object):
+    def ddtest_object_cors_with_tempurl(self, generate_object, **kwargs):
         """
         Scenario:
             Create a container.
@@ -497,7 +498,7 @@ class CORSTest(ObjectStorageFixture):
     @data_driven_test(ObjectDatasetList())
     @ObjectStorageFixture.required_features('tempurl', 'object-cors')
     def ddtest_object_override_container_cors_with_tempurl(
-            self, generate_object):
+            self, generate_object, **kwargs):
         """
         Scenario:
             Create a container with CORS headers.

@@ -194,7 +194,7 @@ class ExpiringObjectTest(ObjectStorageFixture):
                 received=str(received)))
 
     @data_driven_test(ObjectDatasetList())
-    def ddtest_object_deletion_with_x_delete_at(self):
+    def ddtest_object_deletion_with_x_delete_at(self, **kwargs):
         """
         Scenario:
             Create an object which has the X-Delete-At metadata.
