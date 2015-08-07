@@ -64,53 +64,6 @@ class UpdateImageMember(ImagesFixture):
         cls.images.behaviors.resources.release()
         super(UpdateImageMember, cls).tearDownClass()
 
-    def test_update_image_member(self):
-        """
-        @summary: Update image member
-
-        1) Update image member as a member of the image
-        2) Verify that the response code is 200
-        3) Verify that the response contains the correct updated properties
-        """
-
-        errors = []
-
-        resp = self.images_alt_one.client.update_image_member(
-            self.shared_image.id_, self.member_id, ImageMemberStatus.ACCEPTED)
-        self.assertEqual(
-            resp.status_code, 200,
-            Messages.STATUS_CODE_MSG.format(200, resp.status_code))
-        updated_member = resp.entity
-
-        if updated_member.created_at != self.created_member.created_at:
-            errors.append(Messages.PROPERTY_MSG.format(
-                'created_at', self.created_member.created_at,
-                updated_member.created_at))
-        if updated_member.image_id != self.created_member.image_id:
-            errors.append(Messages.PROPERTY_MSG.format(
-                'image_id', self.created_member.image_id,
-                updated_member.image_id))
-        if updated_member.member_id != self.created_member.member_id:
-            errors.append(Messages.PROPERTY_MSG.format(
-                'member_id', self.created_member.member_id,
-                updated_member.member_id))
-        if updated_member.schema != self.created_member.schema:
-            errors.append(Messages.PROPERTY_MSG.format(
-                'schema', self.created_member.schema, updated_member.schema))
-        if updated_member.status != ImageMemberStatus.ACCEPTED:
-            errors.append(Messages.PROPERTY_MSG.format(
-                'status', ImageMemberStatus.ACCEPTED, updated_member.status))
-        if updated_member.updated_at < self.created_member.updated_at:
-            errors.append(Messages.PROPERTY_MSG.format(
-                'updated_at', self.created_member.updated_at,
-                updated_member.updated_at))
-
-        self.assertEqual(
-            errors, [],
-            msg=('Unexpected error received for image {0}. '
-                 'Expected: No errors '
-                 'Received: {1}').format(self.shared_image.id_, errors))
-
     def test_update_image_member_using_deactivated_image(self):
         """
         @summary: Update image member using deactivated image
@@ -215,7 +168,7 @@ class UpdateImageMember(ImagesFixture):
             errors, [],
             msg=('Unexpected error received for image {0}. '
                  'Expected: No errors '
-                 'Received: {1}').format(self.shared_image.id_, errors))
+                 'Received: {1}').format(self.alt_shared_image.id_, errors))
 
     def test_update_image_member_using_blank_image_id(self):
         """

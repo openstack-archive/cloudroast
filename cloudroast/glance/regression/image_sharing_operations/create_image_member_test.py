@@ -14,15 +14,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import calendar
 import random
-import time
 import unittest
 import uuid
 
 from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.glance.common.constants import Messages
-from cloudcafe.glance.common.types import ImageMemberStatus
 
 from cloudroast.glance.fixtures import ImagesFixture
 
@@ -38,9 +35,8 @@ class CreateImageMember(ImagesFixture):
         # Count set to number of images required for this module
         created_images = cls.images.behaviors.create_images_via_task(
             image_properties={'name': rand_name('create_image_member')},
-            count=6)
+            count=5)
 
-        cls.created_image = created_images.pop()
         cls.quota_image = created_images.pop()
         cls.alt_created_image = created_images.pop()
         cls.inaccessible_image = created_images.pop()
@@ -56,55 +52,6 @@ class CreateImageMember(ImagesFixture):
     def tearDownClass(cls):
         cls.images.behaviors.resources.release()
         super(CreateImageMember, cls).tearDownClass()
-
-    def test_create_image_member(self):
-        """
-        @summary: Create image member
-
-        1) Create image member
-        2) Verify that the response code is 200
-        3) Verify that the image member's properties are as expected
-        """
-
-        errors = []
-
-        resp = self.images.client.create_image_member(
-            self.created_image.id_, self.member_id)
-        image_member_created_at_time_in_sec = calendar.timegm(time.gmtime())
-        self.assertEqual(
-            resp.status_code, 200,
-            Messages.STATUS_CODE_MSG.format(200, resp.status_code))
-        image_member = resp.entity
-
-        created_at_delta = self.images.behaviors.get_time_delta(
-            image_member_created_at_time_in_sec, image_member.created_at)
-        updated_at_delta = self.images.behaviors.get_time_delta(
-            image_member_created_at_time_in_sec, image_member.updated_at)
-
-        if created_at_delta > self.images.config.max_created_at_delta:
-            errors.append(Messages.PROPERTY_MSG.format(
-                'created_at delta', self.images.config.max_created_at_delta,
-                created_at_delta))
-        if image_member.image_id != self.created_image.id_:
-            errors.append(Messages.PROPERTY_MSG.format(
-                'image_id', self.created_image.id_,
-                image_member.image_id))
-        if image_member.member_id != self.member_id:
-            errors.append(Messages.PROPERTY_MSG.format(
-                'member_id', self.member_id, image_member.member_id))
-        if image_member.status != ImageMemberStatus.PENDING:
-            errors.append(Messages.PROPERTY_MSG.format(
-                'status', ImageMemberStatus.PENDING, image_member.status))
-        if updated_at_delta > self.images.config.max_updated_at_delta:
-            errors.append(Messages.PROPERTY_MSG.format(
-                'updated_at delta', self.images.config.max_updated_at_delta,
-                updated_at_delta))
-
-        self.assertEqual(
-            errors, [],
-            msg=('Unexpected error received for image {0}. '
-                 'Expected: No errors '
-                 'Received: {1}').format(self.created_image.id_, errors))
 
     @unittest.skip('Bug')
     def test_create_image_member_quota_limit(self):

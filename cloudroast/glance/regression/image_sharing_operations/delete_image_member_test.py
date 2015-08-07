@@ -66,43 +66,6 @@ class DeleteImageMember(ImagesFixture):
         cls.images.behaviors.resources.release()
         super(DeleteImageMember, cls).tearDownClass()
 
-    def test_delete_image_member(self):
-        """
-        @summary: Delete image member
-
-        1) Delete image member
-        2) Verify that the response code is 204
-        3) Get image members
-        4) Verify that the response is ok
-        5) Verify that the image member is not in the list of image members
-        6) List images as member that was deleted
-        7) Verify that the image is no longer listed
-        """
-
-        resp = self.images.client.delete_image_member(
-            self.shared_image.id_, self.member_id)
-        self.assertEqual(
-            resp.status_code, 204,
-            Messages.STATUS_CODE_MSG.format(204, resp.status_code))
-
-        resp = self.images.client.list_image_members(self.shared_image.id_)
-        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
-        members = resp.entity
-
-        self.assertListEqual(
-            members, [],
-            msg=('Unexpected members received for image {0}. '
-                 'Expected: No members '
-                 'Received: {1}').format(self.shared_image.id_, members))
-
-        listed_images = self.images_alt_one.behaviors.list_all_images()
-
-        self.assertNotIn(
-            self.shared_image, listed_images,
-            msg=('Unexpected images received. Expected: {0} not in list of '
-                 'images '
-                 'Received: {1}').format(self.shared_image, listed_images))
-
     def test_delete_accepted_image_member(self):
         """
         @summary: Delete accepted image member

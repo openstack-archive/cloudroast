@@ -72,32 +72,6 @@ class GetImageMember(ImagesFixture):
         cls.images.behaviors.resources.release()
         super(GetImageMember, cls).tearDownClass()
 
-    def test_get_image_member(self):
-        """
-        @summary: Get image member
-
-        1) Get image member
-        2) Verify that the response code is 200
-        3) Verify that the member received for the get image member matches the
-        member received for the create image member
-        """
-
-        resp = self.images.client.get_image_member(
-            self.shared_image.id_, self.member_id)
-        self.assertEqual(
-            resp.status_code, 200,
-            Messages.STATUS_CODE_MSG.format(200, resp.status_code))
-        get_member = resp.entity
-
-        errors = self._validate_get_image_member(
-            get_member, self.created_member)
-
-        self.assertEqual(
-            errors, [],
-            msg=('Unexpected error received for image {0}. '
-                 'Expected: No errors '
-                 'Received: {1}').format(self.shared_image.id_, errors))
-
     def test_get_image_member_as_member_image_shared_with(self):
         """
         @summary: Get image member as a member the image is shared with
