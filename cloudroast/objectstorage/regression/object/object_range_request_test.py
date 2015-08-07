@@ -78,7 +78,7 @@ class ObjectRangeRequestTest(ObjectStorageFixture):
         return multipart_content
 
     @data_driven_test(ObjectDatasetList())
-    def ddtest_basic_object_range_request(self):
+    def ddtest_basic_object_range_request(self, **kwargs):
         """
         Scenario:
             Perform a get with various range request headers.
@@ -136,7 +136,7 @@ class ObjectRangeRequestTest(ObjectStorageFixture):
                 str(response.content)))
 
     @data_driven_test(ObjectDatasetList())
-    def ddtest_multi_part_range_request(self):
+    def ddtest_multi_part_range_request(self, **kwargs):
         """
         Scenario:
             Perform a get with various multi-part range request headers.
@@ -249,7 +249,7 @@ class ObjectRangeRequestTest(ObjectStorageFixture):
                          msg=CONTENT_MSG.format("drok", str(response.content)))
 
     @data_driven_test(ObjectDatasetList())
-    def ddtest_range_request_with_bad_ranges(self):
+    def ddtest_range_request_with_bad_ranges(self, **kwargs):
         """
         Scenario:
             Perform a get with various range request headers not specified
