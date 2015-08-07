@@ -85,6 +85,14 @@ class ImageTagOperationsActions(ImagesFixture):
         @summary: Add/Delete an image tag and return the get image details
         response
 
+        @param image_id: Image id to add/delete image tag to/from
+        @type image_id: Uuid
+        @param api: Api action to perform on image
+        @type api: String
+
+        @return: Get image details response
+        @rtype: Object
+
         1) Delete image tag
         2) Verify that the response code is 204
         3) Get image details

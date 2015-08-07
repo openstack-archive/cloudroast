@@ -210,6 +210,12 @@ class DeleteImageTag(ImagesFixture):
         @summary: Delete an image tag from a given image and return the get
         image details response
 
+        @param image_id: Image id to delete image tag from
+        @type image_id: Uuid
+
+        @return: Get image details response
+        @rtype: Object
+
         1) Delete image tag
         2) Verify that the response code is 204
         3) Get image details
