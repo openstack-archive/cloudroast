@@ -21,7 +21,7 @@ from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.glance.common.constants import ImageProperties, Messages
 
 from cloudcafe.glance.common.types import (
-    ImageMemberStatus, ImageStatus, ImageType, ImageVisibility, SortDirection)
+    ImageMemberStatus, ImageType, ImageVisibility, SortDirection)
 
 from cloudroast.glance.fixtures import ImagesIntegrationFixture
 from cloudroast.glance.generators import ImagesDatasetListGenerator
@@ -140,42 +140,6 @@ class ListImages(ImagesIntegrationFixture):
         self.assertEqual(images_diff, [],
                          msg=('Unexpected images listed in Glance that are '
                               'not listed in Nova: {0}').format(images_diff))
-
-    def test_list_all_images(self):
-        """
-        @summary: List all images with no additional query parameters,
-        paginating through the results as needed, and verify that the created
-        image is listed
-
-        1) List all images not passing in any additional query parameter,
-        paginating through the results as needed
-        2) Verify that the list is not empty
-        3) Verify that the created image is in the returned list of images
-        4) Verify that each image returned has a status of active
-        """
-
-        acceptable_statuses = [ImageStatus.ACTIVE, ImageStatus.DEACTIVATED]
-
-        listed_images = self.images.behaviors.list_all_images()
-        self.assertNotEqual(
-            len(listed_images), 0,
-            msg=('Unexpected number of images received. Expected: Not {0} '
-                 'Received: {1}').format(0, len(listed_images)))
-
-        self.assertIn(
-            self.created_image, listed_images,
-            msg=('Unexpected images received. Expected: {0} in list of '
-                 'images '
-                 'Received: {1}').format(self.created_image, listed_images))
-
-        # TODO: Add additional assertions to verify all images are as expected
-        for image in listed_images:
-            if image.image_type == ImageType.IMPORT:
-                self.assertIn(
-                    image.status, acceptable_statuses,
-                    msg=('Unexpected status for image {0} received. Expected:'
-                         'active or deactivated Received: '
-                         '{1}').format(image.id_, image.status))
 
     def test_image_visibility_of_shared_images(self):
         """
