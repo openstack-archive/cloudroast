@@ -195,6 +195,12 @@ class DeleteImage(ImagesFixture):
         """
         @summary: Delete an image and return the get image details response
 
+        @param image_id: Image id to delete
+        @type image_id: Uuid
+
+        @return: Get image details response
+        @rtype: Object
+
         1) Delete an image
         2) Verify that the response code is 204
         3) Get image details of the deleted image

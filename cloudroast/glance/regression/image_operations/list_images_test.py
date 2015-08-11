@@ -786,6 +786,12 @@ class ListImages(ImagesIntegrationFixture):
         paginating through the results as needed, and verify that the
         expected images are listed
 
+        @param expected_images: Images to expect
+        @type expected_images: List
+
+        @return: Errors
+        @rtype: List
+
         1) List all images not passing in any additional query parameter,
         paginating through the results as needed
         2) Verify that the list is not empty
@@ -810,6 +816,14 @@ class ListImages(ImagesIntegrationFixture):
         @summary: List all images, sorting the list by passing in query
         parameters for the sort_keys and sort_dirs and return the list of
         images
+
+        @param sort_keys: Keys to sort an image list by
+        @type sort_keys: List
+        @param sort_dirs: Directions to sort an image list by
+        @type sort_dirs: Object
+
+        @return: Listed images
+        @rtype: List
 
         1) List all images passing in query parameters for the sort_keys and
         sort_dirs
