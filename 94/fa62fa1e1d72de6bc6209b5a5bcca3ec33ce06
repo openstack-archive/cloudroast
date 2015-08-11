@@ -1,0 +1,10 @@
+Verified+2: Jenkins
+Code-Review+2: jose-idar <jose.idar@rackspace.com>
+Workflow+1: jose-idar <jose.idar@rackspace.com>
+Code-Review+1: Anna Eilering <anna.eilering@rackspace.com>
+Code-Review+1: Josh Aldana <josh.aldana@rackspace.com>
+Submitted-by: Jenkins
+Submitted-at: Tue, 11 Aug 2015 19:31:38 +0000
+Reviewed-on: https://review.openstack.org/208641
+Project: stackforge/cloudroast
+Branch: refs/heads/master
