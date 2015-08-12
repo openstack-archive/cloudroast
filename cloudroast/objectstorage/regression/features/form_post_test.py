@@ -62,7 +62,7 @@ class FormPostTest(ObjectStorageFixture):
 
         files = [{'name': 'foo1'}]
 
-        formpost_info = self.client.create_formpost(
+        formpost_info = self.behaviors.create_formpost(
             container_name,
             files,
             redirect=self.redirect_url,
@@ -115,7 +115,7 @@ class FormPostTest(ObjectStorageFixture):
 
         files = [{'name': 'foo1'}]
 
-        formpost_info = self.client.create_formpost(
+        formpost_info = self.behaviors.create_formpost(
             container_name,
             files,
             redirect="",
@@ -164,7 +164,7 @@ class FormPostTest(ObjectStorageFixture):
 
         delete_at = int(timegm(gmtime()) + 60)
 
-        formpost_info = self.client.create_formpost(
+        formpost_info = self.behaviors.create_formpost(
             container_name,
             files,
             redirect=self.redirect_url,
@@ -228,7 +228,7 @@ class FormPostTest(ObjectStorageFixture):
 
         delete_after = 60
 
-        formpost_info = self.client.create_formpost(
+        formpost_info = self.behaviors.create_formpost(
             container_name,
             files,
             redirect=self.redirect_url,
@@ -293,7 +293,7 @@ class FormPostTest(ObjectStorageFixture):
 
         files = [{'name': 'test_1'}, {'name': 'test_2'}]
 
-        formpost_info = self.client.create_formpost(
+        formpost_info = self.behaviors.create_formpost(
             container_name,
             files,
             redirect="",
@@ -356,7 +356,7 @@ class FormPostTest(ObjectStorageFixture):
 
         files = [{'name': 'foo1'}]
 
-        formpost_info = self.client.create_formpost(
+        formpost_info = self.behaviors.create_formpost(
             container_name,
             files,
             redirect="",
@@ -408,7 +408,7 @@ class FormPostTest(ObjectStorageFixture):
         files = [{'name': 'foo1'}]
         expire_time = int(time() + 60)
 
-        formpost_info = self.client.create_formpost(
+        formpost_info = self.behaviors.create_formpost(
             container_name,
             files,
             redirect="",
@@ -463,7 +463,7 @@ class FormPostTest(ObjectStorageFixture):
 
         files = [{'name': 'foo1'}]
 
-        formpost_info = self.client.create_formpost(
+        formpost_info = self.behaviors.create_formpost(
             container_name,
             files,
             redirect="",
@@ -516,7 +516,7 @@ class FormPostTest(ObjectStorageFixture):
 
         files = [{'name': 'foo1'}]
 
-        formpost_info = self.client.create_formpost(
+        formpost_info = self.behaviors.create_formpost(
             "not_a_container",
             files,
             redirect=self.redirect_url,

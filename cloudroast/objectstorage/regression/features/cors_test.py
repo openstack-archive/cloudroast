@@ -1,5 +1,5 @@
 """
-Copyright 2013 Rackspace
+Copyright 2015 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -171,7 +171,7 @@ class CORSTest(ObjectStorageFixture):
         files = [{'name': 'foo1'}]
 
         # Requests with no Origin should not return CORS headers.
-        formpost_info = self.client.create_formpost(
+        formpost_info = self.behaviors.create_formpost(
             container_name, files, key=tempurl_key)
 
         headers = formpost_info.get('headers')
@@ -187,7 +187,7 @@ class CORSTest(ObjectStorageFixture):
         self.assertTrue('access-control-allow-origin' not in response.headers)
 
         # Requests with Origin which does match, should return CORS headers.
-        formpost_info = self.client.create_formpost(
+        formpost_info = self.behaviors.create_formpost(
             container_name, files, key=tempurl_key)
 
         headers = formpost_info.get('headers')
@@ -206,7 +206,7 @@ class CORSTest(ObjectStorageFixture):
             # CORS should work according to the spec.
             # Requests with Origin which does not match, should not return
             # CORS headers.
-            formpost_info = self.client.create_formpost(
+            formpost_info = self.behaviors.create_formpost(
                 container_name, files, key=tempurl_key)
 
             headers = formpost_info.get('headers')
@@ -226,7 +226,7 @@ class CORSTest(ObjectStorageFixture):
             # Early implementation of CORS.
             # Requests with Origin which does not match, should not return
             # CORS headers.
-            formpost_info = self.client.create_formpost(
+            formpost_info = self.behaviors.create_formpost(
                 container_name, files, key=tempurl_key)
 
             headers = formpost_info.get('headers')
