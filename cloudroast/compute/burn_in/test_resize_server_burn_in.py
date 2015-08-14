@@ -23,7 +23,9 @@ from cloudcafe.compute.flavors_api.config import FlavorsConfig
 from cloudroast.compute.fixtures import ComputeFixture
 
 flavors_config = FlavorsConfig()
-resize_enabled = flavors_config.resize_enabled
+resize_up_enabled = (flavors_config.resize_up_enabled
+                     if flavors_config.resize_up_enabled is not None
+                     else flavors_config.resize_enabled)
 
 
 def load_tests(loader, standard_tests, pattern):
@@ -34,7 +36,7 @@ def load_tests(loader, standard_tests, pattern):
 
 
 @unittest.skipUnless(
-    resize_enabled, 'Resize not enabled for this flavor class.')
+    resize_up_enabled, 'Resize up not enabled for this flavor class.')
 class ResizeServerBurnIn(ComputeFixture):
 
     @classmethod
