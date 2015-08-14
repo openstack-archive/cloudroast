@@ -142,10 +142,10 @@ class ConfigDriveTest(ComputeFixture):
             self.config_drive_config.base_path_to_mount)
         self.assertGreaterEqual(
             kb_size.size, self.config_drive_config.min_size,
-            msg='New image is not less than tolerance')
+            msg='New image less than minimum configured tolerance')
         self.assertLessEqual(
             kb_size.size, self.config_drive_config.max_size,
-            msg='New image is not more than tolerance')
+            msg='New image exceeds maximum configured tolerance')
 
     @tags(type='smoke', net='yes')
     def test_create_server_config_drive_user_data(self):
