@@ -100,7 +100,7 @@ class CreateVolumeServerfromSnapshotTest(ServerFromVolumeV1Fixture):
             flavor_ref=self.flavors_config.primary_flavor,
             name=rand_name("server"))
         # Verify response code is correct
-        self.assertEqual(self.server_response.status_code, 200)
+        self.assertEqual(self.server_response.status_code, 202)
         # Verify the server reaches active status
         wait_response = self.server_behaviors.wait_for_server_status(
             self.server_response.entity.id, NovaServerStatusTypes.ACTIVE)
@@ -131,7 +131,7 @@ class CreateVolumeServerfromSnapshotTest(ServerFromVolumeV1Fixture):
             flavor_ref=self.flavors_config.primary_flavor,
             name=rand_name("server"))
         # Verify response code is correct
-        self.assertEqual(self.server_response.status_code, 200)
+        self.assertEqual(self.server_response.status_code, 202)
         # Verify the server reaches active status
         self.server_behaviors.wait_for_server_status(
             self.server_response.entity.id, NovaServerStatusTypes.ACTIVE)
