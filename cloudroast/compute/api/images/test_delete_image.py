@@ -142,21 +142,6 @@ class DeleteImageTest(ComputeFixture):
                 image.status))
 
     @tags(type='negative', net='no')
-    def test_delete_for_deleted_image_fails(self):
-        """
-        A delete image request for a deleted image should fail.
-
-        Attempting to delete the image that was created and deleted during
-        test set up should result in an 'ItemNotFound' error.
-
-        The following assertions occur:
-            - Requesting the deletion of the image deleted during test set up
-              should raise a 'ItemNotFound' error
-        """
-        with self.assertRaises(ItemNotFound):
-            self.images_client.delete_image(self.image.id)
-
-    @tags(type='negative', net='no')
     def test_create_server_from_deleted_image_fails(self):
         """
         A create server request using a deleted image should fail.
