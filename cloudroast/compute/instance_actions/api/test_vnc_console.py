@@ -54,7 +54,7 @@ class ServerVncConsoleTests(object):
         self._verify_console_url(console.url)
 
     def _verify_console_url(self, url):
-        resp = requests.head(url)
+        resp = requests.head(url, verify=False)
         self.assertEqual(resp.status_code, 200)
 
     @tags(type='smoke', net='no')
