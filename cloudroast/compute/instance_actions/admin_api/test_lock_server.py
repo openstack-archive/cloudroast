@@ -80,7 +80,7 @@ class LockServerTests(ComputeAdminFixture):
               error when given a server id that is in a locked state.
         """
 
-        with self.assertRaises(BadRequest):
+        with self.assertRaises(ActionInProgress):
             self.servers_client.change_password(self.server.id,
                                                 '123abcABC!!')
 
