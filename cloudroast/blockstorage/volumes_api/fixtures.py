@@ -287,6 +287,39 @@ class VolumesTestFixture(BaseVolumesTestFixture):
             poll_failure_retry_limit=3)
         verifier.start()
 
+    # Snapshot build success and failure methods
+
+    def verify_snapshot_build_succeeded(self, snapshot_id, timeout):
+        """
+        Raises an exception if the snapshot does not pass through the normal
+        expected series of states for a snapshot create.
+        """
+
+        self.volumes.behaviors.verify_snapshot_create_status_progression(
+            snapshot_id, timeout)
+
+    def verify_snapshot_build_has_errored(self, snapshot_id, timeout):
+        """
+        Raises an exception if the snapshot does not enter the "error" state,
+        or becomes unexpectedly "available"
+        """
+
+        verifier = StatusProgressionVerifier(
+            'snapshot', snapshot_id,
+            self.volumes.behaviors.get_snapshot_status, snapshot_id)
+
+        # Every known status that isn't 'ERROR' is added to the error statuses
+        error_statuses = statuses.Snapshot.values()
+        error_statuses.remove(statuses.Snapshot.ERROR)
+        error_statuses.remove(statuses.Snapshot.CREATING)
+        verifier.add_state(
+            expected_statuses=[statuses.Snapshot.ERROR],
+            error_statuses=error_statuses,
+            timeout=timeout,
+            poll_rate=self.volumes.config.snapshot_status_poll_frequency,
+            poll_failure_retry_limit=3)
+        verifier.start()
+
     def _assertVolumeBuildSucceededWithTimeout(
             self, volume_id, timeout, msg=None):
         """
@@ -306,6 +339,28 @@ class VolumesTestFixture(BaseVolumesTestFixture):
 
         try:
             self.verify_volume_build_has_errored(volume_id, timeout)
+        except StatusProgressionError as e:
+            self.fail(self._formatMessage(msg, str(e)))
+
+    def _assertSnapshotBuildSucceededWithTimeout(
+            self, snapshot_id, timeout, msg=None):
+        """
+        Assert wrapper for the verify_snapshot_build_succeeded() method
+        """
+
+        try:
+            self.verify_snapshot_build_succeeded(snapshot_id, timeout)
+        except StatusProgressionError as e:
+            self.fail(self._formatMessage(msg, str(e)))
+
+    def _assertSnapshotBuildErroredWithTimeout(
+            self, snapshot_id, timeout, msg=None):
+        """
+        Assert wrapper for the verify_snapshot_build_has_errored() method
+        """
+
+        try:
+            self.verify_snapshot_build_has_errored(snapshot_id, timeout)
         except StatusProgressionError as e:
             self.fail(self._formatMessage(msg, str(e)))
 
@@ -390,3 +445,25 @@ class VolumesTestFixture(BaseVolumesTestFixture):
         timeout = self.volumes.behaviors.calculate_snapshot_restore_timeout(
             volume_size)
         self._assertVolumeBuildErroredWithTimeout(volume_id, timeout, msg=msg)
+
+    def assertSnapshotCreateSucceeded(
+            self, snapshot_id, volume_size, msg=None):
+        """
+        Assert that a snapshot created from a volume has succeeded
+        """
+
+        timeout = self.volumes.behaviors.calculate_snapshot_restore_timeout(
+            volume_size)
+        self._assertSnapshotBuildSucceededWithTimeout(
+            snapshot_id, timeout, msg=msg)
+
+    def assertSnapshotCreateErrored(
+            self, snapshot_id, volume_size, msg=None):
+        """
+        Assert that a snapshot created from a volume has errored
+        """
+
+        timeout = self.volumes.behaviors.calculate_snapshot_restore_timeout(
+            volume_size)
+        self._assertSnapshotBuildErroredWithTimeout(
+            snapshot_id, timeout, msg=msg)
