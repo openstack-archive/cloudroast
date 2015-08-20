@@ -46,7 +46,8 @@ class ServerIntegration(ImagesIntegrationFixture):
             - An image from the newly created server
         """
         super(ServerIntegration, cls).setUpClass()
-        cls.server = cls.compute.servers.behaviors.create_active_server().entity
+        cls.server = (
+            cls.compute.servers.behaviors.create_active_server().entity)
         cls.image = cls.compute.images.behaviors.create_active_image(
             cls.server.id).entity
         cls.resources.add(
