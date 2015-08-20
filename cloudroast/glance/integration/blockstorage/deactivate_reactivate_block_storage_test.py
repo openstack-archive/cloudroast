@@ -23,14 +23,14 @@ from cloudroast.glance.fixtures import ImagesIntegrationFixture
 
 def load_tests(loader, standard_tests, pattern):
     suite = TestSuite()
-    suite.addTest(VolumesIntegration(
-        "test_create_volume_from_deactivated_image"))
-    suite.addTest(VolumesIntegration(
-        "test_create_volume_from_reactivated_image"))
+    suite.addTest(DeactivateReactivateBlockStorage(
+        'test_create_volume_from_deactivated_image_invalid'))
+    suite.addTest(DeactivateReactivateBlockStorage(
+        'test_create_volume_from_reactivated_image'))
     return suite
 
 
-class VolumesIntegration(ImagesIntegrationFixture):
+class DeactivateReactivateBlockStorage(ImagesIntegrationFixture):
 
     @classmethod
     def setUpClass(cls):
@@ -44,7 +44,7 @@ class VolumesIntegration(ImagesIntegrationFixture):
         The following data is generated during this set up:
             - Get compute integration composite
         """
-        super(VolumesIntegration, cls).setUpClass()
+        super(DeactivateReactivateBlockStorage, cls).setUpClass()
         cls.server = (
             cls.compute.servers.behaviors.create_active_server().entity)
         cls.image = cls.compute.images.behaviors.create_active_image(
@@ -56,7 +56,7 @@ class VolumesIntegration(ImagesIntegrationFixture):
         cls.volumes = cls.compute_integration.volumes
         cls.volume_size = int(cls.volumes.config.min_volume_from_image_size)
 
-    def test_create_volume_from_deactivated_image(self):
+    def test_create_volume_from_deactivated_image_invalid(self):
         """Volume should not be created from deactivated image"""
         # Deactivate Image
         self.resp = self.images_admin.client.deactivate_image(self.image.id)
