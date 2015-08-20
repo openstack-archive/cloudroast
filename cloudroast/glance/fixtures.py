@@ -28,8 +28,8 @@ from cloudcafe.compute.servers_api.behaviors import ServerBehaviors
 from cloudcafe.compute.servers_api.client import ServersClient
 from cloudcafe.compute.servers_api.config import ServersConfig
 from cloudcafe.glance.composite import (
-    ImagesAuthComposite, ImagesAuthCompositeAltOne,
-    ImagesAuthCompositeAltTwo, ImagesAuthCompositeAdmin, ImagesComposite)
+    ImagesAuthComposite, ImagesAuthCompositeAdmin, ImagesAuthCompositeAltOne,
+    ImagesAuthCompositeAltTwo, ImagesComposite)
 from cloudcafe.glance.config import (
     AltOneUserConfig, ImagesConfig, MarshallingConfig)
 from cloudcafe.objectstorage.config import ObjectStorageConfig
@@ -40,6 +40,7 @@ from cloudcafe.objectstorage.objectstorage_api.client import (
 from cloudcafe.objectstorage.objectstorage_api.config import (
     ObjectStorageAPIConfig)
 
+from cloudroast.blockstorage.volumes_api.fixtures import VolumesTestFixture
 from cloudroast.compute.fixtures import ComputeFixture
 from cloudroast.objectstorage.fixtures import ObjectStorageFixture
 
@@ -66,7 +67,7 @@ class ImagesFixture(BaseTestFixture):
 
 
 class ImagesIntegrationFixture(ComputeFixture, ImagesFixture,
-                               ObjectStorageFixture):
+                               ObjectStorageFixture, VolumesTestFixture):
     """
     @summary: Fixture for Compute API and Object Storage API integration
     with Images
