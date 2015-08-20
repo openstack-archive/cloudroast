@@ -42,6 +42,7 @@ from cloudcafe.objectstorage.objectstorage_api.config import (
 
 from cloudroast.compute.fixtures import ComputeFixture
 from cloudroast.objectstorage.fixtures import ObjectStorageFixture
+from cloudroast.blockstorage.volumes_api.fixtures import VolumesTestFixture
 
 
 class ImagesFixture(BaseTestFixture):
@@ -66,7 +67,7 @@ class ImagesFixture(BaseTestFixture):
 
 
 class ImagesIntegrationFixture(ComputeFixture, ImagesFixture,
-                               ObjectStorageFixture):
+                               ObjectStorageFixture, VolumesTestFixture):
     """
     @summary: Fixture for Compute API and Object Storage API integration
     with Images
