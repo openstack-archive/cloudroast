@@ -129,9 +129,13 @@ class ServerRescueTests(object):
             - The response status code of an unrescue request is equal to 202
         """
         server = self.create_server(key_name=self.key.name)
-        remote_client = self.server_behaviors.get_remote_instance_client(
+        # We cannot access rescued Windows servers, so skip
+        # this portion of the validation in that case.
+        image = self.images_client.get_image(self.server.image.id).entity
+        if image.metadata.get('os_type', '').lower() != 'windows':
+            remote_client = self.server_behaviors.get_remote_instance_client(
             server, self.servers_config, key=self.key.private_key)
-        distro_before_rescue = remote_client.get_distribution_and_version()
+            distro_before_rescue = remote_client.get_distribution_and_version()
 
         # Rescue server with image supplied to rescue request
         rescue_response = self.rescue_client.rescue(
@@ -146,19 +150,25 @@ class ServerRescueTests(object):
         rescue_server = rescue_server_response.entity
         rescue_server.admin_pass = changed_password
 
-        # Test distro change after rescue with image supplied
-        remote_client = self.server_behaviors.get_remote_instance_client(
-            server, self.servers_config, password=changed_password,
-            key=self.key.private_key)
-        distro_after_rescue = remote_client.get_distribution_and_version()
+        # We cannot access rescued Windows servers, so skip
+        # this portion of the validation in that case.
+        image = self.images_client.get_image(self.server.image.id).entity
+        if image.metadata.get('os_type', '').lower() != 'windows':
 
-        if (distro_before_rescue and distro_after_rescue):
-            if self.image_ref != self.image_ref_alt:
-                self.assertNotEqual(distro_before_rescue, distro_after_rescue)
+            # Test distro change after rescue with image supplied
+            remote_client = self.server_behaviors.get_remote_instance_client(
+                server, self.servers_config, password=changed_password,
+                key=self.key.private_key)
+            distro_after_rescue = remote_client.get_distribution_and_version()
+
+            if (distro_before_rescue and distro_after_rescue):
+                if self.image_ref != self.image_ref_alt:
+                    self.assertNotEqual(
+                        distro_before_rescue, distro_after_rescue)
+                else:
+                    self.assertEqual(distro_before_rescue, distro_after_rescue)
             else:
-                self.assertEqual(distro_before_rescue, distro_after_rescue)
-        else:
-            raise Exception('Unable to retrieve distros for rebuild check')
+                raise Exception('Unable to retrieve distros for rebuild check')
 
         # Exit rescue mode
         unrescue_response = self.rescue_client.unrescue(server.id)
