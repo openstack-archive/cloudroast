@@ -39,12 +39,13 @@ class DeactivateReactivateServers(ImagesIntegrationFixture):
     @classmethod
     def setUpClass(cls):
         """
-        Perform actions that setup the necessary resources for testing.
+        Perform actions that setup the necessary resources for testing
 
         The following resources are created during this setup:
             - A server with defaults defined in server behaviors
             - An image from the newly created server
         """
+
         super(DeactivateReactivateServers, cls).setUpClass()
         cls.server = (
             cls.compute.servers.behaviors.create_active_server().entity)
@@ -56,25 +57,27 @@ class DeactivateReactivateServers(ImagesIntegrationFixture):
 
     def test_deactivate_snapshot_image(self):
         """
-        Verify that a V1 image can be deactivated
+        Verify that a snapshot image can be deactivated
 
-        Execute deactivate API call on pre-created snapshot from cloud server
+        Deactivate a snapshot image
 
         This test will be successful if:
-            - Received response code is valid 204
-            """
+            - The response code received for deactivate image is a 204
+        """
+
         self.resp = self.images_admin.client.deactivate_image(self.image.id)
         self.assertEqual(204, self.resp.status_code)
 
     def test_create_server_from_deactivated_image_invalid(self):
         """
-        Verify that a instance can not be build from deactivated image
+        Verify that a server cannot be created from a deactivated image
 
-        Execute create_server client call with deactivated image
+        Attempt to create a server using a deactivated image
 
         This test will be successful if:
-            - Received response code is 400 Bad Request
+            - The response code received for deactivate image is a 400
         """
+
         resp = self.compute.servers.client.create_server(
             name=rand_name("server"),
             flavor_ref=self.flavor_ref,
@@ -83,26 +86,27 @@ class DeactivateReactivateServers(ImagesIntegrationFixture):
 
     def test_reactivate_snapshot_image(self):
         """
-        Verify that a V1 image can be reactivated
+        Verify that a snapshot image can be reactivated
 
-        Execute reactivate API call on pre-created and deactivated
-        snapshot from cloud server
+        Reactivate a snapshot image
 
         This test will be successful if:
-            - Received response code is valid 204
+            - The response code received for deactivate image is a 204
         """
+
         self.resp = self.images_admin.client.reactivate_image(self.image.id)
         self.assertEqual(204, self.resp.status_code)
 
     def test_create_server_from_reactivated_image(self):
         """
-        Verify that a instance can be build from reactivated image
+        Verify that a server can be created from a reactivated image
 
-        Execute create_active_server behavior call with reactivated image
+        Create a server using a reactivated image
 
         This test will be successful if:
-            - The Active Server had same image id as reactivated one
+            - The server status is active
         """
+
         server = self.compute.servers.behaviors.create_active_server(
             image_ref=self.image.id).entity
         self.resources.add(
