@@ -48,7 +48,8 @@ class VolumeServerIntegration(ImagesIntegrationFixture):
             - Get compute integration composite
         """
         super(VolumeServerIntegration, cls).setUpClass()
-        cls.server = cls.compute.servers.behaviors.create_active_server().entity
+        cls.server = (
+            cls.compute.servers.behaviors.create_active_server().entity)
         cls.image = cls.compute.images.behaviors.create_active_image(
             cls.server.id).entity
         cls.resources.add(
@@ -73,13 +74,12 @@ class VolumeServerIntegration(ImagesIntegrationFixture):
         self.resp = self.images_admin.client.deactivate_image(self.image.id)
         self.assertEqual(204, self.resp.status_code)
         # Creating block device with snapshot data inside
-        self.block_data = self.compute.servers.behaviors.create_block_device_mapping_v2(
-            boot_index=0,
-            uuid=self.image.id,
-            volume_size=self.volume_size,
-            source_type=SourceTypes.IMAGE,
-            destination_type=DestinationTypes.VOLUME,
-            delete_on_termination=True)
+        self.block_data = (
+            self.compute.servers.behaviors.create_block_device_mapping_v2(
+                boot_index=0, uuid=self.image.id, volume_size=self.volume_size,
+                source_type=SourceTypes.IMAGE,
+                destination_type=DestinationTypes.VOLUME,
+                delete_on_termination=True))
         # Creating Instance from Volume V2
         resp = self.compute.boot_from_volume.client.create_server(
             block_device_mapping_v2=self.block_data,
@@ -102,13 +102,12 @@ class VolumeServerIntegration(ImagesIntegrationFixture):
         resp = self.images_admin.client.reactivate_image(self.image.id)
         self.assertEqual(204, resp.status_code)
         # Creating block device with snapshot data inside
-        self.block_data = self.compute.servers.behaviors.create_block_device_mapping_v2(
-            boot_index=0,
-            uuid=self.image.id,
-            volume_size=self.volume_size,
-            source_type=SourceTypes.IMAGE,
-            destination_type=DestinationTypes.VOLUME,
-            delete_on_termination=True)
+        self.block_data = (
+            self.compute.servers.behaviors.create_block_device_mapping_v2(
+                boot_index=0, uuid=self.image.id, volume_size=self.volume_size,
+                source_type=SourceTypes.IMAGE,
+                destination_type=DestinationTypes.VOLUME,
+                delete_on_termination=True))
         # Creating Instance from Volume V2
         resp = self.compute.boot_from_volume.client.create_server(
             block_device_mapping_v2=self.block_data,
