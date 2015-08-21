@@ -352,22 +352,21 @@ class UpdateImage(ImagesFixture):
         """
 
         new_prop = 'alt_new_property'
-        new_prop_value = rand_name('alt_new_property_value')
 
         resp = self.images.client.update_image(
-            self.created_image.id_, add={new_prop: new_prop_value})
+            self.created_image.id_, add={new_prop: self.new_prop_value})
         self.assertEqual(
             resp.status_code, 200,
             Messages.STATUS_CODE_MSG.format(200, resp.status_code))
 
         get_image = self._update_image_remove_property(
-            self.created_image.id_)
+            self.created_image.id_, new_prop)
 
         self.assertNotIn(
-            self.new_prop, get_image.additional_properties,
+            new_prop, get_image.additional_properties,
             msg=('Unexpected removed image property received. Expected: {0} '
                  'to not be present '
-                 'Received: {1}').format(self.new_prop,
+                 'Received: {1}').format(new_prop,
                                          get_image.additional_properties))
 
     def test_update_deactivated_image_add_property(self):
@@ -654,7 +653,7 @@ class UpdateImage(ImagesFixture):
 
         return get_image.additional_properties.get(new_prop, None)
 
-    def _update_image_remove_property(self, image_id):
+    def _update_image_remove_property(self, image_id, new_prop=None):
         """
         @summary: Update image by removing an image property and return the get
         image details response
@@ -674,18 +673,22 @@ class UpdateImage(ImagesFixture):
         6) Return the get image details response
         """
 
+        if new_prop is None:
+            new_prop = self.new_prop
+        new_prop_value = self.new_prop_value
+
         resp = self.images.client.update_image(
-            image_id, remove={self.new_prop: self.new_prop_value})
+            image_id, remove={new_prop: new_prop_value})
         self.assertEqual(
             resp.status_code, 200,
             Messages.STATUS_CODE_MSG.format(200, resp.status_code))
         updated_image = resp.entity
 
         self.assertNotIn(
-            self.new_prop, updated_image.additional_properties,
+            new_prop, updated_image.additional_properties,
             msg=('Unexpected removed image property received. Expected: {0} '
                  'to not be present '
-                 'Received: {1}').format(self.new_prop,
+                 'Received: {1}').format(new_prop,
                                          updated_image.additional_properties))
 
         resp = self.images.client.get_image_details(image_id)
