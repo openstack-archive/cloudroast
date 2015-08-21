@@ -74,45 +74,8 @@ class PauseServerTests(object):
                 self.server.id))
 
 
-class NegativePauseServerTests(object):
-
-    @tags(type='smoke', net='yes')
-    def test_pause_reboot_server(self):
-        """
-        Verify that a server reboot during pause does not restore it.
-
-        First step is getting the IP address for communication based on the
-        configuration. We pause the instance making sure that
-        there is no connectivity. After that we check what happens when we
-        reboot the instance and expecting a "Forbidden" exception and finally
-        making sure the connectivity is still down.
-
-        The following assertions occur:
-            - A 202 response is returned from the pause call.
-        """
-
-        self.ping_ip = self.get_accessible_ip_address(self.server)
-
-        response = self.admin_servers_client.pause_server(self.server.id)
-        self.assertEqual(response.status_code, 202)
-
-        self.admin_server_behaviors.wait_for_server_status(
-            self.server.id, ServerStates.PAUSED)
-
-        PingClient.ping_until_unreachable(
-            self.ping_ip, timeout=60, interval_time=5)
-
-        with self.assertRaises(Forbidden):
-            self.servers_client.reboot(self.server.id,
-                                       NovaServerRebootTypes.HARD)
-
-        PingClient.ping_until_unreachable(
-            self.ping_ip, timeout=60, interval_time=5)
-
-
 class ServerFromImagePauseTests(ServerFromImageFixture,
-                                PauseServerTests,
-                                NegativePauseServerTests):
+                                PauseServerTests):
 
     @classmethod
     def setUpClass(cls):
