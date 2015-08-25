@@ -26,14 +26,14 @@ from cloudroast.glance.fixtures import ImagesIntegrationFixture
 
 def load_tests(loader, standard_tests, pattern):
     suite = TestSuite()
-    suite.addTest(VolumeServerIntegration(
-        "test_can_create_volume_server_from_deactivated_image"))
-    suite.addTest(VolumeServerIntegration(
-        "test_can_create_volume_server_from_reactivated_image"))
+    suite.addTest(DeactivateReactivateBFV(
+        'test_create_volume_server_from_deactivated_image_invalid'))
+    suite.addTest(DeactivateReactivateBFV(
+        'test_create_volume_server_from_reactivated_image'))
     return suite
 
 
-class VolumeServerIntegration(ImagesIntegrationFixture):
+class DeactivateReactivateBFV(ImagesIntegrationFixture):
 
     @classmethod
     def setUpClass(cls):
@@ -47,7 +47,7 @@ class VolumeServerIntegration(ImagesIntegrationFixture):
         The following data is generated during this set up:
             - Get compute integration composite
         """
-        super(VolumeServerIntegration, cls).setUpClass()
+        super(DeactivateReactivateBFV, cls).setUpClass()
         cls.server = (
             cls.compute.servers.behaviors.create_active_server().entity)
         cls.image = cls.compute.images.behaviors.create_active_image(
@@ -59,7 +59,7 @@ class VolumeServerIntegration(ImagesIntegrationFixture):
         cls.volumes = cls.compute_integration.volumes
         cls.volume_size = int(cls.volumes.config.min_volume_from_image_size)
 
-    def test_create_volume_server_from_deactivated_image(self):
+    def test_create_volume_server_from_deactivated_image_invalid(self):
         """
         Verify that a volume instance can not be build from deactivated image
 
