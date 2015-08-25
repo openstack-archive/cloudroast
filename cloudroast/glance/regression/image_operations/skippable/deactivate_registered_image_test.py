@@ -79,7 +79,6 @@ class DeactivateRegisteredImage(ImagesFixture):
                  '{2}').format(self.registered_image.id_,
                                ImageStatus.DEACTIVATED, get_image.status))
 
-    @unittest.skip('Launchpad bug #1445487')
     def test_deactivate_queued_image(self):
         """
         @summary: Deactivate a queued image
@@ -88,7 +87,7 @@ class DeactivateRegisteredImage(ImagesFixture):
         2) Verify that the image's status is deactivated
         """
 
-        get_image = self._deactivate_image(self.queued_image.id_, 400)
+        get_image = self._deactivate_image(self.queued_image.id_, 403)
 
         self.assertEqual(
             get_image.status, ImageStatus.QUEUED,
