@@ -1001,3 +1001,51 @@ class TempUrl(ObjectStorageFixture):
             response.status_code,
             401,
             msg='tempurl did not expire')
+
+    @ObjectStorageFixture.required_features('tempurl')
+    def test_create_object_manifest_with_tempurl(self):
+        """
+        Scenario:
+            Test a tempurl vulnerability by creating a tempurl and then
+            attempt to use that tempurl to PUT a DLO Object Manifest that
+            uses a different container.
+
+        Expected Results:
+            1. The tempurl creation should succeed.
+            2. The PUT against the tempurl should fail with a 400.
+            3. The header 'X-Object-Manifest' should not be returned on a
+            HEAD of the tempurl.
+        """
+        exploit_container_name = self.create_temp_container("test_tempurl")
+        container_name = self.create_temp_container(BASE_CONTAINER_NAME)
+
+        self.client.create_object(
+            exploit_container_name, "exploit_object", data=self.object_data)
+        self.client.create_object(
+            container_name, self.object_name, data=self.object_data)
+
+        tempurl_data = self.client.create_temp_url('PUT',
+                                                   container_name,
+                                                   self.object_name,
+                                                   TEMPURL_KEY_LIFE,
+                                                   self.tempurl_key)
+
+        headers = {'Content-Length': 0,
+                   'X-Object-Manifest': '{0}/e'.format(exploit_container_name)}
+        params = {'temp_url_sig': tempurl_data.get('signature'),
+                  'temp_url_expires': tempurl_data.get('expires')}
+        manifest_response = self.http.put(
+            tempurl_data.get('target_url'), params=params, headers=headers)
+
+        self.assertEqual(
+            manifest_response.status_code,
+            400,
+            msg='Expected status code of {0}, got {1} instead.'.format(
+                400, manifest_response.status_code))
+
+        head_response = self.http.head(
+            tempurl_data.get('target_url'), params=params)
+
+        self.assertNotIn('X-Object-Manifest',
+                         head_response.headers,
+                         msg="Should not find 'X-Object-Manifest' in headers")
