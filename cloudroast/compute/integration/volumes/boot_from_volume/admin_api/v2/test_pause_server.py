@@ -17,13 +17,12 @@ limitations under the License.
 from cloudcafe.compute.composites import ComputeAdminComposite
 
 from cloudroast.compute.instance_actions.admin_api.test_pause_server import \
-    PauseServerTests, NegativePauseServerTests
+    PauseServerTests
 from cloudroast.compute.fixtures import ServerFromVolumeV2Fixture
 
 
 class ServerFromVolumeV2PauseTests(ServerFromVolumeV2Fixture,
-                                   PauseServerTests,
-                                   NegativePauseServerTests):
+                                   PauseServerTests):
 
     @classmethod
     def setUpClass(cls):
