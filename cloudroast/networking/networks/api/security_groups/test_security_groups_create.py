@@ -102,6 +102,7 @@ data_set_list_negative.append_new_dataset(
                "error_type": 'HTTP_BAD_REQUEST'},
     tags=['sec_group', 'post', 'negative', 'rbac_creator'])
 
+# Bug fix available on Neutron .224
 data_set_list_negative.append_new_dataset(
     name='w_long_description',
     data_dict={"name": 'test_secgroup_create_neg',
@@ -109,14 +110,15 @@ data_set_list_negative.append_new_dataset(
                "test_desc": 'description longer than 255 chars',
                "error_type": 'HTTP_BAD_REQUEST',
                "description": (LONG_DESCRIPTION_DATA)},
-    tags=['sec_group', 'post', 'negative', 'rbac_creator'])
+    tags=['bug', 'post', 'negative', 'rbac_creator'])
 
 data_set_list_negative.append_new_dataset(
     name='w_long_name',
-    data_dict={"name": LONG_NAME_DATA,
+    data_dict={"name": 'test_secgroup_create_neg',
                "http_status": 'BAD_REQUEST',
-               "test_desc": 'name longer than 255 chars'},
-    tags=['sec_group', 'post', 'negative', 'rbac_creator'])
+               "test_desc": 'name longer than 255 chars',
+               "name": LONG_NAME_DATA},
+    tags=['bug', 'post', 'negative', 'rbac_creator'])
 
 
 @DataDrivenFixture
