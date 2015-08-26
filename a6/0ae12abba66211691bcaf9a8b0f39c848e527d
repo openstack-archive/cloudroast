@@ -1,0 +1,10 @@
+Verified+2: Jenkins
+Code-Review+2: jose-idar <jose.idar@rackspace.com>
+Code-Review+1: Luke Wollney <luke.wollney@rackspace.com>
+Code-Review+2: Christopher Hunt <chris.hunt@RACKSPACE.COM>
+Workflow+1: Christopher Hunt <chris.hunt@RACKSPACE.COM>
+Submitted-by: Jenkins
+Submitted-at: Wed, 26 Aug 2015 13:55:56 +0000
+Reviewed-on: https://review.openstack.org/190834
+Project: stackforge/cloudroast
+Branch: refs/heads/master
