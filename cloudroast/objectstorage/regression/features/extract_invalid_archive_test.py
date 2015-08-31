@@ -15,8 +15,10 @@ limitations under the License.
 """
 import json
 
-from cloudroast.objectstorage.fixtures import ObjectStorageFixture
 from cloudcafe.common.tools import randomstring as randstring
+from cloudroast.objectstorage.fixtures import ObjectStorageFixture
+from cloudcafe.objectstorage.objectstorage_api.common.constants import \
+    Constants
 
 BASE_NAME = "extract_archive"
 HTTP_OK = 200
@@ -29,7 +31,7 @@ class ExtractInvalidArchiveTest(ObjectStorageFixture):
     @classmethod
     def setUpClass(cls):
         super(ExtractInvalidArchiveTest, cls).setUpClass()
-        cls.default_obj_name = cls.behaviors.VALID_OBJECT_NAME
+        cls.default_obj_name = Constants.VALID_OBJECT_NAME
         cls.storage_url = cls.client.storage_url
         cls.bad_data = "X" * 1000
 

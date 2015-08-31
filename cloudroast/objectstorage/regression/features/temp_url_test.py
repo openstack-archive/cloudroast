@@ -16,9 +16,12 @@ limitations under the License.
 import time
 
 from unittest import skipUnless
+
 from cafe.engine.http.client import HTTPClient
-from cloudroast.objectstorage.fixtures import ObjectStorageFixture
 from cloudcafe.common.tools.check_dict import get_value
+from cloudroast.objectstorage.fixtures import ObjectStorageFixture
+from cloudcafe.objectstorage.objectstorage_api.common.constants import \
+    Constants
 
 BASE_CONTAINER_NAME = 'tempurl'
 CONTENT_TYPE_TEXT = 'text/plain; charset=UTF-8'
@@ -42,13 +45,13 @@ class TempUrl(ObjectStorageFixture):
             cls.objectstorage_api_config.tempurl_key_cache_time)
         cls.http = HTTPClient()
         cls.tempurl_key = cls.behaviors.VALID_TEMPURL_KEY
-        cls.object_name = cls.behaviors.VALID_OBJECT_NAME
+        cls.object_name = Constants.VALID_OBJECT_NAME
         cls.obj_name_containing_trailing_slash = \
-            cls.behaviors.VALID_OBJECT_NAME_WITH_TRAILING_SLASH
+            Constants.VALID_OBJECT_NAME_WITH_TRAILING_SLASH
         cls.obj_name_containing_slash = \
-            cls.behaviors.VALID_OBJECT_NAME_WITH_SLASH
-        cls.object_data = cls.behaviors.VALID_OBJECT_DATA
-        cls.content_length = str(len(cls.behaviors.VALID_OBJECT_DATA))
+            Constants.VALID_OBJECT_NAME_WITH_SLASH
+        cls.object_data = Constants.VALID_OBJECT_DATA
+        cls.content_length = str(len(Constants.VALID_OBJECT_DATA))
 
     def setUp(self):
         """

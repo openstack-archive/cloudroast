@@ -15,11 +15,14 @@ limitations under the License.
 """
 import sys
 
-from cloudcafe.common.tools.check_dict import get_value
 from calendar import timegm
 from time import gmtime, sleep
+
 from cafe.drivers.unittest.decorators import (
     DataDrivenFixture, data_driven_test)
+from cloudcafe.common.tools.check_dict import get_value
+from cloudcafe.objectstorage.objectstorage_api.common.constants import \
+    Constants
 from cloudroast.objectstorage.fixtures import ObjectStorageFixture
 from cloudroast.objectstorage.generators import ObjectDatasetList
 
@@ -33,8 +36,8 @@ class ExpiringObjectTest(ObjectStorageFixture):
     @classmethod
     def setUpClass(cls):
         super(ExpiringObjectTest, cls).setUpClass()
-        cls.default_obj_name = cls.behaviors.VALID_OBJECT_NAME
-        cls.default_obj_data = "Test Data"
+        cls.default_obj_name = Constants.VALID_OBJECT_NAME
+        cls.default_obj_data = Constants.VALID_OBJECT_DATA
 
     @data_driven_test(ObjectDatasetList())
     def ddtest_object_creation_with_x_delete_at(self, object_type,

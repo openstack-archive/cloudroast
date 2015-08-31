@@ -15,8 +15,11 @@ limitations under the License.
 """
 from calendar import timegm
 from time import gmtime, sleep, time
+
 from cafe.engine.http.client import HTTPClient
 from cloudroast.objectstorage.fixtures import ObjectStorageFixture
+from cloudcafe.objectstorage.objectstorage_api.common.constants import \
+    Constants
 
 CONTAINER_DESCRIPTOR = 'form_post_test'
 STATUS_CODE_MSG = ('{method} expected status code {expected}'
@@ -30,9 +33,9 @@ class FormPostTest(ObjectStorageFixture):
         super(FormPostTest, cls).setUpClass()
         cls.key_cache_time = (
             cls.objectstorage_api_config.tempurl_key_cache_time)
-        cls.object_name = cls.behaviors.VALID_OBJECT_NAME
-        cls.object_data = cls.behaviors.VALID_OBJECT_DATA
-        cls.content_length = str(len(cls.behaviors.VALID_OBJECT_DATA))
+        cls.object_name = Constants.VALID_OBJECT_NAME
+        cls.object_data = Constants.VALID_OBJECT_DATA
+        cls.content_length = str(len(Constants.VALID_OBJECT_DATA))
         cls.http_client = HTTPClient()
         cls.redirect_url = "http://example.com/form_post_test"
 

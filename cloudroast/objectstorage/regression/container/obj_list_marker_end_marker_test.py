@@ -15,6 +15,8 @@ limitations under the License.
 """
 import json
 
+from cloudcafe.objectstorage.objectstorage_api.common.constants import \
+    Constants
 from cloudroast.objectstorage.fixtures import ObjectStorageFixture
 
 CONTENT_TYPE_TEXT = 'text/plain; charset=UTF-8'
@@ -29,7 +31,7 @@ class MarkerEndMarkerTest(ObjectStorageFixture):
         cls.container_name = CONTAINER_NAME
         cls.client.create_container(cls.container_name)
 
-        object_data = cls.behaviors.VALID_OBJECT_DATA
+        object_data = Constants.VALID_OBJECT_DATA
         content_length = str(len(object_data))
         headers = {'Content-Length': content_length,
                    'Content-Type': CONTENT_TYPE_TEXT}

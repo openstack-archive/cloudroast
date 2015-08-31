@@ -15,6 +15,8 @@ limitations under the License.
 """
 from cafe.drivers.unittest.decorators import (
     DataDrivenFixture, data_driven_test)
+from cloudcafe.objectstorage.objectstorage_api.common.constants import \
+    Constants
 from cloudroast.objectstorage.fixtures import ObjectStorageFixture
 from cloudroast.objectstorage.generators import ObjectDatasetList
 
@@ -32,7 +34,7 @@ class QuickTest(ObjectStorageFixture):
     def ddtest_create_object(self, object_type, generate_object):
         container_name = self.create_temp_container(
             descriptor='quick_test_container')
-        object_name = 'quick_object'
+        object_name = Constants.VALID_OBJECT_NAME
         generate_object(container_name, object_name)
 
         response = self.client.get_object(container_name, object_name)

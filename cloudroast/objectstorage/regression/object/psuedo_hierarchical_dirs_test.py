@@ -17,6 +17,8 @@ import json
 
 from cloudcafe.common.tools import randomstring as randstring
 from cloudroast.objectstorage.fixtures import ObjectStorageFixture
+from cloudcafe.objectstorage.objectstorage_api.common.constants import \
+    Constants
 
 CONTENT_TYPE_TEXT = "text/plain; charset=UTF-8"
 CONTAINER_NAME = "psuedo_dirs_test"
@@ -26,8 +28,8 @@ class PsuedoHierarchalDirsTest(ObjectStorageFixture):
     @classmethod
     def setUpClass(cls):
         super(PsuedoHierarchalDirsTest, cls).setUpClass()
-        cls.default_obj_name = cls.behaviors.VALID_OBJECT_NAME
-        cls.default_obj_data = cls.behaviors.VALID_OBJECT_DATA
+        cls.default_obj_name = Constants.VALID_OBJECT_NAME
+        cls.default_obj_data = Constants.VALID_OBJECT_DATA
 
     def get_members(self, keys, response_content):
         members = []
