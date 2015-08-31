@@ -13,8 +13,12 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-from cloudroast.objectstorage.fixtures import ObjectStorageFixture
+
 from time import sleep
+
+from cloudcafe.objectstorage.objectstorage_api.common.constants import \
+    Constants
+from cloudroast.objectstorage.fixtures import ObjectStorageFixture
 
 CONTENT_TYPE_TEXT = 'text/plain; charset=UTF-8'
 CONTAINER_NAME = 'container_quota_test_container'
@@ -128,7 +132,7 @@ class ContainerQuotaTest(ObjectStorageFixture):
 
         # create objects == the set limit
         headers = \
-            {'Content-Length': str(len(self.behaviors.VALID_OBJECT_DATA)),
+            {'Content-Length': str(len(Constants.VALID_OBJECT_DATA)),
              'Content-Type': CONTENT_TYPE_TEXT}
 
         for num in range(obj_limit):
@@ -136,7 +140,7 @@ class ContainerQuotaTest(ObjectStorageFixture):
                 CONTAINER_NAME,
                 "obj_{0}".format(str(num)),
                 headers=headers,
-                data=self.behaviors.VALID_OBJECT_DATA)
+                data=Constants.VALID_OBJECT_DATA)
             self.assertTrue(
                 response.status_code,
                 msg=("obj_{0} was not created. obj creation returned"
@@ -170,7 +174,7 @@ class ContainerQuotaTest(ObjectStorageFixture):
             CONTAINER_NAME,
             "obj_{0}".format(str(obj_limit)),
             headers=headers,
-            data=self.behaviors.VALID_OBJECT_DATA)
+            data=Constants.VALID_OBJECT_DATA)
 
         # check to see that the obj creation returns the correct status code
         self.assertEqual(

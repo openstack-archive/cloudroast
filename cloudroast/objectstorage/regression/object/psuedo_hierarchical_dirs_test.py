@@ -16,6 +16,8 @@ limitations under the License.
 import json
 
 from cloudcafe.common.tools import randomstring as randstring
+from cloudcafe.objectstorage.objectstorage_api.common.constants import \
+    Constants
 from cloudroast.objectstorage.fixtures import ObjectStorageFixture
 
 CONTENT_TYPE_TEXT = "text/plain; charset=UTF-8"
@@ -26,8 +28,8 @@ class PsuedoHierarchalDirsTest(ObjectStorageFixture):
     @classmethod
     def setUpClass(cls):
         super(PsuedoHierarchalDirsTest, cls).setUpClass()
-        cls.default_obj_name = cls.behaviors.VALID_OBJECT_NAME
-        cls.default_obj_data = cls.behaviors.VALID_OBJECT_DATA
+        cls.default_obj_name = Constants.VALID_OBJECT_NAME
+        cls.default_obj_data = Constants.VALID_OBJECT_DATA
 
     def get_members(self, keys, response_content):
         members = []

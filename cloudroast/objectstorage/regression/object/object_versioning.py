@@ -13,8 +13,10 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-from cloudroast.objectstorage.fixtures import ObjectStorageFixture
 from cloudcafe.common.tools import randomstring as randstring
+from cloudcafe.objectstorage.objectstorage_api.common.constants import \
+    Constants
+from cloudroast.objectstorage.fixtures import ObjectStorageFixture
 
 CONTENT_TYPE_TEXT = "text/plain; charset=UTF-8"
 CONTAINER_NAME = "object_versioning_test"
@@ -28,7 +30,7 @@ class ObjectVersioningTest(ObjectStorageFixture):
 
         cls.container_name = CONTAINER_NAME
         cls.object_name = "{0}_{1}".format(
-            cls.behaviors.VALID_OBJECT_NAME,
+            Constants.VALID_OBJECT_NAME,
             randstring.get_random_string())
 
     def setUp(self):

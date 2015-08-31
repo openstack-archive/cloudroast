@@ -20,6 +20,8 @@ from hashlib import md5
 
 from cafe.drivers.unittest.decorators import (
     DataDrivenFixture, data_driven_test)
+from cloudcafe.objectstorage.objectstorage_api.common.constants import \
+    Constants
 from cloudroast.objectstorage.fixtures import ObjectStorageFixture
 from cloudroast.objectstorage.generators import (
     ObjectDatasetList, CONTENT_TYPES)
@@ -34,7 +36,7 @@ class ObjectSmokeTest(ObjectStorageFixture):
     @classmethod
     def setUpClass(cls):
         super(ObjectSmokeTest, cls).setUpClass()
-        cls.default_obj_name = cls.behaviors.VALID_OBJECT_NAME
+        cls.default_obj_name = Constants.VALID_OBJECT_NAME
 
     @staticmethod
     def generate_chunk_data():

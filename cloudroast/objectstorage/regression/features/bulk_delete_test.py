@@ -17,7 +17,10 @@ import re
 import unittest
 
 from cloudcafe.common.tools.check_dict import get_value
+from cloudcafe.objectstorage.objectstorage_api.common.constants import \
+    Constants
 from cloudroast.objectstorage.fixtures import ObjectStorageFixture
+
 
 
 class BulkDeleteTest(ObjectStorageFixture):
@@ -25,6 +28,10 @@ class BulkDeleteTest(ObjectStorageFixture):
     Will delete multiple objects or containers from their account with a
     single response.
     """
+    @classmethod
+    def setUpClass(cls):
+        super(BulkDeleteTest, cls).setUpClass()
+        cls.default_obj_name = Constants.VALID_OBJECT_NAME
 
     def test_bulk_deletion_of_multiple_objects(self):
         """
@@ -36,7 +43,7 @@ class BulkDeleteTest(ObjectStorageFixture):
             Only the objects bulk deleted should be removed.
         """
         container_name = self.create_temp_container('bulk_delete')
-        base_name = self.behaviors.VALID_OBJECT_NAME
+        base_name = self.default_obj_name
 
         objects_to_remain = [
             '{0}10'.format(base_name),
@@ -97,7 +104,7 @@ class BulkDeleteTest(ObjectStorageFixture):
             1. All the created objects should be deleted
         """
         container_name = self.create_temp_container('bulk_delete')
-        base_name = self.behaviors.VALID_OBJECT_NAME
+        base_name = self.default_obj_name
 
         objects_list = ['{0}{1}'.format(base_name, x) for x in range(1, 10)]
 
@@ -153,7 +160,7 @@ class BulkDeleteTest(ObjectStorageFixture):
             The all objects should be deleted.
         """
         container_name = self.create_temp_container('bulk_delete')
-        base_name = self.behaviors.VALID_OBJECT_NAME
+        base_name = self.default_obj_name
 
         objects_list = ['{0}{1}'.format(base_name, x + 1) for x in xrange(
             0, self.objectstorage_api_config.bulk_delete_max_count)]
@@ -201,7 +208,7 @@ class BulkDeleteTest(ObjectStorageFixture):
             delete the objects.
         """
         container_name = self.create_temp_container('bulk_delete')
-        base_name = self.behaviors.VALID_OBJECT_NAME
+        base_name = self.default_obj_name
 
         objects_list = ['{0}{1}'.format(base_name, x + 1) for x in xrange(
             0, self.objectstorage_api_config.bulk_delete_max_count + 1)]
@@ -233,7 +240,7 @@ class BulkDeleteTest(ObjectStorageFixture):
         Verify recieve an error when an empty list is sent.
         """
         container_name = self.create_temp_container('bulk_delete')
-        object_name = self.behaviors.VALID_OBJECT_NAME
+        object_name = self.default_obj_name
 
         self.behaviors.create_object(
             container_name=container_name, object_name=object_name, data='')

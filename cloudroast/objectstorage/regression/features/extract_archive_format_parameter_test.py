@@ -20,9 +20,10 @@ from cafe.drivers.unittest.datasets import DatasetList
 from cafe.drivers.unittest.decorators import (
     DataDrivenFixture, data_driven_test)
 from cafe.engine.config import EngineConfig
-from cloudroast.objectstorage.fixtures import ObjectStorageFixture
 from cloudcafe.common.tools import randomstring as randstring
-
+from cloudcafe.objectstorage.objectstorage_api.common.constants import \
+    Constants
+from cloudroast.objectstorage.fixtures import ObjectStorageFixture
 
 BASE_NAME = "extract_archive"
 HTTP_OK = 200
@@ -48,7 +49,7 @@ class ExtractArchiveFormatParameterTest(ObjectStorageFixture):
     @classmethod
     def setUpClass(cls):
         super(ExtractArchiveFormatParameterTest, cls).setUpClass()
-        cls.default_obj_name = cls.behaviors.VALID_OBJECT_NAME
+        cls.default_obj_name = Constants.VALID_OBJECT_NAME
         cls.data_dir = EngineConfig().data_directory
         cls.no_compression = None
         cls.storage_url = cls.client.storage_url
