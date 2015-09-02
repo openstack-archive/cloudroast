@@ -181,12 +181,11 @@ class ComputeIntegrationTestFixture(VolumesTestFixture):
             password=password)
 
     @classmethod
-    def get_server_instance_os_type(cls, server_instance_model):
+    def get_image_os_type(cls, image_id):
         # TODO: make this method handle the various versions of the images
         # api and image model. This might mean making an images auto composite.
 
-        image = cls.images.client.get_image(
-            server_instance_model.image.id).entity
+        image = cls.images.client.get_image(image_id).entity
         return image.metadata.get('os_type', '').lower()
 
     @classmethod
@@ -205,8 +204,8 @@ class ComputeIntegrationTestFixture(VolumesTestFixture):
         else:
             ip_address = server_instance_model.addresses.public.ipv4
 
-        os_type = os_type or cls.get_server_instance_os_type(
-            server_instance_model)
+        if os_type is None:
+            os_type = cls.get_image_os_type(server_instance_model.image.id)
         username = _usernames.get(os_type)
         password = server_instance_model.admin_pass
         connection_timeout = \
