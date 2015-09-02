@@ -15,8 +15,11 @@ limitations under the License.
 """
 from cafe.drivers.unittest.decorators import (
     DataDrivenFixture, data_driven_test)
-from cloudroast.objectstorage.generators import ObjectDatasetList
+from cloudcafe.objectstorage.objectstorage_api.common.constants import \
+    Constants
 from cloudroast.objectstorage.fixtures import ObjectStorageFixture
+from cloudroast.objectstorage.generators import ObjectDatasetList
+
 
 CONTAINER_NAME = 'object_range_request_test_container'
 CONTENT_MSG = 'expected {0} in the content body. recieved {1}'
@@ -31,6 +34,7 @@ class ObjectRangeRequestTest(ObjectStorageFixture):
         super(ObjectRangeRequestTest, self).setUp()
         self.container_name = self.create_temp_container(
             descriptor=CONTAINER_NAME)
+        self.object_name = Constants.VALID_OBJECT_NAME
 
     def get_boundary(self, content_type_header):
         """
@@ -91,14 +95,14 @@ class ObjectRangeRequestTest(ObjectStorageFixture):
         headers = {'Content-Length': str(len(obj_data))}
         self.behaviors.create_object(
             self.container_name,
-            self.behaviors.VALID_OBJECT_NAME,
+            self.object_name,
             headers=headers,
             data=obj_data)
 
         headers = {'Range': 'bytes=-3'}
         response = self.client.get_object(
             self.container_name,
-            self.behaviors.VALID_OBJECT_NAME,
+            self.object_name,
             headers=headers)
 
         self.assertEqual(response.content, "two",
@@ -107,7 +111,7 @@ class ObjectRangeRequestTest(ObjectStorageFixture):
         headers = {'Range': 'bytes=0-3'}
         response = self.client.get_object(
             self.container_name,
-            self.behaviors.VALID_OBJECT_NAME,
+            self.object_name,
             headers=headers)
 
         self.assertEqual(response.content, "grok",
@@ -116,7 +120,7 @@ class ObjectRangeRequestTest(ObjectStorageFixture):
         headers = {'Range': 'bytes=4-4'}
         response = self.client.get_object(
             self.container_name,
-            self.behaviors.VALID_OBJECT_NAME,
+            self.object_name,
             headers=headers)
 
         self.assertEqual(response.content, "_",
@@ -125,7 +129,7 @@ class ObjectRangeRequestTest(ObjectStorageFixture):
         headers = {'Range': 'bytes=9-'}
         response = self.client.get_object(
             self.container_name,
-            self.behaviors.VALID_OBJECT_NAME,
+            self.object_name,
             headers=headers)
 
         self.assertEqual(
@@ -154,14 +158,14 @@ class ObjectRangeRequestTest(ObjectStorageFixture):
         headers = {'Content-Length': str(len(obj_data))}
         self.behaviors.create_object(
             self.container_name,
-            self.behaviors.VALID_OBJECT_NAME,
+            self.object_name,
             headers=headers,
             data=obj_data)
 
         headers = {'Range': 'bytes=0-3,-3'}
         response = self.client.get_object(
             self.container_name,
-            self.behaviors.VALID_OBJECT_NAME,
+            self.object_name,
             headers=headers)
 
         content_type = response.headers.get('content-type')
@@ -182,7 +186,7 @@ class ObjectRangeRequestTest(ObjectStorageFixture):
         headers = {'Range': 'bytes=-3,0-3'}
         response = self.client.get_object(
             self.container_name,
-            self.behaviors.VALID_OBJECT_NAME,
+            self.object_name,
             headers=headers)
 
         content_type = response.headers.get('content-type')
@@ -203,7 +207,7 @@ class ObjectRangeRequestTest(ObjectStorageFixture):
         headers = {'Range': 'bytes=9-,0-3'}
         response = self.client.get_object(
             self.container_name,
-            self.behaviors.VALID_OBJECT_NAME,
+            self.object_name,
             headers=headers)
 
         content_type = response.headers.get('content-type')
@@ -226,7 +230,7 @@ class ObjectRangeRequestTest(ObjectStorageFixture):
         headers = {'Range': 'bytes=0-3,5-7,9-12'}
         response = self.client.get_object(
             self.container_name,
-            self.behaviors.VALID_OBJECT_NAME,
+            self.object_name,
             headers=headers)
 
         content_type = response.headers.get('content-type')
@@ -263,14 +267,14 @@ class ObjectRangeRequestTest(ObjectStorageFixture):
         headers = {'Content-Length': str(len(obj_data))}
         self.behaviors.create_object(
             self.container_name,
-            self.behaviors.VALID_OBJECT_NAME,
+            self.object_name,
             headers=headers,
             data=obj_data)
 
         headers = {'Range': 'bytes=foobar'}
         response = self.client.get_object(
             self.container_name,
-            self.behaviors.VALID_OBJECT_NAME,
+            self.object_name,
             headers=headers)
 
         self.assertEqual(
@@ -283,7 +287,7 @@ class ObjectRangeRequestTest(ObjectStorageFixture):
         headers = {'Range': 'bytes=4'}
         response = self.client.get_object(
             self.container_name,
-            self.behaviors.VALID_OBJECT_NAME,
+            self.object_name,
             headers=headers)
 
         self.assertEqual(
@@ -296,7 +300,7 @@ class ObjectRangeRequestTest(ObjectStorageFixture):
         headers = {'Range': 'bytes=7-1'}
         response = self.client.get_object(
             self.container_name,
-            self.behaviors.VALID_OBJECT_NAME,
+            self.object_name,
             headers=headers)
 
         self.assertEqual(
@@ -309,7 +313,7 @@ class ObjectRangeRequestTest(ObjectStorageFixture):
         headers = {'Range': 'bytes=-160-5'}
         response = self.client.get_object(
             self.container_name,
-            self.behaviors.VALID_OBJECT_NAME,
+            self.object_name,
             headers=headers)
 
         self.assertEqual(
@@ -322,7 +326,7 @@ class ObjectRangeRequestTest(ObjectStorageFixture):
         headers = {'Range': 'bytes=5-160'}
         response = self.client.get_object(
             self.container_name,
-            self.behaviors.VALID_OBJECT_NAME,
+            self.object_name,
             headers=headers)
 
         self.assertEqual(
@@ -335,7 +339,7 @@ class ObjectRangeRequestTest(ObjectStorageFixture):
         headers = {'Range': 'bytes=-160-160'}
         response = self.client.get_object(
             self.container_name,
-            self.behaviors.VALID_OBJECT_NAME,
+            self.object_name,
             headers=headers)
 
         self.assertEqual(

@@ -13,9 +13,12 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
+
 from cafe.drivers.unittest.decorators import (
     DataDrivenFixture, data_driven_test)
 from cafe.engine.http.client import HTTPClient
+from cloudcafe.objectstorage.objectstorage_api.common.constants import \
+    Constants
 from cloudroast.objectstorage.fixtures import ObjectStorageFixture
 from cloudroast.objectstorage.generators import ObjectDatasetList
 
@@ -30,7 +33,7 @@ class CORSTest(ObjectStorageFixture):
         super(CORSTest, cls).setUpClass()
 
         cls.dumb_client = HTTPClient()
-        cls.object_name = cls.behaviors.VALID_OBJECT_NAME
+        cls.object_name = Constants.VALID_OBJECT_NAME
 
     @data_driven_test(ObjectDatasetList())
     @ObjectStorageFixture.required_features('tempurl')

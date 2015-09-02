@@ -16,9 +16,11 @@ limitations under the License.
 
 from random import choice
 from hashlib import md5
-from cloudroast.objectstorage.fixtures import ObjectStorageFixture
-from cafe.common.unicode import UNICODE_BLOCKS, BLOCK_NAMES
 
+from cafe.common.unicode import UNICODE_BLOCKS, BLOCK_NAMES
+from cloudcafe.objectstorage.objectstorage_api.common.constants import \
+    Constants
+from cloudroast.objectstorage.fixtures import ObjectStorageFixture
 
 CONTAINER_DESCRIPTOR = 'static_large_object_regression_test'
 
@@ -31,7 +33,7 @@ class StaticLargeObjectRegressionTest(ObjectStorageFixture):
 
         cls.min_segment_size = \
             cls.objectstorage_api_config.min_slo_segment_size
-        cls.object_name = cls.behaviors.VALID_OBJECT_NAME
+        cls.object_name = Constants.VALID_OBJECT_NAME
         cls.data_pool = [char for char in UNICODE_BLOCKS.get_range(
             BLOCK_NAMES.basic_latin).encoded_codepoints()]
         cls.num_segments = 3
@@ -54,7 +56,7 @@ class StaticLargeObjectRegressionTest(ObjectStorageFixture):
 
         container_name = self.create_temp_container(
             descriptor=CONTAINER_DESCRIPTOR)
-        object_name = 'object'
+        object_name = self.object_name
         object_etag = ''
         object_size = 0
 

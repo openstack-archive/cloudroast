@@ -20,6 +20,8 @@ from cafe.drivers.unittest.decorators import (
     DataDrivenFixture, data_driven_test)
 from cafe.engine.config import EngineConfig
 from cloudcafe.common.tools.md5hash import get_md5_hash
+from cloudcafe.objectstorage.objectstorage_api.common.constants import \
+    Constants
 from cloudroast.objectstorage.fixtures import ObjectStorageFixture
 
 BASE_NAME = "extract_archive"
@@ -46,7 +48,7 @@ class ExtractArchiveTest(ObjectStorageFixture):
     @classmethod
     def setUpClass(cls):
         super(ExtractArchiveTest, cls).setUpClass()
-        cls.default_obj_name = cls.behaviors.VALID_OBJECT_NAME
+        cls.default_obj_name = Constants.VALID_OBJECT_NAME
         cls.data_dir = EngineConfig().data_directory
         cls.no_compression = None
         cls.storage_url = cls.client.storage_url

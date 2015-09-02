@@ -15,6 +15,8 @@ limitations under the License.
 """
 import json
 
+from cloudcafe.objectstorage.objectstorage_api.common.constants import \
+    Constants
 from cloudroast.objectstorage.fixtures import ObjectStorageFixture
 from cloudroast.objectstorage.generators import ObjectStorageGenerator
 
@@ -28,7 +30,7 @@ class NestedSLOTest(ObjectStorageFixture):
     def setUp(self):
         super(NestedSLOTest, self).setUp()
 
-        self.default_obj_name = self.behaviors.VALID_OBJECT_NAME
+        self.default_obj_name = Constants.VALID_OBJECT_NAME
         self.nested_obj_name = "nested_slo"
         self.generator = ObjectStorageGenerator(self.client)
         self.nested_object_count = 5
