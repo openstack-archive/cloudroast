@@ -16,8 +16,7 @@ limitations under the License.
 
 from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.glance.common.constants import Messages
-from cloudcafe.glance.common.types import (
-    ImageMemberStatus, ImageType, TaskStatus, TaskTypes)
+from cloudcafe.glance.common.types import ImageMemberStatus, ImageType
 
 from cloudroast.glance.fixtures import ImagesIntegrationFixture
 
@@ -33,7 +32,7 @@ class ImageSharing(ImagesIntegrationFixture):
 
         # Count set to number of images required for this module
         created_images = cls.images.behaviors.create_images_via_task(
-            image_properties={'name': rand_name('image_sharing')}, count=7)
+            image_properties={'name': rand_name('image_sharing')}, count=6)
 
         cls.single_member_image = created_images.pop()
         cls.multiple_members_image = created_images.pop()
@@ -41,10 +40,6 @@ class ImageSharing(ImagesIntegrationFixture):
         cls.delete_access_image = created_images.pop()
         cls.images.client.create_image_member(
             cls.delete_access_image.id_, cls.alt_one_member_id)
-
-        cls.no_export_image = created_images.pop()
-        cls.images.client.create_image_member(
-            cls.no_export_image.id_, cls.alt_one_member_id)
 
         cls.shared_image = created_images.pop()
         cls.images.client.create_image_member(
@@ -89,25 +84,6 @@ class ImageSharing(ImagesIntegrationFixture):
         cls.resources.add(
             cls.snapshot_server.id,
             cls.compute_alt_one_servers_client.delete_server)
-
-        cls.alt_snapshot_image = cls.images.behaviors.create_image_via_task(
-            image_properties={'name': rand_name('image_sharing')},
-            import_from=cls.images.config.import_from_bootable)
-        cls.images.client.create_image_member(
-            cls.alt_snapshot_image.id_, cls.alt_one_member_id)
-        cls.export_server = (
-            cls.compute_alt_one_servers_behaviors.create_active_server(
-                name=rand_name('image_sharing_server'),
-                image_ref=cls.alt_snapshot_image.id_)).entity
-        cls.resources.add(
-            cls.export_server.id,
-            cls.compute_alt_one_servers_client.delete_server)
-        cls.exported_snapshot = (
-            cls.compute_alt_one_images_behaviors.create_active_image(
-                server_id=cls.export_server.id,
-                name=rand_name('image_sharing_snapshot')).entity)
-        cls.resources.add(
-            cls.exported_snapshot.id, cls.images_alt_one.client.delete_image)
 
     @classmethod
     def tearDownClass(cls):
@@ -504,93 +480,6 @@ class ImageSharing(ImagesIntegrationFixture):
         self.assertTrue(remote_client.can_authenticate(),
                         msg="Cannot connect to server using public ip")
 
-    def test_export_shared_image_as_member_forbidden(self):
-        """
-        @summary: Export a shared image as member
-
-        1) Using alt_one_member, export no_export_image
-        2) Wait for the task to reach failure status
-        3) Verify that the export fails
-        4) Using alt_one_member, update image member status to accepted
-        5) Verify that the response is ok
-        6) Using alt_one_member, export no_export_image
-        7) Wait for the task to reach failure status
-        8) Verify that the export fails
-        9) Using alt_one_member, update image member status to rejected
-        10) Verify that the response is ok
-        11) Using alt_one_member, export no_export_image
-        12) Wait for the task to reach failure status
-        13) Verify that the export fails
-        14) Using alt_one_member, list objects in the container
-        15) Verify that the response is ok
-        16) Verify that the image does not appear in the container
-        """
-
-        input_ = {'image_uuid': self.no_export_image.id_,
-                  'receiving_swift_container': self.images.config.export_to}
-
-        resp = self.images_alt_one.client.task_to_export_image(
-            input_=input_, type_=TaskTypes.EXPORT)
-        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
-        task_id = resp.entity.id_
-
-        task = self.images_alt_one.behaviors.wait_for_task_status(
-            task_id, TaskStatus.FAILURE)
-        self.assertEqual(task.message, Messages.NOT_OWNER_MSG,
-                         msg=('Unexpected exception message received. '
-                              'Expected: {0}, '
-                              'Received: {1}').format(Messages.NOT_OWNER_MSG,
-                                                      task.message))
-
-        resp = self.images_alt_one.client.update_image_member(
-            self.no_export_image.id_, self.alt_one_member_id,
-            ImageMemberStatus.ACCEPTED)
-        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
-
-        resp = self.images_alt_one.client.task_to_export_image(
-            input_=input_, type_=TaskTypes.EXPORT)
-        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
-        task_id = resp.entity.id_
-
-        task = self.images_alt_one.behaviors.wait_for_task_status(
-            task_id, TaskStatus.FAILURE)
-        self.assertEqual(task.message, Messages.NOT_OWNER_MSG,
-                         msg=('Unexpected exception message received. '
-                              'Expected: {0}, '
-                              'Received: {1}').format(Messages.NOT_OWNER_MSG,
-                                                      task.message))
-
-        resp = self.images_alt_one.client.update_image_member(
-            self.no_export_image.id_, self.alt_one_member_id,
-            ImageMemberStatus.REJECTED)
-        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
-
-        resp = self.images_alt_one.client.task_to_export_image(
-            input_=input_, type_=TaskTypes.EXPORT)
-        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
-        task_id = resp.entity.id_
-
-        task = self.images_alt_one.behaviors.wait_for_task_status(
-            task_id, TaskStatus.FAILURE)
-        self.assertEqual(task.message, Messages.NOT_OWNER_MSG,
-                         msg=('Unexpected exception message received. '
-                              'Expected: {0}, '
-                              'Received: {1}').format(Messages.NOT_OWNER_MSG,
-                                                      task.message))
-
-        resp = self.object_storage_alt_one_client.list_objects(
-            self.images.config.export_to)
-        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
-        objects = resp.entity
-
-        exported_image_names = [obj.name for obj in objects]
-
-        self.assertNotIn('{0}.vhd'.format(self.no_export_image.id_),
-                         exported_image_names,
-                         msg=('Unexpected images received. '
-                              'Expected: No images '
-                              'Received: {0}').format(exported_image_names))
-
     def test_create_snapshot_of_server_created_from_shared_image(self):
         """
         @summary: Create snapshot of server created from shared image
@@ -627,55 +516,6 @@ class ImageSharing(ImagesIntegrationFixture):
             errors, [],
             msg=('Unexpected error received. Expected: No errors '
                  'Received: {0}').format(errors))
-
-    def test_export_snapshot_of_server_created_from_shared_image(self):
-        """
-        @summary: Export snapshot of server created from shared image
-
-        1) Using alt_one_member, create a task to export exported_snapshot
-        2) Verify that the response is ok
-        3) Wait for the task to reach success status
-        4) Using alt_one_member, list objects in the container
-        5) Verify that the response is ok
-        6) Verify that image was exported successfully
-        7) Verify that only one image is returned
-        """
-
-        exported_images = []
-
-        input_ = {'image_uuid': self.exported_snapshot.id,
-                  'receiving_swift_container': self.images.config.export_to}
-
-        resp = self.images_alt_one.client.task_to_export_image(
-            input_=input_, type_=TaskTypes.EXPORT)
-        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
-        task_id = resp.entity.id_
-
-        self.images_alt_one.behaviors.wait_for_task_status(
-            task_id, TaskStatus.SUCCESS)
-
-        resp = self.object_storage_alt_one_client.list_objects(
-            self.images.config.export_to)
-        self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
-        files = resp.entity
-
-        errors, file_names = (
-            self.images_alt_one.behaviors.validate_exported_files(
-                expect_success=True, files=files,
-                image_id=self.exported_snapshot.id))
-        self.assertEqual(
-            errors, [],
-            msg=('Unexpected error received. Expected: No errors '
-                 'Received: {0}').format(errors))
-
-        exported_images = [
-            exported_images.append(name) for name in file_names
-            if name == '{0}.vhd'.format(self.exported_snapshot.id)]
-
-        self.assertEqual(
-            len(exported_images), 1,
-            msg=('Unexpected number of images received. Expected: 1 '
-                 'Received: {0}').format(len(exported_images)))
 
     def test_share_image_as_member_of_image_forbidden(self):
         """
