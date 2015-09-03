@@ -16,6 +16,7 @@ limitations under the License.
 
 from IPy import IP
 import os
+import time
 
 from cafe.engine.config import EngineConfig
 from cloudcafe.common.tools.datagen import rand_name
@@ -61,7 +62,8 @@ class ScenarioMixin(object):
 
     @classmethod
     def _create_server(cls, name, isolated_networks_to_connect=None,
-                       public_and_service=True, security_groups=None):
+                       public_and_service=True, security_groups=None,
+                       scheduler_hints=None):
         isolated_networks_to_connect = isolated_networks_to_connect or []
         security_groups = security_groups or []
         networks = [{'uuid': net.id} for net in isolated_networks_to_connect]
@@ -73,7 +75,8 @@ class ScenarioMixin(object):
         server = cls.compute.servers.behaviors.create_active_server(
             name='{}_{}'.format(rand_name(cls.NAMES_PREFIX), name),
             key_name=cls.keypair.name, networks=networks,
-            security_groups=nova_secgroups).entity
+            security_groups=nova_secgroups,
+            scheduler_hints=scheduler_hints).entity
         cls.delete_servers.append(server.id)
         isolated_ips = cls._get_server_isolated_ips(
             server, isolated_networks_to_connect)
@@ -117,6 +120,69 @@ class ScenarioMixin(object):
         msg = ('Error changing access permission to private key file in '
                'gateway server')
         assert not error, msg
+
+    @classmethod
+    def _create_empty_security_group(cls, name):
+        """
+        @summary: Creates an empty security group
+        @param name: A string that will be part of the security group name
+        @type secgroup_id: string
+        @return: security group
+        @rtype: security group entity
+        """
+        sg_name = '{}_{}'.format(rand_name(cls.NAMES_PREFIX), name)
+        sg_desc = sg_name + " description"
+        resp = cls.security_groups.client.create_security_group(
+            name=sg_name, description=sg_desc)
+        msg = "Security group create returned unexpected status code: {}"
+        msg = msg.format(resp.status_code)
+        assert resp.status_code == 201, msg
+        secgroup = resp.entity
+        cls.delete_secgroups.append(secgroup.id)
+        msg = ("Security group create returned unexpected security group "
+               "name: {}")
+        msg = msg.format(secgroup.name)
+        assert secgroup.name == sg_name, msg
+        msg = ("Security group create returned unexpected security group "
+               "description: {}")
+        assert secgroup.description == sg_desc, msg
+        return secgroup
+
+    @classmethod
+    def _get_port_id_owned_by_instance_on_net(cls, instance_id, net_id):
+        """
+        @summary: Gets the uuid of the port owned by the specified instance on
+         the specified network
+        @return: port uuid
+        @rtype: string
+        """
+        resp = cls.net.ports.client.list_ports(device_id=instance_id,
+                                               network_id=net_id)
+        msg = "Ports list returned unexpected status code: {}"
+        msg = msg.format(resp.status_code)
+        assert resp.status_code == 200, msg
+        ports = resp.entity
+        msg = ("Ports list returned unexpected number of ports given provided "
+               "filter. Expected 1 port, {0} returned")
+        msg = msg.format(len(ports))
+        assert len(ports) == 1, msg
+        return ports[0].id
+
+    def _update_port_secgroups(self, port_id, security_groups_ids):
+        resp = self.net.ports.client.update_port(
+            port_id, security_groups=security_groups_ids)
+        msg = "Port security groups update returned unexpected status code: {}"
+        msg = msg.format(resp.status_code)
+        self.assertEqual(resp.status_code, 200, msg)
+        msg = "Port list of security group of unexpected length: {}"
+        msg = msg.format(len(resp.entity.security_groups))
+        self.assertEqual(len(resp.entity.security_groups),
+                         len(security_groups_ids), msg)
+        msg = "Missing security group after port update: {}"
+        for secgroup_id in security_groups_ids:
+            self.assertIn(secgroup_id, resp.entity.security_groups,
+                          msg.format(secgroup_id))
+        time.sleep(self.security_groups.config.data_plane_delay)
 
     def _next_sequential_cidr(self, cidr):
         """
