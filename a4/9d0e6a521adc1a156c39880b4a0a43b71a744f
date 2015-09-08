@@ -1,0 +1,11 @@
+Verified+2: Jenkins
+Code-Review+2: Daryl Walleck <daryl.walleck@rackspace.com>
+Workflow+1: Daryl Walleck <daryl.walleck@rackspace.com>
+Code-Review+1: Carlos Martinez <carlos.martinez@rackspace.com>
+Workflow+1: Carlos Martinez <carlos.martinez@rackspace.com>
+Code-Review+1: Josh Aldana <josh.aldana@rackspace.com>
+Submitted-by: Jenkins
+Submitted-at: Tue, 08 Sep 2015 17:32:07 +0000
+Reviewed-on: https://review.openstack.org/215316
+Project: stackforge/cloudroast
+Branch: refs/heads/master
