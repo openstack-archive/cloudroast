@@ -16,9 +16,9 @@ limitations under the License.
 
 from unittest.suite import TestSuite
 
-from cloudcafe.compute.common.types import SourceTypes, DestinationTypes
-from cloudcafe.compute.common.types import NovaServerStatusTypes
 from cloudcafe.common.tools.datagen import rand_name
+from cloudcafe.compute.common.types import (
+    DestinationTypes, NovaServerStatusTypes, SourceTypes)
 from cloudcafe.compute.composites import ComputeIntegrationComposite
 
 from cloudroast.glance.fixtures import ImagesIntegrationFixture
@@ -38,7 +38,7 @@ class DeactivateReactivateBFV(ImagesIntegrationFixture):
     @classmethod
     def setUpClass(cls):
         """
-        Perform actions that setup the necessary resources for testing.
+        Perform actions that setup the necessary resources for testing
 
         The following resources are created during this setup:
             - A server with defaults defined in server behaviors
@@ -47,6 +47,7 @@ class DeactivateReactivateBFV(ImagesIntegrationFixture):
         The following data is generated during this set up:
             - Get compute integration composite
         """
+
         super(DeactivateReactivateBFV, cls).setUpClass()
         cls.server = (
             cls.compute.servers.behaviors.create_active_server().entity)
@@ -61,15 +62,15 @@ class DeactivateReactivateBFV(ImagesIntegrationFixture):
 
     def test_create_volume_server_from_deactivated_image_invalid(self):
         """
-        Verify that a volume instance can not be build from deactivated image
+        Verify that a volume server cannot be created from a deactivated image
 
-        Execute deactivate API call on pre-created snapshot from cloud server
-        Execute volume create_server client call with deactivated image
+        Attempt to create a volume server using a deactivated image
 
         This test will be successful if:
-            - Received response code is valid 204 for image deactivation
-            - Received response code is 400 Bad Request
+            - The response code received for deactivate image is a 204
+            - The response code received for create volume server is a 400
         """
+
         # Deactivate Image
         self.resp = self.images_admin.client.deactivate_image(self.image.id)
         self.assertEqual(204, self.resp.status_code)
@@ -89,15 +90,16 @@ class DeactivateReactivateBFV(ImagesIntegrationFixture):
 
     def test_create_volume_server_from_reactivated_image(self):
         """
-        Verify that a volume instance can be build from reactivated image
+        Verify that a volume server can be created from a reactivated image
 
-        Execute reactivate API call on pre-created and deactivated snapshot
-        Execute volume create_server client call with reactivated image
+        Create a volume server using a reactivated image
 
         This test will be successful if:
-            - Received response code is valid 204 for image reactivation
-            - Received response code is 202 for volume server creation
+            - The response code received for reactivate image is a 204
+            - The response code received for create volume server is a 202
+            - The volume server status is active
         """
+
         # Reactivate Image
         resp = self.images_admin.client.reactivate_image(self.image.id)
         self.assertEqual(204, resp.status_code)
