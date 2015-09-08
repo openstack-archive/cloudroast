@@ -66,8 +66,10 @@ class TaskToImportImage(ImagesIntegrationFixture):
                   'import_from': self.images.config.import_from}
 
         task_creation_time_in_sec = calendar.timegm(time.gmtime())
+        create_task_resp = self.images.client.task_to_import_image(
+            input_, TaskTypes.IMPORT)
         task = self.images.behaviors.create_task_with_transitions(
-            input_, TaskTypes.IMPORT, TaskStatus.SUCCESS)
+            create_task_resp, TaskStatus.SUCCESS)
 
         expires_at_delta = self.images.behaviors.get_time_delta(
             task_creation_time_in_sec, task.expires_at)
@@ -114,9 +116,11 @@ class TaskToImportImage(ImagesIntegrationFixture):
             self.container_name, self.object_name)
         self.assertTrue(resp.ok, Messages.OK_RESP_MSG.format(resp.status_code))
 
+        create_task_resp = self.images.client.task_to_import_image(
+            input_, TaskTypes.IMPORT)
         task_creation_time_in_sec = calendar.timegm(time.gmtime())
         task = self.images.behaviors.create_task_with_transitions(
-            input_, TaskTypes.IMPORT, TaskStatus.FAILURE)
+            create_task_resp, TaskStatus.FAILURE)
 
         expires_at_delta = self.images.behaviors.get_time_delta(
             task_creation_time_in_sec, task.expires_at)
@@ -127,7 +131,7 @@ class TaskToImportImage(ImagesIntegrationFixture):
                 expires_at_delta))
         if task.result is not None:
             errors.append(Messages.PROPERTY_MSG.format(
-                'export_location', 'None', task.result))
+                'result', 'None', task.result))
         if task.message != Messages.IMAGE_NOT_FOUND:
             errors.append(Messages.PROPERTY_MSG.format(
                 'message', Messages.IMAGE_NOT_FOUND, task.message))

@@ -91,24 +91,6 @@ class ImageTaskOperationsSmoke(ImagesFixture):
             resp.status_code, 201,
             Messages.STATUS_CODE_MSG.format(201, resp.status_code))
 
-    def test_task_to_export_image(self):
-        """
-        @summary: Create a task to export an image
-
-        1) Create a task to export an image passing in an input containing the
-        image id and location to export the image to
-        2) Verify the response status code is 201
-        """
-
-        input_ = {'image_uuid': self.created_image.id_,
-                  'receiving_swift_container': self.images.config.export_to}
-
-        resp = self.images.client.task_to_export_image(
-            input_=input_, type_=TaskTypes.EXPORT)
-        self.assertEqual(
-            resp.status_code, 201,
-            Messages.STATUS_CODE_MSG.format(201, resp.status_code))
-
     def test_delete_task(self):
         """
         @summary: Delete a task
