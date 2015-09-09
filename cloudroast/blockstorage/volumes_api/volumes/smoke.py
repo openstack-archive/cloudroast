@@ -47,7 +47,8 @@ class VolumeActions(VolumesTestFixture):
             availability_zone=availability_zone,
             metadata=metadata)
 
-        self.assertExactResponseStatus(resp, 200, msg='Volume create failed')
+        self.assertResponseStatusInRange(
+            resp, 200, 299, msg='Volume create failed')
         self.assertResponseIsDeserialized(resp)
         volume = resp.entity
 

@@ -41,8 +41,8 @@ class CBSVolumeCloneTests(VolumesTestFixture):
         resp = self.volumes.client.create_volume(
             volume_type=volume_type_id, size=volume.size,
             source_volid=volume.id_)
-        self.assertExactResponseStatus(
-            resp, 200, msg='Volume clone create failed')
+        self.assertResponseStatusInRange(
+            resp, 200, 299, msg='Volume clone create failed')
         self.assertResponseIsDeserialized(resp)
         volume_clone = resp.entity
         self.assertEqual(

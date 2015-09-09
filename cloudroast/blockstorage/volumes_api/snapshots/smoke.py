@@ -76,7 +76,7 @@ class SnapshotActions(VolumesTestFixture):
 
         comparable_attributes_list = [
             "size", "volume_type", "bootable", "availability_zone",
-            "attachments", "links", "status", "image_ref",
+            "attachments", "status", "image_ref",
             "volume_image_metadata", "os_vol_host_attr_host",
             "os_vol_tenant_attr_tenant_id", "os_vol_mig_status_attr_migstat",
             "os_vol_mig_status_attr_name_id"]
