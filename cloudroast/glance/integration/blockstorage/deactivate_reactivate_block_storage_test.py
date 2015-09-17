@@ -16,8 +16,6 @@ limitations under the License.
 
 from unittest.suite import TestSuite
 
-from cloudcafe.compute.composites import ComputeIntegrationComposite
-
 from cloudroast.glance.fixtures import ImagesIntegrationFixture
 
 
@@ -31,11 +29,10 @@ def load_tests(loader, standard_tests, pattern):
 
 
 class DeactivateReactivateBlockStorage(ImagesIntegrationFixture):
-
     @classmethod
     def setUpClass(cls):
         """
-        Perform actions that setup the necessary resources for testing.
+        Perform actions that setup the necessary resources for testing
 
         The following resources are created during this setup:
             - A server with defaults defined in server behaviors
@@ -52,37 +49,56 @@ class DeactivateReactivateBlockStorage(ImagesIntegrationFixture):
         cls.resources.add(
             cls.server.id, cls.compute.servers.client.delete_server)
         cls.resources.add(cls.image.id, cls.images_client.delete_image)
-        cls.compute_integration = ComputeIntegrationComposite()
-        cls.volumes = cls.compute_integration.volumes
-        cls.volume_size = int(cls.volumes.config.min_volume_from_image_size)
 
     def test_create_volume_from_deactivated_image_invalid(self):
-        """Volume should not be created from deactivated image"""
+        """
+        Verify that a volume cannot be created from a deactivated image
+
+        Attempt to create a volume using a deactivated image
+
+        This test will be successful if:
+            - The response code received for deactivate image is a 204
+            - The response received for create volume is valid
+            - The volume status is error
+        """
+
         # Deactivate Image
         self.resp = self.images_admin.client.deactivate_image(self.image.id)
         self.assertEqual(204, self.resp.status_code)
-        # Trying to create bootable volume
-        resp = self.volumes.behaviors.create_available_volume(
-            size=self.volume_size,
+        # Attempt to create bootable volume
+        resp = self.volumes.client.create_volume(
+            size=self.volumes.config.min_volume_from_image_size,
             volume_type=self.volumes.config.default_volume_type,
             image_ref=self.image.id)
-        if resp.ok:
-            self.volumes.behaviors.delete_volume_confirmed(
-                resp.entity.id_,
-                size=self.volume_size)
-            self.fail('The create volume request should fail with disabled'
-                      ' image, but it received response code in 2xx range')
-        self.assertEqual(400, resp.status_code)
+        self.assertResponseDeserializedAndOk(resp)
+        created_volume = resp.entity
+        self.resources.add(
+            created_volume.id_, self.volumes.client.delete_volume)
+        # Verify volume status is error
+        self.assertImageToVolumeCopyErrored(
+            created_volume.id_, self.volumes.config.min_volume_from_image_size)
 
     def test_create_volume_from_reactivated_image(self):
-        """Volume should be created from reactivated image"""
+        """
+        Verify that a volume can be created from a reactivated image
+
+        Create a volume using a reactivated image
+
+        This test will be successful if:
+            - The response code received for reactivate image is a 204
+            - The volume status is available
+        """
+
         # Reactivate Image
         resp = self.images_admin.client.reactivate_image(self.image.id)
         self.assertEqual(204, resp.status_code)
-
-        resp = self.volumes.behaviors.create_available_volume(
-            size=self.volume_size,
+        # Create bootable volume
+        created_volume = self.volumes.behaviors.create_available_volume(
+            size=self.volumes.config.min_volume_from_image_size,
             volume_type=self.volumes.config.default_volume_type,
             image_ref=self.image.id)
         self.resources.add(
-            resp.id_, self.volumes.client.delete_volume)
+            created_volume.id_, self.volumes.client.delete_volume)
+        # Verify volume status is available
+        self.assertImageToVolumeCopySucceeded(
+            created_volume.id_, self.volumes.config.min_volume_from_image_size)
