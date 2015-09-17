@@ -74,7 +74,7 @@ class ScenarioMixin(object):
             name='{}_{}'.format(rand_name(cls.NAMES_PREFIX), name),
             key_name=cls.keypair.name, networks=networks,
             security_groups=nova_secgroups).entity
-        cls.resources.add(server.id, cls.compute.servers.client.delete_server)
+        cls.delete_servers.append(server.id)
         isolated_ips = cls._get_server_isolated_ips(
             server, isolated_networks_to_connect)
         return Instance(server, isolated_ips)
