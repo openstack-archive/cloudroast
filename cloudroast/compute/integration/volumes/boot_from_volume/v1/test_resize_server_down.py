@@ -63,3 +63,7 @@ class ServerFromVolumeV1ResizeDownConfirmTests(ServerFromVolumeV1Fixture,
                           cls.keypairs_client.delete_keypair)
         cls.create_server(flavor_ref=cls.flavor_ref_alt, key_name=cls.key.name)
         cls.resize_down_and_confirm()
+
+    @unittest.skip("Skipped as BFV server disk size does not change on resize.")
+    def test_created_server_disk_size(self):
+        pass

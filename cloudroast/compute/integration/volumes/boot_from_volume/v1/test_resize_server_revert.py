@@ -66,3 +66,7 @@ class ServerFromVolumeV1ResizeRevertTests(ServerFromVolumeV1Fixture,
                           cls.keypairs_client.delete_keypair)
         cls.create_server(key_name=cls.key.name)
         cls.resize_up_and_revert()
+
+    @unittest.skip("Skipped as BFV server disk size does not change on resize.")
+    def test_resize_reverted_server_disk_size(self):
+        pass
