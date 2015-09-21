@@ -16,6 +16,9 @@ limitations under the License.
 
 import unittest
 
+from cloudcafe.compute.common.types import ComputeHypervisors
+from cloudcafe.compute.config import ComputeConfig
+from cloudcafe.compute.flavors_api.config import FlavorsConfig
 from cloudcafe.common.tools.datagen import rand_name
 
 from cloudroast.compute.instance_actions.api.test_resize_server_down \
@@ -23,9 +26,26 @@ from cloudroast.compute.instance_actions.api.test_resize_server_down \
 from cloudroast.compute.fixtures import ServerFromVolumeV1Fixture
 
 
-@unittest.skip('Resize not enabled for boot from volume')
+# This is for setting the resize type and hypervisor based on configs
+compute_config = ComputeConfig()
+hypervisor = compute_config.hypervisor.lower()
+
+flavors_config = FlavorsConfig()
+resize_down_enabled = (flavors_config.resize_down_enabled
+                     if flavors_config.resize_down_enabled is not None
+                     else flavors_config.resize_enabled)
+
+can_resize = (
+    resize_down_enabled
+    and hypervisor not in [ComputeHypervisors.IRONIC,
+                           ComputeHypervisors.LXC_LIBVIRT])
+
+
+@unittest.skipUnless(
+    can_resize, 'Resize not enabled due to the flavor class or hypervisor.')
 class ServerFromVolumeV1ResizeDownConfirmTests(ServerFromVolumeV1Fixture,
-                                               ResizeServerDownConfirmTests):
+                                               ResizeServerDownConfirmTests,
+                                               ResizeDownConfirmBaseFixture):
 
     @classmethod
     def setUpClass(cls):
@@ -42,4 +62,4 @@ class ServerFromVolumeV1ResizeDownConfirmTests(ServerFromVolumeV1Fixture,
         cls.resources.add(cls.key.name,
                           cls.keypairs_client.delete_keypair)
         cls.create_server(flavor_ref=cls.flavor_ref_alt, key_name=cls.key.name)
-        ResizeDownConfirmBaseFixture.resize_down_and_confirm(fixture=cls)
+        cls.resize_down_and_confirm()
