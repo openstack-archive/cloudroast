@@ -16,14 +16,31 @@ limitations under the License.
 
 import unittest
 
+from cloudcafe.compute.common.types import ComputeHypervisors
+from cloudcafe.compute.config import ComputeConfig
+from cloudcafe.compute.flavors_api.config import FlavorsConfig
 from cloudcafe.common.tools.datagen import rand_name
 
 from cloudroast.compute.instance_actions.api.test_resize_server_down \
     import ResizeServerDownConfirmTests, ResizeDownConfirmBaseFixture
 from cloudroast.compute.fixtures import ServerFromVolumeV2Fixture
 
+compute_config = ComputeConfig()
+hypervisor = compute_config.hypervisor.lower()
 
-@unittest.skip('Resize not enabled for boot from volume')
+flavors_config = FlavorsConfig()
+resize_down_enabled = (flavors_config.resize_down_enabled
+                     if flavors_config.resize_down_enabled is not None
+                     else flavors_config.resize_enabled)
+
+can_resize = (
+    resize_down_enabled
+    and hypervisor not in [ComputeHypervisors.IRONIC,
+                           ComputeHypervisors.LXC_LIBVIRT])
+
+
+@unittest.skipUnless(
+    can_resize, 'Resize not enabled due to the flavor class or hypervisor.')
 class ServerFromVolumeV2ResizeDownConfirmTests(ServerFromVolumeV2Fixture,
                                                ResizeServerDownConfirmTests,
                                                ResizeDownConfirmBaseFixture):
