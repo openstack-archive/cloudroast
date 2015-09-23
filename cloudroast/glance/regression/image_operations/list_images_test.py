@@ -519,14 +519,14 @@ class ListImages(ImagesIntegrationFixture):
         ImagesDatasetListGenerator.ListImagesSort())
     def ddtest_sort_images_list(self, params):
         """
-        @summary: List all images, sorting the list by passing in a query
+        @summary: List all base images, sorting the list by passing in a query
         parameter as the sort_key and a direction as the sort_dir
 
         @param params: Parameter being passed to the list images request
         @type params: Dictionary
 
-        1) List all images passing in a query parameter as the sort_key and a
-        direction as the sort_dir
+        1) List all base images passing in a query parameter as the sort_key
+        and a direction as the sort_dir
         2) Verify that the list of images returned is not empty
         3) Verify that each image returned is in order based on the sort_key
         and sort_dir
@@ -543,6 +543,8 @@ class ListImages(ImagesIntegrationFixture):
                 sort_dir = params[key]
             elif key == 'sort_key':
                 sort_key = params[key]
+
+        params.update({'image_type': ImageType.BASE})
 
         listed_images = self.images.behaviors.list_all_images(**params)
         self.assertNotEqual(
@@ -590,25 +592,19 @@ class ListImages(ImagesIntegrationFixture):
         second sort_key (descending by default)
         """
 
-        listed_images = self._list_images_with_sort_keys_dirs(['name', 'size'])
+        listed_images = self._list_images_with_sort_keys_dirs(
+            ['created_at', 'size'])
 
         for current, next_ in zip(listed_images[0::2], listed_images[1::2]):
-            current_name = current.name
-            next_name = next_.name
-            if current_name is not None:
-                current_name = current_name.lower()
-            if next_name is not None:
-                next_name = next_name.lower()
-
             self.assertGreaterEqual(
-                current_name, next_name,
+                current.created_at, next_.created_at,
                 msg=('Unexpected order of images {0} and {1} received. '
                      'Expected: Greater than or equal to {2} Received: '
-                     '{3}').format(next_.id_, current.id_, next_name,
-                                   current_name))
+                     '{3}').format(next_.id_, current.id_, next_.created_at,
+                                   current.created_at))
 
             # If names are equal, verify that sizes are in expected order
-            if current_name == next_name:
+            if current.created_at == next_.created_at:
                 self.assertGreaterEqual(
                     current.size, next_.size,
                     msg=('Unexpected order of images {0} and {1} received.'
@@ -674,24 +670,17 @@ class ListImages(ImagesIntegrationFixture):
         """
 
         listed_images = self._list_images_with_sort_keys_dirs(
-            ['name', 'size'], [SortDirection.ASCENDING])
+            ['created_at', 'size'], [SortDirection.ASCENDING])
 
         for current, next_ in zip(listed_images[0::2], listed_images[1::2]):
-            current_name = current.name
-            next_name = next_.name
-            if current_name is not None:
-                current_name = current_name.lower()
-            if next_name is not None:
-                next_name = next_name.lower()
-
             self.assertLessEqual(
-                current_name, next_name,
+                current.created_at, next_.created_at,
                 msg=('Unexpected order of images {0} and {1} received.'
                      'Expected: Less than or equal to {2} Received: '
-                     '{3}').format(next_.id_, current.id_, next_name,
-                                   current_name))
+                     '{3}').format(next_.id_, current.id_, next_.created_at,
+                                   current.created_at))
 
-            if current_name == next_name:
+            if current.created_at == next_.created_at:
                 self.assertLessEqual(
                     current.size, next_.size,
                     msg=('Unexpected order of images {0} and {1} received.'
