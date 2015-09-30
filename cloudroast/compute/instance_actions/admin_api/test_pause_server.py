@@ -92,3 +92,4 @@ class ServerFromImagePauseTests(ServerFromImageFixture,
         cls.admin_servers_client = cls.compute_admin.servers.client
         cls.admin_server_behaviors = cls.compute_admin.servers.behaviors
         cls.server = cls.server_behaviors.create_active_server().entity
+        cls.resources.add(cls.server.id, cls.servers_client.delete_server)

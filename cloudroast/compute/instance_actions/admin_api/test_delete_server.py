@@ -15,6 +15,7 @@ limitations under the License.
 """
 
 from cloudroast.compute.fixtures import ComputeAdminFixture
+from cloudcafe.common.tools.datagen import rand_name
 from cloudroast.compute.instance_actions.api.test_delete_server import \
     DeleteServersTest
 
@@ -34,7 +35,11 @@ class DeleteServerAsAdminTests(ComputeAdminFixture,
         super(DeleteServerAsAdminTests, cls).setUpClass()
 
         # Create Active server as standard User
-        cls.server = cls.server_behaviors.create_active_server().entity
+        cls.key = cls.keypairs_client.create_keypair(rand_name("key")).entity
+        cls.resources.add(cls.key.name,
+                          cls.keypairs_client.delete_keypair)
+        cls.server = cls.server_behaviors.create_active_server(
+            key_name=cls.key.name).entity
         cls.resources.add(cls.server.id, cls.servers_client.delete_server)
 
         # Delete the server as an admin

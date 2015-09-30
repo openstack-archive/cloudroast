@@ -17,6 +17,7 @@ limitations under the License.
 import unittest
 
 from cafe.drivers.unittest.decorators import tags
+from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.compute.composites import ComputeAdminComposite
 from cloudcafe.compute.common.types import NovaServerRebootTypes
 from cloudcafe.compute.common.exceptions import Forbidden
@@ -63,12 +64,13 @@ class SuspendServerTests(object):
             self.server.id, ServerStates.ACTIVE)
 
         PingClient.ping_until_reachable(
-            self.ping_ip, timeout=60, interval_time=5)
+            self.ping_ip, timeout=600, interval_time=5)
 
         self.assertTrue(self.server_behaviors.get_remote_instance_client(
-            self.server, self.servers_config),
+            self.server, self.servers_config, key=self.key.private_key),
             "Unable to connect to active server {0} after suspending "
             "and resuming".format(self.server.id))
+
 
 class NegativeSuspendServerTests(object):
 
@@ -122,7 +124,12 @@ class ServerFromImageSuspendTests(ServerFromImageFixture,
         cls.compute_admin = ComputeAdminComposite()
         cls.admin_servers_client = cls.compute_admin.servers.client
         cls.admin_server_behaviors = cls.compute_admin.servers.behaviors
-        cls.server = cls.server_behaviors.create_active_server().entity
+        cls.key = cls.keypairs_client.create_keypair(rand_name("key")).entity
+        cls.resources.add(cls.key.name,
+                          cls.keypairs_client.delete_keypair)
+        cls.server = cls.server_behaviors.create_active_server(
+            key_name=cls.key.name).entity
+        cls.resources.add(cls.server.id, cls.servers_client.delete_server)
 
 
 @unittest.skip("Failing due to RM11052.")

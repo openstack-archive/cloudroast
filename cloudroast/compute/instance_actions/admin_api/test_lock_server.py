@@ -15,6 +15,7 @@ limitations under the License.
 """
 
 from cafe.drivers.unittest.decorators import tags
+from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.compute.common.exceptions import ActionInProgress, BadRequest
 from cloudcafe.compute.common.types import NovaServerRebootTypes
 
@@ -37,7 +38,11 @@ class LockServerTests(ComputeAdminFixture):
 
         """
         super(LockServerTests, cls).setUpClass()
-        cls.server = cls.server_behaviors.create_active_server().entity
+        cls.key = cls.keypairs_client.create_keypair(rand_name("key")).entity
+        cls.resources.add(cls.key.name,
+                          cls.keypairs_client.delete_keypair)
+        cls.server = cls.server_behaviors.create_active_server(
+            key_name=cls.key.name).entity
         cls.resources.add(cls.server.id, cls.servers_client.delete_server)
         cls.admin_servers_client.lock_server(cls.server.id)
 
