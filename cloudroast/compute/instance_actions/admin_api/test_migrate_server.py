@@ -13,11 +13,17 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
+import unittest
 
 from cafe.drivers.unittest.decorators import tags
+from cloudcafe.compute.common.types import ComputeHypervisors
 from cloudcafe.compute.common.types import NovaServerStatusTypes
 from cloudroast.compute.fixtures import ServerFromImageFixture
 from cloudcafe.compute.composites import ComputeAdminComposite
+from cloudcafe.compute.config import ComputeConfig
+
+compute_config = ComputeConfig()
+hypervisor = compute_config.hypervisor.lower()
 
 
 class MigrateServerTest(object):
@@ -57,6 +63,9 @@ class MigrateServerTest(object):
                     host_after=server_after_migrate.host))
 
 
+@unittest.skipIf(
+    hypervisor in [ComputeHypervisors.IRONIC],
+    'Migrate server not supported in current configuration.')
 class ServerFromImageMigrateTests(ServerFromImageFixture,
                                   MigrateServerTest):
 

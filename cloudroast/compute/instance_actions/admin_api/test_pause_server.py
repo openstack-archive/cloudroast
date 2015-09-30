@@ -13,17 +13,20 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
+import unittest
 
 from cafe.drivers.unittest.decorators import tags
 
+from cloudcafe.compute.common.types import ComputeHypervisors
 from cloudcafe.compute.common.types import NovaServerStatusTypes \
     as ServerStates
 from cloudcafe.compute.composites import ComputeAdminComposite
 from cloudcafe.compute.common.clients.ping import PingClient
-from cloudcafe.compute.common.types import NovaServerRebootTypes
-from cloudcafe.compute.common.exceptions import Forbidden
-
+from cloudcafe.compute.config import ComputeConfig
 from cloudroast.compute.fixtures import ServerFromImageFixture
+
+compute_config = ComputeConfig()
+hypervisor = compute_config.hypervisor.lower()
 
 
 class PauseServerTests(object):
@@ -74,6 +77,9 @@ class PauseServerTests(object):
                 self.server.id))
 
 
+@unittest.skipIf(
+    hypervisor in [ComputeHypervisors.IRONIC],
+    'Pause server not supported in current configuration.')
 class ServerFromImagePauseTests(ServerFromImageFixture,
                                 PauseServerTests):
 
@@ -92,3 +98,4 @@ class ServerFromImagePauseTests(ServerFromImageFixture,
         cls.admin_servers_client = cls.compute_admin.servers.client
         cls.admin_server_behaviors = cls.compute_admin.servers.behaviors
         cls.server = cls.server_behaviors.create_active_server().entity
+        cls.resources.add(cls.server.id, cls.servers_client.delete_server)
