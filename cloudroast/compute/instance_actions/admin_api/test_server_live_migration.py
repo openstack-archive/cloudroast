@@ -14,13 +14,18 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import unittest
 from unittest.suite import TestSuite
+
 
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.compute.common.types import NovaServerStatusTypes
-from cloudcafe.common.tools.datagen import rand_name
-
+from cloudcafe.compute.common.types import ComputeHypervisors
+from cloudcafe.compute.config import ComputeConfig
 from cloudroast.compute.fixtures import ComputeAdminFixture
+
+compute_config = ComputeConfig()
+hypervisor = compute_config.hypervisor.lower()
 
 
 def load_tests(loader, standard_tests, pattern):
@@ -34,6 +39,9 @@ def load_tests(loader, standard_tests, pattern):
     return suite
 
 
+@unittest.skipIf(
+    hypervisor in [ComputeHypervisors.IRONIC],
+    'Live Migration not supported in current configuration.')
 class LiveMigratationServerTests(ComputeAdminFixture):
 
     @classmethod
