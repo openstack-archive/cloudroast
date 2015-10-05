@@ -13,11 +13,9 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-import time
 
 from cafe.drivers.unittest.decorators import tags
-from cloudcafe.networking.networks.common.constants \
-    import NeutronResponseCodes, NeutronErrorTypes
+from cloudcafe.networking.networks.personas import ServerPersona
 from cloudroast.networking.networks.fixtures import NetworkingComputeFixture
 
 
@@ -34,43 +32,20 @@ class ServersBootTestWithNetworkIPv6(NetworkingComputeFixture):
 
         network_ids = [self.public_network_id, self.service_network_id,
                        network.id]
-        resp = self.net.behaviors.create_networking_server(
-            network_ids=network_ids)
-        server = resp.entity
-        self.delete_servers.append(server.id)
 
-        # Check Public, Servicenet and Isolated networks on server
-        self.assertServerNetworkByName(server=server, network_name='public',
-                                       ipv4=True, ipv6=True)
-        self.assertServerNetworkByName(server=server, network_name='private',
-                                       ipv4=True, ipv6=False)
-        self.assertServerNetworkByName(server=server,
-                                       network_name=network.name, ipv4=False,
-                                       ipv6=True, ipv4_cidr=subnet.cidr)
+        server = self.create_test_server(network_ids=network_ids)
 
-        # Check the server has the expected ports
-        publicnet_port = self.ports.behaviors.list_ports(
-            device_id=server.id, network_id=self.public_network_id)
-        servicenet_port = self.ports.behaviors.list_ports(
-            device_id=server.id, network_id=self.service_network_id)
-        isolatednet_port = self.ports.behaviors.list_ports(
-            device_id=server.id, network_id=network.id)
+        server_persona = ServerPersona(
+            server=server, pnet=True, snet=True, inet=True, network=network,
+            subnetv4=None, portv4=None, subnetv6=subnet, portv6=None,
+            inet_port_count=1, snet_port_count=1, pnet_port_count=1,
+            inet_fix_ipv4_count=0, inet_fix_ipv6_count=1,
+            snet_fix_ipv4_count=1, snet_fix_ipv6_count=0,
+            pnet_fix_ipv4_count=1, pnet_fix_ipv6_count=1)
 
-        results = []
-        failure_msg = ('Unable to get server {0} port for network {1}. '
-                       'Failures: {2}.')
-        if publicnet_port.failures:
-            msg = failure_msg.format(server.id, self.public_network_id,
-                                     publicnet_port.failures)
-            results.append(msg)
-        if servicenet_port.failures:
-            msg = failure_msg.format(server.id, self.service_network_id,
-                                     servicenet_port.failures)
-            results.append(msg)
-        if isolatednet_port.failures:
-            msg = failure_msg.format(server.id, network.id,
-                                     isolatednet_port.failures)
-            results.append(msg)
+        # Setting the isolated network port with updated device owner
+        server_persona.portv6 = server_persona.inet_ports[0]
 
-        # Fail the test if any failure is found
-        self.assertFalse(results)
+        self.assertServerPersonaNetworks(server_persona)
+        self.assertServerPersonaPorts(server_persona)
+        self.assertServerPersonaFixedIps(server_persona)
