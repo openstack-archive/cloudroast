@@ -14,10 +14,16 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import unittest
+
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.common.tools.datagen import rand_name
-from cloudcafe.compute.common.types import NovaImageStatusTypes
+from cloudcafe.compute.common.types import ComputeHypervisors
+from cloudcafe.compute.config import ComputeConfig
 from cloudroast.compute.fixtures import ServerFromImageFixture
+
+compute_config = ComputeConfig()
+hypervisor = compute_config.hypervisor.lower()
 
 
 class CreateImageTest(object):
@@ -203,6 +209,9 @@ class CreateImageTest(object):
         self.assertEqual(server.image.id, self.image_id)
 
 
+@unittest.skipIf(
+    hypervisor in [ComputeHypervisors.IRONIC],
+    'Create image not supported in current configuration.')
 class ServerFromImageCreateImageTests(ServerFromImageFixture,
                                       CreateImageTest):
 
