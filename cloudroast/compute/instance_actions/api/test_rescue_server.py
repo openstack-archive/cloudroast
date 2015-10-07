@@ -28,7 +28,7 @@ hypervisor = compute_config.hypervisor.lower()
 
 
 @unittest.skipIf(
-    hypervisor in [ComputeHypervisors.IRONIC, ComputeHypervisors.LXC_LIBVIRT],
+    hypervisor in [ComputeHypervisors.LXC_LIBVIRT],
     'Rescue server not supported in current configuration.')
 class ServerRescueTests(object):
 
@@ -88,9 +88,11 @@ class ServerRescueTests(object):
             # Verify if original disks plus rescue disk are attached
             remote_client = self.server_behaviors.get_remote_instance_client(
                 rescue_server, self.servers_config,
-                key=self.key.private_key)
+                password=changed_password, auth_strategy='password')
             disks = remote_client.get_all_disks()
-            self.assertEqual(len(disks.keys()), original_num_disks + 1)
+            if hypervisor != ComputeHypervisors.IRONIC:
+                original_num_disks = original_num_disks + 1
+            self.assertEqual(len(disks.keys()), original_num_disks)
 
         # Exit rescue mode
         unrescue_response = self.rescue_client.unrescue(self.server.id)
@@ -102,6 +104,9 @@ class ServerRescueTests(object):
         disks = remote_client.get_all_disks()
         self.assertEqual(len(disks.keys()), original_num_disks)
 
+    @unittest.skipIf(
+        hypervisor in [ComputeHypervisors.IRONIC],
+        'Rescue server not supported in current configuration.')
     @requires_extension('ExtendedRescueWithImage')
     @tags(type='smoke', net='yes')
     def test_rescue_with_image_change_server_test(self):
@@ -134,7 +139,7 @@ class ServerRescueTests(object):
         image = self.images_client.get_image(self.server.image.id).entity
         if image.metadata.get('os_type', '').lower() != 'windows':
             remote_client = self.server_behaviors.get_remote_instance_client(
-            server, self.servers_config, key=self.key.private_key)
+                server, self.servers_config, key=self.key.private_key)
             distro_before_rescue = remote_client.get_distribution_and_version()
 
         # Rescue server with image supplied to rescue request
