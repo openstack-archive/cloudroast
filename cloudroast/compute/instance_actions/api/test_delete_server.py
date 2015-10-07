@@ -15,6 +15,7 @@ limitations under the License.
 """
 
 from cafe.drivers.unittest.decorators import tags
+from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.compute.common.exceptions import ItemNotFound
 
 from cloudroast.compute.fixtures import ServerFromImageFixture
@@ -224,6 +225,13 @@ class ServerFromImageDeleteServerTests(ServerFromImageFixture,
             - The server created during set up is deleted
         """
         super(ServerFromImageDeleteServerTests, cls).setUpClass()
-        cls.create_server()
+        key_resp = cls.keypairs_client.create_keypair(rand_name("key"))
+        assert key_resp.status_code is 200
+        cls.key = key_resp.entity
+        cls.resources.add(cls.key.name,
+                          cls.keypairs_client.delete_keypair)
+        cls.resources.add(cls.key.name,
+                          cls.keypairs_client.delete_keypair)
+        cls.create_server(key_name=cls.key.name)
         cls.resp = cls.servers_client.delete_server(cls.server.id)
         cls.server_behaviors.wait_for_server_to_be_deleted(cls.server.id)
