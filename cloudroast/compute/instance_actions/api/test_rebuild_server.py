@@ -30,7 +30,7 @@ hypervisor = compute_config.hypervisor.lower()
 
 
 @unittest.skipIf(
-    hypervisor in [ComputeHypervisors.LXC_LIBVIRT],
+    hypervisor in [ComputeHypervisors.LXC_LIBVIRT, ComputeHypervisors.IRONIC],
     'Rebuild server not supported in current configuration.')
 class RebuildServerTests(object):
 
