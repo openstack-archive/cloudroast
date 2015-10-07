@@ -54,7 +54,7 @@ class CreateServerTest(object):
         self.assertTrue(self.server.links is not None,
                         msg="Server links were not set in the response")
 
-    @unittest.skipIf(hypervisor in [ComputeHypervisors.ON_METAL],
+    @unittest.skipIf(hypervisor in [ComputeHypervisors.IRONIC],
                      'Admin Password not supported in current configuration.')
     @tags(type='smoke', net='no')
     def test_create_server_admin_password(self):
