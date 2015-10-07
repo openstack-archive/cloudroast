@@ -176,6 +176,57 @@ class ServerRescueTests(object):
         self.server_behaviors.wait_for_server_status(server.id,
                                                      'ACTIVE')
 
+    @tags(type='smoke', net='yes')
+    def test_rescue_and_delete_server_test(self):
+        """
+        Verify that a server can enter a rescue mode and then be deleted.
+        Rescue the server and validate that the response status code is 202
+        and that the password to access the server has changed. Wait for
+        the server to achieve 'RESCUE' status. If the server is not a
+        Windows server, get a remote client for the rescued server and ssh
+        into the server using the newly created admin password. Delete the
+        server and verify that a rescued server can be deleted.
+
+        The following assertions occur:
+            - The response status code of a rescue request is equal to 200
+            - Can ssh into the rescued server using the admin password
+            - The response status code of a delete request for rescued server
+              is equal to 204
+            - The rescued server is deleted.
+        """
+
+        rescue_response = self.rescue_client.rescue(self.server.id)
+        self.assertEqual(rescue_response.status_code, 200)
+        changed_password = rescue_response.entity.admin_pass
+        self.assertTrue(self.server.admin_pass is not changed_password,
+                        msg="The password did not change after Rescue.")
+
+        # Enter rescue mode
+        rescue_server_response = self.server_behaviors.wait_for_server_status(
+            self.server.id, 'RESCUE')
+        rescue_server = rescue_server_response.entity
+        rescue_server.admin_pass = changed_password
+
+        # We cannot access rescued Windows servers, so skip
+        # this portion of the validation in that case.
+        image_resp = self.images_client.get_image(self.server.image.id)
+        self.assertEqual(image_resp.status_code, 200)
+        image = image_resp.entity
+        if image.metadata.get('os_type', '').lower() != 'windows':
+
+            # Verify if original disks plus rescue disk are attached
+            remote_client = self.server_behaviors.get_remote_instance_client(
+                rescue_server, self.servers_config,
+                password=changed_password, auth_strategy='password')
+            self.assertTrue(remote_client.can_authenticate())
+
+        # Delete the server when in rescue mode
+        delete_response = self.servers_client.delete_server(self.server.id)
+        self.assertEqual(204, delete_response.status_code)
+
+        # confirm deletion
+        self.server_behaviors.wait_for_server_to_be_deleted(self.server.id)
+
 
 class ServerFromImageRescueTests(ServerFromImageFixture,
                                  ServerRescueTests):
