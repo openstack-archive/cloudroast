@@ -72,6 +72,38 @@ class SuspendServerTests(object):
             "Unable to connect to active server {0} after suspending "
             "and resuming".format(self.server.id))
 
+    @tags(type='smoke', net='yes')
+    def test_suspend_delete_server(self):
+        """
+        Verify that a server can be suspended and then deleted by the user.
+
+        Will suspend the server and waits for the server state to be
+        suspended followed by pinging the ip until it's unreachable.  Deletes
+        the server as the user and the server was deleted successfully.
+
+        The following assertions occur:
+            - 202 status code response from the stop server call.
+            - 204 status code response from the start server call.
+            - Verify the server was deleted successfully.
+        """
+        self.ping_ip = self.server.addresses.get_by_name(
+            self.servers_config.network_for_ssh).ipv4
+
+        response = self.admin_servers_client.suspend_server(self.server.id)
+        self.assertEqual(response.status_code, 202)
+
+        self.admin_server_behaviors.wait_for_server_status(
+            self.server.id, ServerStates.SUSPENDED)
+
+        PingClient.ping_until_unreachable(
+            self.ping_ip, timeout=60, interval_time=5)
+
+        delete_response = self.servers_client.delete_server(self.server.id)
+        self.assertEqual(delete_response.status_code, 204,
+                         msg="Delete server {0} failed with response code "
+                         "{1}".format(self.server.id, delete_response.status_code))
+        self.server_behaviors.wait_for_server_to_be_deleted(self.server.id)
+
 
 class NegativeSuspendServerTests(object):
 
@@ -114,26 +146,27 @@ class NegativeSuspendServerTests(object):
 class ServerFromImageSuspendTests(ServerFromImageFixture,
                                   SuspendServerTests):
 
-    @classmethod
-    def setUpClass(cls):
+    def setUp(self):
         """
         Perform actions that setup the necessary resources for testing.
 
         The following resources are created during the setup:
             - Create a server in active state.
         """
-        super(ServerFromImageSuspendTests, cls).setUpClass()
-        cls.compute_admin = ComputeAdminComposite()
-        cls.admin_servers_client = cls.compute_admin.servers.client
-        cls.admin_server_behaviors = cls.compute_admin.servers.behaviors
-        key_resp = cls.keypairs_client.create_keypair(rand_name("key"))
-        assert key_resp.status_code is 200
-        cls.key = key_resp.entity
-        cls.resources.add(cls.key.name,
-                          cls.keypairs_client.delete_keypair)
-        cls.server = cls.server_behaviors.create_active_server(
-            key_name=cls.key.name).entity
-        cls.resources.add(cls.server.id, cls.servers_client.delete_server)
+        super(ServerFromImageSuspendTests, self).setUp()
+        self.compute_admin = ComputeAdminComposite()
+        self.admin_servers_client = self.compute_admin.servers.client
+        self.admin_server_behaviors = self.compute_admin.servers.behaviors
+        key_resp = self.keypairs_client.create_keypair(rand_name("key"))
+        if key_resp.status_code != 200:
+            raise Exception("Call to create keypair failed with status_code {0}".format(
+                key_resp.status_code))
+        self.key = key_resp.entity
+        self.resources.add(self.key.name,
+                           self.keypairs_client.delete_keypair)
+        self.server = self.server_behaviors.create_active_server(
+            key_name=self.key.name).entity
+        self.resources.add(self.server.id, self.servers_client.delete_server)
 
 
 @unittest.skip("Failing due to RM11052.")
