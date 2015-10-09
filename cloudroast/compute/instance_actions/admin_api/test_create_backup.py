@@ -36,7 +36,7 @@ class CreateBackupTests(ComputeAdminFixture):
         """
         super(CreateBackupTests, cls).setUpClass()
         key_resp = cls.keypairs_client.create_keypair(rand_name("key"))
-        assert key_resp.status_code is 200
+        cls.assertEqual(key_resp.status_code, 200)
         cls.key = key_resp.entity
         cls.resources.add(cls.key.name,
                           cls.keypairs_client.delete_keypair)
