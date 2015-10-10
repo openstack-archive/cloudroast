@@ -25,11 +25,11 @@ from cloudcafe.compute.servers_api.config import ServersConfig
 
 from cloudroast.compute.fixtures import ServerFromImageFixture
 
+compute_config = ComputeConfig()
+hypervisor = compute_config.hypervisor.lower()
+
 
 class CreateServerTest(object):
-
-    compute_config = ComputeConfig()
-    hypervisor = compute_config.hypervisor.lower()
 
     servers_config = ServersConfig()
     file_injection_enabled = servers_config.personality_file_injection_enabled
@@ -281,9 +281,14 @@ class CreateServerTest(object):
         remote_client = self.server_behaviors.get_remote_instance_client(
             self.server, self.servers_config, key=self.key.private_key)
         hostname = remote_client.get_hostname()
-        self.assertEqual(hostname, self.name,
-                         msg="Expected hostname to be {0}, was {1}".format(
-                             self.name, hostname))
+        if hypervisor == ComputeHypervisors.IRONIC:
+            self.assertTrue(self.name in hostname,
+                            msg="Expected ironic hostname to be {0}, was {1}".format(
+                                self.name, hostname))
+        else:
+            self.assertEqual(hostname, self.name,
+                             msg="Expected hostname to be {0}, was {1}".format(
+                                 self.name, hostname))
 
     @tags(type='smoke', net='yes')
     def test_can_log_into_created_server(self):
@@ -541,6 +546,15 @@ class ServerFromImageCreateServerTests(ServerFromImageFixture,
             self.server, self.servers_config, key=self.key.private_key)
         disk_size = remote_client.get_disk_size(
             self.servers_config.instance_disk_path)
-        self.assertEqual(disk_size, self.flavor.disk,
-                         msg="Expected disk to be {0} GB, was {1} GB".format(
-                             self.flavor.disk, disk_size))
+        if hypervisor == ComputeHypervisors.IRONIC:
+            # convert the returned Gibibytes to Gigabytes
+            disk_size = int(disk_size * 1.073741824)
+            self.assertAlmostEqual(
+                self.flavor.disk, disk_size,
+                msg="Expected disk to be {0} GB, was {1} GB".format(
+                    self.flavor.disk, disk_size), delta=2)
+        else:
+            self.assertEqual(
+                disk_size, self.flavor.disk,
+                msg="Expected disk to be {0} GB, was {1} GB".format(
+                    self.flavor.disk, disk_size))
