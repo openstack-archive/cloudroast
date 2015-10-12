@@ -16,8 +16,6 @@ limitations under the License.
 
 import unittest
 
-import IPy
-
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.networking.networks.common.constants \
     import NeutronResponseCodes

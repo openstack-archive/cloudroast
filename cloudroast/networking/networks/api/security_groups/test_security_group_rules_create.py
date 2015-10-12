@@ -92,8 +92,8 @@ data_set_list_negative.append_new_dataset(
     data_dict={'direction': 'egress',
                'http_status': 'BAD_REQUEST',
                'test_desc': 'Non-ingress rules are not currently supported',
-               'error_type': 'INVALID_INPUT'},
-    tags=['sec_group', 'post', 'negative', 'rbac_creator'])
+               'error_type': 'EGRESS_SECURITY_GROUP_RULES_NOT_ENABLED'},
+    tags=['post', 'negative', 'rbac_creator'])
 data_set_list_negative.append_new_dataset(
     name='w_invalid_protocol',
     data_dict={'protocol': 'invalid_protocol',
@@ -167,7 +167,7 @@ data_set_list_negative.append_new_dataset(
     data_dict={'protocol': 'icmp', 'port_range_max': 200,
                'http_status': 'BAD_REQUEST',
                'test_desc': 'ICMP requires port_range_min when port_range_max given',
-               'error_type': 'SECURITY_GROUP_INVALID_ICMP_VALUE'},
+               'error_type': 'SECURITY_GROUP_MISSING_ICMP_TYPE'},
     tags=['bug'])
 
 

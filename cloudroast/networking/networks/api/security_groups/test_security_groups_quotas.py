@@ -1,5 +1,5 @@
 """
-Copyright 2014 Rackspace
+Copyright 2015 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -13,15 +13,14 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-import unittest
 
 from cafe.drivers.unittest.decorators import tags
-from cloudcafe.networking.networks.extensions.security_groups_api.config \
-    import SecurityGroupsConfig
-from cloudroast.networking.networks.fixtures \
-    import NetworkingSecurityGroupsFixture
+
 from cloudcafe.networking.networks.extensions.security_groups_api.constants \
     import SecurityGroupsErrorTypes, SecurityGroupsResponseCodes
+
+from cloudroast.networking.networks.fixtures \
+    import NetworkingSecurityGroupsFixture
 
 
 class SecurityGroupsQuotasTest(NetworkingSecurityGroupsFixture):
@@ -34,10 +33,10 @@ class SecurityGroupsQuotasTest(NetworkingSecurityGroupsFixture):
         # Setting up
         cls.expected_secgroup = cls.get_expected_secgroup_data()
         cls.expected_secgroup.name = 'test_secgroup_quotas'
-        cls.expected_secrule = cls.get_expected_secrule_data()
 
     def tearDown(self):
         self.secGroupCleanUp()
+        super(SecurityGroupsQuotasTest, self).tearDown()
 
     @tags('quotas')
     def test_rules_per_group(self):
@@ -45,14 +44,14 @@ class SecurityGroupsQuotasTest(NetworkingSecurityGroupsFixture):
         @summary: Testing security rules quota per group
         """
         secgroup = self.create_test_secgroup(self.expected_secgroup)
-        expected_secrule = self.expected_secrule
+        expected_secrule = self.get_expected_secrule_data()
         expected_secrule.security_group_id = secgroup.id
         rules_per_group = self.sec.config.max_rules_per_secgroup
-        num = rules_per_group
-        self.create_n_security_rules_per_group(expected_secrule, num)
+        self.create_n_security_rules_per_group(expected_secrule,
+                                               rules_per_group)
 
         msg = ('Successfully created the expected security rules per group '
-            'allowed by the quota of {0}').format(rules_per_group)
+               'allowed by the quota of {0}').format(rules_per_group)
         self.fixture_log.debug(msg)
 
         # Checking the quota is enforced
@@ -63,31 +62,24 @@ class SecurityGroupsQuotasTest(NetworkingSecurityGroupsFixture):
 
         neg_msg = ('(negative) Creating a security rule over the group quota'
                    ' of {0}').format(rules_per_group)
-        status_code = SecurityGroupsResponseCodes.CONFLICT
-        error_type = SecurityGroupsErrorTypes.OVER_QUOTA
         self.assertNegativeResponse(
-            resp=resp, status_code=status_code, msg=neg_msg,
-            delete_list=self.delete_secgroups,
-            error_type=error_type)
+            resp=resp, status_code=SecurityGroupsResponseCodes.CONFLICT,
+            msg=neg_msg, delete_list=self.delete_secgroups,
+            error_type=SecurityGroupsErrorTypes.OVER_QUOTA)
 
     @tags('quotas')
     def test_groups_per_tenant(self):
         """
         @summary: Testing security groups quota per tenant
         """
-        expected_secgroup = self.expected_secgroup
         groups_per_tenant = self.sec.config.max_secgroups_per_tenant
-        num = groups_per_tenant
-        self.create_n_security_groups(expected_secgroup, num)
-
-        msg = ('Successfully created the expected security groups per tenant '
-            'allowed by the quota of {0}').format(groups_per_tenant)
-        self.fixture_log.debug(msg)
+        self.create_n_security_groups(self.expected_secgroup,
+                                      groups_per_tenant)
 
         # Checking the quota is enforced
         request_kwargs = dict(
-            name=expected_secgroup.name,
-            description=expected_secgroup.description,
+            name=self.expected_secgroup.name,
+            description=self.expected_secgroup.description,
             raise_exception=False)
         resp = self.sec.behaviors.create_security_group(**request_kwargs)
 
@@ -105,18 +97,17 @@ class SecurityGroupsQuotasTest(NetworkingSecurityGroupsFixture):
         """
         @summary: Testing security rules quota per tenant
         """
-        expected_secgroup = self.expected_secgroup
-        expected_secrule = self.expected_secrule
+        expected_secrule = self.get_expected_secrule_data()
         groups_per_tenant = self.sec.config.max_secgroups_per_tenant
         rules_per_tenant = self.sec.config.max_rules_per_tenant
         rules_per_group = rules_per_tenant / groups_per_tenant
 
         secgroups = self.create_n_security_groups_w_n_rules(
-            expected_secgroup, expected_secrule, groups_per_tenant,
+            self.expected_secgroup, expected_secrule, groups_per_tenant,
             rules_per_group)
 
         msg = ('Successfully created the expected security rules per tenant '
-            'allowed by the quota of {0}').format(rules_per_tenant)
+               'allowed by the quota of {0}').format(rules_per_tenant)
         self.fixture_log.debug(msg)
 
         # Checking the quota is enforced
@@ -127,12 +118,10 @@ class SecurityGroupsQuotasTest(NetworkingSecurityGroupsFixture):
 
         neg_msg = ('(negative) Creating a security rule over the tenant quota'
                    ' of {0}').format(rules_per_tenant)
-        status_code = SecurityGroupsResponseCodes.CONFLICT
-        error_type = SecurityGroupsErrorTypes.OVER_QUOTA
         self.assertNegativeResponse(
-            resp=resp, status_code=status_code, msg=neg_msg,
-            delete_list=self.delete_secgroups,
-            error_type=error_type)
+            resp=resp, status_code=SecurityGroupsResponseCodes.CONFLICT,
+            msg=neg_msg, delete_list=self.delete_secgroups,
+            error_type=SecurityGroupsErrorTypes.OVER_QUOTA)
 
     def create_n_security_groups_w_n_rules(self, expected_secgroup,
                                            expected_secrule, groups_num,
@@ -189,5 +178,5 @@ class SecurityGroupsQuotasTest(NetworkingSecurityGroupsFixture):
             self.assertSecurityGroupRuleResponse(expected_secrule, secrule)
 
         msg = ('Successfully created {0} security rules at security group '
-            '{1}').format(num, expected_secrule.security_group_id)
+               '{1}').format(num, expected_secrule.security_group_id)
         self.fixture_log.debug(msg)

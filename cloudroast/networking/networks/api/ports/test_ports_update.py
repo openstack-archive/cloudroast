@@ -237,7 +237,6 @@ class PortUpdateTest(NetworkingAPIFixture):
         port.fixed_ips = self.ports.behaviors.format_fixed_ips(port.fixed_ips)
         self.assertPortResponse(expected_port, port, check_fixed_ips=True)
 
-    @unittest.skip('Needs NCP-1389 fix')
     @tags('quotas')
     def test_ipv4_fixed_ips_per_port_update(self):
         """
@@ -261,7 +260,6 @@ class PortUpdateTest(NetworkingAPIFixture):
             delete_list=self.delete_ports,
             error_type=NeutronErrorTypes.OVER_QUOTA)
 
-    @unittest.skip('Needs NCP-1389 fix')
     @tags('quotas')
     def test_ipv6_fixed_ips_per_port_update(self):
         """

@@ -476,7 +476,6 @@ class PortCreateTest(NetworkingAPIFixture):
             delete_list=self.delete_ports,
             error_type=NeutronErrorTypes.HTTP_BAD_REQUEST)
 
-    @unittest.skip('Needs NCP-1389 fix')
     @tags('quotas')
     def test_ipv4_fixed_ips_per_port_create(self):
         """
@@ -502,7 +501,6 @@ class PortCreateTest(NetworkingAPIFixture):
             delete_list=self.delete_ports,
             error_type=NeutronErrorTypes.OVER_QUOTA)
 
-    @unittest.skip('Needs NCP-1389 fix')
     @tags('quotas')
     def test_ipv6_fixed_ips_per_port_create(self):
         """
