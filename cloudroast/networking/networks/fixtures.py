@@ -186,7 +186,7 @@ class NetworkingFixture(BaseTestFixture):
                 # Need to format IPv6 allocation pools response for assertion
                 subnet.allocation_pools = (
                     self.subnets.behaviors.format_allocation_pools(
-                    subnet.allocation_pools))
+                        subnet.allocation_pools))
 
             # Check the created subnet is as expected
             self.assertSubnetResponse(
@@ -194,9 +194,9 @@ class NetworkingFixture(BaseTestFixture):
                 check_exact_name=False)
         elif set_up:
             msg = ('Unable to create test IPv{0} subnet {1} status code {2}, '
-                'failures:{3}'.format(
-                expected_subnet.ip_version, expected_subnet.name,
-                resp.response.status_code, resp.failures))
+                   'failures:{3}'.format(
+                       expected_subnet.ip_version, expected_subnet.name,
+                       resp.response.status_code, resp.failures))
             self.assertClassSetupFailure(msg)
         return subnet
 
@@ -227,8 +227,9 @@ class NetworkingFixture(BaseTestFixture):
                 check_exact_name=False)
         elif set_up:
             msg = ('Unable to create test port {0} status code {1}, '
-                'failures: {2}'.format(
-                expected_port.name, resp.response.status_code, resp.failures))
+                   'failures: {2}'.format(
+                       expected_port.name, resp.response.status_code,
+                       resp.failures))
             self.assertClassSetupFailure(msg)
         return port
 
@@ -261,8 +262,8 @@ class NetworkingFixture(BaseTestFixture):
             delete_list.append(resp.response.entity.id)
         message = ('{msg}: unexpected HTTP response {resp_status} instead of '
                    'the expected {status}'.format(
-                    msg=msg, resp_status=resp.response.status_code,
-                    status=status_code))
+                       msg=msg, resp_status=resp.response.status_code,
+                       status=status_code))
         self.assertEqual(resp.response.status_code, status_code, message)
         self.assertTrue(resp.failures, 'Missing expected failures')
 
@@ -397,24 +398,27 @@ class NetworkingFixture(BaseTestFixture):
         failures = []
 
         subnet_msg = ('Unexpected subnet id in fixed IP {fixed_ip} instead of '
-            'subnet id {subnet_id} in port {port} fixed IPs {fixed_ips}')
+                      'subnet id {subnet_id} in port {port} fixed IPs'
+                      '{fixed_ips}')
         verify_msg = ('Fixed IP ip_address {ip} not within the expected '
-            'subnet cidr {cidr} in port {port} fixed IPs {fixed_ips}')
+                      'subnet cidr {cidr} in port {port} fixed IPs'
+                      ' {fixed_ips}')
         ip_msg = ('Repeated ip_address {ip} within fixed ips {fixed_ips} '
-            'at port {port}')
+                  'at port {port}')
 
         for fixed_ip in fixed_ips:
             if fixed_ip['subnet_id'] != subnet_id:
                 failures.append(subnet_msg.format(fixed_ip=fixed_ip,
-                    subnet_id=subnet_id, port=port.id, fixed_ips=fixed_ips))
+                                subnet_id=subnet_id, port=port.id,
+                                fixed_ips=fixed_ips))
             fixed_ip_within_cidr = self.subnets.behaviors.verify_ip(
                 ip_cidr=fixed_ip['ip_address'], ip_range=cidr)
             if fixed_ip_within_cidr is not True:
                 failures.append(verify_msg.format(ip=fixed_ip['ip_address'],
-                    cidr=cidr, port=port.id, fixed_ips=fixed_ips))
+                                cidr=cidr, port=port.id, fixed_ips=fixed_ips))
             if fixed_ip['ip_address'] in verified_ip:
                 failures.append(ip_msg.format(ip=fixed_ip['ip_address'],
-                    fixed_ips=fixed_ips, port=port.id))
+                                fixed_ips=fixed_ips, port=port.id))
             verified_ip.append(fixed_ip['ip_address'])
         self.assertFalse(failures)
 
@@ -445,8 +449,9 @@ class NetworkingFixture(BaseTestFixture):
         msg = ('Unexpected subnet IDs {unexpected_ids} instead of the expected'
                ' {expected_ids} within port fixed Ips {ips} at port {port} in '
                'network {network}').format(unexpected_ids=subnet_ids,
-                expected_ids=expected_subnet_ids, ips=fixed_ips, port=port.id,
-                network=port.network_id)
+                                           expected_ids=expected_subnet_ids,
+                                           ips=fixed_ips, port=port.id,
+                                           network=port.network_id)
         self.assertListEqual(subnet_ids, expected_subnet_ids, msg)
 
     def assertPortResponse(self, expected_port, port, subnet=None,
@@ -573,7 +578,7 @@ class NetworkingAPIFixture(NetworkingFixture):
 
     def get_ipv4_dns_nameservers_data(self):
         """IPv4 dns nameservers test data (quota is 2)"""
-                # IPv4 dns_nameservers test data
+        # IPv4 dns_nameservers test data
         ipv4_dns_nameservers = ['0.0.0.0', '0.0.1.0']
         return ipv4_dns_nameservers
 
@@ -650,21 +655,27 @@ class NetworkingSecurityGroupsFixture(NetworkingAPIFixture):
     """
 
     @classmethod
-    def setUpClass(cls):
+    def setUpClass(cls, sec_group_data_dict=None,
+                   sec_group_rule_data_dict=None):
         super(NetworkingSecurityGroupsFixture, cls).setUpClass()
         cls.sec = SecurityGroupsComposite()
-
         # Data for creating security groups
-        cls.security_group_data = dict(
-            description='', security_group_rules=[], name='test_secgroup',
-            tenant_id=cls.user.tenant_id)
+        if sec_group_data_dict is not None:
+            cls.security_group_data = sec_group_data_dict
+        else:
+            cls.security_group_data = dict(
+                description='', security_group_rules=[], name='test_secgroup',
+                tenant_id=cls.user.tenant_id)
 
         # Data for creating security group rules
-        cls.security_group_rule_data = dict(
-            remote_group_id=None, direction='ingress', remote_ip_prefix=None,
-            protocol=None, ethertype='IPv4', port_range_max=None,
-            port_range_min=None,
-            tenant_id=cls.user.tenant_id)
+        if sec_group_rule_data_dict is not None:
+            cls.security_group_rule_data = sec_group_rule_data_dict
+        else:
+            cls.security_group_rule_data = dict(
+                remote_group_id=None, direction='ingress',
+                remote_ip_prefix=None, protocol=None, ethertype='IPv4',
+                port_range_max=None, port_range_min=None,
+                tenant_id=cls.user.tenant_id)
 
         # Using the secGroupCleanup method
         cls.addClassCleanup(cls.secGroupCleanUp)
@@ -809,7 +820,7 @@ class NetworkingSecurityGroupsFixture(NetworkingAPIFixture):
 
         if check_exact_name:
             self.assertEqual(expected_secgroup.name, secgroup.name,
-                msg.format(expected_secgroup.name, secgroup.name))
+                             msg.format(expected_secgroup.name, secgroup.name))
         else:
             start_name_msg = 'Expected {0} name to start with {1}'.format(
                 secgroup.name, expected_secgroup.name)
@@ -829,11 +840,10 @@ class NetworkingSecurityGroupsFixture(NetworkingAPIFixture):
                 key=operator.attrgetter('id'))
             secgroup.security_group_rules.sort(
                 key=operator.attrgetter('id'))
-            self.assertEqual(
-                expected_secgroup.security_group_rules,
-                secgroup.security_group_rules,
-                    msg.format(expected_secgroup.security_group_rules,
-                               secgroup.security_group_rules))
+            self.assertEqual(expected_secgroup.security_group_rules,
+                             secgroup.security_group_rules,
+                             msg.format(expected_secgroup.security_group_rules,
+                                        secgroup.security_group_rules))
 
         if self.config.check_response_attrs:
             msg = 'Unexpected Security Groups response attributes: {0}'.format(
