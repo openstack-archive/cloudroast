@@ -23,7 +23,6 @@ from cloudroast.compute.instance_actions.api.test_rescue_server \
 from cloudroast.compute.fixtures import ServerFromVolumeV2Fixture
 
 
-@unittest.skip('Rescue not enabled for boot from volume')
 class ServerFromVolumeV2RescueTests(ServerFromVolumeV2Fixture,
                                     ServerRescueTests):
 
