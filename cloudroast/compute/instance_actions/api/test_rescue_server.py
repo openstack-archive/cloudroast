@@ -28,7 +28,7 @@ hypervisor = compute_config.hypervisor.lower()
 
 
 @unittest.skipIf(
-    hypervisor in [ComputeHypervisors.IRONIC, ComputeHypervisors.LXC_LIBVIRT],
+    hypervisor in [ComputeHypervisors.LXC_LIBVIRT],
     'Rescue server not supported in current configuration.')
 class ServerRescueTests(object):
 
@@ -88,9 +88,16 @@ class ServerRescueTests(object):
             # Verify if original disks plus rescue disk are attached
             remote_client = self.server_behaviors.get_remote_instance_client(
                 rescue_server, self.servers_config,
-                key=self.key.private_key)
+                password=changed_password, auth_strategy='password')
             disks = remote_client.get_all_disks()
-            self.assertEqual(len(disks.keys()), original_num_disks + 1)
+
+            # Xen VMs create another VM with a clean image of original
+            # server and the image of the VM needing rescue where as Ironic
+            # defaults to the underlying OS.
+            if hypervisor != ComputeHypervisors.IRONIC:
+                self.assertEqual(len(disks.keys()), original_num_disks + 1)
+            else:
+                self.assertEqual(len(disks.keys()), original_num_disks)
 
         # Exit rescue mode
         unrescue_response = self.rescue_client.unrescue(self.server.id)
@@ -102,6 +109,9 @@ class ServerRescueTests(object):
         disks = remote_client.get_all_disks()
         self.assertEqual(len(disks.keys()), original_num_disks)
 
+    @unittest.skipIf(
+        hypervisor in [ComputeHypervisors.IRONIC],
+        'Rescue with image change is not supported in current configuration')
     @requires_extension('ExtendedRescueWithImage')
     @tags(type='smoke', net='yes')
     def test_rescue_with_image_change_server_test(self):
@@ -152,7 +162,9 @@ class ServerRescueTests(object):
 
         # We cannot access rescued Windows servers, so skip
         # this portion of the validation in that case.
-        image = self.images_client.get_image(self.server.image.id).entity
+        image_resp = self.images_client.get_image(self.server.image.id)
+        self.assertEqual(image_resp.status_code, 200)
+        image = image_resp.entity
         if image.metadata.get('os_type', '').lower() != 'windows':
 
             # Test distro change after rescue with image supplied
