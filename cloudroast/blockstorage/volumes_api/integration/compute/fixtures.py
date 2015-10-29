@@ -435,11 +435,14 @@ class ComputeIntegrationTestFixture(VolumesTestFixture):
 
         # Make a snapshot of the server via the images api
         self.make_server_snapshot(server)
-        self.servers.behaviors.wait_for_server_status(server.id, 'ACTIVE', 300)
+        self.servers.behaviors.wait_for_server_status(
+            server.id, 'ACTIVE', timeout=300)
         self.make_server_snapshot(server)
-        self.servers.behaviors.wait_for_server_status(server.id, 'ACTIVE', 300)
+        self.servers.behaviors.wait_for_server_status(
+            server.id, 'ACTIVE', timeout=300)
         server_snapshot_3 = self.make_server_snapshot(server)
-        self.servers.behaviors.wait_for_server_status(server.id, 'ACTIVE', 300)
+        self.servers.behaviors.wait_for_server_status(
+            server.id, 'ACTIVE', timeout=300)
 
         # Create a bootable volume from the server snapshot
         self.create_volume_from_image_test(volume_type, server_snapshot_3)
