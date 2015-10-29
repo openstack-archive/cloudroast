@@ -29,6 +29,11 @@ class VolumeCloningIntegrationSmokeTests(ComputeIntegrationTestFixture):
         # Unmount and detach the original volume
         self.unmount_and_detach_test_volume()
 
+        # Verify that the volume detaches properly
+        self.compute.volume_attachments.behaviors.\
+            verify_volume_status_progression_during_detachment(
+                self.test_volume.volume_type)
+
         # Create a clone of the test volume
         self.volume_clone = self.volumes.behaviors.create_available_volume(
             self.test_volume.size, self.test_volume.volume_type,
