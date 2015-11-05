@@ -36,7 +36,8 @@ class MigrateServerTest(object):
 
         Get the server that was created in setup and use it to call migrate
         server and waits for status verify resize, once it confirms
-        the resize, it will see if the original host is different from the current.
+        the resize, it will see if the original host is different from the
+        current.
 
         The following assertions occur:
             - The list flavors with detail request raises a 'Bad Request'
@@ -52,16 +53,19 @@ class MigrateServerTest(object):
         self.admin_server_behaviors.wait_for_server_status(
             self.server.id, NovaServerStatusTypes.VERIFY_RESIZE)
         self.admin_servers_client.confirm_resize(self.server.id)
-        server_after_migrate = self.admin_server_behaviors.wait_for_server_status(
-            self.server.id, NovaServerStatusTypes.ACTIVE).entity
+        server_after_migrate = (
+            self.admin_server_behaviors.wait_for_server_status(
+                self.server.id, NovaServerStatusTypes.ACTIVE).entity)
 
         # Check that compute node is changed
         self.assertNotEqual(
             server_before_migrate.host, server_after_migrate.host,
-            msg="Host is not changed after migration, source host is {host_before} "
+            msg="Host not changed after migration for instance {uuid}, "
+                "source host is {host_before}, "
                 "destination host is {host_after}".format(
                     host_before=server_before_migrate.host,
-                    host_after=server_after_migrate.host))
+                    host_after=server_after_migrate.host,
+                    uuid=self.server.id))
 
 
 @unittest.skipIf(
