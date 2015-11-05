@@ -13,6 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
+from time import sleep
 import unittest
 
 from cafe.drivers.unittest.decorators import tags
@@ -55,13 +56,19 @@ class MigrateServerTest(object):
         server_after_migrate = self.admin_server_behaviors.wait_for_server_status(
             self.server.id, NovaServerStatusTypes.ACTIVE).entity
 
+        if server_after_migrate.host == server_before_migrate.host:
+            # Wait a bit to make sure database changes have synced
+            sleep(30)
+
         # Check that compute node is changed
         self.assertNotEqual(
             server_before_migrate.host, server_after_migrate.host,
-            msg="Host is not changed after migration, source host is {host_before} "
+            msg="Host not changed after migration for instance {uuid}, "
+                "source host is {host_before}, "
                 "destination host is {host_after}".format(
                     host_before=server_before_migrate.host,
-                    host_after=server_after_migrate.host))
+                    host_after=server_after_migrate.host,
+                    uuid=self.server.id))
 
 
 @unittest.skipIf(
