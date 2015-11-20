@@ -93,7 +93,7 @@ data_set_list_negative.append_new_dataset(
                'http_status': 'BAD_REQUEST',
                'test_desc': 'Non-ingress rules are not currently supported',
                'error_type': 'EGRESS_SECURITY_GROUP_RULES_NOT_ENABLED'},
-    tags=['sec_group', 'post', 'negative', 'rbac_creator'])
+    tags=['post', 'negative', 'rbac_creator'])
 data_set_list_negative.append_new_dataset(
     name='w_invalid_protocol',
     data_dict={'protocol': 'invalid_protocol',
