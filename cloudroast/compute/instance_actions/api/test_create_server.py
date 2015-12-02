@@ -221,11 +221,21 @@ class CreateServerTest(object):
         disks = remote_client.get_all_disks()
         disks.pop(self.servers_config.instance_disk_path, None)
 
-        # Verify the ephemeral disks have the correct size
-        self._verify_ephemeral_disk_size(
-            disks=disks, flavor=self.flavor,
-            split_ephemeral_disk_enabled=self.split_ephemeral_disk_enabled,
-            ephemeral_disk_max_size=self.ephemeral_disk_max_size)
+        if hypervisor == ComputeHypervisors.IRONIC:
+            # convert the returned Gibibytes to Gigabytes
+            for key, value in disks.iteritems():
+                disks[key] = int(value * 1.073741824)
+            ephemeral_disk = sum(disks.itervalues())
+            self.assertAlmostEqual(
+                self.flavor.ephemeral_disk, ephemeral_disk,
+                msg="Expected ephemeral disk to be {0} GB, was {1} GB".format(
+                    self.flavor.ephemeral_disk, ephemeral_disk), delta=2)
+        else:
+            # Verify the ephemeral disks have the correct size
+            self._verify_ephemeral_disk_size(
+                disks=disks, flavor=self.flavor,
+                split_ephemeral_disk_enabled=self.split_ephemeral_disk_enabled,
+                ephemeral_disk_max_size=self.ephemeral_disk_max_size)
 
         # Partition and format the disks
         for disk in disks:
