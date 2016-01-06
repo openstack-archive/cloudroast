@@ -87,13 +87,14 @@ data_set_list.append_new_dataset(
 # Data set for negative testing
 data_set_list_negative = DatasetList()
 
+# This test is only to be used to check if the egress rules are OFF
 data_set_list_negative.append_new_dataset(
     name='w_direction_egress',
     data_dict={'direction': 'egress',
                'http_status': 'BAD_REQUEST',
                'test_desc': 'Non-ingress rules are not currently supported',
                'error_type': 'EGRESS_SECURITY_GROUP_RULES_NOT_ENABLED'},
-    tags=['post', 'negative', 'rbac_creator'])
+    tags=['sec_group_egress_off'])
 data_set_list_negative.append_new_dataset(
     name='w_invalid_protocol',
     data_dict={'protocol': 'invalid_protocol',

@@ -89,13 +89,6 @@ data_set_list.append_new_dataset(
 data_set_list_negative = DatasetList()
 
 data_set_list_negative.append_new_dataset(
-    name='w_direction_egress',
-    data_dict={'direction': 'egress',
-               'http_status': 'BAD_REQUEST',
-               'test_desc': 'Non-ingress rules are not currently supported',
-               'error_type': 'EGRESS_SECURITY_GROUP_RULES_NOT_ENABLED'},
-    tags=['sec_group_egress', 'post', 'negative', 'rbac_creator'])
-data_set_list_negative.append_new_dataset(
     name='w_invalid_protocol',
     data_dict={'direction': 'egress',
                'protocol': 'invalid_protocol',
