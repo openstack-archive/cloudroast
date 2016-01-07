@@ -1,5 +1,5 @@
 """
-Copyright 2015 Rackspace
+Copyright 2016 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -36,10 +36,11 @@ class ListVersions(ImagesFixture):
 
         1) Retrieve the versions data file
         2) List all versions passing in each url addition
-        3) Verify that the response code is 300
-        4) Verify that the number of versions received matches the number of
+        3) If versions is in the url, verify that the response code is 200
+        4) If versions is not in the url, verify that the response code is 300
+        5) Verify that the number of versions received matches the number of
         versions in the versions data file
-        5) For each version returned, verify that the data matches the
+        6) For each version returned, verify that the data matches the
         versions data file
         """
 
@@ -49,9 +50,14 @@ class ListVersions(ImagesFixture):
             self.images.config.versions_data)
 
         resp = self.images.client.list_versions(url_addition)
-        self.assertEqual(
-            resp.status_code, 300,
-            Messages.STATUS_CODE_MSG.format(300, resp.status_code))
+        if 'versions' in url_addition:
+            self.assertEqual(
+                resp.status_code, 200,
+                Messages.STATUS_CODE_MSG.format(200, resp.status_code))
+        else:
+            self.assertEqual(
+                resp.status_code, 300,
+                Messages.STATUS_CODE_MSG.format(300, resp.status_code))
         listed_versions = resp.entity
 
         self.assertEqual(len(listed_versions), len(versions_data))
