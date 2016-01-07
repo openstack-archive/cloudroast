@@ -1,5 +1,5 @@
 """
-Copyright 2015 Rackspace
+Copyright 2016 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -34,10 +34,16 @@ class VersionsSmoke(ImagesFixture):
         @type url_addition: Dictonary
 
         1) List all versions passing in each url addition
-        2) Verify that the response code is 300
+        2) If versions is in the url, verify that the response code is 200
+        3) If versions is not in the url, verify that the response code is 300
         """
 
         resp = self.images.client.list_versions(url_addition)
-        self.assertEqual(
-            resp.status_code, 300,
-            Messages.STATUS_CODE_MSG.format(300, resp.status_code))
+        if 'versions' in url_addition:
+            self.assertEqual(
+                resp.status_code, 200,
+                Messages.STATUS_CODE_MSG.format(200, resp.status_code))
+        else:
+            self.assertEqual(
+                resp.status_code, 300,
+                Messages.STATUS_CODE_MSG.format(300, resp.status_code))
