@@ -1,5 +1,5 @@
 """
-Copyright 2015 Rackspace
+Copyright 2016 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,11 +14,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import re
+import datetime
 from cafe.drivers.unittest.decorators import (
     data_driven_test, DataDrivenFixture)
 from cloudcafe.common.tools.datagen import rand_name
-from cloudcafe.glance.common.constants import ImageProperties, Messages
+from cloudcafe.glance.common.constants import Messages
 
 from cloudcafe.glance.common.types import (
     ImageMemberStatus, ImageType, ImageVisibility, SortDirection)
@@ -204,19 +204,13 @@ class ListImages(ImagesIntegrationFixture):
         """
 
         api_args = {}
-        tz_regex = re.compile(ImageProperties.TZ_REGEX)
 
         for param in params:
             if param == 'id_':
                 api_args.update({'id': getattr(self.created_image, param)})
             elif param == 'created_at' or param == 'updated_at':
-                param_value = str(getattr(self.created_image, param))
-                tz_value = tz_regex.search(param_value)
-                if tz_value is None:
-                    api_args.update({param: param_value})
-                else:
-                    api_args.update(
-                        {param: param_value.replace(tz_value.group(), '')})
+                # Params will always only have a single value
+                api_args.update({param: 'lte:{0}'.format(params.values()[0])})
             else:
                 api_args.update({param: getattr(self.created_image, param)})
 
@@ -230,12 +224,25 @@ class ListImages(ImagesIntegrationFixture):
             for param in params:
                 received = getattr(image, param)
                 expected = getattr(self.created_image, param)
-                self.assertEqual(
-                    received, expected,
-                    msg=('Unexpected property value for image {0} received.'
-                         'Expected: {1} '
-                         'Received: {2}').format(image.id_, expected,
-                                                 received))
+                if param == 'created_at' or param == 'updated_at':
+                    # Params will always only have a single value
+                    received = datetime.datetime.strptime(
+                        str(received), '%Y-%m-%d %H:%M:%S+00:00')
+                    expected = datetime.datetime.strptime(
+                        params.values()[0], '%Y-%m-%dT%H:%M:%SZ')
+                    self.assertLessEqual(
+                        received, expected,
+                        msg=('Unexpected property value for image {0} '
+                             'received. Expected: {1} '
+                             'Received: {2}').format(image.id_, expected,
+                                                     received))
+                else:
+                    self.assertEqual(
+                        received, expected,
+                        msg=('Unexpected property value for image {0} '
+                             'received. Expected: {1} '
+                             'Received: {2}').format(image.id_, expected,
+                                                     received))
 
     def test_filter_images_list_passing_additional_property(self):
         """
