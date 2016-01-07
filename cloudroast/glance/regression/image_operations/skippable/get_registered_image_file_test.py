@@ -1,5 +1,5 @@
 """
-Copyright 2015 Rackspace
+Copyright 2016 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -121,8 +121,8 @@ class GetRegisteredImageFile(ImagesFixture):
 
         resp = self.images.client.get_image_file(self.empty_reg_image.id_)
         self.assertEqual(
-            resp.status_code, 204,
-            Messages.STATUS_CODE_MSG.format(204, resp.status_code))
+            resp.status_code, 403,
+            Messages.STATUS_CODE_MSG.format(403, resp.status_code))
 
         self.assertEqual(
             resp.content, '',
