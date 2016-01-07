@@ -1,5 +1,5 @@
 """
-Copyright 2015 Rackspace
+Copyright 2016 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -82,14 +82,25 @@ class ImageOperationsSmoke(ImagesFixture):
 
         1) Attempt to list a subset of images passing in an invalid query
         parameter
-        2) Verify the response status code is 200
+        2) If the invalid query parameter is created_at or updated_at, verify
+        the response status code is 400
+        3) If the invalid query parameter is not created_at or updated_at,
+        verify the response status code is 200
         """
 
-        # Invalid parameters should be ignored, the response code should be 200
+        unacceptable_props = ['created_at', 'updated_at']
+
+        # Most invalid parameters should be ignored, should return 200 response
         resp = self.images.client.list_images(prop)
-        self.assertEqual(
-            resp.status_code, 200,
-            Messages.STATUS_CODE_MSG.format(200, resp.status_code))
+        # Prop will always only have a single key
+        if prop.keys()[0] in unacceptable_props:
+            self.assertEqual(
+                resp.status_code, 400,
+                Messages.STATUS_CODE_MSG.format(400, resp.status_code))
+        else:
+            self.assertEqual(
+                resp.status_code, 200,
+                Messages.STATUS_CODE_MSG.format(200, resp.status_code))
 
     def test_get_image_details(self):
         """
