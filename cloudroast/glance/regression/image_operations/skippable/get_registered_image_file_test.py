@@ -1,5 +1,5 @@
 """
-Copyright 2015 Rackspace
+Copyright 2016 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -115,19 +115,13 @@ class GetRegisteredImageFile(ImagesFixture):
         @summary: Get image file for image that is empty
 
         1) Get image file for image that is empty
-        2) Verify that the response code is 204
-        3) Verify that the image file is empty
+        2) Verify that the response code is 403
         """
 
         resp = self.images.client.get_image_file(self.empty_reg_image.id_)
         self.assertEqual(
-            resp.status_code, 204,
-            Messages.STATUS_CODE_MSG.format(204, resp.status_code))
-
-        self.assertEqual(
-            resp.content, '',
-            msg='Unexpected file content. Expected: Empty contents '
-                'Received: {0}'.format(resp.content))
+            resp.status_code, 403,
+            Messages.STATUS_CODE_MSG.format(403, resp.status_code))
 
     def test_get_image_file_as_tenant_without_access_to_image(self):
         """
@@ -154,7 +148,6 @@ class GetRegisteredImageFile(ImagesFixture):
 
         1) Get image file using deactivated image
         2) Verify that the response code is 403
-        3) Verify that the image file is empty
         """
 
         resp = self.images.client.get_image_file(self.deactivated_image.id_)
