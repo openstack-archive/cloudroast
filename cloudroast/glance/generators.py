@@ -1,5 +1,5 @@
 """
-Copyright 2015 Rackspace
+Copyright 2016 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@ limitations under the License.
 """
 
 from datetime import datetime
+import time
 import uuid
 
 from cafe.drivers.unittest.datasets import DatasetList
@@ -47,7 +48,7 @@ class ImagesDatasetListGenerator(object):
         auto_disk_config = 'False'
         checksum = random_string()
         container_format = ImageContainerFormat.AMI
-        created_at = datetime.now()
+        created_at = time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())
         disk_format = ImageDiskFormat.RAW
         id_ = str(uuid.uuid1())
         image_type = ImageType.IMPORT
@@ -59,7 +60,7 @@ class ImagesDatasetListGenerator(object):
         protected = False
         size = random_int(0, 9999999)
         status = ImageStatus.ACTIVE
-        updated_at = datetime.now()
+        updated_at = time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())
         user_id = random_string()
         visibility = ImageVisibility.PUBLIC
 
@@ -126,7 +127,8 @@ class ImagesDatasetListGenerator(object):
         auto_disk_config = 'False'
         checksum = random_string()
         container_format = ImageContainerFormat.AMI
-        created_at = datetime.now()
+        created_at = 'eq:{0}'.format(
+            time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()))
         disk_format = ImageDiskFormat.RAW
         id_ = str(uuid.uuid1())
         image_type = ImageType.IMPORT
@@ -146,7 +148,8 @@ class ImagesDatasetListGenerator(object):
         sort_dir = SortDirection.ASCENDING
         sort_key = 'name'
         tag = [rand_name('tag')]
-        updated_at = datetime.now()
+        updated_at = 'eq:{0}'.format(
+            time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()))
         user_id = random_string()
         visibility = ImageVisibility.SHARED
 
@@ -401,7 +404,7 @@ class ImagesDatasetListGenerator(object):
         image_type = ImageType.IMPORT
         location = '/v2/images/{0}/file'.format(image_id)
         os_type = ImageOSType.LINUX
-        owner = str(random_int(0, 999999))
+        owner = images.auth.access_data.token.tenant.id_
         user_id = random_string()
 
         data_dict = {
@@ -444,7 +447,7 @@ class ImagesDatasetListGenerator(object):
         updated_at = str(datetime.now())
 
         # Properties that are reserved
-        owner = str(random_int(0, 999999))
+        owner = images.auth.access_data.token.tenant.id_
 
         data_dict = {
             'passing_checksum': {'checksum': checksum},
