@@ -65,7 +65,7 @@ class CBSVolumeCloneTests(VolumesTestFixture):
         # Verify relevant clone attributes are the same as source volume
         excluded_attributes = [
             'created_at', 'id_', 'display_name', 'name', 'source_volid',
-            'metadata', 'links']
+            'metadata', 'links', 'os_vol_host_attr_host']
         self.assertVolumeAttributesAreEqual(
             volume, volume_clone_info, excluded_attrs_list=excluded_attributes)
 
