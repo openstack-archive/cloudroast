@@ -446,9 +446,6 @@ class ImagesDatasetListGenerator(object):
         status = ImageStatus.ACTIVE
         updated_at = str(datetime.now())
 
-        # Properties that are reserved
-        owner = images.auth.access_data.token.tenant.id_
-
         data_dict = {
             'passing_checksum': {'checksum': checksum},
             'passing_created_at': {'created_at': created_at},
@@ -456,8 +453,7 @@ class ImagesDatasetListGenerator(object):
             'passing_schema': {'schema': schema},
             'passing_self': {'self': self_}, 'passing_size': {'size': size},
             'passing_status': {'status': status},
-            'passing_updated_at': {'updated_at': updated_at},
-            'passing_owner': {'owner': owner}}
+            'passing_updated_at': {'updated_at': updated_at}}
 
         return build_basic_dataset(data_dict, 'prop')
 
