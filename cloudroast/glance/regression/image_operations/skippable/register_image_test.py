@@ -1,5 +1,5 @@
 """
-Copyright 2015 Rackspace
+Copyright 2016 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -175,6 +175,7 @@ class RegisterImage(ImagesFixture):
         min_ram = images.config.min_ram
         name = rand_name('register_image')
         os_type = ImageOSType.LINUX
+        owner = images.auth.access_data.token.tenant.id_
         protected = False
         tags = [rand_name('tag1')]
         user_id = random_string()
@@ -185,8 +186,9 @@ class RegisterImage(ImagesFixture):
             auto_disk_config=auto_disk_config,
             container_format=container_format, disk_format=disk_format,
             id_=id_, image_type=image_type, min_disk=min_disk, min_ram=min_ram,
-            name=name, os_type=os_type, protected=protected, tags=tags,
-            user_id=user_id, additional_properties=additional_properties)
+            name=name, os_type=os_type, owner=owner, protected=protected,
+            tags=tags, user_id=user_id,
+            additional_properties=additional_properties)
         self.assertEqual(
             resp.status_code, 201,
             Messages.STATUS_CODE_MSG.format(201, resp.status_code))
@@ -209,7 +211,7 @@ class RegisterImage(ImagesFixture):
         if id_regex.match(reg_image.id_) is None:
             errors.append(Messages.PROPERTY_MSG.format(
                 'id_', 'not None', id_regex))
-        if reg_image.image_type is None:
+        if reg_image.image_type != image_type:
             errors.append(Messages.PROPERTY_MSG.format(
                 'image_type', 'not None', reg_image.image_type))
         if reg_image.min_disk != min_disk:
@@ -221,16 +223,19 @@ class RegisterImage(ImagesFixture):
         if reg_image.name != name:
             errors.append(Messages.PROPERTY_MSG.format(
                 'name', name, reg_image.name))
-        if reg_image.os_type is None:
+        if reg_image.os_type != os_type:
             errors.append(Messages.PROPERTY_MSG.format(
                 'os_type', 'not None', reg_image.os_type))
+        if reg_image.owner != owner:
+            errors.append(Messages.PROPERTY_MSG.format(
+                'owner', 'not None', reg_image.owner))
         if reg_image.protected != protected:
             errors.append(Messages.PROPERTY_MSG.format(
                 'protected', protected, reg_image.protected))
         if reg_image.tags != tags:
             errors.append(Messages.PROPERTY_MSG.format(
                 'tags', tags, reg_image.tags))
-        if reg_image.user_id is None:
+        if reg_image.user_id != user_id:
             errors.append(Messages.PROPERTY_MSG.format(
                 'user_id', 'not None', reg_image.user_id))
         if reg_image.additional_properties != additional_properties:
