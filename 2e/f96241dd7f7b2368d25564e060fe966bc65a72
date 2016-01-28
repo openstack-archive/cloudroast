@@ -1,0 +1,9 @@
+Code-Review+2: Christopher Hunt <chris.hunt@RACKSPACE.COM>
+Code-Review+2: Daryl Walleck <daryl.walleck@rackspace.com>
+Workflow+1: Daryl Walleck <daryl.walleck@rackspace.com>
+Verified+2: Jenkins
+Submitted-by: Jenkins
+Submitted-at: Thu, 28 Jan 2016 23:20:30 +0000
+Reviewed-on: https://review.openstack.org/231163
+Project: openstack/cloudroast
+Branch: refs/heads/master
