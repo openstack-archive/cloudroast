@@ -102,7 +102,7 @@ data_set_list_negative.append_new_dataset(
                'ethertype': 'invalid_ethertype',
                'http_status': 'BAD_REQUEST',
                'test_desc': 'testing with invalid ethertype (valid:IPv4/IPv6)',
-               'error_type': 'HTTP_BAD_REQUEST'},
+               'error_type': 'SECURITY_GROUP_RULE_INVALID_ETHERTYPE'},
     tags=['sec_group_egress', 'post', 'negative', 'rbac_creator'])
 data_set_list_negative.append_new_dataset(
     name='w_port_ranges_and_protocol_missing',
