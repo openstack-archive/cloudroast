@@ -289,26 +289,57 @@ class StackTachDBTest(StackTachDBFixture):
         @summary: Verify that List Exists by uuid
                   returns 200 Success response
              1.  Find a server that was deleted 2 days ago
-             2.  End of audit period was 1 day ago
+             2.  End of audit period was x days_passed where x is configurable.
              3.  Check for exists event
         """
         date_max = datetime.utcnow() - timedelta(days=2)
         date_min = datetime.utcnow() - timedelta(days=int(self.days_passed))
+        self.verify_list_exist_for_deleted_uuid_from_range(date_min, date_max)
 
+    def verify_list_exist_for_deleted_uuid_from_range(self, date_min, date_max):
+        """
+        @summary: Verify that List Exists by uuid
+                  returns 200 Success response for
+                  the audit period.
+             1.  Begining of audit period is date_min. (I.e., 30 days ago)
+             2.  End of audit period is date_max. (I.e., 1 day ago)
+             3.  Check for exists event
+        """
         response = (self.stacktach_db_behavior
                     .list_deletes_by_date_min_and_date_max(
-                        deleted_at_min=date_min,
-                        deleted_at_max=date_max))
+                        deleted_at_min=date_min, deleted_at_max=date_max))
+
+        self.assertGreater(len(response.entity), 0,
+                msg="There were not any deleted instances found between {0} "
+                "and {1}".format(date_min, date_max))
+
         uuid = response.entity[0].instance
 
         response = (self.stacktach_db_behavior
                     .list_exists_for_uuid(instance=uuid))
+
+        self.assertGreater(len(response.entity), 0, msg="There were not any "
+                "exists events for deleted instance {0}".format(uuid))
+
         self.assertEqual(response.status_code, 200,
                          self.msg.format("status code", "200",
                                          response.status_code,
                                          response.reason,
                                          response.content))
         self.verify_exists_entity_attribute_values(response.entity)
+
+    def test_list_exists_for_uuid_previous_day(self):
+        """
+        @summary: Verify that List Exists by uuid
+                  returns 200 Success response for
+                  recent instances.
+             1.  Find a server that was deleted 24 and 48 hours ago.
+             2.  Check for exists event
+        """
+        date_max = datetime.utcnow() - timedelta(days=1)
+        date_min = datetime.utcnow() - timedelta(days=2)
+        self.verify_list_exist_for_deleted_uuid_from_range(date_min, date_max)
+
 
     def verify_launch_entity_attribute_values(self, entity):
         """
