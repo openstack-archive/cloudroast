@@ -57,8 +57,8 @@ class CBSVolumeCloneTests(VolumesTestFixture):
         volume_clone_create_timeout = \
             self.volumes.behaviors.calculate_volume_clone_timeout(volume.size)
 
-        self.volumes.behaviors.wait_for_volume_status(
-            volume_clone.id_, 'available', volume_clone_create_timeout)
+        self.volumes.behaviors.verify_volume_create_status_progresion(
+            volume_clone.id_, volume_clone_create_timeout)
         volume_clone_info = self.volumes.behaviors.get_volume_info(
             volume_clone.id_)
 
