@@ -39,13 +39,13 @@ class NovaCLI_IntegrationFixture(BaseVolumesTestFixture):
 
     @classmethod
     def new_volume(cls, size=None, volume_type=None, add_cleanup=True):
-        min_size = cls.volumes.behaviors.get_configured_volume_type_property(
-            "min_size",
-            id_=volume_type or cls.volumes.config.default_volume_type,
-            name=volume_type or cls.volumes.config.default_volume_type)
+        size = (
+            size or cls.volumes.behaviors.get_configured_volume_type_property(
+                "min_size",
+                id_=volume_type or cls.volumes.config.default_volume_type,
+                name=volume_type or cls.volumes.config.default_volume_type))
         volume_type = volume_type or cls.volumes.config.default_volume_type
-        resp = cls.nova.client.volume_create(
-            size or min_size, volume_type=volume_type)
+        resp = cls.nova.client.volume_create(size, volume_type=volume_type)
         assert resp.return_code == 0 and resp.entity is not None, (
             "Unable to create volume of size {0} and type {1}".format(
                 size, volume_type))
