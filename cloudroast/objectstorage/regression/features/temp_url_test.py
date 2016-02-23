@@ -30,7 +30,7 @@ EXPECTED_DISPOSITION = ("attachment; filename=\"{filename}\";"
                         " filename*=UTF-8\'\'{filename}")
 
 
-class TempUrl(ObjectStorageFixture):
+class TempUrlTest(ObjectStorageFixture):
     def _reset_default_key(self):
         response = None
         headers = {'X-Account-Meta-Temp-URL-Key': self.tempurl_key}
@@ -40,11 +40,11 @@ class TempUrl(ObjectStorageFixture):
 
     @classmethod
     def setUpClass(cls):
-        super(TempUrl, cls).setUpClass()
+        super(TempUrlTest, cls).setUpClass()
         cls.key_cache_time = (
             cls.objectstorage_api_config.tempurl_key_cache_time)
         cls.http = HTTPClient()
-        cls.tempurl_key = cls.behaviors.VALID_TEMPURL_KEY
+        cls.tempurl_key = Constants.BASE_TEMPURL_KEY
         cls.object_name = Constants.VALID_OBJECT_NAME
         cls.obj_name_containing_trailing_slash = \
             Constants.VALID_OBJECT_NAME_WITH_TRAILING_SLASH
@@ -59,7 +59,7 @@ class TempUrl(ObjectStorageFixture):
         the expected key and wait the appropriate amount of time to let the
         key propogate through the system.
         """
-        super(TempUrl, self).setUp()
+        super(TempUrlTest, self).setUp()
 
         if self.tempurl_key != self.behaviors.get_tempurl_key():
             response = self._reset_default_key()
@@ -857,8 +857,8 @@ class TempUrl(ObjectStorageFixture):
             headers=headers,
             data=self.object_data)
 
-        foo_key = '{0}_foo'.format(self.behaviors.VALID_TEMPURL_KEY)
-        bar_key = '{0}_bar'.format(self.behaviors.VALID_TEMPURL_KEY)
+        foo_key = '{0}_foo'.format(Constants.BASE_TEMPURL_KEY)
+        bar_key = '{0}_bar'.format(Constants.BASE_TEMPURL_KEY)
 
         headers = {'X-Account-Meta-Temp-URL-Key': foo_key}
         set_foo_key_response = self.client.set_temp_url_key(headers=headers)
