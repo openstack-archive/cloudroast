@@ -1,5 +1,5 @@
 """
-Copyright 2015 Rackspace
+Copyright 2016 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -188,11 +188,6 @@ class UpdateImage(ImagesFixture):
         # Each prop passed in only has one key-value pair
         prop_key, prop_val = prop.popitem()
 
-        # This is a temporary workaround for skips in ddtests
-        if prop_key == 'id':
-            sys.stderr.write('skipped \'Launchpad bug #1439808\' ... ')
-            return
-
         resp = self.images.client.update_image(
             self.alt_created_image.id_, replace={prop_key: prop_val})
         self.assertEqual(
@@ -233,12 +228,11 @@ class UpdateImage(ImagesFixture):
         # Each prop passed in only has one key-value pair
         prop_key, prop_val = prop.popitem()
 
-        # This is a temporary workaround for skips in ddtests
-        if prop_key == 'id':
-            sys.stderr.write('skipped \'Launchpad bug #1439808\' ... ')
-            return
         if prop_key == 'visibility':
             sys.stderr.write('skipped \'Launchpad bug #1443512\' ... ')
+            return
+        if prop_key == 'owner':
+            sys.stderr.write('skipped \'Launchpad bug #1541594\' ... ')
             return
 
         resp = self.images.client.update_image(
