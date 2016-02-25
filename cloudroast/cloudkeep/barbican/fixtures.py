@@ -167,6 +167,13 @@ class VersionFixture(AuthenticationFixture):
             serialize_format=cls.marshalling.serializer,
             deserialize_format=cls.marshalling.deserializer)
 
+    def check_version(self, version_info):
+        self.assertEqual('stable', version_info.status)
+        self.assertEqual('v1', version_info.api_id)
+        self.assertIsNotNone(version_info.updated)
+        self.assertIsNotNone(version_info.media_types)
+        self.assertIsNotNone(version_info.links)
+
 
 class SecretsFixture(AuthenticationFixture):
 
