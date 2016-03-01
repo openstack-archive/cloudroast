@@ -991,6 +991,9 @@ class NetworkingComputeFixture(NetworkingSecurityGroupsFixture):
         # Other reusable values
         cls.flavor_ref = cls.flavors.config.primary_flavor
         cls.image_ref = cls.images.config.primary_image
+        cls.ssh_username = (cls.images.config.primary_image_default_user or
+                            'root')
+        cls.auth_strategy = cls.servers.config.instance_auth_strategy or 'key'
 
         cls.delete_servers = []
         cls.failed_servers = []
@@ -1087,10 +1090,10 @@ class NetworkingComputeFixture(NetworkingSecurityGroupsFixture):
                                 expected_data, ip_version=4):
         """
         @summary: Verify UDP port connectivity between two servers
-        @param listener_client: remote client server that receives TCP packages
+        @param listener_client: remote client server that receives UDP packages
         @type listener_client: cloudcafe.compute.common.clients.
                                remote_instance.linux.linux_client.LinuxClient
-        @param sender_client: remote client server that sends TCP packages
+        @param sender_client: remote client server that sends UDP packages
         @type sender_client: cloudcafe.compute.common.clients.
                              remote_instance.linux.linux_client.LinuxClient
         @param listener_ip: public, service or isolated network IP
