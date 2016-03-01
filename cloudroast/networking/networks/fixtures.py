@@ -991,6 +991,9 @@ class NetworkingComputeFixture(NetworkingSecurityGroupsFixture):
         # Other reusable values
         cls.flavor_ref = cls.flavors.config.primary_flavor
         cls.image_ref = cls.images.config.primary_image
+        cls.ssh_username = (cls.images.config.primary_image_default_user or
+                            'root')
+        cls.auth_strategy = cls.servers.config.instance_auth_strategy or 'key'
 
         cls.delete_servers = []
         cls.failed_servers = []
