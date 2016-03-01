@@ -991,6 +991,9 @@ class NetworkingComputeFixture(NetworkingSecurityGroupsFixture):
         # Other reusable values
         cls.flavor_ref = cls.flavors.config.primary_flavor
         cls.image_ref = cls.images.config.primary_image
+        cls.ssh_username = (cls.images.config.primary_image_default_user or
+                            'root')
+        cls.auth_strategy = cls.servers.config.instance_auth_strategy or 'key'
 
         cls.delete_servers = []
         cls.failed_servers = []
@@ -1049,12 +1052,33 @@ class NetworkingComputeFixture(NetworkingSecurityGroupsFixture):
         assert resp.status_code == ComputeResponseCodes.CREATE_KEYPAIR, msg
         return resp.entity
 
-    def verify_remote_client_auth(self, server, remote_client,
-                                  sec_group=None):
-        msg = ('Remote client unable to authenticate for server {0} {1} '
-               'with security group: {2}').format(server.name, server.id,
-                                                  sec_group)
-        self.assertTrue(remote_client.can_authenticate(), msg)
+    def verify_remote_clients_auth(self, servers, remote_clients,
+                                   sec_groups=None):
+        """
+        @summary: verifying remote clients authentication
+        @param servers: server entities
+        @type servers: list of server entities
+        @param remote_clients: remote instance clients from servers
+        @type remote_clients: list of remote instance clients
+        @param sec_groups: security group applied to the server
+        @type sec_groups: list of security groups entities
+        """
+        error_msg = ('Remote client unable to authenticate for server {0} '
+                     'with security group: {1}')
+        errors = []
+
+        # In case there are no security groups associated with the servers
+        if not sec_groups:
+            sec_groups = [''] * len(remote_clients)
+
+        for server, remote_client, sec_group in (
+                zip(servers, remote_clients, sec_groups)):
+
+            if not remote_client.can_authenticate():
+                msg = error_msg.format(server.id, sec_group)
+                errors.append(msg)
+
+        return errors
 
     def verify_ping(self, remote_client, ip_address, ip_version=4,
                     count=3, accepted_packet_loss=0):
@@ -1087,10 +1111,10 @@ class NetworkingComputeFixture(NetworkingSecurityGroupsFixture):
                                 expected_data, ip_version=4):
         """
         @summary: Verify UDP port connectivity between two servers
-        @param listener_client: remote client server that receives TCP packages
+        @param listener_client: remote client server that receives UDP packages
         @type listener_client: cloudcafe.compute.common.clients.
                                remote_instance.linux.linux_client.LinuxClient
-        @param sender_client: remote client server that sends TCP packages
+        @param sender_client: remote client server that sends UDP packages
         @type sender_client: cloudcafe.compute.common.clients.
                              remote_instance.linux.linux_client.LinuxClient
         @param listener_ip: public, service or isolated network IP
@@ -1104,7 +1128,7 @@ class NetworkingComputeFixture(NetworkingSecurityGroupsFixture):
         @type expected_data: str
         """
         file_name = 'udp_transfer'
-        
+
         # Can be set as the default_file_path property in the config
         # file servers section, or to be set to /root by default
         dir_path = self.servers.config.default_file_path or '/root'
