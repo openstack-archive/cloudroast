@@ -19,7 +19,6 @@ from cloudcafe.compute.composites import ComputeAdminComposite
 
 from cloudroast.blockstorage.volumes_api.integration.compute.fixtures \
     import ComputeIntegrationTestFixture
-# from cloudcafe.blockstorage.datasets import ComputeIntegrationDatasets
 from cloudroast.blockstorage.volumes_api.integration.compute.datasets \
     import bfv_datasets
 
@@ -41,18 +40,28 @@ class BootFromVolumeLiveMigrateIntegration(ComputeIntegrationTestFixture):
             volume.id_, True, 'vda', volume.size, volume_type.id_)
 
         # Boot a server from the volume
-        server = self.servers.behaviors.create_active_server(
+        self.server = self.servers.behaviors.create_active_server(
             name=self.random_server_name(), flavor_ref=flavor.id,
             block_device_mapping=bdm).entity
 
         # Connect to server
-        self.server_conn = self.connect_to_instance(server, os_type=os_type)
+        self.server_conn = self.connect_to_instance(
+            self.server, os_type=os_type)
 
         # Create and attach seven volumes
-        for x in range(0, 6):
+        for x in range(0, 7):
             extra_volumes = self.new_volume()
-            self.compute.volume_attachments.behaviors.attach_volume_to_server(
-                server.id, extra_volumes.id_)
+            resp = self.compute.volume_attachments.behaviors. \
+                _validated_volume_attach(self.server.id, extra_volumes.id_)
+            attachment = resp.entity
+
+        for x in range(0, 7):
+                self.compute.volume_attachments.behaviors. \
+                    wait_for_attachment_to_propagate(
+                        attachment.id_, self.server.id)
+                self.compute.volume_attachments.behaviors. \
+                    verify_volume_status_progression_during_attachment(
+                        extra_volumes.id_)
 
         # Write data to the root disk
         resp = self.server_conn.create_large_file(multiplier=0.1)
@@ -65,4 +74,8 @@ class BootFromVolumeLiveMigrateIntegration(ComputeIntegrationTestFixture):
         self.compute_admin.servers.client.live_migrate_server(
             self.server.id, block_migration=True, disk_over_commit=False)
         self.compute_admin.servers.behaviors.wait_for_server_status(
-            self.server.id, "active")
+            self.server.id, "ACTIVE")
+
+        # Verify seven volumes are "in use"
+        self.compute.volume_attachments.behaviors._get_volume_status(
+            extra_volumes)
