@@ -172,14 +172,31 @@ class VolumesTestFixture(BaseVolumesTestFixture):
 
         error_messages = []
         for attr in comparable_attrs:
-            attr1 = getattr(volume1, attr, None)
-            attr2 = getattr(volume2, attr, None)
-            if attr1 != attr2:
-                error_messages.append(
-                    "\n'{attr}' differs for volumes {v0} and {v1}. ({attr1} "
-                    "!= {attr2})".format(
-                        attr=attr, v0=volume1.id_, v1=volume2.id_,
-                        attr1=attr1, attr2=attr2))
+            in_vol1 = hasattr(volume1, attr)
+            in_vol2 = hasattr(volume2, attr)
+            if in_vol1 and in_vol2:
+                attr1 = getattr(volume1, attr, None)
+                attr2 = getattr(volume2, attr, None)
+                if attr1 != attr2:
+                    error_messages.append(
+                        "\n'{attr}' differs for volumes {v0} and {v1}. "
+                        "({attr1} != {attr2})".format(
+                            attr=attr, v0=volume1.id_, v1=volume2.id_,
+                            attr1=attr1, attr2=attr2))
+            else:
+                if not in_vol1 and in_vol2:
+                    error_messages.append(
+                        "\n'{attr}' is present in {v0} but not in {v1}."
+                        .format(attr=attr, v0=volume1.id_, v1=volume2.id_))
+                elif in_vol1 and not in_vol2:
+                    error_messages.append(
+                        "\n'{attr}' is present in {v1} but not in {v0}."
+                        .format(attr=attr, v0=volume1.id_, v1=volume2.id_))
+                elif not in_vol1 and not in_vol2:
+                    error_messages.append(
+                        "\n'{attr}' is not present in {v0} or {v1}, "
+                        "but is expected to be.".format(
+                            attr=attr, v0=volume1.id_, v1=volume2.id_))
 
         if 'metadata' in comparable_attrs:
             error_messages.extend(
