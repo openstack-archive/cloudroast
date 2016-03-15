@@ -223,7 +223,8 @@ class VolumeActions(VolumesTestFixture):
         volume_info = expected_volumes[0]
 
         # Test
-        self.assertVolumeAttributesAreEqual(volume, volume_info)
+        self.assertVolumeAttributesAreEqual(
+            volume, volume_info, excluded_attrs_list=['volume_image_metadata'])
 
     @data_driven_test(volume_types_dataset)
     @tags('volumes', 'smoke')
