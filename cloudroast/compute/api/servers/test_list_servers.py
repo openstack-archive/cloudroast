@@ -1,5 +1,5 @@
 """
-Copyright 2015 Rackspace
+Copyright 2016 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-
+import cloudcafe.compute.common.exceptions as exceptions
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.compute.common.types import NovaImageStatusTypes
@@ -119,6 +119,22 @@ class ServerListTest(ComputeFixture):
         self.assertIn(self.second_server.min_details(), servers_list)
         self.assertIn(self.third_server.min_details(), servers_list)
 
+    @tags(type='positive', net='no')
+    def test_list_servers_all_tenants(self):
+        """
+        Verify that all tenants cannot be retrieved using a non-admin account.
+
+        This will call the list_servers passing an integer value of 1 to the
+        all_tenants parameter. This should return a 403 response code.
+
+        The following assertions occur:
+            - The response code returned is not a 403
+        """
+        all_tenants = 1
+        params = all_tenants
+        with self.assertRaises(exceptions.Forbidden):
+            self.servers_client.list_servers(all_tenants=params)
+
     @tags(type='smoke', net='no')
     def test_list_servers_with_detail(self):
         """
@@ -216,6 +232,22 @@ class ServerListTest(ComputeFixture):
             limit, len(response.entity),
             msg="({0}) servers returned. Expected {1} servers.".format(
                 len(servers), limit))
+
+    @tags(type='positive', net='no')
+    def test_list_servers_with_detail_all_tenants(self):
+        """
+        Verify that all tenants cannot be retrieved using a non-admin account.
+
+        This will call the list_servers_with_detail passing an integer value of
+        1 to the all_tenants parameter. This should return a 403 response code.
+
+        The following assertions occur:
+            - The response code returned is not a 403
+        """
+        all_tenants = 1
+        params = all_tenants
+        with self.assertRaises(exceptions.Forbidden):
+            self.servers_client.list_servers_with_detail(all_tenants=params)
 
     @tags(type='positive', net='no')
     def test_list_servers_filter_by_image(self):
@@ -379,9 +411,9 @@ class ServerListTest(ComputeFixture):
         Filter the list of servers with detail by name.
 
         This will call the list_servers_with_details with the server name that
-        was created at startup. Then it will get the details of the first server
-        created during test set up and use that information to validate that a
-        detailed list of servers respects the server name filter.
+        was created at startup. Then it will get the details of the first
+        server created during test set up and use that information to validate
+        that a detailed list of servers respects the server name filter.
 
         The following assertions occur:
             - 200 status code from the http call.
@@ -394,7 +426,8 @@ class ServerListTest(ComputeFixture):
         filtered_servers = list_response.entity
         self.assertEqual(200, list_response.status_code)
 
-        server_under_test = self.servers_client.get_server(self.server.id).entity
+        server_under_test = self.servers_client.get_server(
+            self.server.id).entity
 
         self.assertIn(server_under_test, filtered_servers)
         self.assertNotIn(self.second_server, filtered_servers)
