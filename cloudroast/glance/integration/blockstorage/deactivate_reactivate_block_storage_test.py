@@ -70,13 +70,7 @@ class DeactivateReactivateBlockStorage(ImagesIntegrationFixture):
             size=self.volumes.config.min_volume_from_image_size,
             volume_type=self.volumes.config.default_volume_type,
             image_ref=self.image.id)
-        self.assertResponseDeserializedAndOk(resp)
-        created_volume = resp.entity
-        self.resources.add(
-            created_volume.id_, self.volumes.client.delete_volume)
-        # Verify volume status is error
-        self.assertImageToVolumeCopyErrored(
-            created_volume.id_, self.volumes.config.min_volume_from_image_size)
+        self.assertEqual(400, resp.status_code)
 
     def test_create_volume_from_reactivated_image(self):
         """
