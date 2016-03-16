@@ -1,5 +1,5 @@
 """
-Copyright 2015 Rackspace
+Copyright 2016 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -119,6 +119,36 @@ class ServerListTest(ComputeFixture):
         self.assertIn(self.second_server.min_details(), servers_list)
         self.assertIn(self.third_server.min_details(), servers_list)
 
+    @tags(type='positive', net='no')
+    def test_list_servers_all_tenants(self):
+        """
+        Verify that all tenants cannot be retrieved using a non-admin account.
+
+        This will call the list_servers passing an integer value of 1 to the
+        all_tenants parameter. This should return a 403 response code.
+
+        The following assertions occur:
+            - The response code returned is not a 403
+        """
+        # Disable error handling for this test
+        preserved_error_codes = self.compute_exception_handler.error_codes_list
+        self.compute_exception_handler.error_codes_list = []
+
+        all_tenants = 1
+        params = all_tenants
+        response = self.servers_client.list_servers(all_tenants=params)
+
+        # re-enable previous error handling codes
+        self.compute_exception_handler.error_codes_list = preserved_error_codes
+
+        expected_response_code = 403
+        self.assertEqual(expected_response_code, response.status_code,
+                         msg="Expected a {expected_response_code} response "
+                             "code but received a {received_response_code} "
+                             "response code.".format(
+                                 expected_response_code=expected_response_code,
+                                 received_response_code=response.status_code))
+
     @tags(type='smoke', net='no')
     def test_list_servers_with_detail(self):
         """
@@ -216,6 +246,37 @@ class ServerListTest(ComputeFixture):
             limit, len(response.entity),
             msg="({0}) servers returned. Expected {1} servers.".format(
                 len(servers), limit))
+
+    @tags(type='positive', net='no')
+    def test_list_servers_with_detail_all_tenants(self):
+        """
+        Verify that all tenants cannot be retrieved using a non-admin account.
+
+        This will call the list_servers_with_detail passing an integer value of
+        1 to the all_tenants parameter. This should return a 403 response code.
+
+        The following assertions occur:
+            - The response code returned is not a 403
+        """
+        # Disable error handling for this test
+        preserved_error_codes = self.compute_exception_handler.error_codes_list
+        self.compute_exception_handler.error_codes_list = []
+
+        all_tenants = 1
+        params = all_tenants
+        response = self.servers_client.list_servers_with_detail(
+            all_tenants=params)
+
+        # re-enable previous error handling codes
+        self.compute_exception_handler.error_codes_list = preserved_error_codes
+
+        expected_response_code = 403
+        self.assertEqual(expected_response_code, response.status_code,
+                         msg="Expected a {expected_response_code} response "
+                             "code but received a {received_response_code} "
+                             "response code.".format(
+                                expected_response_code=expected_response_code,
+                                received_response_code=response.status_code))
 
     @tags(type='positive', net='no')
     def test_list_servers_filter_by_image(self):
