@@ -1,5 +1,5 @@
 """
-Copyright 2015 Rackspace
+Copyright 2016 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -58,8 +58,7 @@ class DeactivateReactivateBlockStorage(ImagesIntegrationFixture):
 
         This test will be successful if:
             - The response code received for deactivate image is a 204
-            - The response received for create volume is valid
-            - The volume status is error
+            - The response code received for create volume server is a 400
         """
 
         # Deactivate Image
@@ -70,13 +69,7 @@ class DeactivateReactivateBlockStorage(ImagesIntegrationFixture):
             size=self.volumes.config.min_volume_from_image_size,
             volume_type=self.volumes.config.default_volume_type,
             image_ref=self.image.id)
-        self.assertResponseDeserializedAndOk(resp)
-        created_volume = resp.entity
-        self.resources.add(
-            created_volume.id_, self.volumes.client.delete_volume)
-        # Verify volume status is error
-        self.assertImageToVolumeCopyErrored(
-            created_volume.id_, self.volumes.config.min_volume_from_image_size)
+        self.assertEqual(400, resp.status_code)
 
     def test_create_volume_from_reactivated_image(self):
         """
