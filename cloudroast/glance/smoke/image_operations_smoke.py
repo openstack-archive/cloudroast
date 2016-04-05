@@ -53,6 +53,24 @@ class ImageOperationsSmoke(ImagesFixture):
         cls.images.behaviors.resources.release()
         super(ImageOperationsSmoke, cls).tearDownClass()
 
+    def test_register_image(self):
+        """
+        @summary: Register an image
+
+        1) Register an image
+        2) Verify that the response code is 201
+        3) Add the image to the resource pool for deletion
+        """
+
+        resp = self.images.client.register_image(
+            name=rand_name('image_operations_smoke'))
+        self.assertEqual(
+            resp.status_code, 201,
+            Messages.STATUS_CODE_MSG.format(201, resp.status_code))
+        image = resp.entity
+
+        self.resources.add(image.id_, self.images.client.delete_image)
+
     @data_driven_test(ImagesDatasetListGenerator.ListImagesSmoke())
     def ddtest_list_images(self, params):
         """
