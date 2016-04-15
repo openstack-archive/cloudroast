@@ -17,12 +17,8 @@ limitations under the License.
 import os
 import sys
 
-try:
-    from setuptools import setup, find_packages
-    from setuptools.command.install import install as _install
-except ImportError:
-    from distutils.core import setup, find_packages
-    from distutils.command.install import install as _install
+from setuptools import setup, find_packages
+from setuptools.command.install import install as _install
 
 
 if sys.argv[-1] == 'publish':
