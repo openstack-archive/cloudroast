@@ -42,6 +42,7 @@ from cloudcafe.networking.networks.extensions.security_groups_api.composites \
     import SecurityGroupsComposite
 from cloudcafe.networking.networks.extensions.security_groups_api.models.\
     response import SecurityGroup, SecurityGroupRule
+from cloudcafe.networking.networks.personas import ServerPersona
 
 
 class NetworkingFixture(BaseTestFixture):
@@ -991,6 +992,9 @@ class NetworkingComputeFixture(NetworkingSecurityGroupsFixture):
         # Other reusable values
         cls.flavor_ref = cls.flavors.config.primary_flavor
         cls.image_ref = cls.images.config.primary_image
+        cls.ssh_username = (cls.images.config.primary_image_default_user or
+                            'root')
+        cls.auth_strategy = cls.servers.config.instance_auth_strategy or 'key'
 
         cls.delete_servers = []
         cls.failed_servers = []
@@ -1042,22 +1046,183 @@ class NetworkingComputeFixture(NetworkingSecurityGroupsFixture):
 
         # Using rand_name to avoid HTTP 409 Conflict due to duplicate names
         name = rand_name(name)
+        cls.fixture_log.info('Creating test server keypair')
         resp = cls.keypairs.client.create_keypair(name)
         msg = ('Unable to create server keypair: received HTTP {0} instead of '
                'the expected HTTP {1} response').format(
                    resp.status_code, ComputeResponseCodes.CREATE_KEYPAIR)
         assert resp.status_code == ComputeResponseCodes.CREATE_KEYPAIR, msg
+        cls.delete_keypairs.append(resp.entity.name)
         return resp.entity
 
-    def verify_remote_client_auth(self, server, remote_client,
-                                  sec_group=None):
-        msg = ('Remote client unable to authenticate for server {0} {1} '
-               'with security group: {2}').format(server.name, server.id,
-                                                  sec_group)
-        self.assertTrue(remote_client.can_authenticate(), msg)
+    @classmethod
+    def create_server_network(cls, name, ipv4=False, ipv6=False):
+        """
+        @summary: Create an isolated network
+        @param name: network name
+        @type name: str
+        @param ipv4: flag to create network with IPv4 subnet
+        @type ipv4: bool
+        @param ipv6: flag to create network with IPv6 subnet
+        @type ipv6: bool
+        """
+
+        net_msg = 'Creating {0} isolated network'.format(name)
+        cls.fixture_log.info(net_msg)
+        net_req = cls.networks.behaviors.create_network(name=name)
+        network = net_req.response.entity
+        cls.delete_networks.append(network.id)
+
+        if ipv4:
+            cls.fixture_log.info('Creating IPv4 subnet')
+            cls.subnets.behaviors.create_subnet(network_id=network.id,
+                                                ip_version=4)
+        if ipv6:
+            cls.fixture_log.info('Creating IPv6 subnet')
+            cls.subnets.behaviors.create_subnet(network_id=network.id,
+                                                ip_version=6)
+
+        return network
+
+    @classmethod
+    def create_multiple_servers(cls, server_names, keypair_name=None,
+                                networks=None, pnet=True, snet=True):
+        """
+        @summary: Create multiple test servers
+        @param server_names: names of servers to create
+        @type server_names: list(str)
+        @param keypair_name: (optional) keypair to create servers with
+        @type keypair_name: str
+        @param networks: (optional) isolated network ids to create servers with
+        @type networks: list(str)
+        @param pnet: flag to create server with public network
+        @type pnet: bool
+        @param snet: flag to create server with service (private) network
+        @type snet: bool
+        @return: server entity objects
+        @rtype: dict(server name: server entity object)
+        """
+
+        cls.fixture_log.debug('Defining the network IDs to be used')
+        network_ids = []
+
+        if pnet:
+            network_ids.append(cls.public_network_id)
+        if snet:
+            network_ids.append(cls.service_network_id)
+        if networks:
+            network_ids.extend(networks)
+
+        # Response dict where the key will be the server name and the value the
+        # server entity object
+        servers = dict()
+        server_ids = []
+        for name in server_names:
+            server = cls.create_test_server(name=name, key_name=keypair_name,
+                                            network_ids=network_ids,
+                                            active_server=False)
+            server_ids.append(server.id)
+            servers[name] = server
+
+        # Waiting for the servers to be active
+        cls.net.behaviors.wait_for_servers_to_be_active(
+            server_id_list=server_ids)
+
+        return servers
+
+    @classmethod
+    def create_multiple_personas(cls, persona_servers, persona_kwargs=None):
+        """
+        @summary: Create multiple server personas
+        @param persona_servers: servers to create personas from
+        @type persona_servers: dict(persona_label: server)
+        @param persona_kwargs: (optional) server persona attributes, excluding
+                               the server one that is at the persona_servers
+        @type persona_kwargs: dict
+        @return: servers personas
+        @rtype: dict(persona_label: persona)
+        """
+
+        # In case serer personas are created with default values
+        if not persona_kwargs:
+            persona_kwargs = dict()
+
+        # Response dict where the key will be the persona label and the value
+        # the persona object
+        personas = dict()
+        for persona_label, persona_server in persona_servers.items():
+            persona_kwargs.update(server=persona_server)
+            server_persona = ServerPersona(**persona_kwargs)
+            personas[persona_label] = server_persona
+
+        return personas
+
+    @classmethod
+    def update_server_ports_w_sec_groups(cls, port_ids, security_groups,
+                                         raise_exception=True):
+        """
+        @summary: Updates server ports with security groups
+        @param port_ids: ports to update
+        @type port_ids: list(str)
+        @param security_groups: security groups to add to the ports
+        @type security_groups: list(str)
+        @param raise_exception: raise exception port was not updated
+        @type raise_exception: bool
+        """
+
+        for port_id in port_ids:
+            cls.ports.behaviors.update_port(
+                port_id=port_id, security_groups=security_groups,
+                raise_exception=raise_exception)
+
+    def verify_remote_clients_auth(self, servers, remote_clients,
+                                   sec_groups=None):
+        """
+        @summary: verifying remote clients authentication
+        @param servers: server entities
+        @type servers: list of server entities
+        @param remote_clients: remote instance clients from servers
+        @type remote_clients: list of remote instance clients
+        @param sec_groups: security group applied to the server
+        @type sec_groups: list of security groups entities
+        """
+        error_msg = ('Remote client unable to authenticate for server {0} '
+                     'with security group: {1}')
+        errors = []
+
+        # In case there are no security groups associated with the servers
+        if not sec_groups:
+            sec_groups = [''] * len(remote_clients)
+
+        for server, remote_client, sec_group in (
+                zip(servers, remote_clients, sec_groups)):
+
+            if not remote_client.can_authenticate():
+                msg = error_msg.format(server.id, sec_group)
+                errors.append(msg)
+
+        return errors
 
     def verify_ping(self, remote_client, ip_address, ip_version=4,
                     count=3, accepted_packet_loss=0):
+        """
+        @summary: Verify ICMP connectivity between two servers
+        @param remote_client: remote client server to ping from
+        @type remote_client: cloudcafe.compute.common.clients.
+                             remote_instance.linux.linux_client.LinuxClient
+        @param ip_address: IP address to ping
+        @type ip_address: str
+        @param ip_version: version of IP address
+        @type ip_version: int
+        @param count: number of pings, for ex. ping -c count (by default 3)
+        @type count: int
+        @param accepted_packet_loss: fail if packet loss greater (by default 0)
+        @type accepted_packet_loss: int
+        """
+
+        count = self.config.ping_count or count
+        accepted_packet_loss = self.config.accepted_packet_loss or (
+            accepted_packet_loss)
         ping_packet_loss_regex = '(\d{1,3})\.?\d*\%.*loss'
 
         if ip_version == 6:
@@ -1087,10 +1252,10 @@ class NetworkingComputeFixture(NetworkingSecurityGroupsFixture):
                                 expected_data, ip_version=4):
         """
         @summary: Verify UDP port connectivity between two servers
-        @param listener_client: remote client server that receives TCP packages
+        @param listener_client: remote client server that receives UDP packages
         @type listener_client: cloudcafe.compute.common.clients.
                                remote_instance.linux.linux_client.LinuxClient
-        @param sender_client: remote client server that sends TCP packages
+        @param sender_client: remote client server that sends UDP packages
         @type sender_client: cloudcafe.compute.common.clients.
                              remote_instance.linux.linux_client.LinuxClient
         @param listener_ip: public, service or isolated network IP
@@ -1104,7 +1269,7 @@ class NetworkingComputeFixture(NetworkingSecurityGroupsFixture):
         @type expected_data: str
         """
         file_name = 'udp_transfer'
-        
+
         # Can be set as the default_file_path property in the config
         # file servers section, or to be set to /root by default
         dir_path = self.servers.config.default_file_path or '/root'
