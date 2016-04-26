@@ -34,12 +34,14 @@ class SecurityGroupRuleDeleteTest(NetworkingSecurityGroupsFixture):
         cls.expected_secrule = cls.get_expected_secrule_data()
 
     def setUp(self):
+        super(SecurityGroupRuleDeleteTest, self).setUp()
         self.secgroup = self.create_test_secgroup(self.expected_secgroup)
         self.expected_secrule.security_group_id = self.secgroup.id
         self.secrule = self.create_test_secrule(self.expected_secrule)
 
     def tearDown(self):
         self.secGroupCleanUp()
+        super(SecurityGroupRuleDeleteTest, self).tearDown()
 
     @tags('sec_group')
     def test_security_group_rule_delete(self):

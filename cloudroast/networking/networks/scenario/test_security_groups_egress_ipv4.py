@@ -163,6 +163,7 @@ class SecurityGroupsEgressIPv4Test(NetworkingComputeFixture):
 
     def setUp(self):
         """ Creating the remote clients """
+        super(SecurityGroupsEgressIPv4Test, self).setUp()
         self.fixture_log.debug('Creating the Remote Clients')
         self.lp_rc = self.servers.behaviors.get_remote_instance_client(
             server=self.listener, ip_address=self.lp.pnet_fix_ipv4[0],

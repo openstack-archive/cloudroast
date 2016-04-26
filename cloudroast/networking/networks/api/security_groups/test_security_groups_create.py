@@ -130,10 +130,12 @@ class SecurityGroupCreateTest(NetworkingSecurityGroupsFixture):
         super(SecurityGroupCreateTest, cls).setUpClass()
 
     def setUp(self):
+        super(SecurityGroupCreateTest, self).setUp()
         self.expected_secgroup = self.get_expected_secgroup_data()
 
     def tearDown(self):
         self.secGroupsCleanUp()
+        super(SecurityGroupCreateTest, self).tearDown()
 
     @data_driven_test(data_set_list)
     def ddtest_security_group_create(self, name=None,

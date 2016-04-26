@@ -190,12 +190,14 @@ class SecurityGroupRuleCreateTest(NetworkingSecurityGroupsFixture):
         cls.expected_secgroup.description = 'testing security rules creates'
 
     def setUp(self):
+        super(SecurityGroupRuleCreateTest, self).setUp()
         self.secgroup = self.create_test_secgroup(self.expected_secgroup)
         self.expected_secrule = self.get_expected_secrule_data()
         self.expected_secrule.security_group_id = self.secgroup.id
 
     def tearDown(self):
         self.secGroupCleanUp()
+        super(SecurityGroupRuleCreateTest, self).tearDown()
 
     @data_driven_test(data_set_list)
     def ddtest_security_group_rule_create(self,

@@ -107,6 +107,7 @@ class SecurityGroupUpdateTest(NetworkingSecurityGroupsFixture):
         cls.expected_secrule = cls.get_expected_secrule_data()
 
     def setUp(self):
+        super(SecurityGroupUpdateTest, self).setUp()
         self.secgroup = self.create_test_secgroup(self.expected_secgroup)
         self.expected_secrule.security_group_id = self.secgroup.id
         secrule1 = self.create_test_secrule(self.expected_secrule)
@@ -126,6 +127,7 @@ class SecurityGroupUpdateTest(NetworkingSecurityGroupsFixture):
     def tearDown(self):
         self.expected_secgroup.security_group_rules = []
         self.secGroupCleanUp()
+        super(SecurityGroupUpdateTest, self).tearDown()
 
     @data_driven_test(data_set_list)
     def ddtest_security_group_update(self, name=None,
