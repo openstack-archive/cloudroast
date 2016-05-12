@@ -13,14 +13,11 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-import sys
-
 from calendar import timegm
 from time import gmtime, sleep
 
 from cafe.drivers.unittest.decorators import (
     DataDrivenFixture, data_driven_test)
-from cloudcafe.common.tools.check_dict import get_value
 from cloudcafe.objectstorage.objectstorage_api.common.constants import \
     Constants
 from cloudroast.objectstorage.fixtures import ObjectStorageFixture
@@ -207,16 +204,7 @@ class ExpiringObjectTest(ObjectStorageFixture):
             The object should not be accessible after the 'delete at' time.
             The object should not be listed after the object expirer has had
                 time to run.
-
-        NOTE:
-            This is currently a bug and has not yet been fixed.
-            https://bugs.launchpad.net/swift/+bug/1257330
         """
-        # this is a workaround. skips currently do not work with ddtests
-        if get_value('fail') != 'true':
-            sys.stderr.write('skipped: current bug ... ')
-            return
-
         container_name = self.behaviors.generate_unique_container_name(
             self.base_container_name)
 
@@ -246,7 +234,7 @@ class ExpiringObjectTest(ObjectStorageFixture):
             'Object should exist before X-Delete-At.')
 
         # wait for the object to be deleted.
-        sleep(delete_after)
+        sleep(self.objectstorage_api_config.object_deletion_wait_interval)
 
         resp = self.client.get_object(container_name, self.default_obj_name)
 
@@ -254,30 +242,27 @@ class ExpiringObjectTest(ObjectStorageFixture):
             404, resp.status_code,
             'Object should be deleted after X-Delete-At.')
 
-        sleep(self.expirer_run_interval)
+        # wait for the container listing to be updated
+        sleep(self.objectstorage_api_config.object_deletion_wait_interval)
 
-        get_response = self.client.list_objects(
-            container_name,
-            params={'format': 'json'})
+        get_response = self.client.list_objects(container_name)
 
         self.assertEqual(
             204, get_response.status_code,
             'No content should be returned for the request.')
 
-        get_count = int(get_response.headers.get('x-container-object-count'))
-
         self.assertEqual(
-            '0', get_count,
-            'No objects should be listed in the container.')
+            0, int(get_response.headers.get('x-container-object-count')),
+            'No objects should be listed in the container. Object count was '
+            '{0}'.format(get_response.headers.get('x-container-object-count')))
 
-        self.assertEqual(
-            '0', len(get_response.entity),
-            'No objects should be listed in the container.')
+        self.assertIsNone(get_response.entity,
+                          'There should not be a response entity. '
+                          'Response entity was {0}'.format(
+                              get_response.entity))
 
         head_response = self.client.get_container_metadata(container_name)
 
-        head_count = int(head_response.headers.get('x-container-object-count'))
-
         self.assertEqual(
-            '0', head_count,
+            0, int(head_response.headers.get('x-container-object-count')),
             'No objects should be listed in the container.')
