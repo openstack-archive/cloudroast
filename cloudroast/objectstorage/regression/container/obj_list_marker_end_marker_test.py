@@ -71,14 +71,14 @@ class MarkerEndMarkerTest(ObjectStorageFixture):
         self.assertTrue(response.ok)
 
         expected = 5
-        recieved = len(members)
+        received = len(members)
 
         self.assertEqual(
             expected,
-            recieved,
-            msg="expected {0} members in the response, recieved {1}".format(
+            received,
+            msg="expected {0} members in the response, received {1}".format(
                 expected,
-                recieved))
+                received))
         self.assertIn("c_obj", members, msg="c_obj was not in the response")
         self.assertIn("d_obj", members, msg="d_obj was not in the response")
         self.assertIn("e_obj", members, msg="e_obj was not in the response")
@@ -106,18 +106,18 @@ class MarkerEndMarkerTest(ObjectStorageFixture):
         self.assertTrue(response.ok)
 
         expected = len(self.obj_names)
-        recieved = len(members)
+        received = len(members)
 
         self.assertEqual(
             expected,
-            recieved,
-            msg="expected {0} members in the response, recieved {1}".format(
+            received,
+            msg="expected {0} members in the response, received {1}".format(
                 expected,
-                recieved))
+                received))
         self.assertEqual(
             members,
             self.obj_names,
-            msg="expected {0} recieved {1}".format(members, self.obj_names))
+            msg="expected {0} received {1}".format(members, self.obj_names))
 
     def test_marker_swapped_lower_bound(self):
         params = {"marker": "h", "format": "json"}
@@ -133,14 +133,14 @@ class MarkerEndMarkerTest(ObjectStorageFixture):
         self.assertTrue(response.ok)
 
         expected = 0
-        recieved = len(content)
+        received = len(content)
 
         self.assertEqual(
             expected,
-            recieved,
-            msg="expected {0} members in the response, recieved {1}".format(
+            received,
+            msg="expected {0} members in the response, received {1}".format(
                 expected,
-                recieved))
+                received))
 
     def test_end_marker(self):
         params = {"end_marker": "d", "format": "json", "format": "json"}
@@ -163,14 +163,14 @@ class MarkerEndMarkerTest(ObjectStorageFixture):
         self.assertTrue(response.ok)
 
         expected = 2
-        recieved = len(members)
+        received = len(members)
 
         self.assertEqual(
             expected,
-            recieved,
-            msg="expected {0} members in the response, recieved {1}".format(
+            received,
+            msg="expected {0} members in the response, received {1}".format(
                 expected,
-                recieved))
+                received))
         self.assertIn("b_obj", members, msg="b_obj was not in the response")
         self.assertIn("c_obj", members, msg="c_obj was not in the response")
 
@@ -195,18 +195,18 @@ class MarkerEndMarkerTest(ObjectStorageFixture):
         self.assertTrue(response.ok)
 
         expected = len(self.obj_names)
-        recieved = len(members)
+        received = len(members)
 
         self.assertEqual(
             expected,
-            recieved,
-            msg="expected {0} members in the response, recieved {1}".format(
+            received,
+            msg="expected {0} members in the response, received {1}".format(
                 expected,
-                recieved))
+                received))
         self.assertEqual(
             members,
             self.obj_names,
-            msg="expected {0} recieved {1}".format(members, self.obj_names))
+            msg="expected {0} received {1}".format(members, self.obj_names))
 
     def test_end_marker_swapped_uppper_bound(self):
         params = {"end_marker": "a", "format": "json", "format": "json"}
@@ -222,14 +222,14 @@ class MarkerEndMarkerTest(ObjectStorageFixture):
         self.assertTrue(response.ok)
 
         expected = 0
-        recieved = len(content)
+        received = len(content)
 
         self.assertEqual(
             expected,
-            recieved,
-            msg="expected {0} members in the response, recieved {1}".format(
+            received,
+            msg="expected {0} members in the response, received {1}".format(
                 expected,
-                recieved))
+                received))
 
     def test_marker_end_marker(self):
         params = {"marker": "b", "end_marker": "e", "format": "json"}
@@ -252,14 +252,14 @@ class MarkerEndMarkerTest(ObjectStorageFixture):
         self.assertTrue(response.ok)
 
         expected = 3
-        recieved = len(members)
+        received = len(members)
 
         self.assertEqual(
             expected,
-            recieved,
-            msg="expected {0} members in the response, recieved {1}".format(
+            received,
+            msg="expected {0} members in the response, received {1}".format(
                 expected,
-                recieved))
+                received))
         self.assertIn("b_obj", members, msg="b_obj was not in the response")
         self.assertIn("c_obj", members, msg="c_obj was not in the response")
         self.assertIn('d_obj', members, msg="d_obj was not in the response")
@@ -285,18 +285,18 @@ class MarkerEndMarkerTest(ObjectStorageFixture):
         self.assertTrue(response.ok)
 
         expected = len(self.obj_names)
-        recieved = len(members)
+        received = len(members)
 
         self.assertEqual(
             expected,
-            recieved,
-            msg="expected {0} members in the response, recieved {1}".format(
+            received,
+            msg="expected {0} members in the response, received {1}".format(
                 expected,
-                recieved))
+                received))
         self.assertEqual(
             members,
             self.obj_names,
-            msg="expected {0} recieved {1}".format(members, self.obj_names))
+            msg="expected {0} received {1}".format(members, self.obj_names))
 
     def test_marker_end_marker_swapped_upper_lower_bound(self):
         params = {"marker": "h", "end_marker": "a", "format": "json"}
@@ -312,14 +312,14 @@ class MarkerEndMarkerTest(ObjectStorageFixture):
         self.assertTrue(response.ok)
 
         expected = 0
-        recieved = len(content)
+        received = len(content)
 
         self.assertEqual(
             expected,
-            recieved,
-            msg="expected {0} members in the response, recieved {1}".format(
+            received,
+            msg="expected {0} members in the response, received {1}".format(
                 expected,
-                recieved))
+                received))
 
     def test_marker_limit(self):
         params = {"marker": "b", "limit": "2", "format": "json"}
@@ -342,14 +342,14 @@ class MarkerEndMarkerTest(ObjectStorageFixture):
         self.assertTrue(response.ok)
 
         expected = 2
-        recieved = len(members)
+        received = len(members)
 
         self.assertEqual(
             expected,
-            recieved,
-            msg="expected {0} members in the response, recieved {1}".format(
+            received,
+            msg="expected {0} members in the response, received {1}".format(
                 expected,
-                recieved))
+                received))
         self.assertIn("b_obj", members, msg="b_obj was not in the response")
         self.assertIn("c_obj", members, msg="c_obj was not in the response")
 
@@ -374,18 +374,18 @@ class MarkerEndMarkerTest(ObjectStorageFixture):
         self.assertTrue(response.ok)
 
         expected = len(self.obj_names)
-        recieved = len(members)
+        received = len(members)
 
         self.assertEqual(
             expected,
-            recieved,
-            msg="expected {0} members in the response, recieved {1}".format(
+            received,
+            msg="expected {0} members in the response, received {1}".format(
                 expected,
-                recieved))
+                received))
         self.assertEqual(
             members,
             self.obj_names,
-            msg="expected {0} recieved {1}".format(members, self.obj_names))
+            msg="expected {0} received {1}".format(members, self.obj_names))
 
     def test_marker_limit_swapped_lower_bound(self):
         params = {"marker": "h", "limit": "6", "format": "json"}
@@ -401,14 +401,14 @@ class MarkerEndMarkerTest(ObjectStorageFixture):
         self.assertTrue(response.ok)
 
         expected = 0
-        recieved = len(content)
+        received = len(content)
 
         self.assertEqual(
             expected,
-            recieved,
-            msg="expected {0} members in the response, recieved {1}".format(
+            received,
+            msg="expected {0} members in the response, received {1}".format(
                 expected,
-                recieved))
+                received))
 
     def test_end_marker_limit(self):
         params = {"end_marker": "e", "limit": "2", "format": "json"}
@@ -431,14 +431,14 @@ class MarkerEndMarkerTest(ObjectStorageFixture):
         self.assertTrue(response.ok)
 
         expected = 2
-        recieved = len(members)
+        received = len(members)
 
         self.assertEqual(
             expected,
-            recieved,
-            msg="expected {0} members in the response, recieved {1}".format(
+            received,
+            msg="expected {0} members in the response, received {1}".format(
                 expected,
-                recieved))
+                received))
         self.assertIn("b_obj", members, msg="b_obj was not in the response")
         self.assertIn("c_obj", members, msg="c_obj was not in the response")
 
@@ -463,18 +463,18 @@ class MarkerEndMarkerTest(ObjectStorageFixture):
         self.assertTrue(response.ok)
 
         expected = len(self.obj_names)
-        recieved = len(members)
+        received = len(members)
 
         self.assertEqual(
             expected,
-            recieved,
-            msg="expected {0} members in the response, recieved {1}".format(
+            received,
+            msg="expected {0} members in the response, received {1}".format(
                 expected,
-                recieved))
+                received))
         self.assertEqual(
             members,
             self.obj_names,
-            msg="expected {0} recieved {1}".format(members, self.obj_names))
+            msg="expected {0} received {1}".format(members, self.obj_names))
 
     def test_end_marker_limit_swapped_upper_bound(self):
         params = {"end_marker": "a", "limit": "6", "format": "json"}
@@ -490,14 +490,14 @@ class MarkerEndMarkerTest(ObjectStorageFixture):
         self.assertTrue(response.ok)
 
         expected = 0
-        recieved = len(content)
+        received = len(content)
 
         self.assertEqual(
             expected,
-            recieved,
-            msg="expected {0} members in the response, recieved {1}".format(
+            received,
+            msg="expected {0} members in the response, received {1}".format(
                 expected,
-                recieved))
+                received))
 
     def test_marker_end_marker_limit(self):
         params = {"marker": "b",
@@ -523,14 +523,14 @@ class MarkerEndMarkerTest(ObjectStorageFixture):
         self.assertTrue(response.ok)
 
         expected = 2
-        recieved = len(members)
+        received = len(members)
 
         self.assertEqual(
             expected,
-            recieved,
-            msg="expected {0} members in the response, recieved {1}".format(
+            received,
+            msg="expected {0} members in the response, received {1}".format(
                 expected,
-                recieved))
+                received))
         self.assertIn("b_obj", members, msg="b_obj was not in the response")
         self.assertIn("c_obj", members, msg="c_obj was not in the response")
 
@@ -558,18 +558,18 @@ class MarkerEndMarkerTest(ObjectStorageFixture):
         self.assertTrue(response.ok)
 
         expected = len(self.obj_names)
-        recieved = len(members)
+        received = len(members)
 
         self.assertEqual(
             expected,
-            recieved,
-            msg="expected {0} members in the response, recieved {1}".format(
+            received,
+            msg="expected {0} members in the response, received {1}".format(
                 expected,
-                recieved))
+                received))
         self.assertEqual(
             members,
             self.obj_names,
-            msg="expected {0} recieved {1}".format(members, self.obj_names))
+            msg="expected {0} received {1}".format(members, self.obj_names))
 
     def test_marker_end_marker_limit_swapped_upper_lower_bound(self):
         params = {"marker": "h",
@@ -588,11 +588,11 @@ class MarkerEndMarkerTest(ObjectStorageFixture):
         self.assertTrue(response.ok)
 
         expected = 0
-        recieved = len(content)
+        received = len(content)
 
         self.assertEqual(
             expected,
-            recieved,
-            msg="expected {0} members in the response, recieved {1}".format(
+            received,
+            msg="expected {0} members in the response, received {1}".format(
                 expected,
-                recieved))
+                received))

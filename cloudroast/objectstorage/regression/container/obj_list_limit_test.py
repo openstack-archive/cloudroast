@@ -69,14 +69,14 @@ class ListLimitTest(ObjectStorageFixture):
         self.assertTrue(response.ok)
 
         expected = 2
-        recieved = len(members)
+        received = len(members)
 
         self.assertEqual(
             expected,
-            recieved,
-            msg="expected {0} members in the response, recieved {1}".format(
+            received,
+            msg="expected {0} members in the response, received {1}".format(
                 expected,
-                recieved))
+                received))
         self.assertIn("a_obj", members, msg="a_obj was not in the response")
         self.assertIn("b_obj", members, msg="b_obj was not in the response")
 
@@ -96,11 +96,11 @@ class ListLimitTest(ObjectStorageFixture):
         self.assertTrue(response.ok)
 
         expected = 0
-        recieved = len(members)
+        received = len(members)
 
         self.assertEqual(
             expected,
-            recieved,
-            msg="expected {0} members in the response, recieved {1}".format(
+            received,
+            msg="expected {0} members in the response, received {1}".format(
                 expected,
-                recieved))
+                received))

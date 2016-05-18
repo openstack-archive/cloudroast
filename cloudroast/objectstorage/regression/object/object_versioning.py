@@ -114,7 +114,7 @@ class ObjectVersioningTest(ObjectStorageFixture):
             expected,
             received,
             msg="retrieving current version of object expected content: {0}"
-                " recieved content: {1}".format(expected, received))
+                " received content: {1}".format(expected, received))
 
         """
         check the number of versioned objects
@@ -169,7 +169,7 @@ class ObjectVersioningTest(ObjectStorageFixture):
                 expected,
                 received,
                 msg="versioned object prefix expected: {0}"
-                    " recieved: {1}".format(expected, received))
+                    " received: {1}".format(expected, received))
 
             """
             check the content of the versioned object
@@ -185,7 +185,7 @@ class ObjectVersioningTest(ObjectStorageFixture):
                 expected,
                 received,
                 msg="retrieving current version of object expected"
-                    " content: {0} recieved content: {1}".format(
+                    " content: {0} received content: {1}".format(
                         expected,
                         received))
 
@@ -199,7 +199,7 @@ class ObjectVersioningTest(ObjectStorageFixture):
                 expected,
                 received,
                 msg="versioned object metadata expected"
-                    " X-Object-Meta-Version: {0} recieved"
+                    " X-Object-Meta-Version: {0} received"
                     " X-Object-Meta-Version: {1}".format(
                         expected,
                         received))
@@ -262,7 +262,7 @@ class ObjectVersioningTest(ObjectStorageFixture):
                 expected,
                 received,
                 msg="retrieving current version of object expected"
-                    " content: {0} recieved content: {1}".format(
+                    " content: {0} received content: {1}".format(
                         expected,
                         received))
 
@@ -277,7 +277,7 @@ class ObjectVersioningTest(ObjectStorageFixture):
                 expected,
                 received,
                 msg="current version object metadata expected"
-                    " content: {0} recieved content: {1}".format(
+                    " content: {0} received content: {1}".format(
                         expected,
                         received))
 

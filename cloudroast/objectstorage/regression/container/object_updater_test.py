@@ -106,7 +106,7 @@ class ObjectUpdaterTest(ObjectStorageFixture):
             num_created_containers,
             updated_get_count,
             msg="GET x-container-object-count expected: {0}"
-            " x-container-object-count recieved: {1}".format(
+            " x-container-object-count received: {1}".format(
                 num_created_containers,
                 updated_get_count))
 
@@ -114,7 +114,7 @@ class ObjectUpdaterTest(ObjectStorageFixture):
             updated_head_count,
             num_created_containers,
             msg="HEAD x-container-object-count expected: {0}"
-            " x-container-object-count recieved: {1}".format(
+            " x-container-object-count received: {1}".format(
                 num_created_containers,
                 updated_head_count))
 
@@ -138,7 +138,7 @@ class ObjectUpdaterTest(ObjectStorageFixture):
             expected_get_count,
             updated_get_count,
             msg="GET x-container-object-count expected: {0}"
-            " x-container-object-count recieved: {1}".format(
+            " x-container-object-count received: {1}".format(
                 expected_get_count,
                 updated_get_count))
 
@@ -146,6 +146,6 @@ class ObjectUpdaterTest(ObjectStorageFixture):
             expected_head_count,
             updated_head_count,
             msg="HEAD x-container-object-count expected: {0}"
-            " x-container-object-count recieved: {1}".format(
+            " x-container-object-count received: {1}".format(
                 expected_head_count,
                 updated_head_count))

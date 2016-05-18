@@ -22,8 +22,8 @@ from cloudroast.objectstorage.generators import ObjectDatasetList
 
 
 CONTAINER_NAME = 'object_range_request_test_container'
-CONTENT_MSG = 'expected {0} in the content body. recieved {1}'
-CONTENT_TYPE_MSG = 'expected content_type {0} recieved {1}'
+CONTENT_MSG = 'expected {0} in the content body. received {1}'
+CONTENT_TYPE_MSG = 'expected content_type {0} received {1}'
 MULTIPART = "multipart/byteranges;boundary="
 
 

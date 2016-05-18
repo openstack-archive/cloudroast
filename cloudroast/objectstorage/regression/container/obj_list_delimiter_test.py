@@ -83,13 +83,13 @@ class DelimiterTest(ObjectStorageFixture):
                 continue
 
         expected = len(obj_names)
-        recieved = len(parsed_content)
+        received = len(parsed_content)
 
         self.assertEqual(
             expected,
-            recieved,
-            msg="expected {0} objects in the response body, recieved"
-                " {1}".format(expected, recieved))
+            received,
+            msg="expected {0} objects in the response body, received"
+                " {1}".format(expected, received))
 
         for obj_name in obj_names:
             tokens = obj_name.split('/')

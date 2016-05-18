@@ -568,7 +568,7 @@ class ObjectSmokeTest(ObjectStorageFixture):
             expected,
             received,
             msg='object created with Access-Control-Allow-Credentials header'
-                ' value expected: {0} recieved: {1}'.format(
+                ' value expected: {0} received: {1}'.format(
                     expected,
                     received))
 
@@ -613,7 +613,7 @@ class ObjectSmokeTest(ObjectStorageFixture):
             expected,
             received,
             msg='object created with Access-Control-Allow-Methods header'
-                ' value expected: {0} recieved: {1}'.format(
+                ' value expected: {0} received: {1}'.format(
                     expected,
                     received))
 
@@ -657,7 +657,7 @@ class ObjectSmokeTest(ObjectStorageFixture):
             expected,
             received,
             msg='object created with Access-Control-Allow-Origin header'
-                ' value expected: {0} recieved: {1}'.format(
+                ' value expected: {0} received: {1}'.format(
                     expected,
                     received))
 
@@ -701,7 +701,7 @@ class ObjectSmokeTest(ObjectStorageFixture):
             expected,
             received,
             msg='object created with Access-Control-Expose-Headers header'
-                ' value expected: {0} recieved: {1}'.format(
+                ' value expected: {0} received: {1}'.format(
                     expected,
                     received))
 
@@ -745,7 +745,7 @@ class ObjectSmokeTest(ObjectStorageFixture):
             expected,
             received,
             msg='object created with Access-Control-Max-Age header'
-                ' value expected: {0} recieved: {1}'.format(
+                ' value expected: {0} received: {1}'.format(
                     expected,
                     received))
 
@@ -789,7 +789,7 @@ class ObjectSmokeTest(ObjectStorageFixture):
             expected,
             received,
             msg='object created with Access-Control-Request-Headers header'
-                ' value expected: {0} recieved: {1}'.format(
+                ' value expected: {0} received: {1}'.format(
                     expected,
                     received))
 
@@ -833,7 +833,7 @@ class ObjectSmokeTest(ObjectStorageFixture):
             expected,
             received,
             msg='object created with Access-Control-Request-Method header'
-                ' value expected: {0} recieved: {1}'.format(
+                ' value expected: {0} received: {1}'.format(
                     expected,
                     received))
 
@@ -869,7 +869,7 @@ class ObjectSmokeTest(ObjectStorageFixture):
             expected,
             received,
             msg='access-control-allow-origin header should reflect origin'
-                ' expected: {0} recieved: {1}'.format(expected, received))
+                ' expected: {0} received: {1}'.format(expected, received))
 
     @data_driven_test(ObjectDatasetList(exclude=['dlo', 'slo']))
     def ddtest_object_creation_with_file_compression(
@@ -916,7 +916,7 @@ class ObjectSmokeTest(ObjectStorageFixture):
             expected,
             received,
             msg='object created with Content-Encoding header value'
-                ' expected: {0} recieved: {1}'.format(expected, received))
+                ' expected: {0} received: {1}'.format(expected, received))
 
     @data_driven_test(ObjectDatasetList())
     def ddtest_object_creation_with_content_disposition(
@@ -958,7 +958,7 @@ class ObjectSmokeTest(ObjectStorageFixture):
             expected,
             received,
             msg='object created with Content-Disposition header value'
-                ' expected: {0} recieved: {1}'.format(expected, received))
+                ' expected: {0} received: {1}'.format(expected, received))
 
     @data_driven_test(ObjectDatasetList())
     def ddtest_object_creation_with_x_delete_at(
@@ -1002,7 +1002,7 @@ class ObjectSmokeTest(ObjectStorageFixture):
             expected,
             received,
             msg='object created with X-Delete-At header value'
-                ' expected: {0} recieved: {1}'.format(expected, received))
+                ' expected: {0} received: {1}'.format(expected, received))
 
     @data_driven_test(ObjectDatasetList())
     def ddtest_object_creation_with_delete_after(
@@ -1269,7 +1269,7 @@ class ObjectSmokeTest(ObjectStorageFixture):
             expected,
             received,
             msg='object created with X-Object-Meta-Grok header value'
-                ' expected: {0} recieved: {1}'.format(expected, received))
+                ' expected: {0} received: {1}'.format(expected, received))
 
         headers = {'X-Object-Meta-Foo': 'Bar'}
 
@@ -1306,7 +1306,7 @@ class ObjectSmokeTest(ObjectStorageFixture):
             expected,
             received,
             msg='object X-Object-Meta-Foo header value expected: {0}'
-                ' recieved: {1}'.format(expected, received))
+                ' received: {1}'.format(expected, received))
 
     @data_driven_test(ObjectDatasetList())
     def ddtest_obj_metadata_update(self, object_type, generate_object):
@@ -1347,7 +1347,7 @@ class ObjectSmokeTest(ObjectStorageFixture):
             expected,
             received,
             msg='object X-Object-Meta-Grok header value expected: {0}'
-                ' recieved: {1}'.format(expected, received))
+                ' received: {1}'.format(expected, received))
 
     @data_driven_test(ObjectDatasetList())
     def ddtest_content_type_not_detected_without_detect_content_type_header(
@@ -1373,7 +1373,7 @@ class ObjectSmokeTest(ObjectStorageFixture):
             expected,
             received,
             msg='object created should have content type: {0}'
-                ' recieved: {1}'.format(expected, received))
+                ' received: {1}'.format(expected, received))
 
         response = self.client.get_object(
             container_name, object2_name)
@@ -1382,7 +1382,7 @@ class ObjectSmokeTest(ObjectStorageFixture):
             expected,
             received,
             msg='object created should have content type: {0}'
-                ' recieved: {1}'.format(expected, received))
+                ' received: {1}'.format(expected, received))
 
     @data_driven_test(ObjectDatasetList())
     def ddtest_content_type_detected_with_detect_content_type(
@@ -1404,7 +1404,7 @@ class ObjectSmokeTest(ObjectStorageFixture):
             expected,
             received,
             msg='object created should have content type: {0}'
-                ' recieved: {1}'.format(expected, received))
+                ' received: {1}'.format(expected, received))
 
         object2_name = 'object2.txt'
         object2_headers = {'X-Detect-Content-Type': True}
@@ -1420,7 +1420,7 @@ class ObjectSmokeTest(ObjectStorageFixture):
             expected,
             received,
             msg='object created should have content type: {0}'
-                ' recieved: {1}'.format(expected, received))
+                ' received: {1}'.format(expected, received))
 
     def test_object_creation_via_chunked_transfer(self):
         """

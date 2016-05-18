@@ -16,7 +16,7 @@ limitations under the License.
 from cloudroast.objectstorage.fixtures import ObjectStorageFixture
 
 STATUS_CODE_MSG = ("{method} expected status code {expected}"
-                   " recieved status code {recieved}")
+                   " received status code {received}")
 CONTAINER_NAME = 'account_smoke_test_container'
 C_TYPE_TEXT = 'text/plain; charset=utf-8'
 C_TYPE_JSON = 'application/json; charset=utf-8'
@@ -47,23 +47,23 @@ class AccountSmokeTest(ObjectStorageFixture):
 
         method = "list containers"
         expected = HTTP_OK
-        recieved = response.status_code
+        received = response.status_code
 
         self.assertEqual(
             expected,
-            recieved,
+            received,
             msg=STATUS_CODE_MSG.format(
                 method=method,
                 expected=expected,
-                recieved=str(recieved)))
+                received=str(received)))
 
         expected = C_TYPE_TEXT
-        recieved = response.headers.get('content-type')
+        received = response.headers.get('content-type')
         self.assertEqual(
             expected,
-            recieved,
-            msg="'x-account-object-count' header value expected: {0} recieved:"
-            " {1}".format(expected, recieved))
+            received,
+            msg="'x-account-object-count' header value expected: {0} received:"
+            " {1}".format(expected, received))
 
     def test_container_list_with_format_json_query_parameter(self):
         format_ = {"format": "json"}
@@ -71,23 +71,23 @@ class AccountSmokeTest(ObjectStorageFixture):
 
         method = "list containers using content-type json"
         expected = HTTP_OK
-        recieved = response.status_code
+        received = response.status_code
 
         self.assertEqual(
             expected,
-            recieved,
+            received,
             msg=STATUS_CODE_MSG.format(
                 method=method,
                 expected=expected,
-                recieved=str(recieved)))
+                received=str(received)))
 
         expected = C_TYPE_JSON
-        recieved = response.headers.get('content-type')
+        received = response.headers.get('content-type')
         self.assertEqual(
             expected,
-            recieved,
-            msg="'x-account-object-count' header value expected: {0} recieved:"
-            " {1}".format(expected, recieved))
+            received,
+            msg="'x-account-object-count' header value expected: {0} received:"
+            " {1}".format(expected, received))
 
     def test_container_list_with_format_xml_query_parameter(self):
         format_ = {"format": "xml"}
@@ -95,23 +95,23 @@ class AccountSmokeTest(ObjectStorageFixture):
 
         method = "list containers using content-type xml"
         expected = HTTP_OK
-        recieved = response.status_code
+        received = response.status_code
 
         self.assertEqual(
             expected,
-            recieved,
+            received,
             msg=STATUS_CODE_MSG.format(
                 method=method,
                 expected=expected,
-                recieved=str(recieved)))
+                received=str(received)))
 
         expected = C_TYPE_XML
-        recieved = response.headers.get('content-type')
+        received = response.headers.get('content-type')
         self.assertEqual(
             expected,
-            recieved,
-            msg="'x-account-object-count' header value expected: {0} recieved:"
-            " {1}".format(expected, recieved))
+            received,
+            msg="'x-account-object-count' header value expected: {0} received:"
+            " {1}".format(expected, received))
 
     def test_container_list_with_accept_header(self):
         headers = {"Accept": "*/*"}
@@ -119,23 +119,23 @@ class AccountSmokeTest(ObjectStorageFixture):
 
         method = "list containers using accept */*"
         expected = HTTP_OK
-        recieved = response.status_code
+        received = response.status_code
 
         self.assertEqual(
             expected,
-            recieved,
+            received,
             msg=STATUS_CODE_MSG.format(
                 method=method,
                 expected=expected,
-                recieved=str(recieved)))
+                received=str(received)))
 
         expected = C_TYPE_TEXT
-        recieved = response.headers.get('content-type')
+        received = response.headers.get('content-type')
         self.assertEqual(
             expected,
-            recieved,
-            msg="'x-account-object-count' header value expected: {0} recieved:"
-            " {1}".format(expected, recieved))
+            received,
+            msg="'x-account-object-count' header value expected: {0} received:"
+            " {1}".format(expected, received))
 
     def test_container_list_with_text_accept_header(self):
         headers = {"Accept": "text/plain"}
@@ -143,23 +143,23 @@ class AccountSmokeTest(ObjectStorageFixture):
 
         method = "list containers using accept text/plain"
         expected = HTTP_OK
-        recieved = response.status_code
+        received = response.status_code
 
         self.assertEqual(
             expected,
-            recieved,
+            received,
             msg=STATUS_CODE_MSG.format(
                 method=method,
                 expected=expected,
-                recieved=str(recieved)))
+                received=str(received)))
 
         expected = C_TYPE_TEXT
-        recieved = response.headers.get('content-type')
+        received = response.headers.get('content-type')
         self.assertEqual(
             expected,
-            recieved,
-            msg="'x-account-object-count' header value expected: {0} recieved:"
-            " {1}".format(expected, recieved))
+            received,
+            msg="'x-account-object-count' header value expected: {0} received:"
+            " {1}".format(expected, received))
 
     def test_container_list_with_json_accept_header(self):
         headers = {"Accept": "application/json"}
@@ -167,23 +167,23 @@ class AccountSmokeTest(ObjectStorageFixture):
 
         method = "list containers using accept application/json"
         expected = HTTP_OK
-        recieved = response.status_code
+        received = response.status_code
 
         self.assertEqual(
             expected,
-            recieved,
+            received,
             msg=STATUS_CODE_MSG.format(
                 method=method,
                 expected=expected,
-                recieved=str(recieved)))
+                received=str(received)))
 
         expected = C_TYPE_JSON
-        recieved = response.headers.get('content-type')
+        received = response.headers.get('content-type')
         self.assertEqual(
             expected,
-            recieved,
-            msg="'x-account-object-count' header value expected: {0} recieved:"
-            " {1}".format(expected, recieved))
+            received,
+            msg="'x-account-object-count' header value expected: {0} received:"
+            " {1}".format(expected, received))
 
     def test_container_list_with_xml_accept_header(self):
         headers = {"Accept": "application/xml"}
@@ -191,23 +191,23 @@ class AccountSmokeTest(ObjectStorageFixture):
 
         method = "list containers using accept application/xml"
         expected = HTTP_OK
-        recieved = response.status_code
+        received = response.status_code
 
         self.assertEqual(
             expected,
-            recieved,
+            received,
             msg=STATUS_CODE_MSG.format(
                 method=method,
                 expected=expected,
-                recieved=str(recieved)))
+                received=str(received)))
 
         expected = C_TYPE_XML
-        recieved = response.headers.get('content-type')
+        received = response.headers.get('content-type')
         self.assertEqual(
             expected,
-            recieved,
-            msg="'x-account-object-count' header value expected: {0} recieved:"
-            " {1}".format(expected, recieved))
+            received,
+            msg="'x-account-object-count' header value expected: {0} received:"
+            " {1}".format(expected, received))
 
     def test_container_list_with_limit_query_parameter(self):
         limit = {"limit": "10"}
@@ -215,23 +215,23 @@ class AccountSmokeTest(ObjectStorageFixture):
 
         method = "list containers using limit query parameter"
         expected = HTTP_OK
-        recieved = response.status_code
+        received = response.status_code
 
         self.assertEqual(
             expected,
-            recieved,
+            received,
             msg=STATUS_CODE_MSG.format(
                 method=method,
                 expected=expected,
-                recieved=str(recieved)))
+                received=str(received)))
 
         expected = C_TYPE_TEXT
-        recieved = response.headers.get('content-type')
+        received = response.headers.get('content-type')
         self.assertEqual(
             expected,
-            recieved,
-            msg="'x-account-object-count' header value expected: {0} recieved:"
-            " {1}".format(expected, recieved))
+            received,
+            msg="'x-account-object-count' header value expected: {0} received:"
+            " {1}".format(expected, received))
 
     def test_container_list_with_marker_query_parameter(self):
         marker = {"marker": "a"}
@@ -239,23 +239,23 @@ class AccountSmokeTest(ObjectStorageFixture):
 
         method = "list containers using marker query parameter"
         expected = HTTP_OK
-        recieved = response.status_code
+        received = response.status_code
 
         self.assertEqual(
             expected,
-            recieved,
+            received,
             msg=STATUS_CODE_MSG.format(
                 method=method,
                 expected=expected,
-                recieved=str(recieved)))
+                received=str(received)))
 
         expected = C_TYPE_TEXT
-        recieved = response.headers.get('content-type')
+        received = response.headers.get('content-type')
         self.assertEqual(
             expected,
-            recieved,
-            msg="'x-account-object-count' header value expected: {0} recieved:"
-            " {1}".format(expected, recieved))
+            received,
+            msg="'x-account-object-count' header value expected: {0} received:"
+            " {1}".format(expected, received))
 
     def test_container_list_with_limit_and_marker_query_parameters(self):
         limit_marker = {"limit": "3", "marker": "a"}
@@ -263,23 +263,23 @@ class AccountSmokeTest(ObjectStorageFixture):
 
         method = "list containers using limit and marker query parameters"
         expected = HTTP_OK
-        recieved = response.status_code
+        received = response.status_code
 
         self.assertEqual(
             expected,
-            recieved,
+            received,
             msg=STATUS_CODE_MSG.format(
                 method=method,
                 expected=expected,
-                recieved=str(recieved)))
+                received=str(received)))
 
         expected = C_TYPE_TEXT
-        recieved = response.headers.get('content-type')
+        received = response.headers.get('content-type')
         self.assertEqual(
             expected,
-            recieved,
-            msg="'x-account-object-count' header value expected: {0} recieved:"
-            " {1}".format(expected, recieved))
+            received,
+            msg="'x-account-object-count' header value expected: {0} received:"
+            " {1}".format(expected, received))
 
     def test_container_list_with_limit_marker_format_json(self):
         limit_marker_format = {"limit": "3", "marker": "a", "format": "json"}
@@ -288,23 +288,23 @@ class AccountSmokeTest(ObjectStorageFixture):
         method = "list containers using limit, marker, and format json query" \
             " parameters"
         expected = HTTP_OK
-        recieved = response.status_code
+        received = response.status_code
 
         self.assertEqual(
             expected,
-            recieved,
+            received,
             msg=STATUS_CODE_MSG.format(
                 method=method,
                 expected=expected,
-                recieved=str(recieved)))
+                received=str(received)))
 
         expected = C_TYPE_JSON
-        recieved = response.headers.get('content-type')
+        received = response.headers.get('content-type')
         self.assertEqual(
             expected,
-            recieved,
-            msg="'x-account-object-count' header value expected: {0} recieved:"
-            " {1}".format(expected, recieved))
+            received,
+            msg="'x-account-object-count' header value expected: {0} received:"
+            " {1}".format(expected, received))
 
     def test_container_list_with_limit_marker_format_xml(self):
         limit_marker_format = {"limit": "3", "marker": "a", "format": "xml"}
@@ -313,38 +313,38 @@ class AccountSmokeTest(ObjectStorageFixture):
         method = "list containers using limit, marker, and format xml query" \
             " parameters"
         expected = HTTP_OK
-        recieved = response.status_code
+        received = response.status_code
 
         self.assertEqual(
             expected,
-            recieved,
+            received,
             msg=STATUS_CODE_MSG.format(
                 method=method,
                 expected=expected,
-                recieved=str(recieved)))
+                received=str(received)))
 
         expected = C_TYPE_XML
-        recieved = response.headers.get('content-type')
+        received = response.headers.get('content-type')
         self.assertEqual(
             expected,
-            recieved,
-            msg="'x-account-object-count' header value expected: {0} recieved:"
-            " {1}".format(expected, recieved))
+            received,
+            msg="'x-account-object-count' header value expected: {0} received:"
+            " {1}".format(expected, received))
 
     def test_metadata_retrieval_with_existing_account(self):
         response = self.client.get_account_metadata()
 
         method = "account metadata retrieval"
         expected = 204
-        recieved = response.status_code
+        received = response.status_code
 
         self.assertEqual(
             expected,
-            recieved,
+            received,
             msg=STATUS_CODE_MSG.format(
                 method=method,
                 expected=expected,
-                recieved=str(recieved)))
+                received=str(received)))
 
         self.assertIn('x-account-bytes-used', response.headers)
 
@@ -357,25 +357,25 @@ class AccountSmokeTest(ObjectStorageFixture):
         self.assertIn('x-account-object-count', response.headers)
 
         expected = 'bytes'
-        recieved = response.headers.get('accept-ranges')
+        received = response.headers.get('accept-ranges')
         self.assertEqual(
             expected,
-            recieved,
-            msg="'accept-ranges' header value expected: {0} recieved"
-            " {1}".format(expected, recieved))
+            received,
+            msg="'accept-ranges' header value expected: {0} received"
+            " {1}".format(expected, received))
 
         expected = 0
-        recieved = int(response.headers.get('content-length'))
+        received = int(response.headers.get('content-length'))
         self.assertEqual(
             expected,
-            recieved,
-            msg="'content-length' header value expected: {0} recieved:"
-            " {1}".format(expected, recieved))
+            received,
+            msg="'content-length' header value expected: {0} received:"
+            " {1}".format(expected, received))
 
         expected = C_TYPE_TEXT
-        recieved = response.headers.get('content-type')
+        received = response.headers.get('content-type')
         self.assertEqual(
             expected,
-            recieved,
-            msg="'content-type' header value expected: {0} recieved:"
-            " {1}".format(expected, recieved))
+            received,
+            msg="'content-type' header value expected: {0} received:"
+            " {1}".format(expected, received))

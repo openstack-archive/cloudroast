@@ -96,14 +96,14 @@ class PrefixTest(ObjectStorageFixture):
         self.assertTrue(response.ok)
 
         expected = 4
-        recieved = len(members)
+        received = len(members)
 
         self.assertEqual(
             expected,
-            recieved,
-            msg="expected {0} members in the response, recieved {1}".format(
+            received,
+            msg="expected {0} members in the response, received {1}".format(
                 expected,
-                recieved))
+                received))
         self.assertIn(
             "music_play_list",
             members,

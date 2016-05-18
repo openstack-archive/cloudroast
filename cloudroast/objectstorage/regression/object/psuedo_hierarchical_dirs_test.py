@@ -85,16 +85,16 @@ class PsuedoHierarchalDirsTest(ObjectStorageFixture):
             members = self.get_members(["subdir", "name"], response.content)
 
             expected = 1
-            recieved = len(members)
+            received = len(members)
             self.assertEqual(
                 expected,
-                recieved,
+                received,
                 msg="container list with prefix: {0} and delimiter: {1}"
-                " expected: {2} members recieved: {3}".format(
+                " expected: {2} members received: {3}".format(
                     prefix,
                     delimiter,
                     expected,
-                    recieved))
+                    received))
 
             obj_name = obj_names.get(delimiter)
             self.assertIn(
@@ -163,16 +163,16 @@ class PsuedoHierarchalDirsTest(ObjectStorageFixture):
         members = self.get_members(["subdir", "name"], response.content)
 
         expected = 1
-        recieved = len(members)
+        received = len(members)
         self.assertEqual(
             expected,
-            recieved,
+            received,
             msg="container list with prefix: {0} and delimiter: {1}"
-            " expected: {2} members recieved: {3}".format(
+            " expected: {2} members received: {3}".format(
                 prefix,
                 delimiter,
                 expected,
-                recieved))
+                received))
 
         obj_name = "music/the_best_of_grok_and_drok/"
         self.assertIn(
@@ -188,16 +188,16 @@ class PsuedoHierarchalDirsTest(ObjectStorageFixture):
         members = self.get_members(["subdir", "name"], response.content)
 
         expected = 1
-        recieved = len(members)
+        received = len(members)
         self.assertEqual(
             expected,
-            recieved,
+            received,
             msg="container list with prefix: {0} and delimiter: {1}"
-            " expected: {2} members recieved: {3}".format(
+            " expected: {2} members received: {3}".format(
                 prefix,
                 delimiter,
                 expected,
-                recieved))
+                received))
 
         obj_name = "music/the_best_of_grok_and_drok/grok_live/"
         self.assertIn(
@@ -213,16 +213,16 @@ class PsuedoHierarchalDirsTest(ObjectStorageFixture):
         members = self.get_members(["subdir", "name"], response.content)
 
         expected = 2
-        recieved = len(members)
+        received = len(members)
         self.assertEqual(
             expected,
-            recieved,
+            received,
             msg="container list with prefix: {0} and delimiter: {1}"
-            " expected: {2} members recieved: {3}".format(
+            " expected: {2} members received: {3}".format(
                 prefix,
                 delimiter,
                 expected,
-                recieved))
+                received))
 
         obj_name = "music/the_best_of_grok_and_drok/grok_live/vol_1/"
         self.assertIn(
@@ -245,16 +245,16 @@ class PsuedoHierarchalDirsTest(ObjectStorageFixture):
         members = self.get_members(["subdir", "name"], response.content)
 
         expected = 3
-        recieved = len(members)
+        received = len(members)
         self.assertEqual(
             expected,
-            recieved,
+            received,
             msg="container list with prefix: {0} and delimiter: {1}"
-            " expected: {2} members recieved: {3}".format(
+            " expected: {2} members received: {3}".format(
                 prefix,
                 delimiter,
                 expected,
-                recieved))
+                received))
 
         self.assertIn(
             vol1_obj1,
@@ -281,16 +281,16 @@ class PsuedoHierarchalDirsTest(ObjectStorageFixture):
         members = self.get_members(["subdir", "name"], response.content)
 
         expected = 2
-        recieved = len(members)
+        received = len(members)
         self.assertEqual(
             expected,
-            recieved,
+            received,
             msg="container list with prefix: {0} and delimiter: {1}"
-            " expected: {2} members recieved: {3}".format(
+            " expected: {2} members received: {3}".format(
                 prefix,
                 delimiter,
                 expected,
-                recieved))
+                received))
 
         self.assertIn(
             vol2_obj1,
@@ -433,12 +433,12 @@ class PsuedoHierarchalDirsTest(ObjectStorageFixture):
         members = self.get_members(["name"], response.content)
 
         expected = 3
-        recieved = len(members)
+        received = len(members)
         self.assertEqual(
             expected,
-            recieved,
+            received,
             msg="container list with path: {0} expected: {1} members"
-            " recieved: {2}".format(lvl1_dir_marker, expected, recieved))
+            " received: {2}".format(lvl1_dir_marker, expected, received))
 
         self.assertIn(
             lvl2_dir_marker,
@@ -464,12 +464,12 @@ class PsuedoHierarchalDirsTest(ObjectStorageFixture):
         members = self.get_members(["name"], response.content)
 
         expected = 3
-        recieved = len(members)
+        received = len(members)
         self.assertEqual(
             expected,
-            recieved,
+            received,
             msg="container list with path: {0} expected: {1} members"
-            " recieved: {2}".format(lvl3_dir_marker, expected, recieved))
+            " received: {2}".format(lvl3_dir_marker, expected, received))
 
         self.assertIn(
             lvl3_dir_marker,
@@ -495,12 +495,12 @@ class PsuedoHierarchalDirsTest(ObjectStorageFixture):
         members = self.get_members(["name"], response.content)
 
         expected = 2
-        recieved = len(members)
+        received = len(members)
         self.assertEqual(
             expected,
-            recieved,
+            received,
             msg="container list with path: {0} expected: {1} members"
-            " recieved: {2}".format(lvl1_dir_marker, expected, recieved))
+            " received: {2}".format(lvl1_dir_marker, expected, received))
 
         self.assertIn(
             lvl3_obj1,

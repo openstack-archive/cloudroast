@@ -90,7 +90,7 @@ class SwiftInfoTest(ObjectStorageFixture):
         self.assertEqual(
             'application/json; charset=UTF-8',
             response.headers.get('content-type'),
-            "info call should return data in json format, recieved {}"
+            "info call should return data in json format, received {}"
             .format(response.headers.get('content-type')))
         info = json.loads(response.content)
         self.assertTrue(

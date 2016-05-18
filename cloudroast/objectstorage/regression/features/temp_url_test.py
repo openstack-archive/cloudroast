@@ -170,7 +170,7 @@ class TempUrlTest(ObjectStorageFixture):
 
         expected_disposition = EXPECTED_DISPOSITION.format(
             filename=self.object_name)
-        recieved_disposition = response.headers.get('content-disposition')
+        received_disposition = response.headers.get('content-disposition')
 
         self.assertIn(
             'content-disposition',
@@ -178,10 +178,10 @@ class TempUrlTest(ObjectStorageFixture):
             msg='content-disposition was not found in response headers')
         self.assertEqual(
             expected_disposition,
-            recieved_disposition,
-            msg='expected {0} recieved {1}'.format(
+            received_disposition,
+            msg='expected {0} received {1}'.format(
                 expected_disposition,
-                recieved_disposition))
+                received_disposition))
         self.assertEqual(
             response.content,
             self.object_data,
@@ -234,7 +234,7 @@ class TempUrlTest(ObjectStorageFixture):
         self.assertTrue(response.ok, 'object should be retrieved over tempurl')
 
         expected_disposition = attachment_hdr
-        recieved_disposition = response.headers.get('content-disposition')
+        received_disposition = response.headers.get('content-disposition')
 
         self.assertIn(
             'content-disposition',
@@ -242,10 +242,10 @@ class TempUrlTest(ObjectStorageFixture):
             msg='content-disposition was not found in response headers')
         self.assertEqual(
             expected_disposition,
-            recieved_disposition,
-            msg='expected {0} recieved {1}'.format(
+            received_disposition,
+            msg='expected {0} received {1}'.format(
                 expected_disposition,
-                recieved_disposition))
+                received_disposition))
         self.assertEqual(
             response.content,
             self.object_data,
@@ -307,7 +307,7 @@ class TempUrlTest(ObjectStorageFixture):
 
         expected_disposition = EXPECTED_DISPOSITION.format(
             filename=expected_filename)
-        recieved_disposition = tempurl_get_response.headers.get(
+        received_disposition = tempurl_get_response.headers.get(
             'content-disposition')
 
         self.assertIn(
@@ -316,10 +316,10 @@ class TempUrlTest(ObjectStorageFixture):
             msg='content-disposition was not found in response headers')
         self.assertEqual(
             expected_disposition,
-            recieved_disposition,
-            msg='expected {0} recieved {1}'.format(
+            received_disposition,
+            msg='expected {0} received {1}'.format(
                 expected_disposition,
-                recieved_disposition))
+                received_disposition))
         self.assertEqual(
             tempurl_get_response.content,
             self.object_data,
@@ -394,7 +394,7 @@ class TempUrlTest(ObjectStorageFixture):
             msg='expires was not in the created tempurl')
 
         expected_disposition = content_disposition
-        recieved_disposition = tempurl_get_response.headers.get(
+        received_disposition = tempurl_get_response.headers.get(
             'content-disposition')
 
         self.assertIn(
@@ -403,10 +403,10 @@ class TempUrlTest(ObjectStorageFixture):
             msg='content-disposition was not found in response headers')
         self.assertEqual(
             expected_disposition,
-            recieved_disposition,
-            msg='expected {0} recieved {1}'.format(
+            received_disposition,
+            msg='expected {0} received {1}'.format(
                 expected_disposition,
-                recieved_disposition))
+                received_disposition))
         self.assertEqual(
             tempurl_get_response.content,
             self.object_data,
@@ -482,7 +482,7 @@ class TempUrlTest(ObjectStorageFixture):
 
         expected_disposition = EXPECTED_DISPOSITION.format(
             filename=expected_filename)
-        recieved_disposition = tempurl_get_response.headers.get(
+        received_disposition = tempurl_get_response.headers.get(
             'content-disposition')
 
         self.assertIn(
@@ -491,10 +491,10 @@ class TempUrlTest(ObjectStorageFixture):
             msg='content-disposition was not found in response headers')
         self.assertEqual(
             expected_disposition,
-            recieved_disposition,
-            msg='expected {0} recieved {1}'.format(
+            received_disposition,
+            msg='expected {0} received {1}'.format(
                 expected_disposition,
-                recieved_disposition))
+                received_disposition))
         self.assertEqual(
             tempurl_get_response.content,
             self.object_data,
@@ -569,7 +569,7 @@ class TempUrlTest(ObjectStorageFixture):
             msg='expires was not in the created tempurl')
 
         expected_disposition = content_disposition
-        recieved_disposition = tempurl_get_response.headers.get(
+        received_disposition = tempurl_get_response.headers.get(
             'content-disposition')
 
         self.assertIn(
@@ -578,10 +578,10 @@ class TempUrlTest(ObjectStorageFixture):
             msg='content-disposition was not found in response headers')
         self.assertEqual(
             expected_disposition,
-            recieved_disposition,
-            msg='expected {0} recieved {1}'.format(
+            received_disposition,
+            msg='expected {0} received {1}'.format(
                 expected_disposition,
-                recieved_disposition))
+                received_disposition))
         self.assertEqual(
             tempurl_get_response.content,
             self.object_data,
@@ -638,7 +638,7 @@ class TempUrlTest(ObjectStorageFixture):
 
         expected_disposition = EXPECTED_DISPOSITION.format(
             filename=object_name_override)
-        recieved_disposition = response.headers.get('content-disposition')
+        received_disposition = response.headers.get('content-disposition')
 
         self.assertIn(
             'content-disposition',
@@ -646,10 +646,10 @@ class TempUrlTest(ObjectStorageFixture):
             msg='content-disposition was not found in response headers')
         self.assertEqual(
             expected_disposition,
-            recieved_disposition,
-            msg='expected {0} recieved {1}'.format(
+            received_disposition,
+            msg='expected {0} received {1}'.format(
                 expected_disposition,
-                recieved_disposition))
+                received_disposition))
         self.assertEqual(
             response.content,
             self.object_data,
@@ -708,7 +708,7 @@ class TempUrlTest(ObjectStorageFixture):
 
         expected_disposition = EXPECTED_DISPOSITION.format(
             filename=object_name_override)
-        recieved_disposition = response.headers.get('content-disposition')
+        received_disposition = response.headers.get('content-disposition')
 
         self.assertIn(
             'content-disposition',
@@ -716,10 +716,10 @@ class TempUrlTest(ObjectStorageFixture):
             msg='content-disposition was not found in response headers')
         self.assertEqual(
             expected_disposition,
-            recieved_disposition,
-            msg='expected {0} recieved {1}'.format(
+            received_disposition,
+            msg='expected {0} received {1}'.format(
                 expected_disposition,
-                recieved_disposition))
+                received_disposition))
         self.assertEqual(
             response.content,
             self.object_data,
@@ -778,7 +778,7 @@ class TempUrlTest(ObjectStorageFixture):
 
         expected_disposition = EXPECTED_DISPOSITION.format(
             filename=object_name_override)
-        recieved_disposition = response.headers.get('content-disposition')
+        received_disposition = response.headers.get('content-disposition')
 
         self.assertIn(
             'content-disposition',
@@ -786,10 +786,10 @@ class TempUrlTest(ObjectStorageFixture):
             msg='content-disposition was not found in response headers')
         self.assertEqual(
             expected_disposition,
-            recieved_disposition,
-            msg='expected {0} recieved {1}'.format(
+            received_disposition,
+            msg='expected {0} received {1}'.format(
                 expected_disposition,
-                recieved_disposition))
+                received_disposition))
         self.assertEqual(
             response.content,
             self.object_data,
@@ -973,13 +973,13 @@ class TempUrlTest(ObjectStorageFixture):
 
         expected_disposition = 'attachment; filename="{0}"'.format(
             self.object_name)
-        recieved_disposition = response.headers.get('content-disposition')
+        received_disposition = response.headers.get('content-disposition')
 
         self.assertTrue(response.ok, 'object should be retrieved over tempurl')
 
         expected_disposition = EXPECTED_DISPOSITION.format(
             filename=self.object_name)
-        recieved_disposition = response.headers.get('content-disposition')
+        received_disposition = response.headers.get('content-disposition')
 
         self.assertIn(
             'content-disposition',
@@ -987,10 +987,10 @@ class TempUrlTest(ObjectStorageFixture):
             msg='content-disposition was not found in response headers')
         self.assertEqual(
             expected_disposition,
-            recieved_disposition,
-            msg='expected {0} recieved {1}'.format(
+            received_disposition,
+            msg='expected {0} received {1}'.format(
                 expected_disposition,
-                recieved_disposition))
+                received_disposition))
         self.assertEqual(
             response.content,
             self.object_data,
