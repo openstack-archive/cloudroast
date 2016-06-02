@@ -53,8 +53,8 @@ class ExpiringObjectTest(ObjectStorageFixture):
         content_length = response.headers.get('content-length')
         self.assertNotEqual(content_length, 0)
 
-        # wait for the object to expire - future_time + 10 seconds
-        sleep(70)
+        # Wait for object to expire using interval from config
+        sleep(self.objectstorage_api_config.object_deletion_wait_interval)
 
         response = self.client.get_object(container_name, object_name)
 
@@ -176,8 +176,7 @@ class ExpiringObjectTest(ObjectStorageFixture):
                 received=str(received)))
 
         # Wait for object to expire using interval from config
-        sleep(
-            self.objectstorage_api_config.object_deletion_wait_interval)
+        sleep(self.objectstorage_api_config.object_deletion_wait_interval)
 
         object_response = self.client.get_object(container_name, object_name)
 
@@ -241,28 +240,3 @@ class ExpiringObjectTest(ObjectStorageFixture):
         self.assertEqual(
             404, resp.status_code,
             'Object should be deleted after X-Delete-At.')
-
-        # wait for the container listing to be updated
-        sleep(self.objectstorage_api_config.object_deletion_wait_interval)
-
-        get_response = self.client.list_objects(container_name)
-
-        self.assertEqual(
-            204, get_response.status_code,
-            'No content should be returned for the request.')
-
-        self.assertEqual(
-            0, int(get_response.headers.get('x-container-object-count')),
-            'No objects should be listed in the container. Object count was '
-            '{0}'.format(get_response.headers.get('x-container-object-count')))
-
-        self.assertIsNone(get_response.entity,
-                          'There should not be a response entity. '
-                          'Response entity was {0}'.format(
-                              get_response.entity))
-
-        head_response = self.client.get_container_metadata(container_name)
-
-        self.assertEqual(
-            0, int(head_response.headers.get('x-container-object-count')),
-            'No objects should be listed in the container.')
