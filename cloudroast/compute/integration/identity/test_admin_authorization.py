@@ -29,18 +29,6 @@ class AdminAuthorizationTest(ComputeFixture):
         cls.resources.add(cls.server.id, cls.servers_client.delete_server)
 
     @tags(type='negative', net='no')
-    def test_lock_server_fails_as_user(self):
-        """A lock request should fail when not made by an admin"""
-        with self.assertRaises(Forbidden):
-            self.servers_client.lock_server(self.server.id)
-
-    @tags(type='negative', net='no')
-    def test_unlock_server_fails_as_user(self):
-        """An unlock request should fail when not made by an admin"""
-        with self.assertRaises(Forbidden):
-            self.servers_client.unlock_server(self.server.id)
-
-    @tags(type='negative', net='no')
     def test_migrate_server_fails_as_user(self):
         """A migrate request should fail when not made by an admin"""
         with self.assertRaises(Forbidden):
@@ -51,18 +39,6 @@ class AdminAuthorizationTest(ComputeFixture):
         """A live migrate request should fail when not made by an admin"""
         with self.assertRaises(Forbidden):
             self.servers_client.live_migrate_server(self.server.id)
-
-    @tags(type='negative', net='no')
-    def test_stop_server_fails_as_user(self):
-        """A stop request should fail when not made by an admin"""
-        with self.assertRaises(BadRequest):
-            self.servers_client.stop_server(self.server.id)
-
-    @tags(type='negative', net='no')
-    def test_start_server_fails_as_user(self):
-        """A start request should fail when not made by an admin"""
-        with self.assertRaises(BadRequest):
-            self.servers_client.start_server(self.server.id)
 
     @tags(type='negative', net='no')
     def test_suspend_server_fails_as_user(self):
