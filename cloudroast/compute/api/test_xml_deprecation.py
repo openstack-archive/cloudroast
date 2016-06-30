@@ -16,7 +16,7 @@ limitations under the License.
 
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.common.tools.datagen import rand_name
-from cloudcafe.compute.common.exceptions import BadRequest
+from cloudcafe.compute.common.exceptions import BadMediaType
 from cloudcafe.compute.common.types import NovaServerStatusTypes
 
 from cloudroast.compute.fixtures import ComputeFixture
@@ -63,7 +63,7 @@ class XMLDeprecationTest(ComputeFixture):
 
         self.flavors_client.default_headers['Accept'] = 'application/json'
         self.flavors_client.default_headers['Content-Type'] = 'application/xml'
-        with self.assertRaises(BadRequest):
+        with self.assertRaises(BadMediaType):
             self.flavors_client.list_flavors()
 
     @tags(type='smoke', net='no')
@@ -81,7 +81,7 @@ class XMLDeprecationTest(ComputeFixture):
 
         self.flavors_client.default_headers['Accept'] = 'application/xml'
         self.flavors_client.default_headers['Content-Type'] = 'application/xml'
-        with self.assertRaises(BadRequest):
+        with self.assertRaises(BadMediaType):
             self.flavors_client.list_flavors()
 
     @tags(type='smoke', net='no')
@@ -136,7 +136,7 @@ class XMLDeprecationTest(ComputeFixture):
         name = rand_name('testserver')
         self.servers_client.default_headers['Accept'] = 'application/json'
         self.servers_client.default_headers['Content-Type'] = 'application/xml'
-        with self.assertRaises(BadRequest):
+        with self.assertRaises(BadMediaType):
             self.servers_client.create_server(
                 name, self.image_ref, self.flavor_ref)
 
@@ -155,6 +155,6 @@ class XMLDeprecationTest(ComputeFixture):
         name = rand_name('testserver')
         self.servers_client.default_headers['Accept'] = 'application/xml'
         self.servers_client.default_headers['Content-Type'] = 'application/xml'
-        with self.assertRaises(BadRequest):
+        with self.assertRaises(BadMediaType):
             self.servers_client.create_server(
                 name, self.image_ref, self.flavor_ref)
