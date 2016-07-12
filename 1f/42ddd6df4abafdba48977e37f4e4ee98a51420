@@ -1,0 +1,8 @@
+Code-Review+2: Carlos Martinez <carlos.martinez@rackspace.com>
+Workflow+1: Carlos Martinez <carlos.martinez@rackspace.com>
+Verified+2: Jenkins
+Submitted-by: Jenkins
+Submitted-at: Tue, 12 Jul 2016 21:14:06 +0000
+Reviewed-on: https://review.openstack.org/341187
+Project: openstack/cloudroast
+Branch: refs/heads/master
