@@ -104,7 +104,11 @@ class SharedIPsTest(NetworkingComputeFixture, ScenarioMixin):
             network_id=net_id, version=ip_version, device_ids=instances_ids)
         msg = "Shared ip create returned unexpected status code: {}"
         msg = msg.format(resp.status_code)
-        self.assertEqual(resp.status_code, 200, msg)
+
+        # HTTP 201 response expected for neutron.574 or higher
+        expected_http_response = [200, 201]
+        self.assertIn(resp.status_code, expected_http_response, msg)
+
         shared_ip = resp.entity
         msg = "Shared ip create returned unexpected network_id: {}"
         msg = msg.format(shared_ip.network_id)
