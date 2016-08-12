@@ -1033,7 +1033,7 @@ class TempUrlTest(ObjectStorageFixture):
                                                    TEMPURL_KEY_LIFE,
                                                    self.tempurl_key)
 
-        headers = {'Content-Length': 0,
+        headers = {'Content-Length': "0",
                    'X-Object-Manifest': '{0}/e'.format(exploit_container_name)}
         params = {'temp_url_sig': tempurl_data.get('signature'),
                   'temp_url_expires': tempurl_data.get('expires')}
