@@ -593,7 +593,7 @@ class NetworkingAPIFixture(NetworkingFixture):
         cls.subnet_data = dict(
             name='test_subnet',
             tenant_id=cls.user.tenant_id,
-            enable_dhcp=None, dns_nameservers=[], gateway_ip=None,
+            enable_dhcp=False, dns_nameservers=[], gateway_ip=None,
             host_routes=[])
 
         # Data for creating ports and asserting responses
