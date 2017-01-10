@@ -40,6 +40,9 @@ class VolumeCloningIntegrationSmokeTests(ComputeIntegrationTestFixture):
             source_volid=self.test_volume.id_)
         assert self.volume_clone is not None, "Unable to clone volume"
 
+        # Re-connect to server to prevent timeout issues
+        self.server_conn = self.connect_to_instance(self.test_server)
+
         # Attach clone to server(self):
         self.clone_attachment = self.attach_volume_and_get_device_info(
             self.server_conn, self.test_server.id, self.volume_clone.id_)
