@@ -127,6 +127,9 @@ class VolumeSnapshotIntegrationSmokeTests(ComputeIntegrationTestFixture):
             self.volumes.behaviors.delete_snapshot_confirmed,
             self.test_snapshot.id_)
 
+        # Re-connect to server to prevent timeout issues
+        self.server_conn = self.connect_to_instance(self.test_server)
+
         # Restore snapshot to new volume
         self.restored_snapshot_volume = \
             self.volumes.behaviors.create_available_volume(
