@@ -135,7 +135,7 @@ class TestCreateInstances(DBaaSFixture):
         Creating a small instance (1G)
 
         """
-        #print (self.instance_id)
+        #print(self.instance_id)
         NAME = "qe-small-instance"
         FLAVOR = 2
         VOLUME = 40
