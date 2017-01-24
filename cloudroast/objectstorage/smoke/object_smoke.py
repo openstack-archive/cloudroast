@@ -36,7 +36,7 @@ class ObjectSmokeTest(ObjectStorageFixture):
     @classmethod
     def setUpClass(cls):
         super(ObjectSmokeTest, cls).setUpClass()
-        cls.default_obj_name = Constants.VALID_OBJECT_NAME
+        cls.default_obj_name = Constants.VALID_OBJECT_NAME_WITH_UNICODE
 
     @staticmethod
     def generate_chunk_data():
