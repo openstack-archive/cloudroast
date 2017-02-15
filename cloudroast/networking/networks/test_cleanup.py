@@ -107,6 +107,6 @@ class NetworkingCleanUp(BaseTestFixture):
 
         print '\nResources to delete dict:'
         print self.resource_dict
-        print ('Note: to delete all resources export or set in config:'
+        print('Note: to delete all resources export or set in config:'
                '\nCAFE_networking_delete_resources={\"all\": \"*\"}')
         self.res.delete_networking(resource_dict=self.resource_dict)

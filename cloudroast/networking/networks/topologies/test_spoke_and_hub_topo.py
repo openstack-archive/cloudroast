@@ -26,6 +26,6 @@ class TestSpokeAndHubTopology(SpokeAndHubFixture):
 
         """
         delay_minutes = 15
-        print ("Connectivity Issues detected!\n You have {delay} minutes to "
+        print("Connectivity Issues detected!\n You have {delay} minutes to "
                "debug. GO!".format(delay=delay_minutes))
         time.sleep(delay_minutes * 60)
