@@ -67,6 +67,126 @@ class TempUrlTest(ObjectStorageFixture):
                 raise Exception('Could not set TempURL key.')
 
     @ObjectStorageFixture.required_features('tempurl')
+    def test_container_level_tempurl(self):
+        container_name = self.create_temp_container(BASE_CONTAINER_NAME)
+        headers = {'X-Container-Meta-Temp-URL-Key': "CONTAINER_KEY_1"}
+        self.client.set_temp_url_key(
+            container_name=container_name,
+            headers=headers)
+
+        headers = {'X-Container-Meta-Temp-URL-Key-2': "CONTAINER_KEY_2"}
+        self.client.set_temp_url_key(
+            container_name=container_name,
+            headers=headers)
+
+        response = self.client.get_container_metadata(container_name)
+
+        self.assertIn(
+            'X-Container-Meta-Temp-URL-Key',
+            response.headers,
+            msg="'X-Container-Meta-Temp-URL-Key' header was not set")
+
+        self.assertIn(
+            'X-Container-Meta-Temp-URL-Key-2',
+            response.headers,
+            msg="'X-Container-Meta-Temp-URL-Key-2' header was not set")
+
+        container_key = response.headers.get('X-Container-Meta-Temp-URL-Key')
+        account_key = self.behaviors.get_tempurl_key()
+
+        self.assertNotEqual(
+            container_key,
+            account_key,
+            msg="container key: {0} != account_key: {1}".format(
+                container_key, account_key))
+
+        self.assertNotEqual(
+            container_key,
+            account_key,
+            msg="container key 2: {0} != account_key: {1}".format(
+                container_key, account_key))
+
+        PUT_tempurl_data = self.client.create_temp_url(
+            'PUT',
+            container_name,
+            self.object_name,
+            TEMPURL_KEY_LIFE,
+            "CONTAINER_KEY_1")
+
+        headers = {'Content-Length': self.content_length,
+                   'Content-Type': CONTENT_TYPE_TEXT}
+        params = {'temp_url_sig': PUT_tempurl_data.get('signature'),
+                  'temp_url_expires': PUT_tempurl_data.get('expires')}
+        response = self.http.put(
+            PUT_tempurl_data.get('target_url'),
+            params=params,
+            headers=headers,
+            data=self.object_data)
+
+        self.assertTrue(response.ok, msg="tempurl PUT returned {0}".format(
+            response.status_code))
+
+        PUT_tempurl_data = self.client.create_temp_url(
+            'PUT',
+            container_name,
+            self.object_name,
+            TEMPURL_KEY_LIFE,
+            "CONTAINER_KEY_2")
+
+        headers = {'Content-Length': self.content_length,
+                   'Content-Type': CONTENT_TYPE_TEXT}
+        params = {'temp_url_sig': PUT_tempurl_data.get('signature'),
+                  'temp_url_expires': PUT_tempurl_data.get('expires')}
+        response = self.http.put(
+            PUT_tempurl_data.get('target_url'),
+            params=params,
+            headers=headers,
+            data=self.object_data)
+
+        self.assertTrue(
+            response.ok,
+            msg="tempurl PUT with key 2 returned {0}".format(
+                response.status_code))
+
+        GET_tempurl_data = self.client.create_temp_url(
+            'GET',
+            container_name,
+            self.object_name,
+            TEMPURL_KEY_LIFE,
+            "CONTAINER_KEY_1")
+
+        params = {'temp_url_sig': GET_tempurl_data.get('signature'),
+                  'temp_url_expires': GET_tempurl_data.get('expires')}
+        response = self.http.get(
+            GET_tempurl_data.get('target_url'),
+            params=params,
+            data=self.object_data)
+
+        self.assertEqual(
+            response.content,
+            self.object_data,
+            msg="tempurl GET data: {0}".format(response.content))
+
+        GET_tempurl_data = self.client.create_temp_url(
+            'GET',
+            container_name,
+            self.object_name,
+            TEMPURL_KEY_LIFE,
+            "CONTAINER_KEY_2")
+
+        params = {'temp_url_sig': GET_tempurl_data.get('signature'),
+                  'temp_url_expires': GET_tempurl_data.get('expires')}
+        response = self.http.get(
+            GET_tempurl_data.get('target_url'),
+            params=params,
+            data=self.object_data)
+
+        self.assertEqual(
+            response.content,
+            self.object_data,
+            msg="tempurl GET with key 2 data: {0}".format(response.content))
+
+    @ObjectStorageFixture.required_features('tempurl')
     def test_object_creation_via_tempurl(self):
         """
         Scenario:
