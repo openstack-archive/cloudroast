@@ -1,5 +1,5 @@
 """
-Copyright 2013 Rackspace
+Copyright 2017 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -32,8 +32,6 @@ class ObjectRangeRequestTest(ObjectStorageFixture):
 
     def setUp(self):
         super(ObjectRangeRequestTest, self).setUp()
-        self.container_name = self.create_temp_container(
-            descriptor=CONTAINER_NAME)
         self.object_name = Constants.VALID_OBJECT_NAME
 
     def get_boundary(self, content_type_header):
@@ -72,7 +70,7 @@ class ObjectRangeRequestTest(ObjectStorageFixture):
         end = len(split_body) - 1
 
         try:
-            while(i < end):
+            while i < end:
                 multipart_content['value{0}'.format(i)] = \
                     split_body[i].split('\r\n\r\n')[1].strip('\r\n')
                 i += 1
@@ -82,7 +80,7 @@ class ObjectRangeRequestTest(ObjectStorageFixture):
         return multipart_content
 
     @data_driven_test(ObjectDatasetList())
-    def ddtest_basic_object_range_request(self, **kwargs):
+    def ddtest_basic_object_range_request(self, object_type, generate_object):
         """
         Scenario:
             Perform a get with various range request headers.
@@ -90,57 +88,77 @@ class ObjectRangeRequestTest(ObjectStorageFixture):
         Expected Results:
             The data returned should be within the range specified.
         """
-        obj_data = "grok_one drok_two"
+        container_name = self.create_temp_container(descriptor=CONTAINER_NAME)
+        # Check the object type, if it's a DLO/SLO we need to generate more
+        # data due to minimum segment lengths.
+        if object_type == "standard":
+            obj_data = "grok_one drok_two"
+        else:
+            obj_data = ''.join(["grok_{0}/".format(x) for x in range(
+                1000000)])
 
-        headers = {'Content-Length': str(len(obj_data))}
-        self.behaviors.create_object(
-            self.container_name,
-            self.object_name,
-            headers=headers,
-            data=obj_data)
+        generate_object(container_name, self.object_name, data=obj_data)
 
         headers = {'Range': 'bytes=-3'}
         response = self.client.get_object(
-            self.container_name,
+            container_name,
             self.object_name,
             headers=headers)
 
-        self.assertEqual(response.content, "two",
-                         msg=CONTENT_MSG.format("two", str(response.content)))
+        if object_type == "standard":
+            self.assertEqual(response.content, "two",
+                             msg=CONTENT_MSG.format("two",
+                                                    str(response.content)))
+        else:
+            self.assertEqual(response.content, "99/",
+                             msg=CONTENT_MSG.format("99/",
+                                                    str(response.content)))
 
         headers = {'Range': 'bytes=0-3'}
         response = self.client.get_object(
-            self.container_name,
+            container_name,
             self.object_name,
             headers=headers)
 
+        # In this case the content should be the same for all object types
         self.assertEqual(response.content, "grok",
                          msg=CONTENT_MSG.format("grok", str(response.content)))
 
         headers = {'Range': 'bytes=4-4'}
         response = self.client.get_object(
-            self.container_name,
+            container_name,
             self.object_name,
             headers=headers)
 
+        # In this case the content should be the same for all object types
         self.assertEqual(response.content, "_",
                          msg=CONTENT_MSG.format("_", str(response.content)))
 
-        headers = {'Range': 'bytes=9-'}
-        response = self.client.get_object(
-            self.container_name,
-            self.object_name,
-            headers=headers)
+        # Splitting up the requests based on object type due to the size of
+        # DLOs and SLOs making this case difficult to handle otherwise.
+        if object_type == "standard":
+            headers = {'Range': 'bytes=9-'}
+            response = self.client.get_object(
+                container_name,
+                self.object_name,
+                headers=headers)
 
-        self.assertEqual(
-            response.content,
-            "drok_two",
-            msg=CONTENT_MSG.format(
-                "drok_two",
-                str(response.content)))
+            self.assertEqual(response.content, "drok_two",
+                             msg=CONTENT_MSG.format("drok_two",
+                                                    str(response.content)))
+        else:
+            headers = {'Range': 'bytes=11888878-'}
+            response = self.client.get_object(
+                container_name,
+                self.object_name,
+                headers=headers)
+
+            self.assertEqual(response.content, "grok_999999/",
+                             msg=CONTENT_MSG.format("grok_999999/",
+                                                    str(response.content)))
 
     @data_driven_test(ObjectDatasetList())
-    def ddtest_multi_part_range_request(self, **kwargs):
+    def ddtest_multi_part_range_request(self, object_type, generate_object):
         """
         Scenario:
             Perform a get with various multi-part range request headers.
@@ -149,22 +167,24 @@ class ObjectRangeRequestTest(ObjectStorageFixture):
             The data returned should be a multi-part message within the
             range specified.
             The content type should be "multipart/byteranges" and should
-            contain a delimeter.
-            the body should be seperated by this delimeter and the data
+            contain a delimiter.
+            the body should be separated by this delimiter and the data
             in the body should be in order.
         """
-        obj_data = "grok_one drok_two"
+        container_name = self.create_temp_container(descriptor=CONTAINER_NAME)
+        # Check the object type, if it's a DLO/SLO we need to generate more
+        # data due to minimum segment lengths.
+        if object_type == "standard":
+            obj_data = "grok_one drok_two"
+        else:
+            obj_data = ''.join(["grok_{0}/".format(x) for x in range(
+                1000000)])
 
-        headers = {'Content-Length': str(len(obj_data))}
-        self.behaviors.create_object(
-            self.container_name,
-            self.object_name,
-            headers=headers,
-            data=obj_data)
+        generate_object(container_name, self.object_name, data=obj_data)
 
         headers = {'Range': 'bytes=0-3,-3'}
         response = self.client.get_object(
-            self.container_name,
+            container_name,
             self.object_name,
             headers=headers)
 
@@ -178,14 +198,26 @@ class ObjectRangeRequestTest(ObjectStorageFixture):
 
         parsed_content = self.parse_msg(response.content, boundary)
 
-        self.assertEqual("grok", parsed_content.get('value1'),
-                         msg=CONTENT_MSG.format("grok", str(response.content)))
-        self.assertEqual("two", parsed_content.get('value2'),
-                         msg=CONTENT_MSG.format("two", str(response.content)))
+        if object_type == "standard":
+            self.assertEqual("grok", parsed_content.get('value1'),
+                             msg=CONTENT_MSG.format("grok",
+                                                    str(response.content)))
+            self.assertEqual("two", parsed_content.get('value2'),
+                             msg=CONTENT_MSG.format("two",
+                                                    str(response.content)))
+        else:
+            self.assertEqual("grok", parsed_content.get('value1'),
+                             msg=CONTENT_MSG.format("grok",
+                                                    str(response.content)))
+            # This assertion will fail whenever the DLO/SLO bug for multipart
+            # range requests is resolved (JIRA STORDEV-189).
+            self.assertEqual("two", parsed_content.get('value2'),
+                             msg=CONTENT_MSG.format("two",
+                                                    str(response.content)))
 
         headers = {'Range': 'bytes=-3,0-3'}
         response = self.client.get_object(
-            self.container_name,
+            container_name,
             self.object_name,
             headers=headers)
 
@@ -199,14 +231,26 @@ class ObjectRangeRequestTest(ObjectStorageFixture):
 
         parsed_content = self.parse_msg(response.content, boundary)
 
-        self.assertEqual("two", parsed_content.get('value1'),
-                         msg=CONTENT_MSG.format("two", str(response.content)))
-        self.assertEqual("grok", parsed_content.get('value2'),
-                         msg=CONTENT_MSG.format("grok", str(response.content)))
+        if object_type == "standard":
+            self.assertEqual("two", parsed_content.get('value1'),
+                             msg=CONTENT_MSG.format("two",
+                                                    str(response.content)))
+            self.assertEqual("grok", parsed_content.get('value2'),
+                             msg=CONTENT_MSG.format("grok",
+                                                    str(response.content)))
+        else:
+            # This assertion will fail whenever the DLO/SLO bug for multipart
+            # range requests is resolved (JIRA STORDEV-189).
+            self.assertEqual("two", parsed_content.get('value2'),
+                             msg=CONTENT_MSG.format("two",
+                                                    str(response.content)))
+            self.assertEqual("grok", parsed_content.get('value1'),
+                             msg=CONTENT_MSG.format("grok",
+                                                    str(response.content)))
 
         headers = {'Range': 'bytes=9-,0-3'}
         response = self.client.get_object(
-            self.container_name,
+            container_name,
             self.object_name,
             headers=headers)
 
@@ -220,18 +264,29 @@ class ObjectRangeRequestTest(ObjectStorageFixture):
 
         parsed_content = self.parse_msg(response.content, boundary)
 
-        self.assertEqual(
-            "drok_two",
-            parsed_content.get('value1'),
-            msg=CONTENT_MSG.format("drok_two", str(response.content)))
-        self.assertEqual("grok", parsed_content.get('value2'),
-                         msg=CONTENT_MSG.format("grok", str(response.content)))
+        if object_type == "standard":
+            self.assertEqual("drok_two",
+                             parsed_content.get('value1'),
+                             msg=CONTENT_MSG.format("drok_two",
+                                                    str(response.content)))
+            self.assertEqual("grok", parsed_content.get('value2'),
+                             msg=CONTENT_MSG.format("grok",
+                                                    str(response.content)))
+        else:
+            # This assertion will fail whenever the DLO/SLO bug for multipart
+            # range requests is resolved (JIRA STORDEV-189).
+            self.assertEqual("drok_two",
+                             parsed_content.get('value1'),
+                             msg=CONTENT_MSG.format("drok_two",
+                                                    str(response.content)))
+            self.assertEqual("grok", parsed_content.get('value2'),
+                             msg=CONTENT_MSG.format("grok",
+                                                    str(response.content)))
 
         headers = {'Range': 'bytes=0-3,5-7,9-12'}
-        response = self.client.get_object(
-            self.container_name,
-            self.object_name,
-            headers=headers)
+        response = self.client.get_object(container_name,
+                                          self.object_name,
+                                          headers=headers)
 
         content_type = response.headers.get('content-type')
 
@@ -243,17 +298,36 @@ class ObjectRangeRequestTest(ObjectStorageFixture):
 
         parsed_content = self.parse_msg(response.content, boundary)
 
-        self.assertEqual(
-            "grok",
-            parsed_content.get('value1'),
-            msg=CONTENT_MSG.format("grok", str(response.content)))
-        self.assertEqual("one", parsed_content.get('value2'),
-                         msg=CONTENT_MSG.format("one", str(response.content)))
-        self.assertEqual("drok", parsed_content.get('value3'),
-                         msg=CONTENT_MSG.format("drok", str(response.content)))
+        if object_type == "standard":
+            self.assertEqual("grok",
+                             parsed_content.get('value1'),
+                             msg=CONTENT_MSG.format("grok",
+                                                    str(response.content)))
+            self.assertEqual("one", parsed_content.get('value2'),
+                             msg=CONTENT_MSG.format("one",
+                                                    str(response.content)))
+            self.assertEqual("drok", parsed_content.get('value3'),
+                             msg=CONTENT_MSG.format("drok",
+                                                    str(response.content)))
+        else:
+            self.assertEqual("grok",
+                             parsed_content.get('value1'),
+                             msg=CONTENT_MSG.format("grok",
+                                                    str(response.content)))
+            # This assertion will fail whenever the DLO/SLO bug for multipart
+            # range requests is resolved (JIRA STORDEV-189).
+            self.assertEqual("one", parsed_content.get('value2'),
+                             msg=CONTENT_MSG.format("one",
+                                                    str(response.content)))
+            # This assertion will fail whenever the DLO/SLO bug for multipart
+            # range requests is resolved (JIRA STORDEV-189).
+            self.assertEqual("drok", parsed_content.get('value3'),
+                             msg=CONTENT_MSG.format("drok",
+                                                    str(response.content)))
 
     @data_driven_test(ObjectDatasetList())
-    def ddtest_range_request_with_bad_ranges(self, **kwargs):
+    def ddtest_range_request_with_bad_ranges(
+            self, object_type, generate_object):
         """
         Scenario:
             Perform a get with various range request headers not specified
@@ -262,18 +336,18 @@ class ObjectRangeRequestTest(ObjectStorageFixture):
         Expected Results:
             The request should return data without breaking.
         """
-        obj_data = "grok_one drok_two"
+        container_name = self.create_temp_container(descriptor=CONTAINER_NAME)
+        if object_type == "standard":
+            obj_data = "grok_one drok_two"
+        else:
+            obj_data = ''.join(["grok_{0}/".format(x) for x in range(
+                1000000)])
 
-        headers = {'Content-Length': str(len(obj_data))}
-        self.behaviors.create_object(
-            self.container_name,
-            self.object_name,
-            headers=headers,
-            data=obj_data)
+        generate_object(container_name, self.object_name, data=obj_data)
 
         headers = {'Range': 'bytes=foobar'}
         response = self.client.get_object(
-            self.container_name,
+            container_name,
             self.object_name,
             headers=headers)
 
@@ -286,7 +360,7 @@ class ObjectRangeRequestTest(ObjectStorageFixture):
 
         headers = {'Range': 'bytes=4'}
         response = self.client.get_object(
-            self.container_name,
+            container_name,
             self.object_name,
             headers=headers)
 
@@ -299,7 +373,7 @@ class ObjectRangeRequestTest(ObjectStorageFixture):
 
         headers = {'Range': 'bytes=7-1'}
         response = self.client.get_object(
-            self.container_name,
+            container_name,
             self.object_name,
             headers=headers)
 
@@ -310,41 +384,83 @@ class ObjectRangeRequestTest(ObjectStorageFixture):
                 obj_data,
                 str(response.content)))
 
-        headers = {'Range': 'bytes=-160-5'}
-        response = self.client.get_object(
-            self.container_name,
-            self.object_name,
-            headers=headers)
+        if object_type == "standard":
+            headers = {'Range': 'bytes=-160-5'}
+            response = self.client.get_object(
+                container_name,
+                self.object_name,
+                headers=headers)
 
-        self.assertEqual(
-            obj_data,
-            response.content,
-            msg=CONTENT_MSG.format(
+            self.assertEqual(
                 obj_data,
-                str(response.content)))
+                response.content,
+                msg=CONTENT_MSG.format(
+                    obj_data,
+                    str(response.content)))
+        else:
+            headers = {'Range': 'bytes=-12888890-11888860'}
+            response = self.client.get_object(
+                container_name,
+                self.object_name,
+                headers=headers)
 
-        headers = {'Range': 'bytes=5-160'}
-        response = self.client.get_object(
-            self.container_name,
-            self.object_name,
-            headers=headers)
+            self.assertEqual(
+                obj_data,
+                response.content,
+                msg=CONTENT_MSG.format(
+                    obj_data,
+                    str(response.content)))
 
-        self.assertEqual(
-            "one drok_two",
-            response.content,
-            msg=CONTENT_MSG.format(
+        if object_type == "standard":
+            headers = {'Range': 'bytes=5-160'}
+            response = self.client.get_object(
+                container_name,
+                self.object_name,
+                headers=headers)
+
+            self.assertEqual(
                 "one drok_two",
-                str(response.content)))
+                response.content,
+                msg=CONTENT_MSG.format(
+                    "one drok_two",
+                    str(response.content)))
+        else:
+            headers = {'Range': 'bytes=11888866-12888890'}
+            response = self.client.get_object(
+                container_name,
+                self.object_name,
+                headers=headers)
 
-        headers = {'Range': 'bytes=-160-160'}
-        response = self.client.get_object(
-            self.container_name,
-            self.object_name,
-            headers=headers)
+            self.assertEqual(
+                "grok_999998/grok_999999/",
+                response.content,
+                msg=CONTENT_MSG.format(
+                    "grok_999998/grok_999999/",
+                    str(response.content)))
 
-        self.assertEqual(
-            obj_data,
-            response.content,
-            msg=CONTENT_MSG.format(
+        if object_type == "standard":
+            headers = {'Range': 'bytes=-160-160'}
+            response = self.client.get_object(
+                container_name,
+                self.object_name,
+                headers=headers)
+
+            self.assertEqual(
                 obj_data,
-                str(response.content)))
+                response.content,
+                msg=CONTENT_MSG.format(
+                    obj_data,
+                    str(response.content)))
+        else:
+            headers = {'Range': 'bytes=-12888890-12888890'}
+            response = self.client.get_object(
+                container_name,
+                self.object_name,
+                headers=headers)
+
+            self.assertEqual(
+                obj_data,
+                response.content,
+                msg=CONTENT_MSG.format(
+                    obj_data,
+                    str(response.content)))
