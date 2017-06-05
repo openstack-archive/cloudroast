@@ -14,14 +14,17 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 import time
-
 from unittest import skipUnless
 
+from cafe.drivers.unittest.datasets import DatasetList
+from cafe.drivers.unittest.decorators import (
+    DataDrivenFixture, data_driven_test)
 from cafe.engine.http.client import HTTPClient
 from cloudcafe.common.tools.check_dict import get_value
 from cloudcafe.objectstorage.objectstorage_api.common.constants import \
     Constants
 from cloudroast.objectstorage.fixtures import ObjectStorageFixture
+
 
 BASE_CONTAINER_NAME = 'tempurl'
 CONTENT_TYPE_TEXT = 'text/plain; charset=UTF-8'
@@ -29,7 +32,17 @@ TEMPURL_KEY_LIFE = 20
 EXPECTED_DISPOSITION = ("attachment; filename=\"{filename}\";"
                         " filename*=UTF-8\'\'{filename}")
 
+sha_type = DatasetList()
 
+sha_type.append_new_dataset(
+    "with_sha1",
+    {"sha_type": "sha1"})
+sha_type.append_new_dataset(
+    "with_sha2",
+    {"sha_type": "sha2"})
+
+
+@DataDrivenFixture
 class TempUrlTest(ObjectStorageFixture):
     def _reset_default_key(self):
         response = None
@@ -57,7 +70,7 @@ class TempUrlTest(ObjectStorageFixture):
         """
         Check if the TempURL has been changed, if so, change it back to
         the expected key and wait the appropriate amount of time to let the
-        key propogate through the system.
+        key propagate through the system.
         """
         super(TempUrlTest, self).setUp()
 
@@ -66,24 +79,35 @@ class TempUrlTest(ObjectStorageFixture):
             if not response.ok:
                 raise Exception('Could not set TempURL key.')
 
+    @data_driven_test(sha_type)
     @ObjectStorageFixture.required_features('tempurl')
-    def test_object_creation_via_tempurl(self):
+    def ddtest_object_creation_via_tempurl(self, sha_type=None):
         """
         Scenario:
-            Create a 'PUT' TempURL.  Perform a HTTP PUT to the TempURL sending
-            data for the object;.
+            Create a 'PUT' TempURL, using sha1 and sha2 encryption
+            algorithms.  Perform a HTTP PUT to the TempURL sending
+            data for the object.
 
         Expected Results:
             The object should be created containing the correct data.
         """
         container_name = self.create_temp_container(BASE_CONTAINER_NAME)
 
-        tempurl_data = self.client.create_temp_url(
-            'PUT',
-            container_name,
-            self.object_name,
-            TEMPURL_KEY_LIFE,
-            self.tempurl_key)
+        if sha_type == 'sha2':
+            tempurl_data = self.client.create_temp_url(
+                'PUT',
+                container_name,
+                self.object_name,
+                TEMPURL_KEY_LIFE,
+                self.tempurl_key,
+                sha_type='sha2')
+        else:
+            tempurl_data = self.client.create_temp_url(
+                'PUT',
+                container_name,
+                self.object_name,
+                TEMPURL_KEY_LIFE,
+                self.tempurl_key)
 
         self.assertIn(
             'target_url',
@@ -103,29 +127,37 @@ class TempUrlTest(ObjectStorageFixture):
                    'X-Object-Meta-Foo': 'bar'}
         params = {'temp_url_sig': tempurl_data.get('signature'),
                   'temp_url_expires': tempurl_data.get('expires')}
-        response = self.http.put(
+        put_response = self.http.put(
             tempurl_data.get('target_url'),
             params=params,
             headers=headers,
             data=self.object_data)
 
-        response = self.client.get_object(container_name, self.object_name)
+        self.assertEqual(put_response.status_code,
+                         201,
+                         msg='Failed to PUT object '
+                             'with status code {0}'.format(
+                                 put_response.status_code))
+
+        object_response = self.client.get_object(container_name,
+                                                 self.object_name)
 
         self.assertEqual(
-            response.content,
+            object_response.content,
             self.object_data,
             msg="object should contain correct data")
         self.assertIn(
             'x-object-meta-foo',
-            response.headers,
+            object_response.headers,
             msg="x-object-meta-foo header was not set")
         self.assertEqual(
-            response.headers['x-object-meta-foo'],
+            object_response.headers['x-object-meta-foo'],
             'bar',
             msg="x-object-meta-foo header value is not bar")
 
+    @data_driven_test(sha_type)
     @ObjectStorageFixture.required_features('tempurl')
-    def test_object_retrieval_via_tempurl(self):
+    def ddtest_object_retrieval_via_tempurl(self, sha_type=None):
         """
         Scenario:
             Create a 'GET' TempURL for an existing object.  Perform a HTTP GET
@@ -141,12 +173,21 @@ class TempUrlTest(ObjectStorageFixture):
             self.object_name,
             data=self.object_data)
 
-        tempurl_data = self.client.create_temp_url(
-            'GET',
-            container_name,
-            self.object_name,
-            TEMPURL_KEY_LIFE,
-            self.tempurl_key)
+        if sha_type == 'sha2':
+            tempurl_data = self.client.create_temp_url(
+                'GET',
+                container_name,
+                self.object_name,
+                TEMPURL_KEY_LIFE,
+                self.tempurl_key,
+                sha_type='sha2')
+        else:
+            tempurl_data = self.client.create_temp_url(
+                'GET',
+                container_name,
+                self.object_name,
+                TEMPURL_KEY_LIFE,
+                self.tempurl_key)
 
         self.assertIn(
             'target_url',
@@ -187,8 +228,10 @@ class TempUrlTest(ObjectStorageFixture):
             self.object_data,
             'object should contain correct data.')
 
+    @data_driven_test(sha_type)
     @ObjectStorageFixture.required_features('tempurl')
-    def test_object_retrieval_via_tempurl_content_disposition_inline(self):
+    def ddtest_object_retrieval_via_tempurl_content_disposition_inline(
+            self, sha_type=None):
         """
         Scenario:
             Create a 'GET' TempURL for an existing object.  Perform a HTTP GET
@@ -207,12 +250,21 @@ class TempUrlTest(ObjectStorageFixture):
             headers={'content-disposition': attachment_hdr},
             data=self.object_data)
 
-        tempurl_data = self.client.create_temp_url(
-            'GET',
-            container_name,
-            self.object_name,
-            TEMPURL_KEY_LIFE,
-            self.tempurl_key)
+        if sha_type == 'sha2':
+            tempurl_data = self.client.create_temp_url(
+                'GET',
+                container_name,
+                self.object_name,
+                TEMPURL_KEY_LIFE,
+                self.tempurl_key,
+                sha_type='sha2')
+        else:
+            tempurl_data = self.client.create_temp_url(
+                'GET',
+                container_name,
+                self.object_name,
+                TEMPURL_KEY_LIFE,
+                self.tempurl_key)
 
         self.assertIn(
             'target_url',
@@ -251,8 +303,10 @@ class TempUrlTest(ObjectStorageFixture):
             self.object_data,
             'object should contain correct data.')
 
+    @data_driven_test(sha_type)
     @ObjectStorageFixture.required_features('tempurl')
-    def test_tempurl_content_disposition_filename_with_trailing_slash(self):
+    def ddtest_tempurl_content_disposition_filename_with_trailing_slash(
+            self, sha_type=None):
         """
         Scenario:
             Create a 'GET' TempURL for an object where the object name ends
@@ -277,30 +331,39 @@ class TempUrlTest(ObjectStorageFixture):
 
         self.assertTrue(set_key_response.ok, msg="tempurl key was not set")
 
-        data = self.client.create_temp_url(
-            'GET',
-            container_name,
-            self.obj_name_containing_trailing_slash,
-            TEMPURL_KEY_LIFE,
-            self.tempurl_key)
+        if sha_type == 'sha2':
+            tempurl_data = self.client.create_temp_url(
+                'GET',
+                container_name,
+                self.obj_name_containing_trailing_slash,
+                TEMPURL_KEY_LIFE,
+                self.tempurl_key,
+                sha_type='sha2')
+        else:
+            tempurl_data = self.client.create_temp_url(
+                'GET',
+                container_name,
+                self.obj_name_containing_trailing_slash,
+                TEMPURL_KEY_LIFE,
+                self.tempurl_key)
 
         self.assertIn(
             'target_url',
-            data.keys(),
+            tempurl_data.keys(),
             msg='target_url was not in the created tempurl')
         self.assertIn(
             'signature',
-            data.keys(),
+            tempurl_data.keys(),
             msg='signature was not in the created tempurl')
         self.assertIn(
             'expires',
-            data.keys(),
+            tempurl_data.keys(),
             msg='expires was not in the created tempurl')
 
-        params = {'temp_url_sig': data.get('signature'),
-                  'temp_url_expires': data.get('expires')}
+        params = {'temp_url_sig': tempurl_data.get('signature'),
+                  'temp_url_expires': tempurl_data.get('expires')}
         tempurl_get_response = self.http.get(
-            data.get('target_url'), params=params)
+            tempurl_data.get('target_url'), params=params)
 
         expected_filename = \
             self.obj_name_containing_trailing_slash.split('/')[0]
@@ -325,9 +388,10 @@ class TempUrlTest(ObjectStorageFixture):
             self.object_data,
             'object should contain correct data.')
 
+    @data_driven_test(sha_type)
     @ObjectStorageFixture.required_features('tempurl')
-    def test_tempurl_content_disposition_header_filename_with_trailing_slash(
-            self):
+    def ddtest_tempurl_content_disposition_header_filename_with_trailing_slash(
+            self, sha_type=None):
         """
         Scenario:
             Create a 'GET' TempURL for an object where the object name ends
@@ -355,42 +419,51 @@ class TempUrlTest(ObjectStorageFixture):
 
         self.assertTrue(set_key_response.ok, msg="tempurl key was not set")
 
-        data = self.client.create_temp_url(
-            'GET',
-            container_name,
-            self.obj_name_containing_trailing_slash,
-            TEMPURL_KEY_LIFE,
-            self.tempurl_key)
+        if sha_type == 'sha2':
+            tempurl_data = self.client.create_temp_url(
+                'GET',
+                container_name,
+                self.obj_name_containing_trailing_slash,
+                TEMPURL_KEY_LIFE,
+                self.tempurl_key,
+                sha_type='sha2')
+        else:
+            tempurl_data = self.client.create_temp_url(
+                'GET',
+                container_name,
+                self.obj_name_containing_trailing_slash,
+                TEMPURL_KEY_LIFE,
+                self.tempurl_key)
 
         self.assertIn(
             'target_url',
-            data.keys(),
+            tempurl_data.keys(),
             msg='target_url was not in the created tempurl')
         self.assertIn(
             'signature',
-            data.keys(),
+            tempurl_data.keys(),
             msg='signature was not in the created tempurl')
         self.assertIn(
             'expires',
-            data.keys(),
+            tempurl_data.keys(),
             msg='expires was not in the created tempurl')
 
-        params = {'temp_url_sig': data.get('signature'),
-                  'temp_url_expires': data.get('expires')}
+        params = {'temp_url_sig': tempurl_data.get('signature'),
+                  'temp_url_expires': tempurl_data.get('expires')}
         tempurl_get_response = self.http.get(
-            data.get('target_url'), params=params)
+            tempurl_data.get('target_url'), params=params)
 
         self.assertIn(
             'target_url',
-            data.keys(),
+            tempurl_data.keys(),
             msg='target_url was not in the created tempurl')
         self.assertIn(
             'signature',
-            data.keys(),
+            tempurl_data.keys(),
             msg='signature was not in the created tempurl')
         self.assertIn(
             'expires',
-            data.keys(),
+            tempurl_data.keys(),
             msg='expires was not in the created tempurl')
 
         expected_disposition = content_disposition
@@ -412,8 +485,10 @@ class TempUrlTest(ObjectStorageFixture):
             self.object_data,
             'object should contain correct data.')
 
+    @data_driven_test(sha_type)
     @ObjectStorageFixture.required_features('tempurl')
-    def test_tempurl_content_disposition_filename_containing_slash(self):
+    def ddtest_tempurl_content_disposition_filename_containing_slash(
+            self, sha_type=None):
         """
         Scenario:
             Create a 'GET' TempURL for an object where the object name
@@ -439,46 +514,54 @@ class TempUrlTest(ObjectStorageFixture):
 
         self.assertTrue(set_key_response.ok, msg="tempurl key was not set")
 
-        data = self.client.create_temp_url(
-            'GET',
-            container_name,
-            self.obj_name_containing_slash,
-            TEMPURL_KEY_LIFE,
-            self.tempurl_key)
+        if sha_type == 'sha2':
+            tempurl_data = self.client.create_temp_url(
+                'GET',
+                container_name,
+                self.obj_name_containing_slash,
+                TEMPURL_KEY_LIFE,
+                self.tempurl_key,
+                sha_type='sha2')
+        else:
+            tempurl_data = self.client.create_temp_url(
+                'GET',
+                container_name,
+                self.obj_name_containing_slash,
+                TEMPURL_KEY_LIFE,
+                self.tempurl_key)
 
         self.assertIn(
             'target_url',
-            data.keys(),
+            tempurl_data.keys(),
             msg='target_url was not in the created tempurl')
         self.assertIn(
             'signature',
-            data.keys(),
+            tempurl_data.keys(),
             msg='signature was not in the created tempurl')
         self.assertIn(
             'expires',
-            data.keys(),
+            tempurl_data.keys(),
             msg='expires was not in the created tempurl')
 
-        params = {'temp_url_sig': data.get('signature'),
-                  'temp_url_expires': data.get('expires')}
+        params = {'temp_url_sig': tempurl_data.get('signature'),
+                  'temp_url_expires': tempurl_data.get('expires')}
         tempurl_get_response = self.http.get(
-            data.get('target_url'), params=params)
+            tempurl_data.get('target_url'), params=params)
 
         self.assertIn(
             'target_url',
-            data.keys(),
+            tempurl_data.keys(),
             msg='target_url was not in the created tempurl')
         self.assertIn(
             'signature',
-            data.keys(),
+            tempurl_data.keys(),
             msg='signature was not in the created tempurl')
         self.assertIn(
             'expires',
-            data.keys(),
+            tempurl_data.keys(),
             msg='expires was not in the created tempurl')
 
-        expected_filename = \
-            expected_filename = self.obj_name_containing_slash.split('/')[1]
+        expected_filename = self.obj_name_containing_slash.split('/')[1]
 
         expected_disposition = EXPECTED_DISPOSITION.format(
             filename=expected_filename)
@@ -500,9 +583,10 @@ class TempUrlTest(ObjectStorageFixture):
             self.object_data,
             'object should contain correct data.')
 
+    @data_driven_test(sha_type)
     @ObjectStorageFixture.required_features('tempurl')
-    def test_tempurl_content_disposition_header_filename_containing_slash(
-            self):
+    def ddtest_tempurl_content_disposition_header_filename_containing_slash(
+            self, sha_type=None):
         """
         Scenario:
             Create a 'GET' TempURL for an object where the object name
@@ -530,42 +614,51 @@ class TempUrlTest(ObjectStorageFixture):
 
         self.assertTrue(set_key_response.ok, msg="tempurl key was not set")
 
-        data = self.client.create_temp_url(
-            'GET',
-            container_name,
-            self.obj_name_containing_slash,
-            TEMPURL_KEY_LIFE,
-            self.tempurl_key)
+        if sha_type == 'sha2':
+            tempurl_data = self.client.create_temp_url(
+                'GET',
+                container_name,
+                self.obj_name_containing_slash,
+                TEMPURL_KEY_LIFE,
+                self.tempurl_key,
+                sha_type='sha2')
+        else:
+            tempurl_data = self.client.create_temp_url(
+                'GET',
+                container_name,
+                self.obj_name_containing_slash,
+                TEMPURL_KEY_LIFE,
+                self.tempurl_key)
 
         self.assertIn(
             'target_url',
-            data.keys(),
+            tempurl_data.keys(),
             msg='target_url was not in the created tempurl')
         self.assertIn(
             'signature',
-            data.keys(),
+            tempurl_data.keys(),
             msg='signature was not in the created tempurl')
         self.assertIn(
             'expires',
-            data.keys(),
+            tempurl_data.keys(),
             msg='expires was not in the created tempurl')
 
-        params = {'temp_url_sig': data.get('signature'),
-                  'temp_url_expires': data.get('expires')}
+        params = {'temp_url_sig': tempurl_data.get('signature'),
+                  'temp_url_expires': tempurl_data.get('expires')}
         tempurl_get_response = self.http.get(
-            data.get('target_url'), params=params)
+            tempurl_data.get('target_url'), params=params)
 
         self.assertIn(
             'target_url',
-            data.keys(),
+            tempurl_data.keys(),
             msg='target_url was not in the created tempurl')
         self.assertIn(
             'signature',
-            data.keys(),
+            tempurl_data.keys(),
             msg='signature was not in the created tempurl')
         self.assertIn(
             'expires',
-            data.keys(),
+            tempurl_data.keys(),
             msg='expires was not in the created tempurl')
 
         expected_disposition = content_disposition
@@ -587,8 +680,10 @@ class TempUrlTest(ObjectStorageFixture):
             self.object_data,
             'object should contain correct data.')
 
+    @data_driven_test(sha_type)
     @ObjectStorageFixture.required_features('tempurl')
-    def test_object_retrieval_with_filename_override_param(self):
+    def ddtest_object_retrieval_with_filename_override_param(
+            self, sha_type=None):
         """
         Scenario:
             Create a 'GET' TempURL.  Download the object using the TempURL,
@@ -611,12 +706,21 @@ class TempUrlTest(ObjectStorageFixture):
             headers=headers,
             data=self.object_data)
 
-        tempurl_data = self.client.create_temp_url(
-            'GET',
-            container_name,
-            self.object_name,
-            TEMPURL_KEY_LIFE,
-            self.tempurl_key)
+        if sha_type == 'sha2':
+            tempurl_data = self.client.create_temp_url(
+                'GET',
+                container_name,
+                self.object_name,
+                TEMPURL_KEY_LIFE,
+                self.tempurl_key,
+                sha_type='sha2')
+        else:
+            tempurl_data = self.client.create_temp_url(
+                'GET',
+                container_name,
+                self.object_name,
+                TEMPURL_KEY_LIFE,
+                self.tempurl_key)
 
         self.assertIn(
             'target_url',
@@ -655,8 +759,10 @@ class TempUrlTest(ObjectStorageFixture):
             self.object_data,
             'object should contain correct data.')
 
+    @data_driven_test(sha_type)
     @ObjectStorageFixture.required_features('tempurl')
-    def test_filename_override_param_containing_trailing_slash(self):
+    def ddtest_filename_override_param_containing_trailing_slash(
+            self, sha_type=None):
         """
         Scenario:
             Create a 'GET' TempURL.  Download the object using the TempURL,
@@ -681,12 +787,21 @@ class TempUrlTest(ObjectStorageFixture):
             headers=headers,
             data=self.object_data)
 
-        tempurl_data = self.client.create_temp_url(
-            'GET',
-            container_name,
-            self.object_name,
-            TEMPURL_KEY_LIFE,
-            self.tempurl_key)
+        if sha_type == 'sha2':
+            tempurl_data = self.client.create_temp_url(
+                'GET',
+                container_name,
+                self.object_name,
+                TEMPURL_KEY_LIFE,
+                self.tempurl_key,
+                sha_type='sha2')
+        else:
+            tempurl_data = self.client.create_temp_url(
+                'GET',
+                container_name,
+                self.object_name,
+                TEMPURL_KEY_LIFE,
+                self.tempurl_key)
 
         self.assertIn(
             'target_url',
@@ -725,8 +840,9 @@ class TempUrlTest(ObjectStorageFixture):
             self.object_data,
             'object should contain correct data.')
 
+    @data_driven_test(sha_type)
     @ObjectStorageFixture.required_features('tempurl')
-    def test_filename_override_param_containing_slash(self):
+    def ddtest_filename_override_param_containing_slash(self, sha_type=None):
         """
         Scenario:
             Create a 'GET' TempURL.  Download the object using the TempURL,
@@ -751,12 +867,21 @@ class TempUrlTest(ObjectStorageFixture):
             headers=headers,
             data=self.object_data)
 
-        tempurl_data = self.client.create_temp_url(
-            'GET',
-            container_name,
-            self.object_name,
-            TEMPURL_KEY_LIFE,
-            self.tempurl_key)
+        if sha_type == 'sha2':
+            tempurl_data = self.client.create_temp_url(
+                'GET',
+                container_name,
+                self.object_name,
+                TEMPURL_KEY_LIFE,
+                self.tempurl_key,
+                sha_type='sha2')
+        else:
+            tempurl_data = self.client.create_temp_url(
+                'GET',
+                container_name,
+                self.object_name,
+                TEMPURL_KEY_LIFE,
+                self.tempurl_key)
 
         self.assertIn(
             'target_url',
@@ -795,10 +920,11 @@ class TempUrlTest(ObjectStorageFixture):
             self.object_data,
             'object should contain correct data.')
 
+    @data_driven_test(sha_type)
     @ObjectStorageFixture.required_features('tempurl')
     @skipUnless(get_value('tempurl-methods') == 'delete',
                 'tempurl must be configured to allow DELETE.')
-    def test_tempurl_object_delete(self):
+    def ddtest_tempurl_object_delete(self, sha_type=None):
         container_name = self.create_temp_container(BASE_CONTAINER_NAME)
 
         headers = {'Content-Length': self.content_length,
@@ -809,12 +935,21 @@ class TempUrlTest(ObjectStorageFixture):
             headers=headers,
             data=self.object_data)
 
-        tempurl_data = self.client.create_temp_url(
-            'DELETE',
-            container_name,
-            self.object_name,
-            TEMPURL_KEY_LIFE,
-            self.tempurl_key)
+        if sha_type == 'sha2':
+            tempurl_data = self.client.create_temp_url(
+                'DELETE',
+                container_name,
+                self.object_name,
+                TEMPURL_KEY_LIFE,
+                self.tempurl_key,
+                sha_type='sha2')
+        else:
+            tempurl_data = self.client.create_temp_url(
+                'DELETE',
+                container_name,
+                self.object_name,
+                TEMPURL_KEY_LIFE,
+                self.tempurl_key)
 
         self.assertIn(
             'target_url',
@@ -831,22 +966,22 @@ class TempUrlTest(ObjectStorageFixture):
 
         params = {'temp_url_sig': tempurl_data.get('signature'),
                   'temp_url_expires': tempurl_data.get('expires')}
-        delete_response = self.http.delete(
-            tempurl_data.get('target_url'),
-            params=params)
+        delete_response = self.http.delete(tempurl_data.get('target_url'),
+                                           params=params)
 
-        self.assertEqual(delete_response.status_code, 204)
+        self.assertEqual(delete_response.status_code,
+                         204,
+                         msg='Failed to DELETE object with status'
+                             ' code {0}'.format(delete_response.status_code))
 
         get_response = self.client.get_object(container_name, self.object_name)
 
         self.assertEqual(get_response.status_code, 404)
 
+    @data_driven_test(sha_type)
     @skipUnless(get_value('slow') == 'true', 'sleep for key change')
     @ObjectStorageFixture.required_features('tempurl')
-    def test_object_retrieval_with_two_tempurl_keys(self):
-        time.sleep(
-            float(self.objectstorage_api_config.tempurl_key_cache_time))
-
+    def ddtest_object_retrieval_with_two_tempurl_keys(self, sha_type=None):
         container_name = self.create_temp_container('temp_url')
 
         headers = {'Content-Length': self.content_length,
@@ -870,12 +1005,21 @@ class TempUrlTest(ObjectStorageFixture):
 
         self.assertTrue(set_bar_key_response.ok)
 
-        foo_data = self.client.create_temp_url(
-            'GET',
-            container_name,
-            self.object_name,
-            TEMPURL_KEY_LIFE,
-            foo_key)
+        if sha_type == 'sha2':
+            foo_data = self.client.create_temp_url(
+                'GET',
+                container_name,
+                self.object_name,
+                TEMPURL_KEY_LIFE,
+                foo_key,
+                sha_type='sha2')
+        else:
+            foo_data = self.client.create_temp_url(
+                'GET',
+                container_name,
+                self.object_name,
+                TEMPURL_KEY_LIFE,
+                foo_key)
 
         self.assertIn(
             'target_url',
@@ -890,12 +1034,21 @@ class TempUrlTest(ObjectStorageFixture):
             foo_data.keys(),
             msg='expires was not in the created tempurl')
 
-        bar_data = self.client.create_temp_url(
-            'GET',
-            container_name,
-            self.object_name,
-            TEMPURL_KEY_LIFE,
-            bar_key)
+        if sha_type == 'sha2':
+            bar_data = self.client.create_temp_url(
+                'GET',
+                container_name,
+                self.object_name,
+                TEMPURL_KEY_LIFE,
+                bar_key,
+                sha_type='sha2')
+        else:
+            bar_data = self.client.create_temp_url(
+                'GET',
+                container_name,
+                self.object_name,
+                TEMPURL_KEY_LIFE,
+                bar_key)
 
         self.assertIn(
             'target_url',
@@ -930,8 +1083,9 @@ class TempUrlTest(ObjectStorageFixture):
             bar_get_response.content,
             msg='object data was changed')
 
+    @data_driven_test(sha_type)
     @ObjectStorageFixture.required_features('tempurl')
-    def test_tempurl_expiration(self):
+    def ddtest_tempurl_expiration(self, sha_type=None):
         """
         Scenario:
             Create a 'GET' TempURL for an existing object.
@@ -947,12 +1101,21 @@ class TempUrlTest(ObjectStorageFixture):
             self.object_name,
             data=self.object_data)
 
-        tempurl_data = self.client.create_temp_url(
-            'GET',
-            container_name,
-            self.object_name,
-            TEMPURL_KEY_LIFE,
-            self.tempurl_key)
+        if sha_type == 'sha2':
+            tempurl_data = self.client.create_temp_url(
+                'GET',
+                container_name,
+                self.object_name,
+                TEMPURL_KEY_LIFE,
+                self.tempurl_key,
+                sha_type='sha2')
+        else:
+            tempurl_data = self.client.create_temp_url(
+                'GET',
+                container_name,
+                self.object_name,
+                TEMPURL_KEY_LIFE,
+                self.tempurl_key)
 
         self.assertIn(
             'target_url',
@@ -970,10 +1133,6 @@ class TempUrlTest(ObjectStorageFixture):
         params = {'temp_url_sig': tempurl_data.get('signature'),
                   'temp_url_expires': tempurl_data.get('expires')}
         response = self.http.get(tempurl_data.get('target_url'), params=params)
-
-        expected_disposition = 'attachment; filename="{0}"'.format(
-            self.object_name)
-        received_disposition = response.headers.get('content-disposition')
 
         self.assertTrue(response.ok, 'object should be retrieved over tempurl')
 
@@ -1005,8 +1164,9 @@ class TempUrlTest(ObjectStorageFixture):
             401,
             msg='tempurl did not expire')
 
+    @data_driven_test(sha_type)
     @ObjectStorageFixture.required_features('tempurl')
-    def test_create_object_manifest_with_tempurl(self):
+    def ddtest_create_object_manifest_with_tempurl(self, sha_type=None):
         """
         Scenario:
             Test a tempurl vulnerability by creating a tempurl and then
@@ -1027,11 +1187,21 @@ class TempUrlTest(ObjectStorageFixture):
         self.client.create_object(
             container_name, self.object_name, data=self.object_data)
 
-        tempurl_data = self.client.create_temp_url('PUT',
-                                                   container_name,
-                                                   self.object_name,
-                                                   TEMPURL_KEY_LIFE,
-                                                   self.tempurl_key)
+        if sha_type == 'sha2':
+            tempurl_data = self.client.create_temp_url(
+                'PUT',
+                container_name,
+                self.object_name,
+                TEMPURL_KEY_LIFE,
+                self.tempurl_key,
+                sha_type='sha2')
+        else:
+            tempurl_data = self.client.create_temp_url(
+                'PUT',
+                container_name,
+                self.object_name,
+                TEMPURL_KEY_LIFE,
+                self.tempurl_key)
 
         headers = {'Content-Length': "0",
                    'X-Object-Manifest': '{0}/e'.format(exploit_container_name)}
