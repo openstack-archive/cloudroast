@@ -625,8 +625,7 @@ class SecurityGroupsTest(NetworkingComputeFixture,
         msg = ('Assignment of more security groups to a port than allowed '
                'by quota raised unexpected exception: {}')
         msg = msg.format(type(exception_manager.exception))
-        self.assertTrue(isinstance(exception_manager.exception,
-                                   AssertionError), msg)
+        self.assertIsInstance(exception_manager.exception, AssertionError, msg)
         msg = ('Assignment of more security groups to a port than allowed '
                'by quota did not return expected 409 response code')
         self.assertIn('409', str(exception_manager.exception), msg)
