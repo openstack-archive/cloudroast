@@ -30,6 +30,8 @@ class ServersTest(ComputeFixture):
     compute_config = ComputeConfig()
     hypervisor = compute_config.hypervisor.lower()
 
+    DEFAULT_PSWD_LENGTH = 24
+
     @unittest.skipIf(
         hypervisor in [ComputeHypervisors.KVM, ComputeHypervisors.QEMU],
         'Password authentication disabled.')
@@ -60,6 +62,61 @@ class ServersTest(ComputeFixture):
             auth_strategy=InstanceAuthStrategies.PASSWORD)
         self.assertTrue(remote_client.can_authenticate(),
                         msg="Cannot authenticate to the server.")
+
+    @tags(type='positive', net='yes')
+    def test_create_server_with_default_password(self):
+        """
+        Creates a server with a default password set by the provisioning
+        algorithm.
+
+        This will set the server that is created with a default password
+        with a length of 24 characters. Calls cloudcafe's server behaviors get
+        remote instance client with the password to validate that it can
+        authenticate wth password.
+
+        The following assertions occur:
+            - Default password is the correct length.
+            - get_remote_instance_client has a true value for can_authenticate
+
+        Design Change: https://jira.rax.io/browse/VIRT-3004
+
+        """
+        border = '*' * 65
+
+        self.fixture_log.info("\n\n{BORDER}\nCreate a server with a default "
+                              "password\n{BORDER}\n\n".format(BORDER=border))
+        response = self.server_behaviors.create_active_server()
+        server = response.entity
+        self.resources.add(server.id, self.servers_client.delete_server)
+
+        # Record expectations and results
+        self.fixture_log.info(
+            "\n\n{BORDER}\n"
+            "Validate Password Length:\n"
+            "\tEXPECTED PSWD LENGTH: {EXP}\n"
+            "\tACTUAL PSWD LENGTH: {ACT}\n"
+            "{BORDER}\n\n".format(
+                EXP=self.DEFAULT_PSWD_LENGTH, ACT=len(server.admin_pass),
+                BORDER=border))
+        self.assertEqual(
+            len(server.admin_pass), self.DEFAULT_PSWD_LENGTH,
+            "Actual length ({ACTUAL}) does not match the expected length "
+            "({EXPECTED})".format(
+                EXPECTED=self.DEFAULT_PSWD_LENGTH,
+                ACTUAL=len(server.admin_pass)))
+
+        self.fixture_log.info(
+            "\n\n{BORDER}\nVerify admin password can be used to log "
+            "in.\n{BORDER}\n\n".format(BORDER=border))
+        remote_client = self.server_behaviors.get_remote_instance_client(
+            server, self.servers_config, password=server.admin_pass,
+            auth_strategy=InstanceAuthStrategies.PASSWORD)
+        self.assertTrue(remote_client.can_authenticate(),
+                        msg="Cannot authenticate to the server.")
+
+        self.fixture_log.info(
+            "\n\n{BORDER}\nPassword accepted. Test PASSES.\n{BORDER}"
+            "\n\n".format(BORDER=border))
 
     @tags(type='positive', net='no')
     def test_update_server(self):
