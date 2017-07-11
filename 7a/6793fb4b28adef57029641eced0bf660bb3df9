@@ -1,0 +1,9 @@
+Code-Review+1: Franklin Naval <franklin.naval@gmail.com>
+Code-Review+2: jose-idar <jose.idar@gmail.com>
+Workflow+1: jose-idar <jose.idar@gmail.com>
+Verified+2: Jenkins
+Submitted-by: Jenkins
+Submitted-at: Tue, 11 Jul 2017 18:39:39 +0000
+Reviewed-on: https://review.openstack.org/482628
+Project: openstack/cloudroast
+Branch: refs/heads/master
