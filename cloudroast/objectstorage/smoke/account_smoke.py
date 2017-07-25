@@ -365,7 +365,7 @@ class AccountSmokeTest(ObjectStorageFixture):
             " {1}".format(expected, received))
 
         expected = 0
-        received = int(response.headers.get('content-length'), 0)
+        received = int(response.headers.get('content-length', 0))
         self.assertEqual(
             expected,
             received,
