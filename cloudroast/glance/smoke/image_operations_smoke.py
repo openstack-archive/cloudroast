@@ -95,8 +95,8 @@ class ImageOperationsSmoke(ImagesFixture):
         @summary: Attempt to list a subset of images passing in invalid query
         parameters
 
-        @param params: Parameter being passed to the list images request
-        @type params: Dictionary
+        @param prop: Parameter being passed to the list images request
+        @type prop: Dictionary
 
         1) Attempt to list a subset of images passing in an invalid query
         parameter
