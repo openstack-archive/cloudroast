@@ -101,7 +101,7 @@ class ChangeServerPasswordTests(object):
         self.assertTrue(any(a.action == 'changePassword' for a in actions))
         filtered_actions = [a for a in actions
                             if a.action == 'changePassword']
-        self.assertEquals(len(filtered_actions), 1)
+        self.assertEqual(len(filtered_actions), 1)
 
         password_action = filtered_actions[0]
         self.validate_instance_action(

@@ -259,7 +259,7 @@ class ImageListTest(ComputeFixture):
         """
         limit = 1
         images = self.images_client.list_images_with_detail(limit=1)
-        self.assertEquals(
+        self.assertEqual(
             len(images.entity), limit,
             msg="The image list length does not match the expected limit.")
 
@@ -339,7 +339,7 @@ class ImageListTest(ComputeFixture):
         """
         limit = 1
         images = self.images_client.list_images(limit=1)
-        self.assertEquals(
+        self.assertEqual(
             len(images.entity), limit,
             msg="The image list length does not match the expected limit.")
 

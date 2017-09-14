@@ -68,7 +68,7 @@ class BaseIdentityServiceSmoke(object):
 
     def test_token_is_valid(self):
         r = self.identity.client.validate_token(self.identity.client.token)
-        self.assertEquals(r.status_code, self.TOKEN_IS_VALID_STATUS_CODE)
+        self.assertEqual(r.status_code, self.TOKEN_IS_VALID_STATUS_CODE)
         if r.ok:
             self.assertIsNotNone(r.entity, "Invalid body in response")
 

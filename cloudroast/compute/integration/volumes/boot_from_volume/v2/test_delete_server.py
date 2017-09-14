@@ -70,7 +70,7 @@ class DeleteVolumeServersTest(object):
         volumes = self.volume_attachments_client.get_server_volume_attachments(
             server.id).entity
         # Verify only one volume is present on a volume server
-        self.assertEquals(
+        self.assertEqual(
             len(volumes), 1,
             msg="More then 1 volume has been found")
         # Delete the Instance

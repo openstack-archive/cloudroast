@@ -170,7 +170,7 @@ class ResizeServerUpRevertTests(object):
         # Verify the resize action is listed
         self.assertTrue(any(a.action == 'resize' for a in actions))
         filtered_actions = [a for a in actions if a.action == 'resize']
-        self.assertEquals(len(filtered_actions), 1)
+        self.assertEqual(len(filtered_actions), 1)
 
         resize_action = filtered_actions[0]
         self.validate_instance_action(
@@ -181,7 +181,7 @@ class ResizeServerUpRevertTests(object):
         # Verify the revert resize action is listed
         self.assertTrue(any(a.action == 'revertResize' for a in actions))
         filtered_actions = [a for a in actions if a.action == 'revertResize']
-        self.assertEquals(len(filtered_actions), 1)
+        self.assertEqual(len(filtered_actions), 1)
 
         resize_action = filtered_actions[0]
         self.validate_instance_action(

@@ -411,16 +411,16 @@ class ComputeIntegrationTestFixture(VolumesTestFixture):
                     "Could not create a volume in setup for "
                     "create_volume_from_image test")
 
-        self.assertEquals(
+        self.assertEqual(
             str(size), str(volume.size),
             "Expected volume size {0} did not match actual observed volume"
             " size {1}".format(size, volume.size))
 
         # TODO: Break this out into it's own assertion with progress verifer
         # to give the bootable flag time to populate.
-        self.assertEquals(
+        self.assertEqual(
             'true', volume.bootable, "Volume built from image was not marked "
-            "as bootable")
+                                     "as bootable")
 
         self.assertImageMetadataWasCopiedToVolume(image, volume)
 
