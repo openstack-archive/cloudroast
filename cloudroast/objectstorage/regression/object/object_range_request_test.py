@@ -13,6 +13,8 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
+import unittest
+
 from cafe.drivers.unittest.decorators import (
     DataDrivenFixture, data_driven_test)
 from cloudcafe.objectstorage.objectstorage_api.common.constants import \
@@ -157,6 +159,7 @@ class ObjectRangeRequestTest(ObjectStorageFixture):
                              msg=CONTENT_MSG.format("grok_999999/",
                                                     str(response.content)))
 
+    @unittest.skip('JIRA Bug https://jira.rax.io/browse/STORDEV-189')
     @data_driven_test(ObjectDatasetList())
     def ddtest_multi_part_range_request(self, object_type, generate_object):
         """
