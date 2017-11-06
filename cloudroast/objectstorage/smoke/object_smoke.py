@@ -17,6 +17,7 @@ import calendar
 import time
 import zlib
 from hashlib import md5
+import unittest
 
 from cafe.drivers.unittest.decorators import (
     DataDrivenFixture, data_driven_test)
@@ -1112,6 +1113,7 @@ class ObjectSmokeTest(ObjectStorageFixture):
                 expected=expected,
                 received=str(received)))
 
+    @unittest.skip('Problem with this tests assertion, needs review')
     @data_driven_test(ObjectDatasetList())
     def ddtest_put_copy_object(self, object_type, generate_object):
         src_container_name = self.create_temp_container(
