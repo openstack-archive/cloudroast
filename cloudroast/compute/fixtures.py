@@ -133,7 +133,7 @@ class ComputeFixture(BaseTestFixture):
                                             action.project_id,
                                             project_id))
         self.assertIsNotNone(action.start_time)
-        self.assertEquals(action.request_id, request_id,
+        self.assertEqual(action.request_id, request_id,
                           msg=message.format('request id',
                                              action.request_id,
                                              request_id))

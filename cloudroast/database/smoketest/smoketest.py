@@ -558,7 +558,7 @@ class SmokeTest(DBaaSFixture):
         tc_name = "Test List Versions"
         try:
             versions = self.dbaas.versions.index(self.version_url)
-            self.assertEquals(len(versions), 1,
+            self.assertEqual(len(versions), 1,
                               "Get an unexpected number of versions back %s" %
                               len(versions))
             version_details = self.dbaas.versions.index(

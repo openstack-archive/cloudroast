@@ -35,17 +35,17 @@ class CinderCLI_SnapshotSmoke(CinderCLI_IntegrationFixture):
 
         snapshot = resp.entity
 
-        self.assertEquals(
+        self.assertEqual(
             snapshot.display_name, display_name,
             "Display name did not match expected display name")
-        self.assertEquals(
+        self.assertEqual(
             snapshot.display_description, display_description,
             "Display description did not match expected display description")
-        self.assertEquals(
+        self.assertEqual(
             str(snapshot.size), str(volume.size),
             "Snapshot size '{0}' did not match source volume size '{1}'"
             .format(snapshot.size, volume.size))
-        self.assertEquals(
+        self.assertEqual(
             snapshot.volume_id, volume.id_,
             "Volume id did not match source volume id")
         self.assertIn(
@@ -67,11 +67,11 @@ class CinderCLI_SnapshotSmoke(CinderCLI_IntegrationFixture):
         self.assertIsNotNone(
             resp.entity, 'Could not parse snapshot-show output')
         snapshot = resp.entity
-        self.assertEquals(
+        self.assertEqual(
             snapshot.progress, '100%',
             "Snapshot attained 'AVAILABLE' status, but progress is not 100%")
 
         # Delete Snapshot
         resp = self.cinder.client.snapshot_delete(snapshot.id_)
-        self.assertEquals(
+        self.assertEqual(
             resp.return_code, 0, 'Could not delete snapshot')

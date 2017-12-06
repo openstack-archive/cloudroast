@@ -28,7 +28,7 @@ class ServerTest(ServersFixture):
     def test_list_servers(self):
         self.create_server()
         list_resp = self.server_client.list_servers()
-        self.assertEquals(list_resp.status_code, 200)
+        self.assertEqual(list_resp.status_code, 200)
 
         servers = list_resp.entity
         self.assertGreater(len(servers), 0)
@@ -36,33 +36,33 @@ class ServerTest(ServersFixture):
     @tags('smoke', 'positive')
     def test_create_server(self):
         create_resp = self.create_server()
-        self.assertEquals(create_resp.status_code, 200)
+        self.assertEqual(create_resp.status_code, 200)
 
         server_id = create_resp.entity.id
 
         get_resp = self.server_client.get_server(server_id)
-        self.assertEquals(get_resp.status_code, 200)
+        self.assertEqual(get_resp.status_code, 200)
 
     @tags('smoke', 'positive')
     def test_update_server(self):
         create_resp = self.create_server()
-        self.assertEquals(create_resp.status_code, 200)
+        self.assertEqual(create_resp.status_code, 200)
 
         server_id = create_resp.entity.id
 
         new_name = rand_name("new.server") + ".com."
         update_resp = self.server_client.update_server(server_id, new_name)
-        self.assertEquals(update_resp.status_code, 200)
+        self.assertEqual(update_resp.status_code, 200)
 
     @tags('smoke', 'positive')
     def test_delete_server(self):
         create_resp = self.create_server()
-        self.assertEquals(create_resp.status_code, 200)
+        self.assertEqual(create_resp.status_code, 200)
 
         server_id = create_resp.entity.id
 
         del_resp = self.server_client.delete_server(server_id)
-        self.assertEquals(del_resp.status_code, 200)
+        self.assertEqual(del_resp.status_code, 200)
 
         get_resp = self.server_client.get_server(server_id)
-        self.assertEquals(get_resp.status_code, 404)
+        self.assertEqual(get_resp.status_code, 404)

@@ -21,7 +21,7 @@ class CinderCLI_VolumeSmoke(CinderCLI_IntegrationFixture):
         self.assertIsNotNone(
             resp.entity, 'Could not parse cinder create response')
 
-        self.assertEquals(
+        self.assertEqual(
             resp.return_code, 0, "Cinder command returned an error code.")
 
         volume = resp.entity
@@ -43,7 +43,7 @@ class CinderCLI_VolumeSmoke(CinderCLI_IntegrationFixture):
             size=size, volume_type=volume_type_id)
 
         resp = self.cinder.client.delete(volume.id_)
-        self.assertEquals(
+        self.assertEqual(
             len(resp.standard_out), 0,
             "Volume delete returned output on standard error")
         self.addCleanup(self.cinder.client.delete, volume.id_)
@@ -64,7 +64,7 @@ class CinderCLI_VolumeSmoke(CinderCLI_IntegrationFixture):
             name=self.random_volume_name())
 
         resp = self.cinder.client.delete(volume.name)
-        self.assertEquals(
+        self.assertEqual(
             len(resp.standard_out), 0,
             "Volume delete returned output on standard error")
         self.addCleanup(self.cinder.client.delete, volume.id_)

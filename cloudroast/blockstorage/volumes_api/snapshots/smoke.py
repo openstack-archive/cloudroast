@@ -44,13 +44,13 @@ class SnapshotActions(VolumesTestFixture):
         self.addCleanup(
             self.volumes.behaviors.delete_snapshot_confirmed, snapshot.id_)
 
-        self.assertEquals(snapshot.volume_id, volume.id_)
-        self.assertEquals(snapshot.name, snapshot_name)
-        self.assertEquals(snapshot.description, snapshot_description)
+        self.assertEqual(snapshot.volume_id, volume.id_)
+        self.assertEqual(snapshot.name, snapshot_name)
+        self.assertEqual(snapshot.description, snapshot_description)
         self.assertIn(
             snapshot.status,
             [statuses.Snapshot.AVAILABLE, statuses.Snapshot.CREATING])
-        self.assertEquals(snapshot.size, volume.size)
+        self.assertEqual(snapshot.size, volume.size)
 
     @data_driven_test(complete_volume_types)
     def ddtest_verify_snapshot_restore_to_same_volume_type(

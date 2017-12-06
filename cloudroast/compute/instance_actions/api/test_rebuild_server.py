@@ -86,7 +86,7 @@ class RebuildServerTests(object):
                          msg="Server Created date changed after rebuild")
         self.assertTrue(rebuilt_server.updated != self.server.updated,
                         msg="Server Updated date not changed after rebuild")
-        self.assertEquals(rebuilt_server.addresses, self.server.addresses,
+        self.assertEqual(rebuilt_server.addresses, self.server.addresses,
                           msg="Server IP addresses changed after rebuild")
 
     @tags(type='smoke', net='no')
@@ -340,7 +340,7 @@ class RebuildServerTests(object):
         # Verify the rebuild action is listed
         self.assertTrue(any(a.action == 'rebuild' for a in actions))
         filtered_actions = [a for a in actions if a.action == 'rebuild']
-        self.assertEquals(len(filtered_actions), 1)
+        self.assertEqual(len(filtered_actions), 1)
 
         rebuild_action = filtered_actions[0]
         self.validate_instance_action(

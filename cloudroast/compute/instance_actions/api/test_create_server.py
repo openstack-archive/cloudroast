@@ -399,7 +399,7 @@ class CreateServerTest(object):
         # Verify the create action is listed
         self.assertTrue(any(a.action == 'create' for a in actions))
         filtered_actions = [a for a in actions if a.action == 'create']
-        self.assertEquals(len(filtered_actions), 1)
+        self.assertEqual(len(filtered_actions), 1)
 
         create_action = filtered_actions[0]
         self.validate_instance_action(

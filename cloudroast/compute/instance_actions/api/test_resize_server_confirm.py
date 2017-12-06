@@ -214,7 +214,7 @@ class ResizeServerUpConfirmTests(object):
         # Verify the resize action is listed
         self.assertTrue(any(a.action == 'resize' for a in actions))
         filtered_actions = [a for a in actions if a.action == 'resize']
-        self.assertEquals(len(filtered_actions), 1)
+        self.assertEqual(len(filtered_actions), 1)
 
         resize_action = filtered_actions[0]
         self.validate_instance_action(
@@ -225,7 +225,7 @@ class ResizeServerUpConfirmTests(object):
         # Verify the confirm resize action is listed
         self.assertTrue(any(a.action == 'confirmResize' for a in actions))
         filtered_actions = [a for a in actions if a.action == 'confirmResize']
-        self.assertEquals(len(filtered_actions), 1)
+        self.assertEqual(len(filtered_actions), 1)
 
         resize_action = filtered_actions[0]
         self.validate_instance_action(

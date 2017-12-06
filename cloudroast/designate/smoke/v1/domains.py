@@ -28,21 +28,21 @@ class DomainTest(DomainsFixture):
     def test_list_domains(self):
         self.create_domain()
         list_resp = self.domain_client.list_domains()
-        self.assertEquals(list_resp.status_code, 200)
+        self.assertEqual(list_resp.status_code, 200)
         self.assertGreater(len(list_resp.entity), 0)
 
         domains = list_resp.entity
         for domain in domains:
             get_resp = self.domain_client.get_domain(domain.id)
-            self.assertEquals(get_resp.status_code, 200)
+            self.assertEqual(get_resp.status_code, 200)
 
     @tags('smoke', 'positive')
     def test_create_domain(self):
         create_resp = self.create_domain()
-        self.assertEquals(create_resp.status_code, 200)
+        self.assertEqual(create_resp.status_code, 200)
 
         get_resp = self.domain_client.get_domain(create_resp.entity.id)
-        self.assertEquals(get_resp.status_code, 200)
+        self.assertEqual(get_resp.status_code, 200)
 
     @tags('smoke', 'positive')
     def test_update_domain(self):
@@ -55,7 +55,7 @@ class DomainTest(DomainsFixture):
         update_resp = self.domain_behaviors.update_domain(domain_id=domain_id,
                                                           email=new_email,
                                                           name=name)
-        self.assertEquals(update_resp.status_code, 200)
+        self.assertEqual(update_resp.status_code, 200)
 
     @tags('smoke', 'positive')
     def test_delete_domain(self):
@@ -63,7 +63,7 @@ class DomainTest(DomainsFixture):
         domain_id = create_resp.entity.id
 
         del_resp = self.domain_client.delete_domain(domain_id)
-        self.assertEquals(del_resp.status_code, 200)
+        self.assertEqual(del_resp.status_code, 200)
 
     @tags('smoke', 'positive')
     def test_list_domain_servers(self):
@@ -71,7 +71,7 @@ class DomainTest(DomainsFixture):
         domain_id = create_resp.entity.id
 
         list_resp = self.domain_client.list_domain_servers(domain_id)
-        self.assertEquals(list_resp.status_code, 200)
+        self.assertEqual(list_resp.status_code, 200)
 
         servers = list_resp.entity
         self.assertGreater(len(servers), 0)
