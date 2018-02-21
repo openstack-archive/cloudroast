@@ -13,7 +13,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-
 from cafe.drivers.unittest.decorators import tags
 from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.compute.common.exceptions import BadMediaType
@@ -58,13 +57,20 @@ class XMLDeprecationTest(ComputeFixture):
         header as xml and ensure that a bad request exception is returned.
 
         The following assertions occur:
-            - The response code is 400
+            - The response code is 415
         """
 
         self.flavors_client.default_headers['Accept'] = 'application/json'
         self.flavors_client.default_headers['Content-Type'] = 'application/xml'
-        with self.assertRaises(BadMediaType):
+        try:
             self.flavors_client.list_flavors()
+        except BadMediaType:
+            pass
+        else:
+            self.assertFalse(
+                True,
+                "Did not receive expected response: '{0}'".format(
+                    BadMediaType().message))
 
     @tags(type='smoke', net='no')
     def test_get_request_accept_and_content_type_xml_negative(self):
@@ -76,13 +82,20 @@ class XMLDeprecationTest(ComputeFixture):
         returned.
 
         The following assertions occur:
-            - The response code is 400
+            - The response code is 415
         """
 
         self.flavors_client.default_headers['Accept'] = 'application/xml'
         self.flavors_client.default_headers['Content-Type'] = 'application/xml'
-        with self.assertRaises(BadMediaType):
+        try:
             self.flavors_client.list_flavors()
+        except BadMediaType:
+            pass
+        else:
+            self.assertFalse(
+                True,
+                "Did not receive expected response: '{0}'".format(
+                    BadMediaType().message))
 
     @tags(type='smoke', net='no')
     def test_post_request_accept_xml_ignored(self):
@@ -130,15 +143,22 @@ class XMLDeprecationTest(ComputeFixture):
         xml and ensure that a bad request exception is returned.
 
         The following assertions occur:
-            - The response code is 400
+            - The response code is 415
         """
 
         name = rand_name('testserver')
         self.servers_client.default_headers['Accept'] = 'application/json'
         self.servers_client.default_headers['Content-Type'] = 'application/xml'
-        with self.assertRaises(BadMediaType):
+        try:
             self.servers_client.create_server(
                 name, self.image_ref, self.flavor_ref)
+        except BadMediaType:
+            pass
+        else:
+            self.assertFalse(
+                True,
+                "Did not receive expected response: '{0}'".format(
+                    BadMediaType().message))
 
     @tags(type='smoke', net='no')
     def test_post_request_accept_and_content_type_xml_negative(self):
@@ -149,12 +169,19 @@ class XMLDeprecationTest(ComputeFixture):
         headers as xml and ensure that a bad request exception is returned.
 
         The following assertions occur:
-            - The response code is 400
+            - The response code is 415
         """
 
         name = rand_name('testserver')
         self.servers_client.default_headers['Accept'] = 'application/xml'
         self.servers_client.default_headers['Content-Type'] = 'application/xml'
-        with self.assertRaises(BadMediaType):
+        try:
             self.servers_client.create_server(
                 name, self.image_ref, self.flavor_ref)
+        except BadMediaType:
+            pass
+        else:
+            self.assertFalse(
+                True,
+                "Did not receive expected response: '{0}'".format(
+                    BadMediaType().message))
