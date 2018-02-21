@@ -51,7 +51,7 @@ class CloudInitBoothookTest(ComputeFixture):
                           cls.servers_client.delete_server)
 
     @tags(type='smoke', net='yes')
-    def test_bothook_input_format(self):
+    def test_boothook_input_format(self):
         """
         Verify the Cloud Boothook Input Format is working as expected.
 
