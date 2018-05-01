@@ -26,7 +26,7 @@ support infrastructure to CloudCAFE.
 
 Installation
 ------------
-CloudRoast can be [installed with pip](https://pypi.python.org/pypi/pip) from the git repository after it is cloned to a local machine. 
+CloudRoast can be [installed with pip](https://pypi.org/project/pip) from the git repository after it is cloned to a local machine. 
  
 * First follow the README instructions to install the [CloudCAFE Framework](https://github.com/stackforge)
 * Clone this repository to your local machine  
