@@ -92,3 +92,21 @@ class CreateVolumeServerNegativeTest(ServerFromVolumeV2Fixture):
                 block_device_mapping_v2=self.block_data,
                 flavor_ref='invalid',
                 name=rand_name("server"))
+
+    @tags(type='smoke', net='no')
+    def test_destination_type_not_provided(self):
+        """Verify when destination type not provided throws bad request"""
+        # This is to verify VIRT-3099
+        # Creating block device with snapshot data inside
+        # Question: Will the existing logic support it if destination_type is omitted altogether?
+        # Question 2: uuid must be assigned a volume id or reference. How to provide that?
+        self.block_data = self.server_behaviors.create_block_device_mapping_v2_virt3099(
+            boot_index=0, uuid=self.bootable_volume_ref,
+            source_type='volume',
+            delete_on_termination=True)
+        # Try Creating Instance from Volume V2
+        with self.assertRaises(BadRequest):
+            self.boot_from_volume_client.create_server(
+                block_device_mapping_v2=self.block_data,
+                flavor_ref=self.flavors_config.primary_flavor,
+                name=rand_name("server"))
