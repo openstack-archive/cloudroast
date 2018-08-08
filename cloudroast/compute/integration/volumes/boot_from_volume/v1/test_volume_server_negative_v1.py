@@ -19,20 +19,26 @@ from cloudcafe.common.tools.datagen import rand_name
 from cloudcafe.compute.common.exceptions import BadRequest
 from cloudroast.compute.fixtures import ServerFromVolumeV1Fixture
 
+
 class CreateVolumeV1ServerNegativeTest(ServerFromVolumeV1Fixture):
 
     @tags(type='smoke', net='no')
-    def test_device_name_invalid(self):
-        """Verify device type set to SSD throws bad request"""
+    def test_block_device_name_invalid(self):
+        """
+        Verify device name in block device mapping set
+        to SSD throws bad request
+        """
         # Creating block device
-        # Attempted code for verification of VIRT-2837
-        self.block_data = self.server_behaviors.create_block_device_mapping_v1_virt2837(
-            device_name="SSD",
-            volume_id=self.bootable_volume_ref,
-            delete_on_termination=True)
+        # For verification of VIRT-2837
+        self.block_data = \
+            self.server_behaviors.create_block_device_mapping_v1_virt2837(
+                device_name="SSD",
+                volume_id=self.bootable_volume_ref,
+                delete_on_termination=True)
+
         # Try Creating Instance from Volume V1
         with self.assertRaises(BadRequest):
-            self.boot_from_volume_client.create_server_virt2837(
+            self.boot_from_volume_client.create_server_device_mapper_v1(
                 block_device_mapping_v1=self.block_data,
                 flavor_ref=self.flavors_config.primary_flavor,
                 name=rand_name("server"))

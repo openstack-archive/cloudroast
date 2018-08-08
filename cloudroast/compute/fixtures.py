@@ -27,10 +27,7 @@ from cloudcafe.compute.common.exception_handler import ExceptionHandler
 from cloudcafe.compute.common.clients.ping import PingClient
 from cloudcafe.compute.common.exceptions import ServerUnreachable
 from cloudcafe.objectstorage.composites import ObjectStorageComposite
-
-#Added by SKS - 11-JUL-2018
 from cloudcafe.blockstorage.volumes_api.common.config import VolumesAPIConfig
-# AdditionEnd SKS
 
 
 class ComputeFixture(BaseTestFixture):
@@ -47,11 +44,7 @@ class ComputeFixture(BaseTestFixture):
         cls.flavors_config = cls.compute.flavors.config
         cls.images_config = cls.compute.images.config
         cls.servers_config = cls.compute.servers.config
-
-        # Added by SKS 11-Jul-2018
         cls.volumes_config = VolumesAPIConfig()
-        # AdditionEnd SKS
-
         cls.compute_endpoint = ComputeEndpointConfig()
         cls.marshalling = MarshallingConfig()
         cls.config_drive_config = cls.compute.config_drive.config
@@ -64,10 +57,7 @@ class ComputeFixture(BaseTestFixture):
         cls.flavor_ref_alt = cls.flavors_config.secondary_flavor
         cls.image_ref = cls.images_config.primary_image
         cls.image_ref_alt = cls.images_config.secondary_image
-
-        # Added by SKS- 11-jul-2018
         cls.bootable_volume_ref = cls.volumes_config.primary_bootable_volume
-        # AdditionEnd
 
         cls.disk_path = cls.servers_config.instance_disk_path
         cls.split_ephemeral_disk_enabled = \
@@ -361,7 +351,7 @@ class ServerFromVolumeV2Fixture(BlockstorageIntegrationFixture):
             the server domain object
         @rtype: Request Response Object
         """
-        #Creating block device used for server creation
+        # Creating block device used for server creation
         cls.block_device_matrix = [{
             "boot_index": 0,
             "uuid": cls.image_ref,
