@@ -337,16 +337,18 @@ class ServerFromVolumeV1Fixture(BlockstorageIntegrationFixture):
 class ServerFromVolumeV2Fixture(BlockstorageIntegrationFixture):
 
     @classmethod
-    def create_server(cls, flavor_ref=None, key_name=None):
+    def create_server(cls, flavor_ref=None, key_name=None, networks=None):
         """
         @summary: Base fixture for compute tests creating the Boot from Volume
         Version 2 Instance Changes between the two versions are block device
         mapping is deprecated in favor of block device which is now creating
         the volume behind the scenes
         @param flavor_ref: The flavor used to build the server.
-        @type key_name: String
-        @param key_name: Generated key for the instance
         @type flavor_ref: String
+        @param key_name: Generated key for the instance
+        @type key_name: String
+        @param networks: Networks for the server.
+        @type networks: List
         @return: Response Object containing response code and
             the server domain object
         @rtype: Request Response Object
@@ -362,7 +364,7 @@ class ServerFromVolumeV2Fixture(BlockstorageIntegrationFixture):
         # Creating the Boot from Volume Version 2 Instance
         cls.server_response = cls.volume_server_behaviors.create_active_server(
             block_device=cls.block_device_matrix, flavor_ref=flavor_ref,
-            key_name=key_name)
+            key_name=key_name, networks=networks)
         cls.server = cls.server_response.entity
         cls.resources.add(cls.server.id, cls.servers_client.delete_server)
         return cls.server
