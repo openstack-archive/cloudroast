@@ -20,14 +20,16 @@ from cafe.engine.clients.ping import PingClient
 from cloudcafe.networking.networks.common.tools.connectivity import \
     Connectivity
 from cloudcafe.networking.networks.personas import ServerPersona
+from cloudroast.compute.fixtures import ServerFromVolumeV2Fixture
 from cloudroast.networking.networks.fixtures import NetworkingComputeFixture
 from cloudroast.networking.networks.scenario.common import ScenarioMixin
 
 
-class TestConnectivity(NetworkingComputeFixture, ScenarioMixin):
-    """Testing connectivity between servers"""
+class TestBFVConnectivity(NetworkingComputeFixture, ServerFromVolumeV2Fixture,
+                          ScenarioMixin):
+    """Testing connectivity between boot from volume servers"""
 
-    NAMES_PREFIX = 'connectivity'
+    NAMES_PREFIX = 'bfv_connectivity'
     PRIVATE_KEY_PATH = '/root/pkey'
     MAX_RETRIES = 5
 
@@ -40,10 +42,8 @@ class TestConnectivity(NetworkingComputeFixture, ScenarioMixin):
 
     @classmethod
     def setUpClass(cls):
-        super(TestConnectivity, cls).setUpClass()
+        super(TestBFVConnectivity, cls).setUpClass()
         network_name = 'network_{0}'.format(cls.NAMES_PREFIX)
-        svr_name_1 = 'svr_1_{0}'.format(cls.NAMES_PREFIX)
-        svr_name_2 = 'svr_2_{0}'.format(cls.NAMES_PREFIX)
         cls._create_keypair()
         cls.delete_keypairs.append(cls.keypair.name)
         network, subnet, port = (
@@ -51,24 +51,26 @@ class TestConnectivity(NetworkingComputeFixture, ScenarioMixin):
         cls.delete_ports.append(port.id)
         cls.delete_networks.append(network.id)
         cls.delete_subnets.append(subnet.id)
-        servers = cls.net.behaviors.create_multiple_servers(
-            names=[svr_name_1, svr_name_2], pnet=True, snet=True,
-            keypair_name=cls.keypair.name, networks=[network.id])
-        svr_names = servers.keys()
-        svr_names.sort()
+
+        server1 = cls.create_server(key_name=cls.keypair.name,
+                                    networks=[{'uuid': cls.public_network_id},
+                                              {'uuid': cls.service_network_id},
+                                              {'uuid': network.id}])
+        server2 = cls.create_server(key_name=cls.keypair.name,
+                                    networks=[{'uuid': cls.public_network_id},
+                                              {'uuid': cls.service_network_id},
+                                              {'uuid': network.id}])
 
         # Defining the server personas
         cls.sp1 = ServerPersona(
-            server=servers[svr_names[0]], pnet=True, snet=True, inet=True,
-            network=network, keypair=cls.keypair,
-            ssh_username='root')
+            server=server1, pnet=True, snet=True, inet=True,
+            network=network, keypair=cls.keypair, ssh_username='root')
         cls.sp2 = ServerPersona(
-            server=servers[svr_names[1]], pnet=True, snet=True, inet=True,
-            network=network, keypair=cls.keypair,
-            ssh_username='root')
-
+            server=server2, pnet=True, snet=True, inet=True,
+            network=network, keypair=cls.keypair, ssh_username='root')
         server_ids = [cls.sp1.server.id, cls.sp2.server.id]
         cls.delete_servers.extend(server_ids)
+
         cls._transfer_private_key_to_vm(cls.sp1.remote_client.ssh_client,
                                         cls.keypair.private_key,
                                         cls.PRIVATE_KEY_PATH
@@ -78,9 +80,9 @@ class TestConnectivity(NetworkingComputeFixture, ScenarioMixin):
                                         cls.PRIVATE_KEY_PATH
                                         )
 
-    @tags('connectivity', 'positive')
+    @tags('bfv_server_test', 'positive')
     def test_server_ifconfig(self):
-        """Testing ifconfig on servers"""
+        """Testing ifconfig on BFV servers"""
         servers = [self.sp1, self.sp2]
         for server in servers:
             ips = []
@@ -94,7 +96,7 @@ class TestConnectivity(NetworkingComputeFixture, ScenarioMixin):
             while stdout is None or len(ifconfig_ips) != 3:
                 del ifconfig_ips[:]
                 if retry_count < self.MAX_RETRIES:
-                    ifconfig_output = rm_client.ssh_client.\
+                    ifconfig_output = rm_client.ssh_client. \
                         execute_shell_command("hostname -I")
                     stdout = ifconfig_output.stdout
                     pattern = re.compile(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}')
@@ -114,9 +116,9 @@ class TestConnectivity(NetworkingComputeFixture, ScenarioMixin):
                                  "ifconfig {}".
                              format(server, ip, ifconfig_ips))
 
-    @tags('connectivity', 'positive')
+    @tags('bfv_server_test', 'positive')
     def test_public_ping(self):
-        """Testing ping on servers with public network"""
+        """Testing ping on BFV servers with public network"""
         msg_err = 'Public ping to IP address {0} - FAILED'
         msg_ok = 'Public ping to IP address {0} - OK'
 
@@ -137,23 +139,23 @@ class TestConnectivity(NetworkingComputeFixture, ScenarioMixin):
         # Fail the test if any ping failure is found
         self.assertFalse(failure_flag, msg.format(all_pub_ips_ping_result))
 
-    @tags('connectivity', 'positive')
+    @tags('bfv_server_test', 'positive')
     def test_remote_public_ping(self):
-        """Testing public network remote ping on servers"""
+        """Testing public network remote ping on BFV servers"""
         self._test_remote_ping(port_type='pnet')
 
-    @tags('connectivity', 'positive')
+    @tags('bfv_server_test', 'positive')
     def test_remote_private_ping(self):
-        """Testing private network remote ping on servers"""
+        """Testing private network remote ping on BFV servers"""
         self._test_remote_ping(port_type='snet')
 
-    @tags('connectivity', 'positive')
+    @tags('bfv_server_test', 'positive')
     def test_remote_isolated_ping(self):
-        """Testing isolated network remote ping on servers"""
+        """Testing isolated network remote ping on BFV servers"""
         self._test_remote_ping(port_type='inet')
 
     def _test_remote_ping(self, port_type):
-        """Testing remote ping on servers"""
+        """Testing remote ping on BFV servers"""
         conn = Connectivity(self.sp2, self.sp1)
         icmp_basic = dict(port_type=port_type, protocol='icmp', ip_version=4)
         rp = conn.verify_personas_conn(**icmp_basic)
@@ -161,23 +163,23 @@ class TestConnectivity(NetworkingComputeFixture, ScenarioMixin):
         ping_result = result['connection']
         self.assertTrue(ping_result, rp)
 
-    @tags('connectivity', 'positive')
+    @tags('bfv_server_test', 'positive')
     def test_remote_public_ssh(self):
-        """Testing Public remote ssh on servers"""
+        """Testing Public remote ssh on BFV servers"""
         self._test_remote_ssh(self.sp1.pnet_fix_ipv4[0])
 
-    @tags('connectivity', 'positive')
+    @tags('bfv_server_test', 'positive')
     def test_remote_private_ssh(self):
-        """Testing ServiceNet remote ssh on servers"""
+        """Testing ServiceNet remote ssh on BFV servers"""
         self._test_remote_ssh(self.sp1.snet_fix_ipv4[0])
 
-    @tags('connectivity', 'positive')
+    @tags('bfv_server_test', 'positive')
     def test_remote_isolated_ssh(self):
-        """Testing isolated network A remote ssh on servers"""
+        """Testing isolated network remote ssh on BFV servers"""
         self._test_remote_ssh(self.sp1.inet_fix_ipv4[0])
 
     def _test_remote_ssh(self, target_ip_addr):
-        """Testing remote ssh on servers"""
+        """Testing remote ssh on BFV servers"""
         rc2 = self.sp2.remote_client
         ssh_cmd = self.SSH_COMMAND.format(
             private_key_path=self.PRIVATE_KEY_PATH,
@@ -190,8 +192,6 @@ class TestConnectivity(NetworkingComputeFixture, ScenarioMixin):
                 output = rc2.ssh_client.execute_shell_command(ssh_cmd)
                 stdout = output.stdout
             retry_count += 1
-            if retry_count == self.MAX_RETRIES:
-                break
         if stdout.endswith('# '):
             ssh_connection_established = True
         self.assertTrue(ssh_connection_established, self.ssh_msg.format(
