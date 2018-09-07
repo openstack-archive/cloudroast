@@ -1,0 +1,8 @@
+Code-Review+2: Christopher Hunt <chris.hunt@RACKSPACE.COM>
+Workflow+1: Christopher Hunt <chris.hunt@RACKSPACE.COM>
+Verified+2: Zuul
+Submitted-by: Zuul
+Submitted-at: Fri, 07 Sep 2018 20:33:04 +0000
+Reviewed-on: https://review.openstack.org/600852
+Project: openstack/cloudroast
+Branch: refs/heads/master
