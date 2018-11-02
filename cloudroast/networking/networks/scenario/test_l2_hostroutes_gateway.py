@@ -49,7 +49,7 @@ class L2HostroutesGatewayTest(NetworkingComputeFixture,
     5. A vm is created and connected only to the 'destination' network.
     6. ip forwarding is enabled in the 'router' vm
     7. The test verifies that the vm connected only to the 'origin' network
-       can ping the the vm connected only to the 'destination' network.
+       can ping the vm connected only to the 'destination' network.
     8. The test verifies that the vm connected only to the 'destination'
        network cannot ping the vm connected to the 'origin' network.
     """
