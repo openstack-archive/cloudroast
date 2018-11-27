@@ -889,11 +889,11 @@ class TestVirtualInterfaceDelete(NetworkingComputeFixture):
         vi_to_delete = network.name + "-invalid-net-id"
         response = self.compute.servers.client.delete_virtual_interface(
             server.id, vi_to_delete)
-        # check the delete call returns an Internal Server Error, 500 status
+        # check the delete call returns 200 status code
         msg = 'Expected {} HTTP response but received {} HTTP response'.format(
-            NeutronResponseCodes.INTERNAL_SERVER_ERROR, response.status_code)
+            NeutronResponseCodes.DELETE_INTERFACE, response.status_code)
         self.assertEqual(
-            response.status_code, NeutronResponseCodes.INTERNAL_SERVER_ERROR,
+            response.status_code, NeutronResponseCodes.DELETE_INTERFACE,
             msg=msg)
         # Again check list of virtual interfaces to make sure valid interface
         # is not deleted
