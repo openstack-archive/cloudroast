@@ -1,7 +1,8 @@
-from cafe.drivers.unittest.decorators import \
-    data_driven_test, DataDrivenFixture, tags
-from cloudcafe.blockstorage.datasets import BlockstorageDatasets
+from qe_coverage.opencafe_decorators import tags
 
+from cafe.drivers.unittest.decorators import \
+    data_driven_test, DataDrivenFixture
+from cloudcafe.blockstorage.datasets import BlockstorageDatasets
 from cloudroast.blockstorage.volumes_api.integration.oscli.fixtures \
     import NovaCLI_IntegrationFixture
 
@@ -11,7 +12,7 @@ volume_type_complete_dataset = BlockstorageDatasets.volume_types()
 @DataDrivenFixture
 class NovaCLI_VolumesSmoke(NovaCLI_IntegrationFixture):
 
-    @tags('cinder-only')
+    @tags('cinder-only', 'positive')
     @data_driven_test(volume_type_complete_dataset)
     def ddtest_create_minimum_sized_volume(
             self, volume_type_name, volume_type_id):
@@ -21,7 +22,7 @@ class NovaCLI_VolumesSmoke(NovaCLI_IntegrationFixture):
         volume = self.new_volume(size=size, volume_type=volume_type_id)
         assert int(volume.size) == int(size), "Volume was the wrong size"
 
-    @tags('cinder-only')
+    @tags('cinder-only', 'positive')
     @data_driven_test(volume_type_complete_dataset)
     def ddtest_delete(self, volume_type_name, volume_type_id):
 

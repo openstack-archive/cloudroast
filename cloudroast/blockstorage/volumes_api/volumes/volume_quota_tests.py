@@ -1,9 +1,11 @@
-from cafe.drivers.unittest.decorators import \
-    tags, data_driven_test, DataDrivenFixture
+from qe_coverage.opencafe_decorators import tags
+
 from cafe.drivers.unittest.datasets import DatasetList
+from cafe.drivers.unittest.decorators import \
+    data_driven_test, DataDrivenFixture
+from cloudcafe.blockstorage.datasets import BlockstorageDatasets
 from cloudroast.blockstorage.volumes_api.fixtures import \
     VolumesTestFixture
-from cloudcafe.blockstorage.datasets import BlockstorageDatasets
 
 
 class QuotaTestDatasets(BlockstorageDatasets):
@@ -34,6 +36,7 @@ class QuotaTestDatasets(BlockstorageDatasets):
 @DataDrivenFixture
 class QuotaTest(VolumesTestFixture):
 
+    @tags('smoke', 'negative')
     def test_negative_show_default_quota_with_garbage_tenant_id(self):
         """Negative test requesting default quotas with an invalid tenant id"""
 
@@ -43,6 +46,7 @@ class QuotaTest(VolumesTestFixture):
             "test_show_default_quota_with_garbage_tenant_id"
             " passed while using a garbage target tenant_id")
 
+    @tags('smoke', 'positive')
     def test_show_default_quota(self):
         """Test requesting default quotas with a valid id"""
 
@@ -51,6 +55,7 @@ class QuotaTest(VolumesTestFixture):
         self.assertExactResponseStatus(
             resp, 200, msg="Unexpected response status")
 
+    @tags('smoke', 'positive')
     @data_driven_test(QuotaTestDatasets.valid_quota_names())
     def ddtest_verify_quota(self, quota_name):
         """Test to verify resource key names obtained from response with

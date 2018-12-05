@@ -14,8 +14,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+from qe_coverage.opencafe_decorators import tags
+
 from cafe.drivers.unittest.decorators import data_driven_test
-from cafe.drivers.unittest.decorators import tags
 from cloudroast.blockstorage.volumes_api.fixtures import \
     VolumesTestFixture
 from cloudcafe.blockstorage.datasets import BlockstorageDatasets
@@ -28,7 +29,7 @@ volume_types_dataset = BlockstorageDatasets.volume_types()
 class VolumeActions(VolumesTestFixture):
 
     @data_driven_test(volume_types_dataset)
-    @tags('volumes', 'smoke')
+    @tags('volumes', 'smoke', 'positive')
     def ddtest_create_volume(
             self, volume_type_name, volume_type_id):
         """Verify that a volume of minimum size can be created"""
@@ -77,7 +78,7 @@ class VolumeActions(VolumesTestFixture):
         self.assertVolumeCreateSucceeded(volume.id_, volume.size)
 
     @data_driven_test(volume_types_dataset)
-    @tags('volumes', 'smoke')
+    @tags('volumes', 'smoke', 'positive')
     def ddtest_final_volume_metadata(
             self, volume_type_name, volume_type_id):
         """Verify that a volume of minimum size can be created"""
@@ -112,7 +113,7 @@ class VolumeActions(VolumesTestFixture):
         self.assertVolumeCreateSucceeded(volume.id_, volume.size)
 
     @data_driven_test(volume_types_dataset)
-    @tags('volumes', 'smoke')
+    @tags('volumes', 'smoke', 'positive')
     def ddtest_update_volume_info_via_body(
             self, volume_type_name, volume_type_id):
         """Verify that a volume's name and description can be updated after
@@ -162,7 +163,7 @@ class VolumeActions(VolumesTestFixture):
             "info")
 
     @data_driven_test(volume_types_dataset)
-    @tags('volumes', 'smoke')
+    @tags('volumes', 'smoke', 'positive')
     def ddtest_get_volume_info(self, volume_type_name, volume_type_id):
         """Verify that the API can return detailed information on a single
         volume
@@ -180,7 +181,7 @@ class VolumeActions(VolumesTestFixture):
         self.assertVolumeAttributesAreEqual(volume, volume_info)
 
     @data_driven_test(volume_types_dataset)
-    @tags('volumes', 'smoke')
+    @tags('volumes', 'smoke', 'positive')
     def ddtest_list_volumes(self, volume_type_name, volume_type_id):
         """Verify that the API can return a list of all volumes"""
 
@@ -201,7 +202,7 @@ class VolumeActions(VolumesTestFixture):
             '{0}'.format(volume.id_))
 
     @data_driven_test(volume_types_dataset)
-    @tags('volumes', 'smoke')
+    @tags('volumes', 'smoke', 'positive')
     def ddtest_list_volume_details(self, volume_type_name, volume_type_id):
         """Verify that the API can return a list detailed information for
         all volumes
@@ -227,7 +228,7 @@ class VolumeActions(VolumesTestFixture):
             volume, volume_info, excluded_attrs_list=['volume_image_metadata'])
 
     @data_driven_test(volume_types_dataset)
-    @tags('volumes', 'smoke')
+    @tags('volumes', 'smoke', 'positive')
     def ddtest_delete_volume(self, volume_type_name, volume_type_id):
         """Verify that a volume can be deleted"""
 

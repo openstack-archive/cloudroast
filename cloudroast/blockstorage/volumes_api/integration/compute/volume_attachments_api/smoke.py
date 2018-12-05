@@ -13,7 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-from cafe.drivers.unittest.decorators import tags
+from qe_coverage.opencafe_decorators import tags, unless_coverage
 from cafe.drivers.unittest.suite import OpenCafeUnittestTestSuite
 from cloudroast.blockstorage.volumes_api.integration.compute.fixtures \
     import ComputeIntegrationTestFixture
@@ -34,6 +34,7 @@ def load_tests(loader, standard_tests, pattern):
 class VolumeAttachmentsAPISmoke(ComputeIntegrationTestFixture):
     """Tests attaching a single volume to a server"""
 
+    @unless_coverage
     @classmethod
     def setUpClass(cls):
         super(VolumeAttachmentsAPISmoke, cls).setUpClass()
@@ -58,7 +59,11 @@ class VolumeAttachmentsAPISmoke(ComputeIntegrationTestFixture):
         cls.addClassCleanup(
             cls.volumes.client.delete_volume, cls.test_volume.id_)
 
-    @tags('integration', 'smoke')
+    @unless_coverage
+    def setUp(self):
+        super(VolumeAttachmentsAPISmoke, self).setUp()
+
+    @tags('integration', 'smoke', 'positive')
     def test_attach_volume_to_server(self):
         # Note: For the attach test, I rely on the behavior that waits for
         # attachment propagation and status changes because in a smoke test,
@@ -71,7 +76,7 @@ class VolumeAttachmentsAPISmoke(ComputeIntegrationTestFixture):
             self.test_attachment.volume_id, self.test_volume.id_,
             "Attachment's Volume id and actual Volume id did not match")
 
-    @tags('integration', 'smoke')
+    @tags('integration', 'smoke', 'positive')
     def test_list_server_volume_attachments(self):
         resp = self.volume_attachments.client.get_server_volume_attachments(
             self.test_server.id)
@@ -84,7 +89,7 @@ class VolumeAttachmentsAPISmoke(ComputeIntegrationTestFixture):
             " volume attachments".format(
                 self.test_attachment.id_, self.test_server.id))
 
-    @tags('integration', 'smoke')
+    @tags('integration', 'smoke', 'positive')
     def test_get_volume_attachment_details(self):
         resp = self.volume_attachments.client.get_volume_attachment_details(
             self.test_attachment.id_, self.test_server.id)
@@ -94,8 +99,17 @@ class VolumeAttachmentsAPISmoke(ComputeIntegrationTestFixture):
         self.assertDictEqual(
             vars(self.test_attachment), vars(attachment_details))
 
-    @tags('integration', 'smoke')
+    @tags('integration', 'smoke', 'positive')
     def test_volume_attachment_delete(self):
         resp = self.volume_attachments.client.delete_volume_attachment(
             self.test_attachment.id_, self.test_server.id)
         self.assertExactResponseStatus(resp, 202)
+
+    @unless_coverage
+    @classmethod
+    def tearDownClass(cls):
+        super(VolumeAttachmentsAPISmoke, cls).tearDownClass()
+
+    @unless_coverage
+    def tearDown(self):
+        super(VolumeAttachmentsAPISmoke, self).tearDown()

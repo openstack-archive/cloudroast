@@ -14,12 +14,14 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from cafe.drivers.unittest.decorators import data_driven_test
+from qe_coverage.opencafe_decorators import tags
+
+from cafe.drivers.unittest.decorators import (
+    data_driven_test, DataDrivenFixture)
+from cloudcafe.blockstorage.datasets import BlockstorageDatasets
 from cloudcafe.blockstorage.volumes_api.common.models import statuses
 from cloudroast.blockstorage.volumes_api.fixtures import \
     VolumesTestFixture
-from cloudcafe.blockstorage.datasets import BlockstorageDatasets
-from cafe.drivers.unittest.decorators import DataDrivenFixture
 
 
 volume_types_dataset = BlockstorageDatasets.volume_types()
@@ -29,6 +31,7 @@ volume_types_dataset = BlockstorageDatasets.volume_types()
 class VolumeCapacity(VolumesTestFixture):
 
     @data_driven_test(volume_types_dataset)
+    @tags('smoke', 'positive')
     def ddtest_create_maximum_size_volume(
             self, volume_type_name, volume_type_id):
         """Verify that a volume of maximum size can be created"""

@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 import time
+from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from cloudroast.blockstorage.volumes_api.integration.compute.fixtures \
     import ComputeIntegrationTestFixture
@@ -21,6 +22,7 @@ from cloudroast.blockstorage.volumes_api.integration.compute.fixtures \
 
 class VolumeSnapshotIntegrationSmokeTests(ComputeIntegrationTestFixture):
 
+    @unless_coverage
     @classmethod
     def setUpClass(cls):
         super(VolumeSnapshotIntegrationSmokeTests, cls).setUpClass()
@@ -34,6 +36,10 @@ class VolumeSnapshotIntegrationSmokeTests(ComputeIntegrationTestFixture):
         cls.test_volume = cls.new_volume()
         cls.test_attachment = cls.attach_volume_and_get_device_info(
             cls.server_conn, cls.test_server.id, cls.test_volume.id_)
+
+    @unless_coverage
+    def setUp(self):
+        super(VolumeSnapshotIntegrationSmokeTests, self).setUp()
 
     @classmethod
     def attach_volume_and_get_device_info(
@@ -90,6 +96,7 @@ class VolumeSnapshotIntegrationSmokeTests(ComputeIntegrationTestFixture):
 
         return attachment
 
+    @tags('positive', 'integration')
     def test_restore_snapshot_of_written_volume_and_verify_data(self):
 
         # Format Volume
@@ -161,3 +168,12 @@ class VolumeSnapshotIntegrationSmokeTests(ComputeIntegrationTestFixture):
             "Unable to hash file on mounted volume")
         assert new_md5hash == self.original_md5hash, (
             "Unable to hash file on mounted volume")
+
+    @unless_coverage
+    @classmethod
+    def tearDownClass(cls):
+        super(VolumeSnapshotIntegrationSmokeTests, cls).tearDownClass()
+
+    @unless_coverage
+    def tearDown(self):
+        super(VolumeSnapshotIntegrationSmokeTests, self).tearDown()

@@ -1,7 +1,8 @@
+from qe_coverage.opencafe_decorators import tags
+
 from cafe.drivers.unittest.decorators import (
     DataDrivenFixture, data_driven_test)
 from cloudcafe.blockstorage.datasets import BlockstorageDatasets
-
 from cloudroast.blockstorage.volumes_api.integration.oscli.fixtures import (
     CinderCLI_IntegrationFixture)
 
@@ -9,6 +10,7 @@ from cloudroast.blockstorage.volumes_api.integration.oscli.fixtures import (
 @DataDrivenFixture
 class CinderCLI_VolumeSmoke(CinderCLI_IntegrationFixture):
 
+    @tags('positive')
     @data_driven_test(BlockstorageDatasets.volume_types())
     def ddtest_create_minimum_sized_volume(
             self, volume_type_name, volume_type_id):
@@ -34,6 +36,7 @@ class CinderCLI_VolumeSmoke(CinderCLI_IntegrationFixture):
             name, volume.display_name,
             "Volume display name reported incorrectly")
 
+    @tags('positive')
     @data_driven_test(BlockstorageDatasets.volume_types())
     def ddtest_delete_volume_by_id(self, volume_type_name, volume_type_id):
         # setup
@@ -53,6 +56,7 @@ class CinderCLI_VolumeSmoke(CinderCLI_IntegrationFixture):
                 volume.id_, size, ),
             "Could not confirm that volume {0} was deleted".format(volume.id_))
 
+    @tags('positive')
     @data_driven_test(BlockstorageDatasets.volume_types())
     def ddtest_delete_volume_by_name(self, volume_type_name, volume_type_id):
         # setup

@@ -21,6 +21,8 @@ from cloudroast.blockstorage.volumes_api.fixtures import VolumesTestFixture
 
 class ComputeIntegrationTestFixture(VolumesTestFixture):
 
+    _class_cleanup_tasks = []
+
     @classmethod
     def setUpClass(cls):
         super(ComputeIntegrationTestFixture, cls).setUpClass()

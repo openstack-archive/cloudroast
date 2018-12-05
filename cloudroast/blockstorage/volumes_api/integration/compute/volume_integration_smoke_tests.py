@@ -13,6 +13,8 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
+from qe_coverage.opencafe_decorators import tags, unless_coverage
+
 from cafe.drivers.unittest.suite import OpenCafeUnittestTestSuite
 from cloudroast.blockstorage.volumes_api.integration.compute.fixtures \
     import ComputeIntegrationTestFixture
@@ -34,6 +36,7 @@ def load_tests(loader, standard_tests, pattern):
 
 class VolumeIntegrationSmokeTests(ComputeIntegrationTestFixture):
 
+    @unless_coverage
     @classmethod
     def setUpClass(cls):
         super(VolumeIntegrationSmokeTests, cls).setUpClass()
@@ -52,30 +55,49 @@ class VolumeIntegrationSmokeTests(ComputeIntegrationTestFixture):
             cls.volume_attachments.behaviors.delete_volume_attachment,
             cls.test_attachment.id_, cls.test_server.id)
 
+    @unless_coverage
+    def setUp(self):
+        super(VolumeIntegrationSmokeTests, self).setUp()
+
+    @tags('positive', 'integration')
     def test_format_volume_on_server(self):
         self.format_attached_volume(
             self.server_conn, self.test_attachment.os_disk_device_name)
 
+    @tags('positive', 'integration')
     def test_mount_volume_on_server(self):
         self.mount_attached_volume(
             self.server_conn, self.test_attachment.os_disk_device_name,
             mount_point=self.volume_mount_point)
 
+    @tags('positive', 'integration')
     def test_verify_volume_writability(self):
         resp = self.create_remote_file(
             self.server_conn, self.volume_mount_point, "testfile")
         assert resp is not None, (
             "Could not verify writability of attached volume")
 
+    @tags('positive', 'integration')
     def test_verify_volume_readability(self):
         md5hash = self.get_remote_file_md5_hash(
             self.server_conn, self.volume_mount_point, "testfile")
         assert md5hash is not None, "Unable to hash file on mounted volume"
 
+    @tags('positive', 'integration')
     def test_unmount_used_volume(self):
         self.unmount_attached_volume(
             self.server_conn, self.test_attachment.os_disk_device_name)
 
+    @tags('positive', 'integration')
     def test_detach_unmounted_volume(self):
         self.volume_attachments.behaviors.delete_volume_attachment(
             self.test_attachment.id_, self.test_server.id)
+
+    @unless_coverage
+    def tearDown(self):
+        super(VolumeIntegrationSmokeTests, self).tearDown()
+
+    @unless_coverage
+    @classmethod
+    def tearDownClass(cls):
+        super(VolumeIntegrationSmokeTests, cls).tearDownClass()

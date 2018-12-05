@@ -13,10 +13,11 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
+from qe_coverage.opencafe_decorators import tags
+
 from cafe.drivers.unittest.decorators import (
     data_driven_test, DataDrivenFixture)
 from cloudcafe.compute.composites import ComputeAdminComposite
-
 from cloudroast.blockstorage.volumes_api.integration.compute.fixtures \
     import ComputeIntegrationTestFixture
 from cloudroast.blockstorage.volumes_api.integration.compute.datasets \
@@ -26,6 +27,7 @@ from cloudroast.blockstorage.volumes_api.integration.compute.datasets \
 @DataDrivenFixture
 class BootFromVolumeLiveMigrateIntegration(ComputeIntegrationTestFixture):
 
+    @tags('positive', 'integration')
     @data_driven_test(bfv_datasets.flavors_by_images_by_volume_type)
     def ddtest_live_migrate_bfv_server_with_seven_attached_volumes(
             self, image, flavor, volume_type):

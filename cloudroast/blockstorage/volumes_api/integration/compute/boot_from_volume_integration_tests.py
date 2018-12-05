@@ -13,11 +13,12 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
+from qe_coverage.opencafe_decorators import tags
+
 from cafe.drivers.unittest.decorators import (
     data_driven_test, DataDrivenFixture)
 from cloudcafe.common.tools.datagen import random_string
 from cloudcafe.blockstorage.datasets import BlockstorageDatasets
-
 from cloudroast.blockstorage.volumes_api.integration.compute.fixtures \
     import ComputeIntegrationTestFixture
 from cloudroast.blockstorage.volumes_api.integration.compute.datasets \
@@ -27,22 +28,26 @@ from cloudroast.blockstorage.volumes_api.integration.compute.datasets \
 @DataDrivenFixture
 class BootFromVolumeIntegrationTests(ComputeIntegrationTestFixture):
 
+    @tags('positive', 'integration')
     @data_driven_test(bfv_datasets.images)
     def ddtest_non_asserting_min_disk_check_for_image(self, image):
         """Check if the image has min disk attribute set, print a
         message if it doesn't.  This test will only fail on Error"""
         self.check_if_minimum_disk_size_is_set(image)
 
+    @tags('positive', 'integration')
     @data_driven_test(bfv_datasets.images)
     def ddtest_min_disk_is_set_for_image(self, image):
         """Verify that image has min disk attribute set"""
         self.assertMinDiskSizeIsSet(image)
 
+    @tags('positive', 'integration')
     @data_driven_test(bfv_datasets.images_by_volume)
     def ddtest_create_basic_bootable_volume_from(self, volume_type, image):
         """Create a single volume_type volume from image"""
         self.create_volume_from_image_test(volume_type, image)
 
+    @tags('positive', 'integration')
     @data_driven_test(bfv_datasets.images_by_flavor)
     def ddtest_create_bootable_volume_from_a_snapshot_of_a_server(
             self, image, flavor,
@@ -50,6 +55,7 @@ class BootFromVolumeIntegrationTests(ComputeIntegrationTestFixture):
         self.create_bootable_volume_from_server_snapshot(
             image, flavor, volume_type)
 
+    @tags('positive', 'integration')
     @data_driven_test(bfv_datasets.images_by_flavor)
     def ddtest_create_bootable_volume_from_last_of_3_snapshots_of_a_server(
             self, image, flavor,
@@ -57,6 +63,7 @@ class BootFromVolumeIntegrationTests(ComputeIntegrationTestFixture):
         self.create_bootable_volume_from_third_snapshot_of_server_test(
             image, flavor, volume_type)
 
+    @tags('positive', 'integration')
     @data_driven_test(bfv_datasets.flavors_by_images_by_volume_type)
     def ddtest_boot_a_server_from_a_volume(
             self, image, flavor, volume_type):
@@ -82,6 +89,7 @@ class BootFromVolumeIntegrationTests(ComputeIntegrationTestFixture):
         resp = self.server_conn.create_large_file(multiplier=0.1)
         self.assertTrue(resp, "Unable to write data to bootable OS volume")
 
+    @tags('positive', 'integration')
     @data_driven_test(bfv_datasets.images_by_flavor)
     def ddtest_verify_data_on_custom_snapshot_after_copy_to_volume(
             self, image, flavor,

@@ -1,9 +1,10 @@
+from qe_coverage.opencafe_decorators import tags
+
 from cafe.drivers.unittest.decorators import (
     DataDrivenFixture, data_driven_test)
 from cloudcafe.blockstorage.datasets import BlockstorageDatasets
 from cloudcafe.blockstorage.volumes_api.common.models.statuses import \
     Snapshot as SnapshotStatuses
-
 from cloudroast.blockstorage.volumes_api.integration.oscli.fixtures \
     import CinderCLI_IntegrationFixture
 
@@ -11,6 +12,7 @@ from cloudroast.blockstorage.volumes_api.integration.oscli.fixtures \
 @DataDrivenFixture
 class CinderCLI_SnapshotSmoke(CinderCLI_IntegrationFixture):
 
+    @tags('positive')
     @data_driven_test(BlockstorageDatasets.volume_types())
     def ddtest_snapshot_create_and_delete(
             self, volume_type_name, volume_type_id):

@@ -1,9 +1,10 @@
-from cafe.drivers.unittest.decorators import data_driven_test
-from cafe.drivers.unittest.decorators import tags
+from qe_coverage.opencafe_decorators import tags
+
+from cafe.drivers.unittest.decorators import (
+    data_driven_test, DataDrivenFixture)
+from cloudcafe.blockstorage.datasets import BlockstorageDatasets
 from cloudroast.blockstorage.volumes_api.fixtures import \
     VolumesTestFixture
-from cloudcafe.blockstorage.datasets import BlockstorageDatasets
-from cafe.drivers.unittest.decorators import DataDrivenFixture
 
 volume_types_dataset = BlockstorageDatasets.volume_types()
 volume_types_dataset.apply_test_tags('volume-cloning-complete-dataset')
@@ -20,7 +21,7 @@ volume_types_dataset.merge_dataset_tags(random_vtype_dataset)
 class CBSVolumeCloneTests(VolumesTestFixture):
 
     @data_driven_test(volume_types_dataset)
-    @tags('smoke')
+    @tags('smoke', 'positive')
     def ddtest_create_exact_clone_of_existing_volume_and_verify_attributes(
             self, volume_type_name, volume_type_id):
         """Verify that data written to a volume is intact and available
@@ -80,6 +81,7 @@ class CBSVolumeCloneTests(VolumesTestFixture):
         #    volume, volume_clone_info, key_list=key_list)
 
     @data_driven_test(volume_types_dataset)
+    @tags('smoke', 'positive')
     def ddtest_create_larger_clone_of_volume(
             self, volume_type_name, volume_type_id):
         """Clone a volume using a larger size than the original volume."""

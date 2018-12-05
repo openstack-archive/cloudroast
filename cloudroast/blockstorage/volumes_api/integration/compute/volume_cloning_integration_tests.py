@@ -13,17 +13,25 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
+from qe_coverage.opencafe_decorators import tags, unless_coverage
+
 from cloudroast.blockstorage.volumes_api.integration.compute.fixtures import \
     ComputeIntegrationTestFixture
 
 
 class VolumeCloningIntegrationSmokeTests(ComputeIntegrationTestFixture):
 
+    @unless_coverage
     @classmethod
     def setUpClass(cls):
         super(VolumeCloningIntegrationSmokeTests, cls).setUpClass()
         cls.setup_server_and_attached_volume_with_data()
 
+    @unless_coverage
+    def setUp(self):
+        super(VolumeCloningIntegrationSmokeTests, self).setUp()
+
+    @tags('positive', 'integration')
     def test_source_volume_data_on_volume_clone(self):
 
         # Unmount and detach the original volume
@@ -63,6 +71,7 @@ class VolumeCloningIntegrationSmokeTests(ComputeIntegrationTestFixture):
             "not match".format(
                 self.original_hash, md5hash, self.written_filename))
 
+    @unless_coverage
     def tearDown(self):
         if hasattr(self, 'clone_attachment'):
             self.unmount_attached_volume(
@@ -70,3 +79,8 @@ class VolumeCloningIntegrationSmokeTests(ComputeIntegrationTestFixture):
             self.volume_attachments.behaviors.delete_volume_attachment(
                 self.clone_attachment.id_, self.test_server.id)
         super(VolumeCloningIntegrationSmokeTests, self).tearDown()
+
+    @unless_coverage
+    @classmethod
+    def tearDownClass(cls):
+        super(VolumeCloningIntegrationSmokeTests, cls).tearDownClass()
