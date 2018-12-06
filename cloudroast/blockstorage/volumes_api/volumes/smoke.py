@@ -28,8 +28,8 @@ volume_types_dataset = BlockstorageDatasets.volume_types()
 @DataDrivenFixture
 class VolumeActions(VolumesTestFixture):
 
-    @data_driven_test(volume_types_dataset)
     @tags('volumes', 'smoke', 'positive')
+    @data_driven_test(volume_types_dataset)
     def ddtest_create_volume(
             self, volume_type_name, volume_type_id):
         """Verify that a volume of minimum size can be created"""
@@ -77,8 +77,8 @@ class VolumeActions(VolumesTestFixture):
         # Verify volume create suceeded
         self.assertVolumeCreateSucceeded(volume.id_, volume.size)
 
-    @data_driven_test(volume_types_dataset)
     @tags('volumes', 'smoke', 'positive')
+    @data_driven_test(volume_types_dataset)
     def ddtest_final_volume_metadata(
             self, volume_type_name, volume_type_id):
         """Verify that a volume of minimum size can be created"""
@@ -112,8 +112,8 @@ class VolumeActions(VolumesTestFixture):
         # Verify volume create suceeded
         self.assertVolumeCreateSucceeded(volume.id_, volume.size)
 
-    @data_driven_test(volume_types_dataset)
     @tags('volumes', 'smoke', 'positive')
+    @data_driven_test(volume_types_dataset)
     def ddtest_update_volume_info_via_body(
             self, volume_type_name, volume_type_id):
         """Verify that a volume's name and description can be updated after
@@ -162,8 +162,8 @@ class VolumeActions(VolumesTestFixture):
             msg="Unmodified updated volume info did not match original volume "
             "info")
 
-    @data_driven_test(volume_types_dataset)
     @tags('volumes', 'smoke', 'positive')
+    @data_driven_test(volume_types_dataset)
     def ddtest_get_volume_info(self, volume_type_name, volume_type_id):
         """Verify that the API can return detailed information on a single
         volume
@@ -180,8 +180,8 @@ class VolumeActions(VolumesTestFixture):
         # Test
         self.assertVolumeAttributesAreEqual(volume, volume_info)
 
-    @data_driven_test(volume_types_dataset)
     @tags('volumes', 'smoke', 'positive')
+    @data_driven_test(volume_types_dataset)
     def ddtest_list_volumes(self, volume_type_name, volume_type_id):
         """Verify that the API can return a list of all volumes"""
 
@@ -201,8 +201,8 @@ class VolumeActions(VolumesTestFixture):
             'No volumes where found in the volume list with an id == '
             '{0}'.format(volume.id_))
 
-    @data_driven_test(volume_types_dataset)
     @tags('volumes', 'smoke', 'positive')
+    @data_driven_test(volume_types_dataset)
     def ddtest_list_volume_details(self, volume_type_name, volume_type_id):
         """Verify that the API can return a list detailed information for
         all volumes
@@ -227,8 +227,8 @@ class VolumeActions(VolumesTestFixture):
         self.assertVolumeAttributesAreEqual(
             volume, volume_info, excluded_attrs_list=['volume_image_metadata'])
 
-    @data_driven_test(volume_types_dataset)
     @tags('volumes', 'smoke', 'positive')
+    @data_driven_test(volume_types_dataset)
     def ddtest_delete_volume(self, volume_type_name, volume_type_id):
         """Verify that a volume can be deleted"""
 

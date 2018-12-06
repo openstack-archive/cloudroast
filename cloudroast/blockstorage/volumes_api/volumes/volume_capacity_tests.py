@@ -30,8 +30,8 @@ volume_types_dataset = BlockstorageDatasets.volume_types()
 @DataDrivenFixture
 class VolumeCapacity(VolumesTestFixture):
 
-    @data_driven_test(volume_types_dataset)
     @tags('smoke', 'positive')
+    @data_driven_test(volume_types_dataset)
     def ddtest_create_maximum_size_volume(
             self, volume_type_name, volume_type_id):
         """Verify that a volume of maximum size can be created"""

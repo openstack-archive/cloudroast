@@ -32,8 +32,8 @@ complete_volume_types.merge_dataset_tags(default_volume_type)
 @DataDrivenFixture
 class SnapshotActions(VolumesTestFixture):
 
-    @data_driven_test(complete_volume_types)
     @tags('smoke', 'positive')
+    @data_driven_test(complete_volume_types)
     def ddtest_verify_snapshot_status_progression(
             self, volume_type_name, volume_type_id):
         """Verify snapshot passes through all expected states after create"""
@@ -54,8 +54,8 @@ class SnapshotActions(VolumesTestFixture):
             [statuses.Snapshot.AVAILABLE, statuses.Snapshot.CREATING])
         self.assertEquals(snapshot.size, volume.size)
 
-    @data_driven_test(complete_volume_types)
     @tags('smoke', 'positive')
+    @data_driven_test(complete_volume_types)
     def ddtest_verify_snapshot_restore_to_same_volume_type(
             self, volume_type_name, volume_type_id):
         """Verify that a snapshot can be restored to a volume of the
@@ -88,8 +88,8 @@ class SnapshotActions(VolumesTestFixture):
             original_volume, restored_volume,
             attr_list=comparable_attributes_list)
 
-    @data_driven_test(complete_volume_types)
     @tags('smoke', 'positive')
+    @data_driven_test(complete_volume_types)
     def ddtest_list_snapshots(
             self, volume_type_name, volume_type_id):
         """Verify that the api can list snapshots"""
@@ -107,8 +107,8 @@ class SnapshotActions(VolumesTestFixture):
         self.assertIn(snapshot.name, [s.name for s in snapshot_list])
         self.assertIn(snapshot.id_, [s.id_ for s in snapshot_list])
 
-    @data_driven_test(complete_volume_types)
     @tags('smoke', 'positive')
+    @data_driven_test(complete_volume_types)
     def ddtest_list_detailed_snapshots(
             self, volume_type_name, volume_type_id):
         """Verify that the api can list snapshot details"""
@@ -126,8 +126,8 @@ class SnapshotActions(VolumesTestFixture):
         self.assertIn(snapshot.name, [s.name for s in snapshot_list])
         self.assertIn(snapshot.id_, [s.id_ for s in snapshot_list])
 
-    @data_driven_test(complete_volume_types)
     @tags('smoke', 'positive')
+    @data_driven_test(complete_volume_types)
     def ddtest_get_snapshot_info(
             self, volume_type_name, volume_type_id):
         """Verify that the api return details on a single snapshot"""

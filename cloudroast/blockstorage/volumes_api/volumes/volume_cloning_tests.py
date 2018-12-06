@@ -20,8 +20,8 @@ volume_types_dataset.merge_dataset_tags(random_vtype_dataset)
 @DataDrivenFixture
 class CBSVolumeCloneTests(VolumesTestFixture):
 
-    @data_driven_test(volume_types_dataset)
     @tags('smoke', 'positive')
+    @data_driven_test(volume_types_dataset)
     def ddtest_create_exact_clone_of_existing_volume_and_verify_attributes(
             self, volume_type_name, volume_type_id):
         """Verify that data written to a volume is intact and available
@@ -80,8 +80,8 @@ class CBSVolumeCloneTests(VolumesTestFixture):
         # self.assertVolumeMetadataIsEqual(
         #    volume, volume_clone_info, key_list=key_list)
 
-    @data_driven_test(volume_types_dataset)
     @tags('smoke', 'positive')
+    @data_driven_test(volume_types_dataset)
     def ddtest_create_larger_clone_of_volume(
             self, volume_type_name, volume_type_id):
         """Clone a volume using a larger size than the original volume."""
