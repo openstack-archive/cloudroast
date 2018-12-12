@@ -1,4 +1,4 @@
-from qe_coverage.opencafe_decorators import tags
+from qe_coverage.opencafe_decorators import tags, unless_coverage
 
 from cafe.drivers.unittest.decorators import \
     data_driven_test, DataDrivenFixture
@@ -12,12 +12,19 @@ volume_type_complete_dataset = BlockstorageDatasets.volume_types()
 @DataDrivenFixture
 class NovaCLI_IntegrationSmoke(NovaCLI_IntegrationFixture):
 
+    _class_cleanup_tasks = []
+
+    @unless_coverage
     @classmethod
     def setUpClass(cls):
         super(NovaCLI_IntegrationSmoke, cls).setUpClass()
 
         # Create test server
         cls.test_server = cls.new_server()
+
+    @unless_coverage
+    def setUp(self):
+        super(NovaCLI_IntegrationSmoke, self).setUp()
 
     @tags('positive')
     @data_driven_test(volume_type_complete_dataset)
@@ -63,3 +70,12 @@ class NovaCLI_IntegrationSmoke(NovaCLI_IntegrationFixture):
         volume = self.new_volume(volume_type=volume_type_id)
         resp = self.nova.client.volume_delete(volume.id_)
         assert resp.return_code == 0, 'Unable to delete volume'
+
+    @unless_coverage
+    def tearDown(self):
+        super(NovaCLI_IntegrationSmoke, self).tearDown()
+
+    @unless_coverage
+    @classmethod
+    def tearDownClass(cls):
+        super(NovaCLI_IntegrationSmoke, cls).tearDownClass()
