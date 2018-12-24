@@ -51,7 +51,7 @@ class TestFixedIPsMultiple(NetworkingComputeFixture):
                        cls.network.id]
         cls.server = cls.create_test_server(
             name=svr_name, key_name=cls.keypair.name,
-            network_ids=network_ids, active_server=False)
+            network_ids=network_ids, active_server=True)
         cls.server_persona = ServerPersona(
             server=cls.server, pnet=True, snet=True, inet=True,
             pnet_fix_ipv4_count=1, snet_fix_ipv4_count=1,
@@ -88,7 +88,7 @@ class TestFixedIPsMultiple(NetworkingComputeFixture):
         cls.rem_msg = ('Unable to remove a {0} network fixed IP of server {1} '
                        'Response: {2}')
 
-    @tags('admin', 'limits')
+    @tags('admin', 'limits', 'positive')
     def test_multiple_add_remove_fixed_ips_public(self):
         """
         Testing adding and removing multiple public fixed IP's
@@ -97,7 +97,7 @@ class TestFixedIPsMultiple(NetworkingComputeFixture):
                                        number_fixed_ips=self.FIXED_IPS_TO_ADD,
                                        ini_ips_count=self.ini_ips_count)
 
-    @tags('admin', 'limits')
+    @tags('admin', 'limits', 'positive')
     def test_multiple_add_remove_fixed_ips_private(self):
         """
         Testing adding and removing multiple private fixed IP's
@@ -106,7 +106,7 @@ class TestFixedIPsMultiple(NetworkingComputeFixture):
                                        number_fixed_ips=self.FIXED_IPS_TO_ADD,
                                        ini_ips_count=self.ini_ips_count)
 
-    @tags('admin', 'limits')
+    @tags('admin', 'limits', 'positive')
     def test_multiple_add_remove_fixed_ips_isolated(self):
         """
         Testing adding and removing multiple isolated fixed IP's

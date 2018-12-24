@@ -51,7 +51,7 @@ class TestFixedIPsMultiple(NetworkingComputeFixture):
                        cls.network.id]
         cls.server = cls.create_test_server(
             name=svr_name, key_name=cls.keypair.name,
-            network_ids=network_ids, active_server=False)
+            network_ids=network_ids, active_server=True)
         cls.server_persona = ServerPersona(
             server=cls.server, pnet=True, snet=True, inet=True,
             network=cls.network, keypair=cls.keypair, ssh_username='root')

@@ -50,7 +50,7 @@ class TestFixedIPs(NetworkingComputeFixture):
                        cls.network.id]
         cls.server = cls.create_test_server(
             name=svr_name, key_name=cls.keypair.name,
-            network_ids=network_ids, active_server=False)
+            network_ids=network_ids, active_server=True)
         cls.server_persona = ServerPersona(
             server=cls.server, pnet=True, snet=True, inet=True,
             pnet_fix_ipv4_count=1, snet_fix_ipv4_count=1,

@@ -72,10 +72,10 @@ class TestFixedIPsConnectivity(NetworkingComputeFixture, ScenarioMixin):
                        cls.network.id]
         cls.server1 = cls.create_test_server(
             name=svr_name_1, key_name=cls.keypair.name,
-            network_ids=network_ids, active_server=False)
+            network_ids=network_ids, active_server=True)
         cls.server2 = cls.create_test_server(
             name=svr_name_2, key_name=cls.keypair.name,
-            network_ids=network_ids, active_server=False)
+            network_ids=network_ids, active_server=True)
         cls.servers = [cls.server1, cls.server2]
 
         cls.FIXED_IPS_TO_ADD = cls.net.config.fixed_ips_to_add
