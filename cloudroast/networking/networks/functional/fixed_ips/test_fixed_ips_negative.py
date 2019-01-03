@@ -88,7 +88,7 @@ class TestFixedIPsMultiple(NetworkingComputeFixture):
         """
         self._add_fixed_ips_network(self.server, self.pub_net_id,
                                     number_fixed_ips=self.FIXED_IPS_TO_ADD)
-        self._remove_all_ips(self.server, self.pub_net_id,
+        self._remove_all_ips_re_add_ips(self.server, self.pub_net_id,
                              self.ini_ips_count)
 
     @tags('admin', 'negative')
@@ -98,7 +98,7 @@ class TestFixedIPsMultiple(NetworkingComputeFixture):
         """
         self._add_fixed_ips_network(self.server, self.pri_net_id,
                                     number_fixed_ips=self.FIXED_IPS_TO_ADD)
-        self._remove_all_ips(self.server, self.pri_net_id,
+        self._remove_all_ips_re_add_ips(self.server, self.pri_net_id,
                              self.ini_ips_count)
 
     @tags('admin', 'negative')
@@ -108,7 +108,7 @@ class TestFixedIPsMultiple(NetworkingComputeFixture):
         """
         self._add_fixed_ips_network(self.server, self.iso_net_id,
                                     number_fixed_ips=self.FIXED_IPS_TO_ADD)
-        self._remove_all_ips(self.server, self.iso_net_id,
+        self._remove_all_ips_re_add_ips(self.server, self.iso_net_id,
                              self.ini_ips_count)
 
     def _add_fixed_ips_network(self, server, network, number_fixed_ips):
@@ -116,10 +116,10 @@ class TestFixedIPsMultiple(NetworkingComputeFixture):
         for _ in range(number_fixed_ips):
             self.servers_client.add_fixed_ip(server.id, network)
 
-    def _remove_all_ips(self, server, port_type, ini_ips_count):
+    def _remove_all_ips_re_add_ips(self, server, port_type, ini_ips_count):
         """
-        Tries to remove all network IPs from a server and verifies
-        that the last IP of a network can NOT be removed
+        Tries to remove all network IPs from a server and re-adds
+        the ip based on port_type
         """
         persona_args = {"server": self.server, "keypair": self.keypair,
                         "pnet": True, "snet": True, "inet": True,
@@ -147,17 +147,13 @@ class TestFixedIPsMultiple(NetworkingComputeFixture):
             removed_ip_response = self.servers_client.\
                 remove_fixed_ip(self.server.id, ip_to_remove)
             ip_count -= 1
-            if ip_count >= 1:
-                self.assertEqual(removed_ip_response.status_code,
-                                 NeutronResponseCodes.REMOVE_FIXED_IP,
-                                 msg=self.rem_msg.format(
-                                     port_type, self.server.id,
-                                     removed_ip_response))
-            else:
-                msg = ('Tried to remove last IP of {0} network in server {1} '
-                       'Unexpected Response: {2}'.
-                       format(port_type, server.id,
-                              removed_ip_response.status_code))
-                self.assertEqual(removed_ip_response.status_code,
-                                 NeutronResponseCodes.REMOVE_FIXED_IP, msg)
-                self.assertServerPersonaFixedIps(self.server_persona)
+            self.assertEqual(removed_ip_response.status_code,
+                             NeutronResponseCodes.REMOVE_FIXED_IP,
+                             msg=self.rem_msg.format(
+                                 port_type, self.server.id,
+                                 removed_ip_response))
+            self.assertServerPersonaFixedIps(self.server_persona)
+        # Re-adding ip's to the server and verifying fixed ip's count
+        self._add_fixed_ips_network(server, port_type,
+                                    number_fixed_ips=self.FIXED_IPS_TO_ADD)
+        self.assertServerPersonaFixedIps(self.server_persona)
