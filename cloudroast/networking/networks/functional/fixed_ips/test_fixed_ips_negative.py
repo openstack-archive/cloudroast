@@ -88,7 +88,7 @@ class TestFixedIPsMultiple(NetworkingComputeFixture):
         """
         self._add_fixed_ips_network(self.server, self.pub_net_id,
                                     number_fixed_ips=self.FIXED_IPS_TO_ADD)
-        self._remove_all_ips_re_add_ips(self.server, self.pub_net_id,
+        self._remove_all_ips(self.server, self.pub_net_id,
                              self.ini_ips_count)
 
     @tags('admin', 'negative')
@@ -98,7 +98,7 @@ class TestFixedIPsMultiple(NetworkingComputeFixture):
         """
         self._add_fixed_ips_network(self.server, self.pri_net_id,
                                     number_fixed_ips=self.FIXED_IPS_TO_ADD)
-        self._remove_all_ips_re_add_ips(self.server, self.pri_net_id,
+        self._remove_all_ips(self.server, self.pri_net_id,
                              self.ini_ips_count)
 
     @tags('admin', 'negative')
@@ -108,7 +108,7 @@ class TestFixedIPsMultiple(NetworkingComputeFixture):
         """
         self._add_fixed_ips_network(self.server, self.iso_net_id,
                                     number_fixed_ips=self.FIXED_IPS_TO_ADD)
-        self._remove_all_ips_re_add_ips(self.server, self.iso_net_id,
+        self._remove_all_ips(self.server, self.iso_net_id,
                              self.ini_ips_count)
 
     def _add_fixed_ips_network(self, server, network, number_fixed_ips):
@@ -116,44 +116,50 @@ class TestFixedIPsMultiple(NetworkingComputeFixture):
         for _ in range(number_fixed_ips):
             self.servers_client.add_fixed_ip(server.id, network)
 
-    def _remove_all_ips_re_add_ips(self, server, port_type, ini_ips_count):
+    def _remove_all_ips(self, server, port_type, ini_ips_count):
         """
-        Tries to remove all network IPs from a server and re-adds
-        the ip based on port_type
+        Tries to remove all network IPs from a server
         """
-        persona_args = {"server": self.server, "keypair": self.keypair,
+        persona_args = {"server": server, "keypair": self.keypair,
                         "pnet": True, "snet": True, "inet": True,
-                        "pnet_fix_ipv4_count": ini_ips_count,
-                        "snet_fix_ipv4_count": ini_ips_count,
-                        "inet_fix_ipv4_count": ini_ips_count,
                         "network": self.network, "ssh_username": 'root'}
         if port_type == self.pub_net_id:
-            persona_args["pnet_fix_ipv4_count"] = self.FIXED_IPS_TO_ADD+1
+            persona_args["pnet_fix_ipv4_count"] = \
+                self.FIXED_IPS_TO_ADD + ini_ips_count
             server_persona = ServerPersona(**persona_args)
             ips = server_persona.pnet_fix_ipv4
             ip_count = server_persona.pnet_fix_ipv4_count
         if port_type == self.pri_net_id:
-            persona_args["snet_fix_ipv4_count"] = self.FIXED_IPS_TO_ADD+1
+            persona_args["snet_fix_ipv4_count"] = \
+                self.FIXED_IPS_TO_ADD + ini_ips_count
             server_persona = ServerPersona(**persona_args)
             ips = server_persona.snet_fix_ipv4
             ip_count = server_persona.snet_fix_ipv4_count
         if port_type == self.iso_net_id:
-            persona_args["inet_fix_ipv4_count"] = self.FIXED_IPS_TO_ADD + 1
+            persona_args["inet_fix_ipv4_count"] = \
+                self.FIXED_IPS_TO_ADD + ini_ips_count
             server_persona = ServerPersona(**persona_args)
             ips = server_persona.inet_fix_ipv4
             ip_count = server_persona.inet_fix_ipv4_count
         # Try to remove all IPv4 IPs
         for ip_to_remove in ips:
             removed_ip_response = self.servers_client.\
-                remove_fixed_ip(self.server.id, ip_to_remove)
+                remove_fixed_ip(server.id, ip_to_remove)
             ip_count -= 1
             self.assertEqual(removed_ip_response.status_code,
                              NeutronResponseCodes.REMOVE_FIXED_IP,
                              msg=self.rem_msg.format(
-                                 port_type, self.server.id,
+                                 port_type, server.id,
                                  removed_ip_response))
-            self.assertServerPersonaFixedIps(self.server_persona)
-        # Re-adding ip's to the server and verifying fixed ip's count
-        self._add_fixed_ips_network(server, port_type,
-                                    number_fixed_ips=self.FIXED_IPS_TO_ADD)
-        self.assertServerPersonaFixedIps(self.server_persona)
+            if port_type == self.pub_net_id:
+                persona_args["pnet_fix_ipv4_count"] = ip_count
+                server_persona = ServerPersona(**persona_args)
+                self.assertServerPersonaFixedIps(server_persona)
+            elif port_type == self.pri_net_id:
+                persona_args["snet_fix_ipv4_count"] = ip_count
+                server_persona = ServerPersona(**persona_args)
+                self.assertServerPersonaFixedIps(server_persona)
+            elif port_type == self.iso_net_id:
+                persona_args["inet_fix_ipv4_count"] = ip_count
+                server_persona = ServerPersona(**persona_args)
+                self.assertServerPersonaFixedIps(server_persona)
